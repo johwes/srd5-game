@@ -1,4 +1,5 @@
 export * from './enums.js';
+export * from './primitives.js';
 export * from './choices.js';
 export * from './effects.js';
 export * from './races.js';

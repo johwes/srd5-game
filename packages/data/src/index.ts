@@ -9,3 +9,5 @@ export const SRD_VERSION = '5.1' as const;
 export const SRD_LICENSE = 'CC-BY-4.0' as const;
 
 export * from './schemas/index.js';
+export * from './ingestion/index.js';
+export * from './overlays/index.js';
