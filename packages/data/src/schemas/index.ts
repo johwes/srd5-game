@@ -5,3 +5,6 @@ export * from './races.js';
 export * from './classes.js';
 export * from './backgrounds.js';
 export * from './feats.js';
+export * from './equipment.js';
+export * from './spells.js';
+export * from './monsters.js';
