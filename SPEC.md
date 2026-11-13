@@ -21,6 +21,7 @@ This repository's specification is organized into modular engineering documents 
 | **[03-combat-and-rules-engine.md](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md)** | Seeded deterministic PRNG & dice engine, 5e turn lifecycle, action economy, reaction interrupts (`Opportunity Attack`, `Shield`, `Counterspell`), 5-ft grid geometry, A* pathfinding, Bresenham/shadowcasting Line of Sight, cover, lighting, conditions, concentration, and death saves. |
 | **[04-dungeon-and-ai.md](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md)** | Multi-room dungeon format, exploration-to-combat transition, interactive props (locked/trapped doors, chests), Short & Long Rest mechanics, loot/XP progression, and utility-based Tactical Monster AI archetypes. |
 | **[05-multiplayer-and-ui.md](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md)** | Multiplayer-ready Command/Event transport layer, per-player Fog-of-War state projection (`PlayerViewState`), PixiJS 2D canvas rendering pipeline, and React HUD/Compendium/Builder UI architecture. |
+| **[BACKLOG.md](file:///home/jwesterl/ai/srd5-game/BACKLOG.md)** | Granular, dependency-ordered engineering backlog (`SRD-101` through `SRD-604`) across Epics 1–6 with package targets and acceptance criteria. |
 
 ---
 
