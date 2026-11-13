@@ -1,0 +1,85 @@
+[
+  {
+    "id": "acolyte",
+    "name": "Acolyte",
+    "skillProficiencies": [
+      "insight",
+      "religion"
+    ],
+    "toolProficiencies": [],
+    "languages": [],
+    "choices": [
+      {
+        "id": "acolyte-languages",
+        "label": "Choose two languages of your choice",
+        "count": 2,
+        "type": "language",
+        "from": {
+          "mode": "category",
+          "category": "all_languages"
+        }
+      }
+    ],
+    "startingEquipment": [
+      {
+        "itemId": "amulet",
+        "quantity": 1
+      },
+      {
+        "itemId": "book",
+        "quantity": 1
+      },
+      {
+        "itemId": "incense-block",
+        "quantity": 5
+      },
+      {
+        "itemId": "vestments",
+        "quantity": 1
+      },
+      {
+        "itemId": "common-clothes",
+        "quantity": 1
+      },
+      {
+        "itemId": "pouch",
+        "quantity": 1
+      }
+    ],
+    "startingCurrency": {
+      "gp": 15
+    },
+    "feature": {
+      "id": "shelter-of-the-faithful",
+      "name": "Shelter of the Faithful",
+      "description": "As an acolyte, you command the respect of those who share your faith, and you can perform the religious ceremonies of your deity. You and your adventuring companions can expect to receive free healing and care at a temple, shrine, or other established presence of your faith."
+    },
+    "suggestedCharacteristics": {
+      "personalityTraits": [
+        "I idolize a particular hero of my faith, and constantly refer to that person’s deeds and example.",
+        "I can find common ground between the fiercest enemies, empathizing with them and always working toward peace.",
+        "I see omens in every event and action. The gods try to speak to us, we just need to listen.",
+        "Nothing can shake my optimistic attitude."
+      ],
+      "ideals": [
+        "Tradition. The ancient traditions of worship and sacrifice must be preserved and upheld. (Lawful)",
+        "Charity. I always try to help those in need, no matter what the personal cost. (Good)",
+        "Change. We must help bring about the changes the gods are constantly working in the world. (Chaotic)",
+        "Faith. I trust that my deity will guide my actions. I have faith that if I work hard, things will go well. (Lawful)"
+      ],
+      "bonds": [
+        "I would die to recover an ancient relic of my faith that was lost long ago.",
+        "I will someday get revenge on the corrupt temple hierarchy who branded me a heretic.",
+        "I owe my life to the priest who took me in when my parents died.",
+        "Everything I do is for the common people."
+      ],
+      "flaws": [
+        "I judge others harshly, and myself even more severely.",
+        "I put too much trust in those who wield power within my temple’s hierarchy.",
+        "My piety sometimes leads me to blindly trust those that profess faith in my god.",
+        "I am inflexible in my thinking."
+      ]
+    },
+    "description": "You have spent your life in the service of a temple to a specific god or pantheon of gods."
+  }
+]

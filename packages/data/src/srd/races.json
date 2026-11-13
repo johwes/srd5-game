@@ -1,0 +1,566 @@
+[
+  {
+    "id": "dragonborn",
+    "name": "Dragonborn",
+    "size": "medium",
+    "speedFeet": 30,
+    "abilityBonuses": {
+      "str": 2,
+      "cha": 1
+    },
+    "choices": [
+      {
+        "id": "draconic-ancestry",
+        "label": "Choose your Draconic Ancestry",
+        "count": 1,
+        "type": "feature_option",
+        "featureGroup": "draconic-ancestry",
+        "options": [
+          "black",
+          "blue",
+          "brass",
+          "bronze",
+          "copper",
+          "gold",
+          "green",
+          "red",
+          "silver",
+          "white"
+        ]
+      }
+    ],
+    "senses": {},
+    "proficiencies": [],
+    "languages": [
+      "common",
+      "draconic"
+    ],
+    "traits": [
+      {
+        "id": "draconic-ancestry-trait",
+        "name": "Draconic Ancestry",
+        "description": "You have draconic ancestry. Choose one type of dragon from the Draconic Ancestry table. Your breath weapon and damage resistance are determined by the dragon type.",
+        "modifiers": []
+      },
+      {
+        "id": "breath-weapon",
+        "name": "Breath Weapon",
+        "description": "You can use your action to exhale destructive energy. Your draconic ancestry determines the size, shape, and damage type of the exhalation.",
+        "modifiers": [
+          {
+            "type": "grant_resource",
+            "resourceId": "breath_weapon",
+            "name": "Breath Weapon",
+            "maxFormula": "1",
+            "recovery": "short_rest"
+          }
+        ],
+        "activatedAbilities": [
+          {
+            "id": "dragonborn-breath-weapon",
+            "name": "Breath Weapon",
+            "description": "Use your action to exhale destructive energy in a 15-foot cone or 5-by-30-foot line based on your Draconic Ancestry (DC = 8 + CON modifier + proficiency bonus).",
+            "actionCost": "action",
+            "resourceCost": {
+              "resourceId": "breath_weapon",
+              "amount": 1
+            },
+            "targeting": {
+              "type": "self_aoe",
+              "rangeFeet": 0,
+              "aoe": {
+                "shape": "cone",
+                "sizeFeet": 15
+              }
+            },
+            "effects": [
+              {
+                "step": "saving_throw",
+                "ability": "dex",
+                "dcFormula": "8 + @conMod + @prof",
+                "onFail": [
+                  {
+                    "step": "deal_damage",
+                    "diceFormula": "2d6",
+                    "damageType": "fire",
+                    "halfOnSaveSuccess": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "draconic-damage-resistance",
+        "name": "Damage Resistance",
+        "description": "You have resistance to the damage type associated with your draconic ancestry.",
+        "modifiers": [
+          {
+            "type": "damage_mitigation",
+            "mitigation": "resistance",
+            "damageTypes": [
+              "fire"
+            ]
+          }
+        ]
+      }
+    ],
+    "subraceIds": [],
+    "description": "Born of dragons, as their name proclaims, the dragonborn walk proudly through a world that greets them with fearful incomprehension."
+  },
+  {
+    "id": "dwarf",
+    "name": "Dwarf",
+    "size": "medium",
+    "speedFeet": 25,
+    "abilityBonuses": {
+      "con": 2
+    },
+    "choices": [
+      {
+        "id": "dwarf-tool-proficiency",
+        "label": "Choose one artisan's tool proficiency",
+        "count": 1,
+        "type": "tool",
+        "from": {
+          "mode": "explicit",
+          "options": [
+            "smiths-tools",
+            "brewers-supplies",
+            "masons-tools"
+          ]
+        }
+      }
+    ],
+    "senses": {
+      "darkvisionFeet": 60
+    },
+    "proficiencies": [
+      "battleaxe",
+      "handaxe",
+      "light-hammer",
+      "warhammer"
+    ],
+    "languages": [
+      "common",
+      "dwarvish"
+    ],
+    "traits": [
+      {
+        "id": "dwarven-resilience",
+        "name": "Dwarven Resilience",
+        "description": "You have advantage on saving throws against poison, and you have resistance against poison damage.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "save:con",
+            "condition": "save_against_poison"
+          },
+          {
+            "type": "damage_mitigation",
+            "mitigation": "resistance",
+            "damageTypes": [
+              "poison"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dwarven-combat-training",
+        "name": "Dwarven Combat Training",
+        "description": "You have proficiency with the battleaxe, handaxe, light hammer, and warhammer.",
+        "modifiers": []
+      },
+      {
+        "id": "stonecunning",
+        "name": "Stonecunning",
+        "description": "Whenever you make an Intelligence (History) check related to the origin of stonework, you are considered proficient in the History skill and add double your proficiency bonus to the check.",
+        "modifiers": []
+      }
+    ],
+    "subraceIds": [
+      "hill-dwarf"
+    ],
+    "description": "Bold and hardy, dwarves are known as skilled warriors, miners, and workers of stone and metal."
+  },
+  {
+    "id": "elf",
+    "name": "Elf",
+    "size": "medium",
+    "speedFeet": 30,
+    "abilityBonuses": {
+      "dex": 2
+    },
+    "choices": [],
+    "senses": {
+      "darkvisionFeet": 60
+    },
+    "proficiencies": [
+      "perception"
+    ],
+    "languages": [
+      "common",
+      "elvish"
+    ],
+    "traits": [
+      {
+        "id": "keen-senses",
+        "name": "Keen Senses",
+        "description": "You have proficiency in the Perception skill.",
+        "modifiers": []
+      },
+      {
+        "id": "fey-ancestry",
+        "name": "Fey Ancestry",
+        "description": "You have advantage on saving throws against being charmed, and magic cannot put you to sleep.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws",
+            "condition": "save_against_charmed"
+          }
+        ]
+      },
+      {
+        "id": "trance",
+        "name": "Trance",
+        "description": "Elves do not need to sleep. Instead, they meditate deeply, remaining semiconscious, for 4 hours a day.",
+        "modifiers": []
+      }
+    ],
+    "subraceIds": [
+      "high-elf"
+    ],
+    "description": "Elves are a magical people of otherworldly grace, living in the world but not entirely part of it."
+  },
+  {
+    "id": "gnome",
+    "name": "Gnome",
+    "size": "small",
+    "speedFeet": 25,
+    "abilityBonuses": {
+      "int": 2
+    },
+    "choices": [],
+    "senses": {
+      "darkvisionFeet": 60
+    },
+    "proficiencies": [],
+    "languages": [
+      "common",
+      "gnomish"
+    ],
+    "traits": [
+      {
+        "id": "gnome-cunning",
+        "name": "Gnome Cunning",
+        "description": "You have advantage on all Intelligence, Wisdom, and Charisma saving throws against magic.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "save:int",
+            "condition": "save_against_magic"
+          },
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "save:wis",
+            "condition": "save_against_magic"
+          },
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "save:cha",
+            "condition": "save_against_magic"
+          }
+        ]
+      }
+    ],
+    "subraceIds": [
+      "rock-gnome"
+    ],
+    "description": "A constant hum of busy activity pervades the warrens and neighborhoods where gnomes form their close-knit communities."
+  },
+  {
+    "id": "half-elf",
+    "name": "Half-Elf",
+    "size": "medium",
+    "speedFeet": 30,
+    "abilityBonuses": {
+      "cha": 2
+    },
+    "choices": [
+      {
+        "id": "half-elf-ability-bonuses",
+        "label": "Choose two distinct ability scores other than Charisma to increase by 1",
+        "count": 2,
+        "type": "ability_score_bonus",
+        "bonus": 1,
+        "excludeAbilities": [
+          "cha"
+        ],
+        "distinct": true
+      },
+      {
+        "id": "half-elf-skill-versatility",
+        "label": "Choose two skills of your choice",
+        "count": 2,
+        "type": "skill",
+        "from": {
+          "mode": "category",
+          "category": "all_skills"
+        }
+      },
+      {
+        "id": "half-elf-extra-language",
+        "label": "Choose one extra language of your choice",
+        "count": 1,
+        "type": "language",
+        "from": {
+          "mode": "category",
+          "category": "all_languages"
+        }
+      }
+    ],
+    "senses": {
+      "darkvisionFeet": 60
+    },
+    "proficiencies": [],
+    "languages": [
+      "common",
+      "elvish"
+    ],
+    "traits": [
+      {
+        "id": "fey-ancestry",
+        "name": "Fey Ancestry",
+        "description": "You have advantage on saving throws against being charmed, and magic cannot put you to sleep.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws",
+            "condition": "save_against_charmed"
+          }
+        ]
+      },
+      {
+        "id": "skill-versatility",
+        "name": "Skill Versatility",
+        "description": "You gain proficiency in two skills of your choice.",
+        "modifiers": []
+      }
+    ],
+    "subraceIds": [],
+    "description": "Walking in two worlds but truly belonging to neither, half-elves combine what some say are the best qualities of their elf and human parents."
+  },
+  {
+    "id": "half-orc",
+    "name": "Half-Orc",
+    "size": "medium",
+    "speedFeet": 30,
+    "abilityBonuses": {
+      "str": 2,
+      "con": 1
+    },
+    "choices": [],
+    "senses": {
+      "darkvisionFeet": 60
+    },
+    "proficiencies": [
+      "intimidation"
+    ],
+    "languages": [
+      "common",
+      "orc"
+    ],
+    "traits": [
+      {
+        "id": "menacing",
+        "name": "Menacing",
+        "description": "You gain proficiency in the Intimidation skill.",
+        "modifiers": []
+      },
+      {
+        "id": "relentless-endurance",
+        "name": "Relentless Endurance",
+        "description": "When you are reduced to 0 hit points but not killed outright, you can drop to 1 hit point instead once per long rest.",
+        "modifiers": [
+          {
+            "type": "grant_resource",
+            "resourceId": "relentless_endurance",
+            "name": "Relentless Endurance",
+            "maxFormula": "1",
+            "recovery": "long_rest"
+          }
+        ]
+      },
+      {
+        "id": "savage-attacks",
+        "name": "Savage Attacks",
+        "description": "When you score a critical hit with a melee weapon attack, you can roll one of the weapon’s damage dice one additional time and add it to the extra damage of the critical hit.",
+        "modifiers": [
+          {
+            "type": "die_manipulation",
+            "rule": "savage_attacks"
+          }
+        ]
+      }
+    ],
+    "subraceIds": [],
+    "description": "Half-orcs’ grayish pigmentation, sloping foreheads, jutting jaws, prominent teeth, and towering builds make their orcish heritage plain for all to see."
+  },
+  {
+    "id": "halfling",
+    "name": "Halfling",
+    "size": "small",
+    "speedFeet": 25,
+    "abilityBonuses": {
+      "dex": 2
+    },
+    "choices": [],
+    "senses": {},
+    "proficiencies": [],
+    "languages": [
+      "common",
+      "halfling"
+    ],
+    "traits": [
+      {
+        "id": "lucky",
+        "name": "Lucky",
+        "description": "When you roll a 1 on the d20 for an attack roll, ability check, or saving throw, you can reroll the die and must use the new roll.",
+        "modifiers": [
+          {
+            "type": "die_manipulation",
+            "rule": "halfling_lucky"
+          }
+        ]
+      },
+      {
+        "id": "brave",
+        "name": "Brave",
+        "description": "You have advantage on saving throws against being frightened.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws",
+            "condition": "save_against_frightened"
+          }
+        ]
+      },
+      {
+        "id": "halfling-nimbleness",
+        "name": "Halfling Nimbleness",
+        "description": "You can move through the space of any creature that is of a size larger than yours.",
+        "modifiers": []
+      }
+    ],
+    "subraceIds": [
+      "lightfoot-halfling"
+    ],
+    "description": "The comforts of home are the goals of most halflings’ lives: a place to settle in peace and quiet, far from marauding monsters and clashing armies."
+  },
+  {
+    "id": "human",
+    "name": "Human",
+    "size": "medium",
+    "speedFeet": 30,
+    "abilityBonuses": {
+      "str": 1,
+      "dex": 1,
+      "con": 1,
+      "int": 1,
+      "wis": 1,
+      "cha": 1
+    },
+    "choices": [
+      {
+        "id": "human-extra-language",
+        "label": "Choose one extra language of your choice",
+        "count": 1,
+        "type": "language",
+        "from": {
+          "mode": "category",
+          "category": "all_languages"
+        }
+      }
+    ],
+    "senses": {},
+    "proficiencies": [],
+    "languages": [
+      "common"
+    ],
+    "traits": [],
+    "subraceIds": [],
+    "description": "In the reckonings of most worlds, humans are the youngest of the common races, late to arrive on the world scene and short-lived in comparison to dwarves, elves, and dragons."
+  },
+  {
+    "id": "tiefling",
+    "name": "Tiefling",
+    "size": "medium",
+    "speedFeet": 30,
+    "abilityBonuses": {
+      "int": 1,
+      "cha": 2
+    },
+    "choices": [],
+    "senses": {
+      "darkvisionFeet": 60
+    },
+    "proficiencies": [],
+    "languages": [
+      "common",
+      "infernal"
+    ],
+    "traits": [
+      {
+        "id": "hellish-resistance",
+        "name": "Hellish Resistance",
+        "description": "You have resistance to fire damage.",
+        "modifiers": [
+          {
+            "type": "damage_mitigation",
+            "mitigation": "resistance",
+            "damageTypes": [
+              "fire"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "infernal-legacy",
+        "name": "Infernal Legacy",
+        "description": "You know the thaumaturgy cantrip. At 3rd level, you can cast hellish rebuke as a 2nd-level spell once per long rest. At 5th level, you can cast darkness once per long rest.",
+        "modifiers": [],
+        "innateSpells": [
+          {
+            "spellId": "thaumaturgy",
+            "minCharacterLevel": 1,
+            "ability": "cha"
+          },
+          {
+            "spellId": "hellish-rebuke",
+            "minCharacterLevel": 3,
+            "ability": "cha",
+            "oncePerRest": "long_rest",
+            "castAtSlotLevel": 2
+          },
+          {
+            "spellId": "darkness",
+            "minCharacterLevel": 5,
+            "ability": "cha",
+            "oncePerRest": "long_rest"
+          }
+        ]
+      }
+    ],
+    "subraceIds": [],
+    "description": "To be greeted with stares and whispers, to suffer violence and insult on the street, to see mistrust and fear in every eye: this is the lot of the tiefling."
+  }
+]

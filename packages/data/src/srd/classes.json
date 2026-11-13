@@ -1,0 +1,6302 @@
+[
+  {
+    "id": "barbarian",
+    "name": "Barbarian",
+    "hitDie": 12,
+    "primaryAbilities": [
+      "str"
+    ],
+    "savingThrowProficiencies": [
+      "str",
+      "con"
+    ],
+    "armorProficiencies": [
+      "light-armor",
+      "medium-armor",
+      "shields"
+    ],
+    "weaponProficiencies": [
+      "simple-weapons",
+      "martial-weapons"
+    ],
+    "toolProficiencies": [],
+    "skillChoices": {
+      "id": "barbarian-skills",
+      "label": "Choose two skills from Animal Handling, Athletics, Intimidation, Nature, Perception, and Survival",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "animal-handling",
+          "athletics",
+          "intimidation",
+          "nature",
+          "perception",
+          "survival"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "barbarian-main-weapon",
+        "label": "(a) a greataxe or (b) any martial melee weapon",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "greataxe",
+            "label": "Greataxe",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "greataxe",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "martial-melee",
+            "label": "Any martial melee weapon",
+            "items": [
+              {
+                "kind": "category_choice",
+                "category": "martial_melee_weapons",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "barbarian-secondary-weapon",
+        "label": "(a) two handaxes or (b) any simple weapon",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "two-handaxes",
+            "label": "Two handaxes",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "handaxe",
+                "quantity": 2
+              }
+            ]
+          },
+          {
+            "id": "simple-weapon",
+            "label": "Any simple weapon",
+            "items": [
+              {
+                "kind": "category_choice",
+                "category": "simple_weapons",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "explorers-pack",
+        "quantity": 1
+      },
+      {
+        "itemId": "javelin",
+        "quantity": 4
+      }
+    ],
+    "startingGoldFormula": "2d4 * 10",
+    "subclassLevel": 3,
+    "subclassTitle": "Primal Path",
+    "subclassIds": [
+      "berserker"
+    ],
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "rage",
+          "barbarian-unarmored-defense"
+        ],
+        "classSpecific": {
+          "rage_count": 2,
+          "rage_damage_bonus": 2,
+          "brutal_critical_dice": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "reckless-attack",
+          "danger-sense"
+        ],
+        "classSpecific": {
+          "rage_count": 2,
+          "rage_damage_bonus": 2,
+          "brutal_critical_dice": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "primal-path"
+        ],
+        "classSpecific": {
+          "rage_count": 3,
+          "rage_damage_bonus": 2,
+          "brutal_critical_dice": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-barbarian"
+        ],
+        "classSpecific": {
+          "rage_count": 3,
+          "rage_damage_bonus": 2,
+          "brutal_critical_dice": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "extra-attack-barbarian",
+          "fast-movement"
+        ],
+        "classSpecific": {
+          "rage_count": 3,
+          "rage_damage_bonus": 2,
+          "brutal_critical_dice": 0
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "rage_count": 4,
+          "rage_damage_bonus": 2,
+          "brutal_critical_dice": 0
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "feral-instinct"
+        ],
+        "classSpecific": {
+          "rage_count": 4,
+          "rage_damage_bonus": 2,
+          "brutal_critical_dice": 0
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-barbarian"
+        ],
+        "classSpecific": {
+          "rage_count": 4,
+          "rage_damage_bonus": 2,
+          "brutal_critical_dice": 0
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "brutal-critical"
+        ],
+        "classSpecific": {
+          "rage_count": 4,
+          "rage_damage_bonus": 3,
+          "brutal_critical_dice": 1
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "rage_count": 4,
+          "rage_damage_bonus": 3,
+          "brutal_critical_dice": 1
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "relentless-rage"
+        ],
+        "classSpecific": {
+          "rage_count": 4,
+          "rage_damage_bonus": 3,
+          "brutal_critical_dice": 1
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-barbarian"
+        ],
+        "classSpecific": {
+          "rage_count": 5,
+          "rage_damage_bonus": 3,
+          "brutal_critical_dice": 1
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "rage_count": 5,
+          "rage_damage_bonus": 3,
+          "brutal_critical_dice": 2
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "rage_count": 5,
+          "rage_damage_bonus": 3,
+          "brutal_critical_dice": 2
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "persistent-rage"
+        ],
+        "classSpecific": {
+          "rage_count": 5,
+          "rage_damage_bonus": 3,
+          "brutal_critical_dice": 2
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-barbarian"
+        ],
+        "classSpecific": {
+          "rage_count": 5,
+          "rage_damage_bonus": 4,
+          "brutal_critical_dice": 2
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "rage_count": 6,
+          "rage_damage_bonus": 4,
+          "brutal_critical_dice": 3
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "indomitable-might"
+        ],
+        "classSpecific": {
+          "rage_count": 6,
+          "rage_damage_bonus": 4,
+          "brutal_critical_dice": 3
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-barbarian"
+        ],
+        "classSpecific": {
+          "rage_count": 6,
+          "rage_damage_bonus": 4,
+          "brutal_critical_dice": 3
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "primal-champion"
+        ],
+        "classSpecific": {
+          "rage_count": 999,
+          "rage_damage_bonus": 4,
+          "brutal_critical_dice": 3
+        }
+      }
+    ],
+    "description": "A fierce warrior of primitive background who can enter a battle rage."
+  },
+  {
+    "id": "bard",
+    "name": "Bard",
+    "hitDie": 8,
+    "primaryAbilities": [
+      "cha"
+    ],
+    "savingThrowProficiencies": [
+      "dex",
+      "cha"
+    ],
+    "armorProficiencies": [
+      "light-armor"
+    ],
+    "weaponProficiencies": [
+      "simple-weapons",
+      "hand-crossbow",
+      "longsword",
+      "rapier",
+      "shortsword"
+    ],
+    "toolProficiencies": [],
+    "toolChoices": [
+      {
+        "id": "bard-musical-instruments",
+        "label": "Choose three musical instruments of your choice",
+        "count": 3,
+        "type": "tool",
+        "from": {
+          "mode": "explicit",
+          "options": [
+            "bagpipes",
+            "drum",
+            "dulcimer",
+            "flute",
+            "lute",
+            "lyre",
+            "horn",
+            "pan-flute",
+            "shawm",
+            "viol"
+          ]
+        }
+      }
+    ],
+    "skillChoices": {
+      "id": "bard-skills",
+      "label": "Choose any three skills",
+      "count": 3,
+      "type": "skill",
+      "from": {
+        "mode": "category",
+        "category": "all_skills"
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "bard-weapon",
+        "label": "(a) a rapier, (b) a longsword, or (c) any simple weapon",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "rapier",
+            "label": "Rapier",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "rapier",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "longsword",
+            "label": "Longsword",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "longsword",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "simple-weapon",
+            "label": "Any simple weapon",
+            "items": [
+              {
+                "kind": "category_choice",
+                "category": "simple_weapons",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bard-pack",
+        "label": "(a) a diplomat's pack or (b) an entertainer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "diplomats-pack",
+            "label": "Diplomat's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "diplomats-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "entertainers-pack",
+            "label": "Entertainer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "entertainers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "leather-armor",
+        "quantity": 1
+      },
+      {
+        "itemId": "dagger",
+        "quantity": 1
+      },
+      {
+        "itemId": "lute",
+        "quantity": 1
+      }
+    ],
+    "startingGoldFormula": "5d4 * 10",
+    "subclassLevel": 3,
+    "subclassTitle": "Bard College",
+    "subclassIds": [
+      "lore"
+    ],
+    "spellcasting": {
+      "ability": "cha",
+      "progression": "full",
+      "preparationMode": "known",
+      "cantripsKnownByLevel": [
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "spellsKnownByLevel": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        14,
+        15,
+        15,
+        16,
+        18,
+        19,
+        19,
+        20,
+        22,
+        22,
+        22
+      ],
+      "ritualCasting": true,
+      "spellcastingFocusType": "musical-instrument"
+    },
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "spellcasting-bard",
+          "bardic-inspiration"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d6",
+          "song_of_rest_die": "0"
+        },
+        "spellSlots": {
+          "level1": 2,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "jack-of-all-trades",
+          "song-of-rest"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d6",
+          "song_of_rest_die": "1d6"
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "bard-college",
+          "expertise-bard"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d6",
+          "song_of_rest_die": "1d6"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-bard"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d6",
+          "song_of_rest_die": "1d6"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "font-of-inspiration"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d8",
+          "song_of_rest_die": "1d6"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "countercharm"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d8",
+          "song_of_rest_die": "1d6"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d8",
+          "song_of_rest_die": "1d6"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-bard"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d8",
+          "song_of_rest_die": "1d6"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d8",
+          "song_of_rest_die": "1d8"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "magical-secrets"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d10",
+          "song_of_rest_die": "1d8"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d10",
+          "song_of_rest_die": "1d8"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-bard"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d10",
+          "song_of_rest_die": "1d8"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d10",
+          "song_of_rest_die": "1d10"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "magical-secrets"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d10",
+          "song_of_rest_die": "1d10"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d12",
+          "song_of_rest_die": "1d10"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-bard"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d12",
+          "song_of_rest_die": "1d10"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d12",
+          "song_of_rest_die": "1d12"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "magical-secrets"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d12",
+          "song_of_rest_die": "1d12"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-bard"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d12",
+          "song_of_rest_die": "1d12"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "superior-inspiration"
+        ],
+        "classSpecific": {
+          "bardic_inspiration_die": "1d12",
+          "song_of_rest_die": "1d12"
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 2,
+          "level8": 1,
+          "level9": 1
+        }
+      }
+    ],
+    "description": "An inspiring magician whose power echoes the music of creation."
+  },
+  {
+    "id": "cleric",
+    "name": "Cleric",
+    "hitDie": 8,
+    "primaryAbilities": [
+      "wis"
+    ],
+    "savingThrowProficiencies": [
+      "wis",
+      "cha"
+    ],
+    "armorProficiencies": [
+      "light-armor",
+      "medium-armor",
+      "shields"
+    ],
+    "weaponProficiencies": [
+      "simple-weapons"
+    ],
+    "toolProficiencies": [],
+    "skillChoices": {
+      "id": "cleric-skills",
+      "label": "Choose two skills from History, Insight, Medicine, Persuasion, and Religion",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "history",
+          "insight",
+          "medicine",
+          "persuasion",
+          "religion"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "cleric-weapon",
+        "label": "(a) a mace or (b) a warhammer (if proficient)",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "mace",
+            "label": "Mace",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "mace",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "warhammer",
+            "label": "Warhammer",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "warhammer",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cleric-armor",
+        "label": "(a) scale mail, (b) leather armor, or (c) chain mail (if proficient)",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "scale-mail",
+            "label": "Scale mail",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "scale-mail",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "leather-armor",
+            "label": "Leather armor",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "leather-armor",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "chain-mail",
+            "label": "Chain mail",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "chain-mail",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cleric-pack",
+        "label": "(a) a priest's pack or (b) an explorer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "priests-pack",
+            "label": "Priest's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "priests-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "explorers-pack",
+            "label": "Explorer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "explorers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "shield",
+        "quantity": 1
+      },
+      {
+        "itemId": "amulet",
+        "quantity": 1
+      }
+    ],
+    "startingGoldFormula": "5d4 * 10",
+    "subclassLevel": 1,
+    "subclassTitle": "Divine Domain",
+    "subclassIds": [
+      "life"
+    ],
+    "spellcasting": {
+      "ability": "wis",
+      "progression": "full",
+      "preparationMode": "prepared_full_list",
+      "cantripsKnownByLevel": [
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "ritualCasting": true,
+      "spellcastingFocusType": "holy-symbol"
+    },
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "spellcasting-cleric",
+          "divine-domain"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 0,
+          "destroy_undead_cr": 0
+        },
+        "spellSlots": {
+          "level1": 2,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "channel-divinity-cleric"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 1,
+          "destroy_undead_cr": 0
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 1,
+          "destroy_undead_cr": 0
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-cleric"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 1,
+          "destroy_undead_cr": 0
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "destroy-undead"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 1,
+          "destroy_undead_cr": 0.5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 0.5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 0.5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-cleric"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "divine-intervention"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-cleric"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-cleric"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 2,
+          "destroy_undead_cr": 4
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 3,
+          "destroy_undead_cr": 4
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-cleric"
+        ],
+        "classSpecific": {
+          "channel_divinity_charges": 3,
+          "destroy_undead_cr": 4
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "channel_divinity_charges": 3,
+          "destroy_undead_cr": 4
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 2,
+          "level8": 1,
+          "level9": 1
+        }
+      }
+    ],
+    "description": "A priestly champion who wields divine magic in service of a higher power."
+  },
+  {
+    "id": "druid",
+    "name": "Druid",
+    "hitDie": 8,
+    "primaryAbilities": [
+      "wis"
+    ],
+    "savingThrowProficiencies": [
+      "int",
+      "wis"
+    ],
+    "armorProficiencies": [
+      "light-armor",
+      "medium-armor",
+      "shields"
+    ],
+    "weaponProficiencies": [
+      "club",
+      "dagger",
+      "dart",
+      "javelin",
+      "mace",
+      "quarterstaff",
+      "scimitar",
+      "sickle",
+      "sling",
+      "spear"
+    ],
+    "toolProficiencies": [
+      "herbalism-kit"
+    ],
+    "skillChoices": {
+      "id": "druid-skills",
+      "label": "Choose two skills from Arcana, Animal Handling, Insight, Medicine, Nature, Perception, Religion, and Survival",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "arcana",
+          "animal-handling",
+          "insight",
+          "medicine",
+          "nature",
+          "perception",
+          "religion",
+          "survival"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "druid-main",
+        "label": "(a) a wooden shield or (b) any simple weapon",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "shield",
+            "label": "Wooden shield",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "shield",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "simple-weapon",
+            "label": "Any simple weapon",
+            "items": [
+              {
+                "kind": "category_choice",
+                "category": "simple_weapons",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "druid-weapon",
+        "label": "(a) a scimitar or (b) any simple melee weapon",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "scimitar",
+            "label": "Scimitar",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "scimitar",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "quarterstaff",
+            "label": "Quarterstaff",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "quarterstaff",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "leather-armor",
+        "quantity": 1
+      },
+      {
+        "itemId": "explorers-pack",
+        "quantity": 1
+      },
+      {
+        "itemId": "sprig-of-mistletoe",
+        "quantity": 1
+      }
+    ],
+    "startingGoldFormula": "2d4 * 10",
+    "subclassLevel": 2,
+    "subclassTitle": "Druid Circle",
+    "subclassIds": [
+      "land"
+    ],
+    "spellcasting": {
+      "ability": "wis",
+      "progression": "full",
+      "preparationMode": "prepared_full_list",
+      "cantripsKnownByLevel": [
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "ritualCasting": true,
+      "spellcastingFocusType": "druidic-focus"
+    },
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "druidic",
+          "spellcasting-druid"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 0
+        },
+        "spellSlots": {
+          "level1": 2,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "wild-shape",
+          "druid-circle"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 0.25
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 0.25
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-druid"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 0.5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 0.5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 0.5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 0.5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-druid"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-druid"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-druid"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "timeless-body-druid",
+          "beast-spells"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-druid"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "archdruid"
+        ],
+        "classSpecific": {
+          "wild_shape_cr": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 2,
+          "level8": 1,
+          "level9": 1
+        }
+      }
+    ],
+    "description": "A priest of the Old Faith, wielding the powers of nature and adopting animal forms."
+  },
+  {
+    "id": "fighter",
+    "name": "Fighter",
+    "hitDie": 10,
+    "primaryAbilities": [
+      "str",
+      "dex"
+    ],
+    "savingThrowProficiencies": [
+      "str",
+      "con"
+    ],
+    "armorProficiencies": [
+      "light-armor",
+      "medium-armor",
+      "heavy-armor",
+      "shields"
+    ],
+    "weaponProficiencies": [
+      "simple-weapons",
+      "martial-weapons"
+    ],
+    "toolProficiencies": [],
+    "skillChoices": {
+      "id": "fighter-skills",
+      "label": "Choose two skills from Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Perception, and Survival",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "acrobatics",
+          "animal-handling",
+          "athletics",
+          "history",
+          "insight",
+          "intimidation",
+          "perception",
+          "survival"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "fighter-armor",
+        "label": "(a) chain mail or (b) leather armor, longbow, and 20 arrows",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "chain-mail",
+            "label": "Chain mail",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "chain-mail",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "leather-and-bow",
+            "label": "Leather armor, longbow, and 20 arrows",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "leather-armor",
+                "quantity": 1
+              },
+              {
+                "kind": "item",
+                "itemId": "longbow",
+                "quantity": 1
+              },
+              {
+                "kind": "item",
+                "itemId": "arrow",
+                "quantity": 20
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "fighter-weapons",
+        "label": "(a) a longsword and a shield or (b) greatsword",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "sword-and-shield",
+            "label": "Longsword and shield",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "longsword",
+                "quantity": 1
+              },
+              {
+                "kind": "item",
+                "itemId": "shield",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "greatsword",
+            "label": "Greatsword",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "greatsword",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "fighter-pack",
+        "label": "(a) a dungeoneer's pack or (b) an explorer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "dungeoneers-pack",
+            "label": "Dungeoneer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "dungeoneers-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "explorers-pack",
+            "label": "Explorer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "explorers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "handaxe",
+        "quantity": 2
+      }
+    ],
+    "startingGoldFormula": "5d4 * 10",
+    "subclassLevel": 3,
+    "subclassTitle": "Martial Archetype",
+    "subclassIds": [
+      "champion"
+    ],
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "fighting-style-fighter",
+          "second-wind"
+        ],
+        "classSpecific": {
+          "action_surges": 0,
+          "indomitable_uses": 0,
+          "extra_attacks": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "action-surge"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 0,
+          "extra_attacks": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "martial-archetype"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 0,
+          "extra_attacks": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-fighter"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 0,
+          "extra_attacks": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "extra-attack"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 0,
+          "extra_attacks": 1
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-fighter"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 0,
+          "extra_attacks": 1
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 0,
+          "extra_attacks": 1
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-fighter"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 0,
+          "extra_attacks": 1
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "indomitable"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 1,
+          "extra_attacks": 1
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 1,
+          "extra_attacks": 1
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "extra-attack-2"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 1,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-fighter"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 1,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 2,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-fighter"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 2,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 2,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-fighter"
+        ],
+        "classSpecific": {
+          "action_surges": 1,
+          "indomitable_uses": 2,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "action_surges": 2,
+          "indomitable_uses": 3,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "action_surges": 2,
+          "indomitable_uses": 3,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-fighter"
+        ],
+        "classSpecific": {
+          "action_surges": 2,
+          "indomitable_uses": 3,
+          "extra_attacks": 2
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "extra-attack-3"
+        ],
+        "classSpecific": {
+          "action_surges": 2,
+          "indomitable_uses": 3,
+          "extra_attacks": 3
+        }
+      }
+    ],
+    "description": "A master of martial combat, skilled with a variety of weapons and armor."
+  },
+  {
+    "id": "monk",
+    "name": "Monk",
+    "hitDie": 8,
+    "primaryAbilities": [
+      "dex",
+      "wis"
+    ],
+    "savingThrowProficiencies": [
+      "str",
+      "dex"
+    ],
+    "armorProficiencies": [],
+    "weaponProficiencies": [
+      "simple-weapons",
+      "shortsword"
+    ],
+    "toolProficiencies": [],
+    "toolChoices": [
+      {
+        "id": "monk-tools",
+        "label": "Choose one type of artisan's tools or one musical instrument",
+        "count": 1,
+        "type": "tool",
+        "from": {
+          "mode": "explicit",
+          "options": [
+            "smiths-tools",
+            "brewers-supplies",
+            "masons-tools",
+            "woodcarvers-tools",
+            "flute",
+            "lute",
+            "drum"
+          ]
+        }
+      }
+    ],
+    "skillChoices": {
+      "id": "monk-skills",
+      "label": "Choose two skills from Acrobatics, Athletics, History, Insight, Religion, and Stealth",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "acrobatics",
+          "athletics",
+          "history",
+          "insight",
+          "religion",
+          "stealth"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "monk-weapon",
+        "label": "(a) a shortsword or (b) any simple weapon",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "shortsword",
+            "label": "Shortsword",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "shortsword",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "quarterstaff",
+            "label": "Quarterstaff",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "quarterstaff",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "monk-pack",
+        "label": "(a) a dungeoneer's pack or (b) an explorer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "dungeoneers-pack",
+            "label": "Dungeoneer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "dungeoneers-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "explorers-pack",
+            "label": "Explorer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "explorers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "dart",
+        "quantity": 10
+      }
+    ],
+    "startingGoldFormula": "5d4",
+    "subclassLevel": 3,
+    "subclassTitle": "Monastic Tradition",
+    "subclassIds": [
+      "open-hand"
+    ],
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "monk-unarmored-defense",
+          "martial-arts"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d4",
+          "ki_points": 0,
+          "unarmored_movement_bonus": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "ki",
+          "unarmored-movement"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d4",
+          "ki_points": 2,
+          "unarmored_movement_bonus": 10
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "monastic-tradition",
+          "deflect-missiles"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d4",
+          "ki_points": 3,
+          "unarmored_movement_bonus": 10
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-monk",
+          "slow-fall"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d4",
+          "ki_points": 4,
+          "unarmored_movement_bonus": 10
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "extra-attack-monk",
+          "stunning-strike"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d6",
+          "ki_points": 5,
+          "unarmored_movement_bonus": 10
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "ki-empowered-strikes"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d6",
+          "ki_points": 6,
+          "unarmored_movement_bonus": 15
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "evasion-monk",
+          "stillness-of-mind"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d6",
+          "ki_points": 7,
+          "unarmored_movement_bonus": 15
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-monk"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d6",
+          "ki_points": 8,
+          "unarmored_movement_bonus": 15
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "martial_arts_die": "1d6",
+          "ki_points": 9,
+          "unarmored_movement_bonus": 15
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "purity-of-body"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d6",
+          "ki_points": 10,
+          "unarmored_movement_bonus": 20
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "martial_arts_die": "1d8",
+          "ki_points": 11,
+          "unarmored_movement_bonus": 20
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-monk"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d8",
+          "ki_points": 12,
+          "unarmored_movement_bonus": 20
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "tongue-of-the-sun-and-moon"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d8",
+          "ki_points": 13,
+          "unarmored_movement_bonus": 20
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "diamond-soul"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d8",
+          "ki_points": 14,
+          "unarmored_movement_bonus": 25
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "timeless-body-monk"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d8",
+          "ki_points": 15,
+          "unarmored_movement_bonus": 25
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-monk"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d8",
+          "ki_points": 16,
+          "unarmored_movement_bonus": 25
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "martial_arts_die": "1d10",
+          "ki_points": 17,
+          "unarmored_movement_bonus": 25
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "empty-body"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d10",
+          "ki_points": 18,
+          "unarmored_movement_bonus": 30
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-monk"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d10",
+          "ki_points": 19,
+          "unarmored_movement_bonus": 30
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "perfect-self"
+        ],
+        "classSpecific": {
+          "martial_arts_die": "1d10",
+          "ki_points": 20,
+          "unarmored_movement_bonus": 30
+        }
+      }
+    ],
+    "description": "A master of martial arts, harnessing the power of the body in pursuit of physical and spiritual perfection."
+  },
+  {
+    "id": "paladin",
+    "name": "Paladin",
+    "hitDie": 10,
+    "primaryAbilities": [
+      "str",
+      "cha"
+    ],
+    "savingThrowProficiencies": [
+      "wis",
+      "cha"
+    ],
+    "armorProficiencies": [
+      "light-armor",
+      "medium-armor",
+      "heavy-armor",
+      "shields"
+    ],
+    "weaponProficiencies": [
+      "simple-weapons",
+      "martial-weapons"
+    ],
+    "toolProficiencies": [],
+    "skillChoices": {
+      "id": "paladin-skills",
+      "label": "Choose two skills from Athletics, Insight, Intimidation, Medicine, Persuasion, and Religion",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "athletics",
+          "insight",
+          "intimidation",
+          "medicine",
+          "persuasion",
+          "religion"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "paladin-weapons",
+        "label": "(a) a longsword and a shield or (b) greatsword",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "sword-and-shield",
+            "label": "Longsword and shield",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "longsword",
+                "quantity": 1
+              },
+              {
+                "kind": "item",
+                "itemId": "shield",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "greatsword",
+            "label": "Greatsword",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "greatsword",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "paladin-pack",
+        "label": "(a) a priest's pack or (b) an explorer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "priests-pack",
+            "label": "Priest's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "priests-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "explorers-pack",
+            "label": "Explorer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "explorers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "chain-mail",
+        "quantity": 1
+      },
+      {
+        "itemId": "javelin",
+        "quantity": 5
+      },
+      {
+        "itemId": "emblem",
+        "quantity": 1
+      }
+    ],
+    "startingGoldFormula": "5d4 * 10",
+    "subclassLevel": 3,
+    "subclassTitle": "Sacred Oath",
+    "subclassIds": [
+      "devotion"
+    ],
+    "spellcasting": {
+      "ability": "cha",
+      "progression": "half",
+      "preparationMode": "prepared_full_list",
+      "cantripsKnownByLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ritualCasting": false,
+      "spellcastingFocusType": "holy-symbol"
+    },
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "divine-sense",
+          "lay-on-hands"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 5,
+          "aura_range_feet": 0
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "fighting-style-paladin",
+          "spellcasting-paladin",
+          "divine-smite"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 10,
+          "aura_range_feet": 0
+        },
+        "spellSlots": {
+          "level1": 2,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "divine-health",
+          "sacred-oath"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 15,
+          "aura_range_feet": 0
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-paladin"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 20,
+          "aura_range_feet": 0
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "extra-attack-paladin"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 25,
+          "aura_range_feet": 0
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "aura-of-protection"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 30,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "lay_on_hands_pool": 35,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-paladin"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 40,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "lay_on_hands_pool": 45,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "aura-of-courage"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 50,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "improved-divine-smite"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 55,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-paladin"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 60,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "lay_on_hands_pool": 65,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "cleansing-touch"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 70,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "lay_on_hands_pool": 75,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-paladin"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 80,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "lay_on_hands_pool": 85,
+          "aura_range_feet": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "lay_on_hands_pool": 90,
+          "aura_range_feet": 30
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-paladin"
+        ],
+        "classSpecific": {
+          "lay_on_hands_pool": 95,
+          "aura_range_feet": 30
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "lay_on_hands_pool": 100,
+          "aura_range_feet": 30
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      }
+    ],
+    "description": "A holy warrior bound to a sacred oath."
+  },
+  {
+    "id": "ranger",
+    "name": "Ranger",
+    "hitDie": 10,
+    "primaryAbilities": [
+      "dex",
+      "wis"
+    ],
+    "savingThrowProficiencies": [
+      "str",
+      "dex"
+    ],
+    "armorProficiencies": [
+      "light-armor",
+      "medium-armor",
+      "shields"
+    ],
+    "weaponProficiencies": [
+      "simple-weapons",
+      "martial-weapons"
+    ],
+    "toolProficiencies": [],
+    "skillChoices": {
+      "id": "ranger-skills",
+      "label": "Choose three skills from Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, and Survival",
+      "count": 3,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "animal-handling",
+          "athletics",
+          "insight",
+          "investigation",
+          "nature",
+          "perception",
+          "stealth",
+          "survival"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "ranger-armor",
+        "label": "(a) scale mail or (b) leather armor",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "scale-mail",
+            "label": "Scale mail",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "scale-mail",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "leather-armor",
+            "label": "Leather armor",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "leather-armor",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ranger-weapons",
+        "label": "(a) two shortswords or (b) two simple melee weapons",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "two-shortswords",
+            "label": "Two shortswords",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "shortsword",
+                "quantity": 2
+              }
+            ]
+          },
+          {
+            "id": "two-handaxes",
+            "label": "Two handaxes",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "handaxe",
+                "quantity": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ranger-pack",
+        "label": "(a) a dungeoneer's pack or (b) an explorer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "dungeoneers-pack",
+            "label": "Dungeoneer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "dungeoneers-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "explorers-pack",
+            "label": "Explorer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "explorers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "longbow",
+        "quantity": 1
+      },
+      {
+        "itemId": "arrow",
+        "quantity": 20
+      }
+    ],
+    "startingGoldFormula": "5d4 * 10",
+    "subclassLevel": 3,
+    "subclassTitle": "Ranger Archetype",
+    "subclassIds": [
+      "hunter"
+    ],
+    "spellcasting": {
+      "ability": "wis",
+      "progression": "half",
+      "preparationMode": "known",
+      "cantripsKnownByLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "spellsKnownByLevel": [
+        0,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6,
+        7,
+        7,
+        8,
+        8,
+        9,
+        9,
+        10,
+        10,
+        11,
+        11
+      ],
+      "ritualCasting": false
+    },
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "favored-enemy",
+          "natural-explorer"
+        ],
+        "classSpecific": {
+          "favored_enemies": 1,
+          "favored_terrains": 1
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "fighting-style-ranger",
+          "spellcasting-ranger"
+        ],
+        "classSpecific": {
+          "favored_enemies": 1,
+          "favored_terrains": 1
+        },
+        "spellSlots": {
+          "level1": 2,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "ranger-archetype",
+          "primeval-awareness"
+        ],
+        "classSpecific": {
+          "favored_enemies": 1,
+          "favored_terrains": 1
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-ranger"
+        ],
+        "classSpecific": {
+          "favored_enemies": 1,
+          "favored_terrains": 1
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "extra-attack-ranger"
+        ],
+        "classSpecific": {
+          "favored_enemies": 1,
+          "favored_terrains": 1
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "favored_enemies": 2,
+          "favored_terrains": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "favored_enemies": 2,
+          "favored_terrains": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-ranger",
+          "lands-stride-ranger"
+        ],
+        "classSpecific": {
+          "favored_enemies": 2,
+          "favored_terrains": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "favored_enemies": 2,
+          "favored_terrains": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "hide-in-plain-sight"
+        ],
+        "classSpecific": {
+          "favored_enemies": 2,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "favored_enemies": 2,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-ranger"
+        ],
+        "classSpecific": {
+          "favored_enemies": 2,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "favored_enemies": 2,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "vanish"
+        ],
+        "classSpecific": {
+          "favored_enemies": 3,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "favored_enemies": 3,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-ranger"
+        ],
+        "classSpecific": {
+          "favored_enemies": 3,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "favored_enemies": 3,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "feral-senses"
+        ],
+        "classSpecific": {
+          "favored_enemies": 3,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-ranger"
+        ],
+        "classSpecific": {
+          "favored_enemies": 3,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "foe-slayer"
+        ],
+        "classSpecific": {
+          "favored_enemies": 3,
+          "favored_terrains": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      }
+    ],
+    "description": "A warrior who uses martial prowess and nature magic to combat threats on the edges of civilization."
+  },
+  {
+    "id": "rogue",
+    "name": "Rogue",
+    "hitDie": 8,
+    "primaryAbilities": [
+      "dex"
+    ],
+    "savingThrowProficiencies": [
+      "dex",
+      "int"
+    ],
+    "armorProficiencies": [
+      "light-armor"
+    ],
+    "weaponProficiencies": [
+      "simple-weapons",
+      "hand-crossbow",
+      "longsword",
+      "rapier",
+      "shortsword"
+    ],
+    "toolProficiencies": [
+      "thieves-tools"
+    ],
+    "skillChoices": {
+      "id": "rogue-skills",
+      "label": "Choose four skills from Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, Persuasion, Sleight of Hand, and Stealth",
+      "count": 4,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "acrobatics",
+          "athletics",
+          "deception",
+          "insight",
+          "intimidation",
+          "investigation",
+          "perception",
+          "performance",
+          "persuasion",
+          "sleight-of-hand",
+          "stealth"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "rogue-weapon",
+        "label": "(a) a rapier or (b) a shortsword",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "rapier",
+            "label": "Rapier",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "rapier",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "shortsword",
+            "label": "Shortsword",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "shortsword",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rogue-secondary",
+        "label": "(a) a shortbow and quiver of 20 arrows or (b) a shortsword",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "shortbow",
+            "label": "Shortbow and 20 arrows",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "shortbow",
+                "quantity": 1
+              },
+              {
+                "kind": "item",
+                "itemId": "arrow",
+                "quantity": 20
+              }
+            ]
+          },
+          {
+            "id": "shortsword-offhand",
+            "label": "Shortsword",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "shortsword",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rogue-pack",
+        "label": "(a) a burglar's pack, (b) a dungeoneer's pack, or (c) an explorer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "burglars-pack",
+            "label": "Burglar's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "burglars-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "dungeoneers-pack",
+            "label": "Dungeoneer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "dungeoneers-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "explorers-pack",
+            "label": "Explorer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "explorers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "leather-armor",
+        "quantity": 1
+      },
+      {
+        "itemId": "dagger",
+        "quantity": 2
+      },
+      {
+        "itemId": "thieves-tools",
+        "quantity": 1
+      }
+    ],
+    "startingGoldFormula": "4d4 * 10",
+    "subclassLevel": 3,
+    "subclassTitle": "Roguish Archetype",
+    "subclassIds": [
+      "thief"
+    ],
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "expertise-rogue",
+          "sneak-attack",
+          "thieves-cant-feature"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "1d6"
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "cunning-action"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "1d6"
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "roguish-archetype"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "2d6"
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-rogue"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "2d6"
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "uncanny-dodge"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "3d6"
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "expertise-rogue"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "3d6"
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "evasion-rogue"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "4d6"
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-rogue"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "4d6"
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "sneak_attack_dice": "5d6"
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-rogue"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "5d6"
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "reliable-talent"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "6d6"
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-rogue"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "6d6"
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "sneak_attack_dice": "7d6"
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "blindsense"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "7d6"
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "slippery-mind"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "8d6"
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-rogue"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "8d6"
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "sneak_attack_dice": "9d6"
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "elusive"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "9d6"
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-rogue"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "10d6"
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "stroke-of-luck"
+        ],
+        "classSpecific": {
+          "sneak_attack_dice": "10d6"
+        }
+      }
+    ],
+    "description": "A scoundrel who uses stealth and trickery to overcome obstacles and enemies."
+  },
+  {
+    "id": "sorcerer",
+    "name": "Sorcerer",
+    "hitDie": 6,
+    "primaryAbilities": [
+      "cha"
+    ],
+    "savingThrowProficiencies": [
+      "con",
+      "cha"
+    ],
+    "armorProficiencies": [],
+    "weaponProficiencies": [
+      "dagger",
+      "dart",
+      "sling",
+      "quarterstaff",
+      "light-crossbow"
+    ],
+    "toolProficiencies": [],
+    "skillChoices": {
+      "id": "sorcerer-skills",
+      "label": "Choose two skills from Arcana, Deception, Insight, Intimidation, Persuasion, and Religion",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "arcana",
+          "deception",
+          "insight",
+          "intimidation",
+          "persuasion",
+          "religion"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "sorcerer-weapon",
+        "label": "(a) a light crossbow and 20 bolts or (b) any simple weapon",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "light-crossbow",
+            "label": "Light crossbow and 20 bolts",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "light-crossbow",
+                "quantity": 1
+              },
+              {
+                "kind": "item",
+                "itemId": "crossbow-bolt",
+                "quantity": 20
+              }
+            ]
+          },
+          {
+            "id": "quarterstaff",
+            "label": "Quarterstaff",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "quarterstaff",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sorcerer-pack",
+        "label": "(a) a dungeoneer's pack or (b) an explorer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "dungeoneers-pack",
+            "label": "Dungeoneer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "dungeoneers-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "explorers-pack",
+            "label": "Explorer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "explorers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "crystal",
+        "quantity": 1
+      },
+      {
+        "itemId": "dagger",
+        "quantity": 2
+      }
+    ],
+    "startingGoldFormula": "3d4 * 10",
+    "subclassLevel": 1,
+    "subclassTitle": "Sorcerous Origin",
+    "subclassIds": [
+      "draconic"
+    ],
+    "spellcasting": {
+      "ability": "cha",
+      "progression": "full",
+      "preparationMode": "known",
+      "cantripsKnownByLevel": [
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6
+      ],
+      "spellsKnownByLevel": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        12,
+        13,
+        13,
+        14,
+        14,
+        15,
+        15,
+        15,
+        15
+      ],
+      "ritualCasting": false,
+      "spellcastingFocusType": "arcane-focus"
+    },
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "spellcasting-sorcerer",
+          "sorcerous-origin"
+        ],
+        "classSpecific": {
+          "sorcery_points": 0
+        },
+        "spellSlots": {
+          "level1": 2,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "font-of-magic"
+        ],
+        "classSpecific": {
+          "sorcery_points": 2
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "metamagic"
+        ],
+        "classSpecific": {
+          "sorcery_points": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-sorcerer"
+        ],
+        "classSpecific": {
+          "sorcery_points": 4
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 6
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 7
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-sorcerer"
+        ],
+        "classSpecific": {
+          "sorcery_points": 8
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 9
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "metamagic"
+        ],
+        "classSpecific": {
+          "sorcery_points": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 11
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-sorcerer"
+        ],
+        "classSpecific": {
+          "sorcery_points": 12
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 13
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 14
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 15
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-sorcerer"
+        ],
+        "classSpecific": {
+          "sorcery_points": 16
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "metamagic"
+        ],
+        "classSpecific": {
+          "sorcery_points": 17
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "sorcery_points": 18
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-sorcerer"
+        ],
+        "classSpecific": {
+          "sorcery_points": 19
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "sorcerous-restoration"
+        ],
+        "classSpecific": {
+          "sorcery_points": 20
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 2,
+          "level8": 1,
+          "level9": 1
+        }
+      }
+    ],
+    "description": "A spellcaster who draws on inherent magic from a gift or bloodline."
+  },
+  {
+    "id": "warlock",
+    "name": "Warlock",
+    "hitDie": 8,
+    "primaryAbilities": [
+      "cha"
+    ],
+    "savingThrowProficiencies": [
+      "wis",
+      "cha"
+    ],
+    "armorProficiencies": [
+      "light-armor"
+    ],
+    "weaponProficiencies": [
+      "simple-weapons"
+    ],
+    "toolProficiencies": [],
+    "skillChoices": {
+      "id": "warlock-skills",
+      "label": "Choose two skills from Arcana, Deception, History, Intimidation, Investigation, Nature, and Religion",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "arcana",
+          "deception",
+          "history",
+          "intimidation",
+          "investigation",
+          "nature",
+          "religion"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "warlock-weapon",
+        "label": "(a) a light crossbow and 20 bolts or (b) any simple weapon",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "light-crossbow",
+            "label": "Light crossbow and 20 bolts",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "light-crossbow",
+                "quantity": 1
+              },
+              {
+                "kind": "item",
+                "itemId": "crossbow-bolt",
+                "quantity": 20
+              }
+            ]
+          },
+          {
+            "id": "quarterstaff",
+            "label": "Quarterstaff",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "quarterstaff",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "warlock-pack",
+        "label": "(a) a scholar's pack or (b) a dungeoneer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "scholars-pack",
+            "label": "Scholar's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "scholars-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "dungeoneers-pack",
+            "label": "Dungeoneer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "dungeoneers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "leather-armor",
+        "quantity": 1
+      },
+      {
+        "itemId": "orb",
+        "quantity": 1
+      },
+      {
+        "itemId": "dagger",
+        "quantity": 2
+      }
+    ],
+    "startingGoldFormula": "4d4 * 10",
+    "subclassLevel": 1,
+    "subclassTitle": "Otherworldly Patron",
+    "subclassIds": [
+      "fiend"
+    ],
+    "spellcasting": {
+      "ability": "cha",
+      "progression": "pact",
+      "preparationMode": "known",
+      "cantripsKnownByLevel": [
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "spellsKnownByLevel": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        10,
+        11,
+        11,
+        12,
+        12,
+        13,
+        13,
+        14,
+        14,
+        15,
+        15
+      ],
+      "ritualCasting": false,
+      "spellcastingFocusType": "arcane-focus"
+    },
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "otherworldly-patron",
+          "pact-magic"
+        ],
+        "classSpecific": {
+          "invocations_known": 0
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 1,
+          "pactSlotLevel": 1
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "eldritch-invocations"
+        ],
+        "classSpecific": {
+          "invocations_known": 2
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 1
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "pact-boon"
+        ],
+        "classSpecific": {
+          "invocations_known": 2
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 2
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-warlock"
+        ],
+        "classSpecific": {
+          "invocations_known": 2
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 2
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "invocations_known": 3
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 3
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "invocations_known": 3
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 3
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "invocations_known": 4
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 4
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-warlock"
+        ],
+        "classSpecific": {
+          "invocations_known": 4
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 4
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "invocations_known": 5
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "invocations_known": 5
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 2,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "mystic-arcanum-6"
+        ],
+        "classSpecific": {
+          "invocations_known": 5
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 3,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-warlock"
+        ],
+        "classSpecific": {
+          "invocations_known": 6
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 3,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "mystic-arcanum-7"
+        ],
+        "classSpecific": {
+          "invocations_known": 6
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 3,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "invocations_known": 6
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 3,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "mystic-arcanum-8"
+        ],
+        "classSpecific": {
+          "invocations_known": 7
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 3,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-warlock"
+        ],
+        "classSpecific": {
+          "invocations_known": 7
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 3,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "mystic-arcanum-9"
+        ],
+        "classSpecific": {
+          "invocations_known": 7
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 4,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "invocations_known": 8
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 4,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-warlock"
+        ],
+        "classSpecific": {
+          "invocations_known": 8
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 4,
+          "pactSlotLevel": 5
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "eldritch-master"
+        ],
+        "classSpecific": {
+          "invocations_known": 8
+        },
+        "spellSlots": {
+          "level1": 0,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0,
+          "pactSlots": 4,
+          "pactSlotLevel": 5
+        }
+      }
+    ],
+    "description": "A wielder of magic that is derived from a bargain with an extraplanar entity."
+  },
+  {
+    "id": "wizard",
+    "name": "Wizard",
+    "hitDie": 6,
+    "primaryAbilities": [
+      "int"
+    ],
+    "savingThrowProficiencies": [
+      "int",
+      "wis"
+    ],
+    "armorProficiencies": [],
+    "weaponProficiencies": [
+      "dagger",
+      "dart",
+      "sling",
+      "quarterstaff",
+      "light-crossbow"
+    ],
+    "toolProficiencies": [],
+    "skillChoices": {
+      "id": "wizard-skills",
+      "label": "Choose two skills from Arcana, History, Insight, Investigation, Medicine, and Religion",
+      "count": 2,
+      "type": "skill",
+      "from": {
+        "mode": "explicit",
+        "options": [
+          "arcana",
+          "history",
+          "insight",
+          "investigation",
+          "medicine",
+          "religion"
+        ]
+      }
+    },
+    "startingEquipmentChoices": [
+      {
+        "id": "wizard-weapon",
+        "label": "(a) a quarterstaff or (b) a dagger",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "quarterstaff",
+            "label": "Quarterstaff",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "quarterstaff",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "dagger",
+            "label": "Dagger",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "dagger",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "wizard-focus",
+        "label": "(a) a component pouch or (b) an arcane focus",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "component-pouch",
+            "label": "Component pouch",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "component-pouch",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "staff",
+            "label": "Arcane focus (staff)",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "staff",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "wizard-pack",
+        "label": "(a) a scholar's pack or (b) an explorer's pack",
+        "count": 1,
+        "type": "equipment_bundle",
+        "options": [
+          {
+            "id": "scholars-pack",
+            "label": "Scholar's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "scholars-pack",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "explorers-pack",
+            "label": "Explorer's Pack",
+            "items": [
+              {
+                "kind": "item",
+                "itemId": "explorers-pack",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "startingEquipmentDefault": [
+      {
+        "itemId": "spellbook",
+        "quantity": 1
+      }
+    ],
+    "startingGoldFormula": "4d4 * 10",
+    "subclassLevel": 2,
+    "subclassTitle": "Arcane Tradition",
+    "subclassIds": [
+      "evocation"
+    ],
+    "spellcasting": {
+      "ability": "int",
+      "progression": "full",
+      "preparationMode": "spellbook",
+      "cantripsKnownByLevel": [
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "ritualCasting": true,
+      "spellcastingFocusType": "arcane-focus"
+    },
+    "levels": [
+      {
+        "level": 1,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "spellcasting-wizard",
+          "arcane-recovery"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 1
+        },
+        "spellSlots": {
+          "level1": 2,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 2,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "arcane-tradition"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 1
+        },
+        "spellSlots": {
+          "level1": 3,
+          "level2": 0,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 3,
+        "proficiencyBonus": 2,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 2,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 4,
+        "proficiencyBonus": 2,
+        "featureIds": [
+          "asi-wizard"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 2
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 0,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 5,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 2,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 6,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 3
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 0,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 7,
+        "proficiencyBonus": 3,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 4
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 1,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 8,
+        "proficiencyBonus": 3,
+        "featureIds": [
+          "asi-wizard"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 4
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 2,
+          "level5": 0,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 9,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 1,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 10,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 5
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 0,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 11,
+        "proficiencyBonus": 4,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 6
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 12,
+        "proficiencyBonus": 4,
+        "featureIds": [
+          "asi-wizard"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 6
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 0,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 13,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 7
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 14,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 7
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 0,
+          "level9": 0
+        }
+      },
+      {
+        "level": 15,
+        "proficiencyBonus": 5,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 8
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 16,
+        "proficiencyBonus": 5,
+        "featureIds": [
+          "asi-wizard"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 8
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 0
+        }
+      },
+      {
+        "level": 17,
+        "proficiencyBonus": 6,
+        "featureIds": [],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 9
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 2,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 18,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "spell-mastery"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 9
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 1,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 19,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "asi-wizard"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 1,
+          "level8": 1,
+          "level9": 1
+        }
+      },
+      {
+        "level": 20,
+        "proficiencyBonus": 6,
+        "featureIds": [
+          "signature-spells"
+        ],
+        "classSpecific": {
+          "arcane_recovery_max_slot_sum": 10
+        },
+        "spellSlots": {
+          "level1": 4,
+          "level2": 3,
+          "level3": 3,
+          "level4": 3,
+          "level5": 3,
+          "level6": 2,
+          "level7": 2,
+          "level8": 1,
+          "level9": 1
+        }
+      }
+    ],
+    "description": "A scholarly magic-user capable of manipulating the structures of reality."
+  }
+]

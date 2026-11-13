@@ -1,0 +1,3532 @@
+[
+  {
+    "id": "acolyte",
+    "name": "Acolyte",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "true_neutral",
+    "armorClass": {
+      "value": 10,
+      "type": "unarmored"
+    },
+    "hitPoints": {
+      "average": 9,
+      "rollFormula": "2d8"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 10,
+      "dex": 10,
+      "con": 10,
+      "int": 10,
+      "wis": 14,
+      "cha": 11
+    },
+    "savingThrows": {},
+    "skills": {
+      "medicine": 4,
+      "religion": 2
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 12
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 0.25,
+    "xp": 50,
+    "aiArchetype": "support",
+    "traits": [],
+    "spellcasting": {
+      "ability": "wis",
+      "spellSaveDc": 12,
+      "spellAttackBonus": 4,
+      "casterLevel": 1,
+      "classId": "cleric",
+      "slotsByLevel": {
+        "1": 3
+      },
+      "atWillSpellIds": [
+        "light",
+        "sacred-flame",
+        "thaumaturgy"
+      ],
+      "preparedSpellIds": [
+        "bless",
+        "cure-wounds",
+        "sanctuary"
+      ]
+    },
+    "actions": [
+      {
+        "id": "club",
+        "name": "Club",
+        "description": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 2,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "adult-black-dragon",
+    "name": "Adult Black Dragon",
+    "size": "huge",
+    "type": "dragon",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 19,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 195,
+      "rollFormula": "17d12 + 85"
+    },
+    "speed": {
+      "walk": 40,
+      "fly": 80,
+      "swim": 40
+    },
+    "abilities": {
+      "str": 23,
+      "dex": 14,
+      "con": 21,
+      "int": 14,
+      "wis": 13,
+      "cha": 17
+    },
+    "savingThrows": {
+      "dex": 7,
+      "con": 10,
+      "wis": 6,
+      "cha": 8
+    },
+    "skills": {
+      "perception": 11,
+      "stealth": 7
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "acid"
+    ],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 120,
+      "blindsightFeet": 60,
+      "passivePerception": 21
+    },
+    "languages": [
+      "common",
+      "draconic"
+    ],
+    "challengeRating": 14,
+    "xp": 11500,
+    "aiArchetype": "artillery",
+    "traits": [
+      {
+        "id": "amphibious",
+        "name": "Amphibious",
+        "description": "The dragon can breathe air and water."
+      },
+      {
+        "id": "legendary-resistance",
+        "name": "Legendary Resistance (3/Day)",
+        "description": "If the dragon fails a saving throw, it can choose to succeed instead."
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The dragon can use its Frightful Presence. It then makes three attacks: one with its bite and two with its claws.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "bite",
+              "count": 1
+            },
+            {
+              "actionId": "claw",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +11 to hit, reach 10 ft., one target. Hit: 17 (2d10 + 6) piercing damage plus 4 (1d8) acid damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 11,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d10 + 6",
+                "damageType": "piercing"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8",
+                "damageType": "acid"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "claw",
+        "name": "Claw",
+        "description": "Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d6 + 6) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 11,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 6",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tail",
+        "name": "Tail",
+        "description": "Melee Weapon Attack: +11 to hit, reach 15 ft., one target. Hit: 15 (2d8 + 6) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 15,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 11,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d8 + 6",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "acid-breath",
+        "name": "Acid Breath (Recharge 5–6)",
+        "description": "The dragon exhales acid in a 60-foot line that is 5 feet wide. Each creature in that line must make a DC 18 Dexterity saving throw, taking 54 (12d8) acid damage on a failed save, or half as much damage on a successful one.",
+        "actionCost": "action",
+        "recharge": {
+          "minRoll": 5,
+          "die": 6
+        },
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "line",
+            "sizeFeet": 60,
+            "widthFeet": 5
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "18",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "12d8",
+                "damageType": "acid",
+                "halfOnSaveSuccess": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "legendaryActions": {
+      "perRound": 3,
+      "actions": [
+        {
+          "id": "tail-attack",
+          "name": "Tail Attack",
+          "description": "The dragon makes a tail attack.",
+          "actionCost": "special",
+          "legendaryCost": 1,
+          "targeting": {
+            "type": "single",
+            "rangeFeet": 15,
+            "targetFilter": "enemy"
+          },
+          "effects": [
+            {
+              "step": "attack_roll",
+              "attackType": "melee_weapon",
+              "attackBonusOverride": 11,
+              "onHit": [
+                {
+                  "step": "deal_damage",
+                  "diceFormula": "2d8 + 6",
+                  "damageType": "bludgeoning"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "bandit",
+    "name": "Bandit",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "chaotic_neutral",
+    "armorClass": {
+      "value": 12,
+      "type": "armor",
+      "armorIds": [
+        "leather-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 11,
+      "rollFormula": "2d8 + 2"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 11,
+      "dex": 12,
+      "con": 12,
+      "int": 10,
+      "wis": 10,
+      "cha": 10
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 0.125,
+    "xp": 25,
+    "aiArchetype": "skirmisher",
+    "traits": [],
+    "actions": [
+      {
+        "id": "scimitar",
+        "name": "Scimitar",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6 + 1) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 1",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "light-crossbow",
+        "name": "Light Crossbow",
+        "description": "Ranged Weapon Attack: +3 to hit, range 80/320 ft., one target. Hit: 5 (1d8 + 1) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 80,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 1",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bugbear",
+    "name": "Bugbear",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "goblinoid",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 16,
+      "type": "armor",
+      "armorIds": [
+        "hide-armor",
+        "shield"
+      ],
+      "hasShield": true
+    },
+    "hitPoints": {
+      "average": 27,
+      "rollFormula": "5d8 + 5"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 15,
+      "dex": 14,
+      "con": 13,
+      "int": 8,
+      "wis": 11,
+      "cha": 9
+    },
+    "savingThrows": {},
+    "skills": {
+      "stealth": 6,
+      "survival": 2
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 10
+    },
+    "languages": [
+      "common",
+      "goblin"
+    ],
+    "challengeRating": 1,
+    "xp": 200,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "brute",
+        "name": "Brute",
+        "description": "A melee weapon deals one extra die of its damage when the bugbear hits with it (included in the attack)."
+      },
+      {
+        "id": "surprise-attack",
+        "name": "Surprise Attack",
+        "description": "If the bugbear surprises a creature and hits it with an attack during the first round of combat, the target takes an extra 7 (2d6) damage from the attack."
+      }
+    ],
+    "actions": [
+      {
+        "id": "morningstar",
+        "name": "Morningstar",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 11 (2d8 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d8 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "javelin",
+        "name": "Javelin",
+        "description": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cult-fanatic",
+    "name": "Cult Fanatic",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "neutral_evil",
+    "armorClass": {
+      "value": 13,
+      "type": "armor",
+      "armorIds": [
+        "leather-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 33,
+      "rollFormula": "6d8 + 6"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 11,
+      "dex": 14,
+      "con": 12,
+      "int": 10,
+      "wis": 13,
+      "cha": 14
+    },
+    "savingThrows": {},
+    "skills": {
+      "deception": 4,
+      "persuasion": 4,
+      "religion": 2
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 11
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 2,
+    "xp": 450,
+    "aiArchetype": "controller",
+    "traits": [
+      {
+        "id": "dark-devotion",
+        "name": "Dark Devotion",
+        "description": "The fanatic has advantage on saving throws against being charmed or frightened."
+      }
+    ],
+    "spellcasting": {
+      "ability": "wis",
+      "spellSaveDc": 11,
+      "spellAttackBonus": 3,
+      "casterLevel": 4,
+      "classId": "cleric",
+      "slotsByLevel": {
+        "1": 4,
+        "2": 3
+      },
+      "atWillSpellIds": [
+        "light",
+        "sacred-flame",
+        "thaumaturgy"
+      ],
+      "preparedSpellIds": [
+        "command",
+        "inflict-wounds",
+        "shield-of-faith",
+        "hold-person",
+        "spiritual-weapon"
+      ]
+    },
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The fanatic makes two melee attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "dagger",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "dagger",
+        "name": "Dagger",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 4 (1d4 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cultist",
+    "name": "Cultist",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "neutral_evil",
+    "armorClass": {
+      "value": 12,
+      "type": "armor",
+      "armorIds": [
+        "leather-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 9,
+      "rollFormula": "2d8"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 11,
+      "dex": 12,
+      "con": 10,
+      "int": 10,
+      "wis": 11,
+      "cha": 10
+    },
+    "savingThrows": {},
+    "skills": {
+      "deception": 2,
+      "religion": 2
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 0.125,
+    "xp": 25,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "dark-devotion",
+        "name": "Dark Devotion",
+        "description": "The cultist has advantage on saving throws against being charmed or frightened."
+      }
+    ],
+    "actions": [
+      {
+        "id": "scimitar",
+        "name": "Scimitar",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one creature. Hit: 4 (1d6 + 1) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 1",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dire-wolf",
+    "name": "Dire Wolf",
+    "size": "large",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 14,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 37,
+      "rollFormula": "5d10 + 10"
+    },
+    "speed": {
+      "walk": 50
+    },
+    "abilities": {
+      "str": 17,
+      "dex": 15,
+      "con": 15,
+      "int": 3,
+      "wis": 12,
+      "cha": 7
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 3,
+      "stealth": 4
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 13
+    },
+    "languages": [],
+    "challengeRating": 1,
+    "xp": 200,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "keen-hearing-and-smell",
+        "name": "Keen Hearing and Smell",
+        "description": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+      },
+      {
+        "id": "pack-tactics",
+        "name": "Pack Tactics",
+        "description": "The wolf has advantage on an attack roll against a creature if at least one of the wolf’s allies is within 5 feet of the creature and the ally isn’t incapacitated.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls",
+            "condition": "ally_within_5ft_of_target"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 3",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gelatinous-cube",
+    "name": "Gelatinous Cube",
+    "size": "large",
+    "type": "ooze",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 6,
+      "type": "unarmored"
+    },
+    "hitPoints": {
+      "average": 84,
+      "rollFormula": "8d10 + 40"
+    },
+    "speed": {
+      "walk": 15
+    },
+    "abilities": {
+      "str": 14,
+      "dex": 3,
+      "con": 20,
+      "int": 1,
+      "wis": 6,
+      "cha": 1
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [
+      "blinded",
+      "charmed",
+      "deafened",
+      "exhaustion",
+      "frightened",
+      "prone"
+    ],
+    "senses": {
+      "blindsightFeet": 60,
+      "passivePerception": 8
+    },
+    "languages": [],
+    "challengeRating": 2,
+    "xp": 450,
+    "aiArchetype": "controller",
+    "traits": [
+      {
+        "id": "ooze-cube",
+        "name": "Ooze Cube",
+        "description": "The cube takes up its entire space. Other creatures can enter the space, but a creature that does so is subjected to the cube’s Engulf."
+      },
+      {
+        "id": "transparent",
+        "name": "Transparent",
+        "description": "Even when the cube is in plain sight, it takes a successful DC 15 Wisdom (Perception) check to spot a cube that has neither moved nor attacked."
+      }
+    ],
+    "actions": [
+      {
+        "id": "pseudopod",
+        "name": "Pseudopod",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 10 (3d6) acid damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d6",
+                "damageType": "acid"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ghoul",
+    "name": "Ghoul",
+    "size": "medium",
+    "type": "undead",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 12,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 22,
+      "rollFormula": "5d8"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 13,
+      "dex": 15,
+      "con": 10,
+      "int": 7,
+      "wis": 10,
+      "cha": 6
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "poison"
+    ],
+    "conditionImmunities": [
+      "charmed",
+      "exhaustion",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 1,
+    "xp": 200,
+    "aiArchetype": "controller",
+    "traits": [],
+    "actions": [
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +2 to hit, reach 5 ft., one creature. Hit: 9 (2d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 2,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "claws",
+        "name": "Claws",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (2d4 + 2) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d4 + 2",
+                "damageType": "slashing"
+              },
+              {
+                "step": "saving_throw",
+                "ability": "con",
+                "dcFormula": "10",
+                "onFail": [
+                  {
+                    "step": "apply_condition",
+                    "conditionId": "paralyzed",
+                    "durationRounds": 10,
+                    "repeatSaveAtTurnEnd": {
+                      "ability": "con",
+                      "dcFormula": "10"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "giant-rat",
+    "name": "Giant Rat",
+    "size": "small",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 12,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 7,
+      "rollFormula": "2d6"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 7,
+      "dex": 15,
+      "con": 11,
+      "int": 2,
+      "wis": 10,
+      "cha": 4
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 10
+    },
+    "languages": [],
+    "challengeRating": 0.125,
+    "xp": 25,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "keen-smell",
+        "name": "Keen Smell",
+        "description": "The rat has advantage on Wisdom (Perception) checks that rely on smell."
+      },
+      {
+        "id": "pack-tactics",
+        "name": "Pack Tactics",
+        "description": "The rat has advantage on an attack roll against a creature if at least one of the rat’s allies is within 5 feet of the creature and the ally isn’t incapacitated.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls",
+            "condition": "ally_within_5ft_of_target"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "giant-spider",
+    "name": "Giant Spider",
+    "size": "large",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 14,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 26,
+      "rollFormula": "4d10 + 4"
+    },
+    "speed": {
+      "walk": 30,
+      "climb": 30
+    },
+    "abilities": {
+      "str": 14,
+      "dex": 16,
+      "con": 12,
+      "int": 2,
+      "wis": 11,
+      "cha": 4
+    },
+    "savingThrows": {},
+    "skills": {
+      "stealth": 7
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "blindsightFeet": 10,
+      "passivePerception": 10
+    },
+    "languages": [],
+    "challengeRating": 1,
+    "xp": 200,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "spider-climb",
+        "name": "Spider Climb",
+        "description": "The spider can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check."
+      }
+    ],
+    "actions": [
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one creature. Hit: 7 (1d8 + 3) piercing damage plus 9 (2d8) poison damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 3",
+                "damageType": "piercing"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d8",
+                "damageType": "poison"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "web",
+        "name": "Web (Recharge 5–6)",
+        "description": "Ranged Weapon Attack: +5 to hit, range 30/60 ft., one creature. Hit: The target is restrained by webbing.",
+        "actionCost": "action",
+        "recharge": {
+          "minRoll": 5,
+          "die": 6
+        },
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "apply_condition",
+                "conditionId": "restrained",
+                "durationRounds": 10
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "goblin",
+    "name": "Goblin",
+    "size": "small",
+    "type": "humanoid",
+    "subtype": "goblinoid",
+    "alignment": "neutral_evil",
+    "armorClass": {
+      "value": 15,
+      "type": "armor",
+      "armorIds": [
+        "leather-armor",
+        "shield"
+      ],
+      "hasShield": true
+    },
+    "hitPoints": {
+      "average": 7,
+      "rollFormula": "2d6"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 8,
+      "dex": 14,
+      "con": 10,
+      "int": 10,
+      "wis": 8,
+      "cha": 8
+    },
+    "savingThrows": {},
+    "skills": {
+      "stealth": 6
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 9
+    },
+    "languages": [
+      "common",
+      "goblin"
+    ],
+    "challengeRating": 0.25,
+    "xp": 50,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "nimble-escape",
+        "name": "Nimble Escape",
+        "description": "The goblin can take the Disengage or Hide action as a bonus action on each of its turns.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "scimitar",
+        "name": "Scimitar",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "shortbow",
+        "name": "Shortbow",
+        "description": "Ranged Weapon Attack: +4 to hit, range 80/320 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 80,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "goblin-boss",
+    "name": "Goblin Boss",
+    "size": "small",
+    "type": "humanoid",
+    "subtype": "goblinoid",
+    "alignment": "neutral_evil",
+    "armorClass": {
+      "value": 17,
+      "type": "armor",
+      "armorIds": [
+        "chain-shirt",
+        "shield"
+      ],
+      "hasShield": true
+    },
+    "hitPoints": {
+      "average": 21,
+      "rollFormula": "6d6"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 10,
+      "dex": 14,
+      "con": 10,
+      "int": 10,
+      "wis": 8,
+      "cha": 10
+    },
+    "savingThrows": {},
+    "skills": {
+      "stealth": 6
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 9
+    },
+    "languages": [
+      "common",
+      "goblin"
+    ],
+    "challengeRating": 1,
+    "xp": 200,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "nimble-escape",
+        "name": "Nimble Escape",
+        "description": "The goblin can take the Disengage or Hide action as a bonus action on each of its turns."
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The goblin makes two attacks with its scimitar.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "scimitar",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "scimitar",
+        "name": "Scimitar",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "javelin",
+        "name": "Javelin",
+        "description": "Ranged Weapon Attack: +2 to hit, range 30/120 ft., one target. Hit: 3 (1d6) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 2,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "harpy",
+    "name": "Harpy",
+    "size": "medium",
+    "type": "monstrosity",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 11,
+      "type": "unarmored"
+    },
+    "hitPoints": {
+      "average": 38,
+      "rollFormula": "7d8 + 7"
+    },
+    "speed": {
+      "walk": 20,
+      "fly": 40
+    },
+    "abilities": {
+      "str": 12,
+      "dex": 13,
+      "con": 12,
+      "int": 7,
+      "wis": 10,
+      "cha": 13
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 1,
+    "xp": 200,
+    "aiArchetype": "controller",
+    "traits": [],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The harpy makes two attacks: one with its claws and one with its club.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "claws",
+              "count": 1
+            },
+            {
+              "actionId": "club",
+              "count": 1
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "claws",
+        "name": "Claws",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 6 (2d4 + 1) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d4 + 1",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "club",
+        "name": "Club",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 3 (1d4 + 1) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 1",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "luring-song",
+        "name": "Luring Song",
+        "description": "The harpy sings a magical melody. Every humanoid and giant within 300 feet of the harpy that can hear the song must succeed on a DC 11 Wisdom saving throw or be charmed until the song ends.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "sphere",
+            "sizeFeet": 300
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "wis",
+            "dcFormula": "11",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "charmed",
+                "durationRounds": 10
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hill-giant",
+    "name": "Hill Giant",
+    "size": "huge",
+    "type": "giant",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 13,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 105,
+      "rollFormula": "10d12 + 40"
+    },
+    "speed": {
+      "walk": 40
+    },
+    "abilities": {
+      "str": 21,
+      "dex": 8,
+      "con": 19,
+      "int": 5,
+      "wis": 9,
+      "cha": 6
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 2
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 12
+    },
+    "languages": [
+      "giant"
+    ],
+    "challengeRating": 5,
+    "xp": 1800,
+    "aiArchetype": "brute",
+    "traits": [],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The giant makes two greatclub attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "greatclub",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "greatclub",
+        "name": "Greatclub",
+        "description": "Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 18 (3d8 + 5) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 8,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d8 + 5",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rock",
+        "name": "Rock",
+        "description": "Ranged Weapon Attack: +8 to hit, range 60/240 ft., one target. Hit: 21 (3d10 + 5) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 60,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 8,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d10 + 5",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "hobgoblin",
+    "name": "Hobgoblin",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "goblinoid",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 18,
+      "type": "armor",
+      "armorIds": [
+        "chain-mail",
+        "shield"
+      ],
+      "hasShield": true
+    },
+    "hitPoints": {
+      "average": 11,
+      "rollFormula": "2d8 + 2"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 13,
+      "dex": 12,
+      "con": 12,
+      "int": 10,
+      "wis": 10,
+      "cha": 9
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 10
+    },
+    "languages": [
+      "common",
+      "goblin"
+    ],
+    "challengeRating": 0.5,
+    "xp": 100,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "martial-advantage",
+        "name": "Martial Advantage",
+        "description": "Once per turn, the hobgoblin can deal an extra 7 (2d6) damage to a creature it hits with a weapon attack if that creature is within 5 feet of an ally of the hobgoblin that isn’t incapacitated."
+      }
+    ],
+    "actions": [
+      {
+        "id": "longsword",
+        "name": "Longsword",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 5 (1d8 + 1) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 1",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "longbow",
+        "name": "Longbow",
+        "description": "Ranged Weapon Attack: +3 to hit, range 150/600 ft., one target. Hit: 5 (1d8 + 1) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 150,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 1",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "kobold",
+    "name": "Kobold",
+    "size": "small",
+    "type": "humanoid",
+    "subtype": "kobold",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 12,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 5,
+      "rollFormula": "2d6 - 2"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 7,
+      "dex": 15,
+      "con": 9,
+      "int": 8,
+      "wis": 7,
+      "cha": 8
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 8
+    },
+    "languages": [
+      "common",
+      "draconic"
+    ],
+    "challengeRating": 0.125,
+    "xp": 25,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "sunlight-sensitivity",
+        "name": "Sunlight Sensitivity",
+        "description": "While in sunlight, the kobold has disadvantage on attack rolls, as well as on Wisdom (Perception) checks that rely on sight.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "disadvantage",
+            "target": "attack_rolls",
+            "condition": "in_sunlight"
+          },
+          {
+            "type": "roll_mode",
+            "mode": "disadvantage",
+            "target": "skill:perception",
+            "condition": "in_sunlight"
+          }
+        ]
+      },
+      {
+        "id": "pack-tactics",
+        "name": "Pack Tactics",
+        "description": "The kobold has advantage on an attack roll against a creature if at least one of the kobold’s allies is within 5 feet of the creature and the ally isn’t incapacitated.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls",
+            "condition": "ally_within_5ft_of_target"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "dagger",
+        "name": "Dagger",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sling",
+        "name": "Sling",
+        "description": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 4 (1d4 + 2) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 2",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mage",
+    "name": "Mage",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "true_neutral",
+    "armorClass": {
+      "value": 15,
+      "type": "mage_armor",
+      "notes": "12 (15 with mage armor)"
+    },
+    "hitPoints": {
+      "average": 40,
+      "rollFormula": "9d8"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 9,
+      "dex": 14,
+      "con": 11,
+      "int": 17,
+      "wis": 12,
+      "cha": 11
+    },
+    "savingThrows": {
+      "int": 6,
+      "wis": 4
+    },
+    "skills": {
+      "arcana": 6,
+      "history": 6
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 11
+    },
+    "languages": [
+      "common",
+      "draconic",
+      "dwarvish",
+      "elvish"
+    ],
+    "challengeRating": 6,
+    "xp": 2300,
+    "aiArchetype": "artillery",
+    "traits": [],
+    "spellcasting": {
+      "ability": "int",
+      "spellSaveDc": 14,
+      "spellAttackBonus": 6,
+      "casterLevel": 9,
+      "classId": "wizard",
+      "slotsByLevel": {
+        "1": 4,
+        "2": 3,
+        "3": 3,
+        "4": 3,
+        "5": 1
+      },
+      "atWillSpellIds": [
+        "fire-bolt",
+        "light",
+        "mage-hand",
+        "prestidigitation"
+      ],
+      "preparedSpellIds": [
+        "detect-magic",
+        "mage-armor",
+        "magic-missile",
+        "shield",
+        "misty-step",
+        "suggestion",
+        "counterspell",
+        "fireball",
+        "fly",
+        "greater-invisibility",
+        "ice-storm",
+        "cone-of-cold"
+      ]
+    },
+    "actions": [
+      {
+        "id": "dagger",
+        "name": "Dagger",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "manticore",
+    "name": "Manticore",
+    "size": "large",
+    "type": "monstrosity",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 14,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 68,
+      "rollFormula": "8d10 + 24"
+    },
+    "speed": {
+      "walk": 30,
+      "fly": 50
+    },
+    "abilities": {
+      "str": 17,
+      "dex": 16,
+      "con": 17,
+      "int": 7,
+      "wis": 12,
+      "cha": 8
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 11
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 3,
+    "xp": 700,
+    "aiArchetype": "artillery",
+    "traits": [
+      {
+        "id": "tail-spike-regrowth",
+        "name": "Tail Spike Regrowth",
+        "description": "The manticore has twenty-four tail spikes. Used spikes regrow when the manticore finishes a long rest."
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The manticore makes three attacks: one with its bite and two with its claws or three with its tail spikes.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "tail-spike",
+              "count": 3
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 3",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "claw",
+        "name": "Claw",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 3",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tail-spike",
+        "name": "Tail Spike",
+        "description": "Ranged Weapon Attack: +5 to hit, range 100/200 ft., one target. Hit: 7 (1d8 + 3) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 100,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 3",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "medusa",
+    "name": "Medusa",
+    "size": "medium",
+    "type": "monstrosity",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 15,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 127,
+      "rollFormula": "17d8 + 51"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 10,
+      "dex": 15,
+      "con": 16,
+      "int": 12,
+      "wis": 13,
+      "cha": 15
+    },
+    "savingThrows": {},
+    "skills": {
+      "deception": 5,
+      "insight": 4,
+      "perception": 4,
+      "stealth": 5
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 14
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 6,
+    "xp": 2300,
+    "aiArchetype": "controller",
+    "traits": [
+      {
+        "id": "petrifying-gaze",
+        "name": "Petrifying Gaze",
+        "description": "When a creature that can see the medusa’s eyes starts its turn within 30 feet of the medusa, the medusa can force it to make a DC 14 Constitution saving throw if the medusa isn’t incapacitated and can see the creature."
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The medusa makes either three melee attacks—one with its snake hair and two with its shortsword—or two ranged attacks with its longbow.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "snake-hair",
+              "count": 1
+            },
+            {
+              "actionId": "shortsword",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "snake-hair",
+        "name": "Snake Hair",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one creature. Hit: 4 (1d4 + 2) piercing damage plus 14 (4d6) poison damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 2",
+                "damageType": "piercing"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "4d6",
+                "damageType": "poison"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "shortsword",
+        "name": "Shortsword",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "longbow",
+        "name": "Longbow",
+        "description": "Ranged Weapon Attack: +5 to hit, range 150/600 ft., one target. Hit: 6 (1d8 + 2) piercing damage plus 7 (2d6) poison damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 150,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 2",
+                "damageType": "piercing"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6",
+                "damageType": "poison"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "minotaur",
+    "name": "Minotaur",
+    "size": "large",
+    "type": "monstrosity",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 14,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 76,
+      "rollFormula": "9d10 + 27"
+    },
+    "speed": {
+      "walk": 40
+    },
+    "abilities": {
+      "str": 18,
+      "dex": 11,
+      "con": 16,
+      "int": 6,
+      "wis": 16,
+      "cha": 9
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 7
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 17
+    },
+    "languages": [
+      "abyssal"
+    ],
+    "challengeRating": 3,
+    "xp": 700,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "charge",
+        "name": "Charge",
+        "description": "If the minotaur moves at least 10 feet straight toward a target and then hits it with a gore attack on the same turn, the target takes an extra 9 (2d8) piercing damage."
+      },
+      {
+        "id": "reckless",
+        "name": "Reckless",
+        "description": "At the start of its turn, the minotaur can gain advantage on all melee weapon attack rolls it makes during that turn, but attack rolls against it have advantage until the start of its next turn."
+      }
+    ],
+    "actions": [
+      {
+        "id": "greataxe",
+        "name": "Greataxe",
+        "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 17 (2d12 + 4) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 6,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d12 + 4",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gore",
+        "name": "Gore",
+        "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 6,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d8 + 4",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ogre",
+    "name": "Ogre",
+    "size": "large",
+    "type": "giant",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 11,
+      "type": "armor",
+      "armorIds": [
+        "hide-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 59,
+      "rollFormula": "7d10 + 21"
+    },
+    "speed": {
+      "walk": 40
+    },
+    "abilities": {
+      "str": 19,
+      "dex": 8,
+      "con": 16,
+      "int": 5,
+      "wis": 7,
+      "cha": 7
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 8
+    },
+    "languages": [
+      "common",
+      "giant"
+    ],
+    "challengeRating": 2,
+    "xp": 450,
+    "aiArchetype": "brute",
+    "traits": [],
+    "actions": [
+      {
+        "id": "greatclub",
+        "name": "Greatclub",
+        "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 6,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d8 + 4",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "javelin",
+        "name": "Javelin",
+        "description": "Ranged Weapon Attack: +6 to hit, range 30/120 ft., one target. Hit: 11 (2d6 + 4) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 6,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 4",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "orc",
+    "name": "Orc",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "orc",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 13,
+      "type": "armor",
+      "armorIds": [
+        "hide-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 15,
+      "rollFormula": "2d8 + 6"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 16,
+      "dex": 12,
+      "con": 16,
+      "int": 7,
+      "wis": 11,
+      "cha": 10
+    },
+    "savingThrows": {},
+    "skills": {
+      "intimidation": 2
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 10
+    },
+    "languages": [
+      "common",
+      "orc"
+    ],
+    "challengeRating": 0.5,
+    "xp": 100,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "aggressive",
+        "name": "Aggressive",
+        "description": "As a bonus action, the orc can move up to its speed toward a hostile creature that it can see."
+      }
+    ],
+    "actions": [
+      {
+        "id": "greataxe",
+        "name": "Greataxe",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 9 (1d12 + 3) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d12 + 3",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "javelin",
+        "name": "Javelin",
+        "description": "Ranged Weapon Attack: +5 to hit, range 30/120 ft., one target. Hit: 6 (1d6 + 3) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 3",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "owlbear",
+    "name": "Owlbear",
+    "size": "large",
+    "type": "monstrosity",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 13,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 59,
+      "rollFormula": "7d10 + 21"
+    },
+    "speed": {
+      "walk": 40
+    },
+    "abilities": {
+      "str": 20,
+      "dex": 12,
+      "con": 17,
+      "int": 3,
+      "wis": 12,
+      "cha": 7
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 3
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 13
+    },
+    "languages": [],
+    "challengeRating": 3,
+    "xp": 700,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "keen-sight-and-smell",
+        "name": "Keen Sight and Smell",
+        "description": "The owlbear has advantage on Wisdom (Perception) checks that rely on sight or smell."
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The owlbear makes two attacks: one with its beak and one with its claws.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "beak",
+              "count": 1
+            },
+            {
+              "actionId": "claws",
+              "count": 1
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "beak",
+        "name": "Beak",
+        "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one creature. Hit: 10 (1d10 + 5) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 7,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d10 + 5",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "claws",
+        "name": "Claws",
+        "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 7,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d8 + 5",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "priest",
+    "name": "Priest",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "any race",
+    "alignment": "true_neutral",
+    "armorClass": {
+      "value": 13,
+      "type": "armor",
+      "armorIds": [
+        "chain-shirt"
+      ]
+    },
+    "hitPoints": {
+      "average": 27,
+      "rollFormula": "5d8 + 5"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 10,
+      "dex": 10,
+      "con": 12,
+      "int": 13,
+      "wis": 16,
+      "cha": 13
+    },
+    "savingThrows": {},
+    "skills": {
+      "medicine": 7,
+      "persuasion": 3,
+      "religion": 4
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 13
+    },
+    "languages": [
+      "common",
+      "celestial"
+    ],
+    "challengeRating": 2,
+    "xp": 450,
+    "aiArchetype": "support",
+    "traits": [
+      {
+        "id": "divine-eminence",
+        "name": "Divine Eminence",
+        "description": "As a bonus action, the priest can expend a spell slot to cause its melee weapon attacks to magically deal an extra 10 (3d6) radiant damage to a target on a hit."
+      }
+    ],
+    "spellcasting": {
+      "ability": "wis",
+      "spellSaveDc": 13,
+      "spellAttackBonus": 5,
+      "casterLevel": 5,
+      "classId": "cleric",
+      "slotsByLevel": {
+        "1": 4,
+        "2": 3,
+        "3": 2
+      },
+      "atWillSpellIds": [
+        "light",
+        "sacred-flame",
+        "thaumaturgy"
+      ],
+      "preparedSpellIds": [
+        "cure-wounds",
+        "guiding-bolt",
+        "sanctuary",
+        "lesser-restoration",
+        "spiritual-weapon",
+        "dispel-magic",
+        "spirit-guardians"
+      ]
+    },
+    "actions": [
+      {
+        "id": "mace",
+        "name": "Mace",
+        "description": "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 3 (1d6) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 2,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "skeleton",
+    "name": "Skeleton",
+    "size": "medium",
+    "type": "undead",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 13,
+      "type": "armor"
+    },
+    "hitPoints": {
+      "average": 13,
+      "rollFormula": "2d8 + 4"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 10,
+      "dex": 14,
+      "con": 15,
+      "int": 6,
+      "wis": 8,
+      "cha": 5
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [
+      "bludgeoning"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [
+      "poison"
+    ],
+    "conditionImmunities": [
+      "exhaustion",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 9
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 0.25,
+    "xp": 50,
+    "aiArchetype": "artillery",
+    "traits": [],
+    "actions": [
+      {
+        "id": "shortsword",
+        "name": "Shortsword",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "shortbow",
+        "name": "Shortbow",
+        "description": "Ranged Weapon Attack: +4 to hit, range 80/320 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 80,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wight",
+    "name": "Wight",
+    "size": "medium",
+    "type": "undead",
+    "alignment": "neutral_evil",
+    "armorClass": {
+      "value": 14,
+      "type": "armor",
+      "armorIds": [
+        "studded-leather-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 45,
+      "rollFormula": "6d8 + 18"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 15,
+      "dex": 14,
+      "con": 16,
+      "int": 10,
+      "wis": 13,
+      "cha": 15
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 3,
+      "stealth": 4
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [
+      "necrotic",
+      "bludgeoning",
+      "piercing",
+      "slashing"
+    ],
+    "damageImmunities": [
+      "poison"
+    ],
+    "conditionImmunities": [
+      "exhaustion",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 13
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 3,
+    "xp": 700,
+    "aiArchetype": "controller",
+    "traits": [
+      {
+        "id": "sunlight-sensitivity",
+        "name": "Sunlight Sensitivity",
+        "description": "While in sunlight, the wight has disadvantage on attack rolls, as well as on Wisdom (Perception) checks that rely on sight."
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The wight makes two longsword attacks or two longbow attacks. It can use its Life Drain in place of one longsword attack.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "life-drain",
+              "count": 1
+            },
+            {
+              "actionId": "longsword",
+              "count": 1
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "life-drain",
+        "name": "Life Drain",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 5 (1d6 + 2) necrotic damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "necrotic"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "longsword",
+        "name": "Longsword",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 2",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "longbow",
+        "name": "Longbow",
+        "description": "Ranged Weapon Attack: +4 to hit, range 150/600 ft., one target. Hit: 6 (1d8 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 150,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wolf",
+    "name": "Wolf",
+    "size": "medium",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 13,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 11,
+      "rollFormula": "2d8 + 2"
+    },
+    "speed": {
+      "walk": 40
+    },
+    "abilities": {
+      "str": 12,
+      "dex": 15,
+      "con": 12,
+      "int": 3,
+      "wis": 12,
+      "cha": 6
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 3,
+      "stealth": 4
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 13
+    },
+    "languages": [],
+    "challengeRating": 0.25,
+    "xp": 50,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "keen-hearing-and-smell",
+        "name": "Keen Hearing and Smell",
+        "description": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+      },
+      {
+        "id": "pack-tactics",
+        "name": "Pack Tactics",
+        "description": "The wolf has advantage on an attack roll against a creature if at least one of the wolf’s allies is within 5 feet of the creature and the ally isn’t incapacitated.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls",
+            "condition": "ally_within_5ft_of_target"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (2d4 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d4 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "young-black-dragon",
+    "name": "Young Black Dragon",
+    "size": "large",
+    "type": "dragon",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 18,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 127,
+      "rollFormula": "15d10 + 45"
+    },
+    "speed": {
+      "walk": 40,
+      "fly": 80,
+      "swim": 40
+    },
+    "abilities": {
+      "str": 19,
+      "dex": 14,
+      "con": 17,
+      "int": 12,
+      "wis": 11,
+      "cha": 15
+    },
+    "savingThrows": {
+      "dex": 5,
+      "con": 6,
+      "wis": 3,
+      "cha": 5
+    },
+    "skills": {
+      "perception": 6,
+      "stealth": 5
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "acid"
+    ],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 120,
+      "blindsightFeet": 30,
+      "passivePerception": 16
+    },
+    "languages": [
+      "common",
+      "draconic"
+    ],
+    "challengeRating": 7,
+    "xp": 2900,
+    "aiArchetype": "artillery",
+    "traits": [
+      {
+        "id": "amphibious",
+        "name": "Amphibious",
+        "description": "The dragon can breathe air and water."
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The dragon makes three attacks: one with its bite and two with its claws.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "bite",
+              "count": 1
+            },
+            {
+              "actionId": "claw",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 15 (2d10 + 4) piercing damage plus 4 (1d8) acid damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 7,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d10 + 4",
+                "damageType": "piercing"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8",
+                "damageType": "acid"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "claw",
+        "name": "Claw",
+        "description": "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 7,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 4",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "acid-breath",
+        "name": "Acid Breath (Recharge 5–6)",
+        "description": "The dragon exhales acid in a 30-foot line that is 5 feet wide. Each creature in that line must make a DC 14 Dexterity saving throw, taking 49 (11d8) acid damage on a failed save, or half as much damage on a successful one.",
+        "actionCost": "action",
+        "recharge": {
+          "minRoll": 5,
+          "die": 6
+        },
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "line",
+            "sizeFeet": 30,
+            "widthFeet": 5
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "14",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "11d8",
+                "damageType": "acid",
+                "halfOnSaveSuccess": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "zombie",
+    "name": "Zombie",
+    "size": "medium",
+    "type": "undead",
+    "alignment": "neutral_evil",
+    "armorClass": {
+      "value": 8,
+      "type": "unarmored"
+    },
+    "hitPoints": {
+      "average": 22,
+      "rollFormula": "3d8 + 9"
+    },
+    "speed": {
+      "walk": 20
+    },
+    "abilities": {
+      "str": 13,
+      "dex": 6,
+      "con": 16,
+      "int": 3,
+      "wis": 6,
+      "cha": 5
+    },
+    "savingThrows": {
+      "wis": 0
+    },
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "poison"
+    ],
+    "conditionImmunities": [
+      "poisoned"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 8
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 0.25,
+    "xp": 50,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "undead-fortitude",
+        "name": "Undead Fortitude",
+        "description": "If damage reduces the zombie to 0 hit points, it must make a Constitution saving throw with a DC of 5 + the damage taken, unless the damage is radiant or from a critical hit. On a success, the zombie drops to 1 hit point instead."
+      }
+    ],
+    "actions": [
+      {
+        "id": "slam",
+        "name": "Slam",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6 + 1) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 1",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

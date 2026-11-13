@@ -1,0 +1,2223 @@
+[
+  {
+    "id": "action-surge",
+    "name": "Action Surge",
+    "classId": "fighter",
+    "level": 2,
+    "description": "Starting at 2nd level, you can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action on top of your regular action.",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "action_surge",
+        "name": "Action Surge",
+        "maxFormula": "1",
+        "recovery": "short_rest"
+      }
+    ],
+    "activatedAbilities": [
+      {
+        "id": "use-action-surge",
+        "name": "Action Surge",
+        "description": "On your turn, you can take one additional action on top of your regular action.",
+        "actionCost": "free",
+        "resourceCost": {
+          "resourceId": "action_surge",
+          "amount": 1
+        },
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "spend_resource",
+            "resourceId": "action_surge",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "additional-fighting-style",
+    "name": "Additional Fighting Style",
+    "classId": "fighter",
+    "subclassId": "champion",
+    "level": 10,
+    "description": "At 10th level, you can choose a second option from the Fighting Style class feature.",
+    "choices": [
+      {
+        "id": "champion-additional-fighting-style",
+        "label": "Choose an additional Fighting Style",
+        "count": 1,
+        "type": "feature_option",
+        "featureGroup": "fighting-style",
+        "options": [
+          "fighting-style-archery",
+          "fighting-style-defense",
+          "fighting-style-dueling",
+          "fighting-style-great-weapon-fighting",
+          "fighting-style-protection",
+          "fighting-style-two-weapon-fighting"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "additional-magical-secrets",
+    "name": "Additional Magical Secrets",
+    "classId": "bard",
+    "subclassId": "lore",
+    "level": 6,
+    "description": "At 6th level, you learn two spells of your choice from any class of a level you can cast or cantrips.",
+    "modifiers": []
+  },
+  {
+    "id": "arcane-recovery",
+    "name": "Arcane Recovery",
+    "classId": "wizard",
+    "level": 1,
+    "description": "You have learned to regain some of your magical energy by studying your spellbook. Once per day when you finish a short rest, you can choose expended spell slots to recover.",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "arcane_recovery",
+        "name": "Arcane Recovery",
+        "maxFormula": "1",
+        "recovery": "long_rest"
+      }
+    ]
+  },
+  {
+    "id": "arcane-tradition",
+    "name": "Arcane Tradition",
+    "classId": "wizard",
+    "level": 2,
+    "description": "When you reach 2nd level, you choose an arcane tradition, shaping your practice of magic through one of eight schools, such as Evocation.",
+    "modifiers": []
+  },
+  {
+    "id": "archdruid",
+    "name": "Archdruid",
+    "classId": "druid",
+    "level": 20,
+    "description": "At 20th level, you can use your Wild Shape an unlimited number of times.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-barbarian",
+    "name": "Ability Score Improvement",
+    "classId": "barbarian",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-bard",
+    "name": "Ability Score Improvement",
+    "classId": "bard",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-cleric",
+    "name": "Ability Score Improvement",
+    "classId": "cleric",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-druid",
+    "name": "Ability Score Improvement",
+    "classId": "druid",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-fighter",
+    "name": "Ability Score Improvement",
+    "classId": "fighter",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-monk",
+    "name": "Ability Score Improvement",
+    "classId": "monk",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-paladin",
+    "name": "Ability Score Improvement",
+    "classId": "paladin",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-ranger",
+    "name": "Ability Score Improvement",
+    "classId": "ranger",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-rogue",
+    "name": "Ability Score Improvement",
+    "classId": "rogue",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-sorcerer",
+    "name": "Ability Score Improvement",
+    "classId": "sorcerer",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-warlock",
+    "name": "Ability Score Improvement",
+    "classId": "warlock",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "asi-wizard",
+    "name": "Ability Score Improvement",
+    "classId": "wizard",
+    "level": 4,
+    "description": "Increase one ability score by 2, or two ability scores by 1, or select a Feat.",
+    "modifiers": []
+  },
+  {
+    "id": "aura-of-courage",
+    "name": "Aura of Courage",
+    "classId": "paladin",
+    "level": 10,
+    "description": "Starting at 10th level, you and friendly creatures within 10 feet of you can’t be frightened while you are conscious.",
+    "modifiers": [
+      {
+        "type": "condition_immunity",
+        "conditions": [
+          "frightened"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aura-of-devotion",
+    "name": "Aura of Devotion",
+    "classId": "paladin",
+    "subclassId": "devotion",
+    "level": 7,
+    "description": "Starting at 7th level, you and friendly creatures within 10 feet of you can’t be charmed while you are conscious.",
+    "modifiers": [
+      {
+        "type": "condition_immunity",
+        "conditions": [
+          "charmed"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "aura-of-protection",
+    "name": "Aura of Protection",
+    "classId": "paladin",
+    "level": 6,
+    "description": "Starting at 6th level, whenever you or a friendly creature within 10 feet of you must make a saving throw, the creature gains a bonus to the saving throw equal to your Charisma modifier (minimum of +1).",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "all_saving_throws",
+        "value": "max(1, @chaMod)"
+      }
+    ]
+  },
+  {
+    "id": "barbarian-unarmored-defense",
+    "name": "Unarmored Defense",
+    "classId": "barbarian",
+    "level": 1,
+    "description": "While you are not wearing any armor, your Armor Class equals 10 + your Dexterity modifier + your Constitution modifier. You can use a shield and still gain this benefit.",
+    "modifiers": [
+      {
+        "type": "ac_calculation",
+        "id": "unarmored_barbarian",
+        "formula": "10 + @dexMod + @conMod",
+        "allowsShield": true,
+        "requiresNoArmor": true
+      }
+    ]
+  },
+  {
+    "id": "bard-college",
+    "name": "Bard College",
+    "classId": "bard",
+    "level": 3,
+    "description": "At 3rd level, you delve into the advanced techniques of a bard college of your choice, such as the College of Lore.",
+    "modifiers": []
+  },
+  {
+    "id": "bardic-inspiration",
+    "name": "Bardic Inspiration",
+    "classId": "bard",
+    "level": 1,
+    "description": "You can inspire others through stirring words or music. To do so, you use a bonus action on your turn to choose one creature other than yourself within 60 feet.",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "bardic_inspiration",
+        "name": "Bardic Inspiration",
+        "maxFormula": "max(1, @chaMod)",
+        "recovery": "long_rest"
+      }
+    ]
+  },
+  {
+    "id": "beast-spells",
+    "name": "Beast Spells",
+    "classId": "druid",
+    "level": 18,
+    "description": "Beginning at 18th level, you can cast many of your druid spells in any shape you assume using Wild Shape.",
+    "modifiers": []
+  },
+  {
+    "id": "blessed-healer",
+    "name": "Blessed Healer",
+    "classId": "cleric",
+    "subclassId": "life",
+    "level": 6,
+    "description": "Beginning at 6th level, the healing spells you cast on others heal you as well (regain 2 + spell level hit points).",
+    "modifiers": []
+  },
+  {
+    "id": "blindsense",
+    "name": "Blindsense",
+    "classId": "rogue",
+    "level": 14,
+    "description": "Starting at 14th level, if you are able to hear, you are aware of the location of any hidden or invisible creature within 10 feet of you.",
+    "modifiers": []
+  },
+  {
+    "id": "bonus-cantrip-land",
+    "name": "Bonus Cantrip",
+    "classId": "druid",
+    "subclassId": "land",
+    "level": 2,
+    "description": "When you choose this circle at 2nd level, you learn one additional druid cantrip of your choice.",
+    "choices": [
+      {
+        "id": "land-bonus-cantrip",
+        "label": "Choose one additional Druid cantrip",
+        "count": 1,
+        "type": "spell",
+        "classList": "druid",
+        "maxSpellLevel": 0
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "bonus-proficiencies-lore",
+    "name": "Bonus Proficiencies",
+    "classId": "bard",
+    "subclassId": "lore",
+    "level": 3,
+    "description": "When you join the College of Lore at 3rd level, you gain proficiency with three skills of your choice.",
+    "choices": [
+      {
+        "id": "lore-bonus-skills",
+        "label": "Choose any three skills",
+        "count": 3,
+        "type": "skill",
+        "from": {
+          "mode": "category",
+          "category": "all_skills"
+        }
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "bonus-proficiency-life",
+    "name": "Bonus Proficiency",
+    "classId": "cleric",
+    "subclassId": "life",
+    "level": 1,
+    "description": "When you choose this domain at 1st level, you gain proficiency with heavy armor.",
+    "modifiers": []
+  },
+  {
+    "id": "brutal-critical",
+    "name": "Brutal Critical",
+    "classId": "barbarian",
+    "level": 9,
+    "description": "Beginning at 9th level, you can roll one additional weapon damage die when determining the extra damage for a critical hit with a melee attack.",
+    "modifiers": [
+      {
+        "type": "die_manipulation",
+        "rule": "brutal_critical",
+        "params": {
+          "extraDice": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "channel-divinity-cleric",
+    "name": "Channel Divinity",
+    "classId": "cleric",
+    "level": 2,
+    "description": "At 2nd level, you gain the ability to channel divine energy directly from your deity, using that energy to fuel magical effects including Turn Undead.",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "channel_divinity",
+        "name": "Channel Divinity",
+        "maxFormula": "1",
+        "recovery": "short_rest"
+      }
+    ]
+  },
+  {
+    "id": "channel-divinity-preserve-life",
+    "name": "Channel Divinity: Preserve Life",
+    "classId": "cleric",
+    "subclassId": "life",
+    "level": 2,
+    "description": "Starting at 2nd level, you can use your Channel Divinity to heal the badly injured.",
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "preserve-life",
+        "name": "Channel Divinity: Preserve Life",
+        "description": "As an action, restore up to 5 times your Cleric level in hit points divided among creatures within 30 feet (up to half a creature’s hit point maximum).",
+        "actionCost": "action",
+        "resourceCost": {
+          "resourceId": "channel_divinity",
+          "amount": 1
+        },
+        "targeting": {
+          "type": "multiple",
+          "rangeFeet": 30,
+          "targetFilter": "ally"
+        },
+        "effects": [
+          {
+            "step": "heal",
+            "diceFormula": "5 * @classLevel"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "circle-spells",
+    "name": "Circle Spells",
+    "classId": "druid",
+    "subclassId": "land",
+    "level": 3,
+    "description": "Your mystical connection to the land infuses you with the ability to cast certain spells.",
+    "choices": [
+      {
+        "id": "land-circle-terrain",
+        "label": "Choose your Circle of the Land terrain",
+        "count": 1,
+        "type": "feature_option",
+        "featureGroup": "land-terrain",
+        "options": [
+          "arctic",
+          "coast",
+          "desert",
+          "forest",
+          "grassland",
+          "mountain",
+          "swamp",
+          "underdark"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "cleansing-touch",
+    "name": "Cleansing Touch",
+    "classId": "paladin",
+    "level": 14,
+    "description": "Beginning at 14th level, you can use your action to end one spell on yourself or on one willing creature that you touch.",
+    "modifiers": []
+  },
+  {
+    "id": "countercharm",
+    "name": "Countercharm",
+    "classId": "bard",
+    "level": 6,
+    "description": "At 6th level, you gain the ability to use musical notes or words of power to disrupt mind-influencing effects.",
+    "modifiers": []
+  },
+  {
+    "id": "cunning-action",
+    "name": "Cunning Action",
+    "classId": "rogue",
+    "level": 2,
+    "description": "Starting at 2nd level, your quick thinking and agility allow you to move and act quickly. You can take a bonus action on each of your turns in combat to take the Dash, Disengage, or Hide action.",
+    "modifiers": []
+  },
+  {
+    "id": "cutting-words",
+    "name": "Cutting Words",
+    "classId": "bard",
+    "subclassId": "lore",
+    "level": 3,
+    "description": "At 3rd level, you learn how to use your wit to distract, confuse, and otherwise sap the confidence and competence of others.",
+    "modifiers": []
+  },
+  {
+    "id": "danger-sense",
+    "name": "Danger Sense",
+    "classId": "barbarian",
+    "level": 2,
+    "description": "You have advantage on Dexterity saving throws against effects that you can see, such as traps and spells.",
+    "modifiers": [
+      {
+        "type": "roll_mode",
+        "mode": "advantage",
+        "target": "save:dex",
+        "condition": "save_against_traps"
+      }
+    ]
+  },
+  {
+    "id": "dark-ones-blessing",
+    "name": "Dark One's Blessing",
+    "classId": "warlock",
+    "subclassId": "fiend",
+    "level": 1,
+    "description": "Starting at 1st level, when you reduce a hostile creature to 0 hit points, you gain temporary hit points equal to your Charisma modifier + your warlock level (minimum of 1).",
+    "modifiers": []
+  },
+  {
+    "id": "dark-ones-own-luck",
+    "name": "Dark One's Own Luck",
+    "classId": "warlock",
+    "subclassId": "fiend",
+    "level": 6,
+    "description": "Starting at 6th level, you can call on your patron to alter fate in your favor, adding 1d10 to an ability check or saving throw once per short or long rest.",
+    "modifiers": []
+  },
+  {
+    "id": "defensive-tactics",
+    "name": "Defensive Tactics",
+    "classId": "ranger",
+    "subclassId": "hunter",
+    "level": 7,
+    "description": "At 7th level, you gain one of the following features of your choice: Escape the Horde, Multiattack Defense, or Steel Will.",
+    "modifiers": []
+  },
+  {
+    "id": "deflect-missiles",
+    "name": "Deflect Missiles",
+    "classId": "monk",
+    "level": 3,
+    "description": "Starting at 3rd level, you can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack.",
+    "modifiers": []
+  },
+  {
+    "id": "destroy-undead",
+    "name": "Destroy Undead",
+    "classId": "cleric",
+    "level": 5,
+    "description": "Starting at 5th level, when an undead fails its saving throw against your Turn Undead feature, the creature is instantly destroyed if its challenge rating is at or below a certain threshold.",
+    "modifiers": []
+  },
+  {
+    "id": "diamond-soul",
+    "name": "Diamond Soul",
+    "classId": "monk",
+    "level": 14,
+    "description": "Beginning at 14th level, your mastery of ki grants you proficiency in all saving throws.",
+    "modifiers": []
+  },
+  {
+    "id": "disciple-of-life",
+    "name": "Disciple of Life",
+    "classId": "cleric",
+    "subclassId": "life",
+    "level": 1,
+    "description": "Also starting at 1st level, your healing spells are more effective. Whenever you use a spell of 1st level or higher to restore hit points to a creature, the creature regains additional hit points equal to 2 + the spell’s level.",
+    "modifiers": []
+  },
+  {
+    "id": "divine-domain",
+    "name": "Divine Domain",
+    "classId": "cleric",
+    "level": 1,
+    "description": "Choose one domain related to your deity, such as the Life domain.",
+    "modifiers": []
+  },
+  {
+    "id": "divine-health",
+    "name": "Divine Health",
+    "classId": "paladin",
+    "level": 3,
+    "description": "By 3rd level, the divine magic flowing through you makes you immune to disease.",
+    "modifiers": []
+  },
+  {
+    "id": "divine-intervention",
+    "name": "Divine Intervention",
+    "classId": "cleric",
+    "level": 10,
+    "description": "Beginning at 10th level, you can call on your deity to intervene on your behalf when your need is great.",
+    "modifiers": []
+  },
+  {
+    "id": "divine-sense",
+    "name": "Divine Sense",
+    "classId": "paladin",
+    "level": 1,
+    "description": "The presence of strong evil registers on your senses like a noxious odor, and powerful good rings like heavenly music in your ears.",
+    "modifiers": []
+  },
+  {
+    "id": "divine-smite",
+    "name": "Divine Smite",
+    "classId": "paladin",
+    "level": 2,
+    "description": "Starting at 2nd level, when you hit a creature with a melee weapon attack, you can expend one spell slot to deal radiant damage to the target, in addition to the weapon’s damage (2d8 for a 1st-level slot, plus 1d8 for each spell level higher than 1st).",
+    "modifiers": []
+  },
+  {
+    "id": "divine-strike-life",
+    "name": "Divine Strike",
+    "classId": "cleric",
+    "subclassId": "life",
+    "level": 8,
+    "description": "At 8th level, you gain the ability to infuse your weapon strikes with divine energy, dealing an extra 1d8 radiant damage once per turn.",
+    "modifiers": []
+  },
+  {
+    "id": "draconic-presence",
+    "name": "Draconic Presence",
+    "classId": "sorcerer",
+    "subclassId": "draconic",
+    "level": 18,
+    "description": "Beginning at 18th level, you can channel the dread presence of your dragon ancestor, causing those around you to become awestruck or frightened.",
+    "modifiers": []
+  },
+  {
+    "id": "draconic-resilience",
+    "name": "Draconic Resilience",
+    "classId": "sorcerer",
+    "subclassId": "draconic",
+    "level": 1,
+    "description": "As magic flows through your body, it causes physical traits of your dragon ancestors to emerge (+1 HP per level, base AC 13 + DEX when unarmored).",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "hp_per_level",
+        "value": 1
+      },
+      {
+        "type": "ac_calculation",
+        "id": "draconic_resilience",
+        "formula": "13 + @dexMod",
+        "allowsShield": true,
+        "requiresNoArmor": true
+      }
+    ]
+  },
+  {
+    "id": "dragon-ancestor",
+    "name": "Dragon Ancestor",
+    "classId": "sorcerer",
+    "subclassId": "draconic",
+    "level": 1,
+    "description": "At 1st level, you choose one type of dragon as your ancestor. You can speak, read, and write Draconic.",
+    "modifiers": []
+  },
+  {
+    "id": "dragon-wings",
+    "name": "Dragon Wings",
+    "classId": "sorcerer",
+    "subclassId": "draconic",
+    "level": 14,
+    "description": "At 14th level, you gain the ability to sprout a pair of dragon wings from your back, gaining a flying speed equal to your current speed.",
+    "modifiers": []
+  },
+  {
+    "id": "druid-circle",
+    "name": "Druid Circle",
+    "classId": "druid",
+    "level": 2,
+    "description": "At 2nd level, you choose to identify with a circle of druids, such as the Circle of the Land.",
+    "modifiers": []
+  },
+  {
+    "id": "druidic",
+    "name": "Druidic",
+    "classId": "druid",
+    "level": 1,
+    "description": "You know Druidic, the secret language of druids.",
+    "modifiers": []
+  },
+  {
+    "id": "eldritch-invocations",
+    "name": "Eldritch Invocations",
+    "classId": "warlock",
+    "level": 2,
+    "description": "In your study of occult lore, you have unearthed eldritch invocations, fragments of forbidden knowledge that imbue you with an abiding magical ability.",
+    "choices": [
+      {
+        "id": "warlock-invocations",
+        "label": "Choose two Eldritch Invocations",
+        "count": 2,
+        "type": "feature_option",
+        "featureGroup": "eldritch-invocation",
+        "options": [
+          "agonizing-blast",
+          "armor-of-shadows",
+          "devils-sight",
+          "eldritch-spear",
+          "fiendish-vigor",
+          "repelling-blast"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "eldritch-master",
+    "name": "Eldritch Master",
+    "classId": "warlock",
+    "level": 20,
+    "description": "At 20th level, you can spend 1 minute entreating your patron for aid to regain all your expended spell slots from your Pact Magic feature once per long rest.",
+    "modifiers": []
+  },
+  {
+    "id": "elemental-affinity",
+    "name": "Elemental Affinity",
+    "classId": "sorcerer",
+    "subclassId": "draconic",
+    "level": 6,
+    "description": "Starting at 6th level, when you cast a spell that deals damage of the type associated with your draconic ancestry, you can add your Charisma modifier to one damage roll of that spell.",
+    "modifiers": []
+  },
+  {
+    "id": "elusive",
+    "name": "Elusive",
+    "classId": "rogue",
+    "level": 18,
+    "description": "Beginning at 18th level, no attack roll has advantage against you while you aren’t incapacitated.",
+    "modifiers": []
+  },
+  {
+    "id": "empowered-evocation",
+    "name": "Empowered Evocation",
+    "classId": "wizard",
+    "subclassId": "evocation",
+    "level": 10,
+    "description": "Beginning at 10th level, you can add your Intelligence modifier to one damage roll of any wizard evocation spell you cast.",
+    "modifiers": []
+  },
+  {
+    "id": "empty-body",
+    "name": "Empty Body",
+    "classId": "monk",
+    "level": 18,
+    "description": "Beginning at 18th level, you can use your action to spend 4 ki points to become invisible for 1 minute.",
+    "modifiers": []
+  },
+  {
+    "id": "evasion-monk",
+    "name": "Evasion",
+    "classId": "monk",
+    "level": 7,
+    "description": "At 7th level, your instinctive agility lets you dodge out of the way of certain area effects, taking no damage on a successful DEX save and half damage on a failed save.",
+    "modifiers": []
+  },
+  {
+    "id": "evasion-rogue",
+    "name": "Evasion",
+    "classId": "rogue",
+    "level": 7,
+    "description": "Beginning at 7th level, you can nimbly dodge out of the way of certain area effects, taking no damage on a successful DEX save and half damage on a failed save.",
+    "modifiers": []
+  },
+  {
+    "id": "evocation-savant",
+    "name": "Evocation Savant",
+    "classId": "wizard",
+    "subclassId": "evocation",
+    "level": 2,
+    "description": "Beginning when you select this school at 2nd level, the gold and time you must spend to copy an evocation spell into your spellbook is halved.",
+    "modifiers": []
+  },
+  {
+    "id": "expertise-bard",
+    "name": "Expertise",
+    "classId": "bard",
+    "level": 3,
+    "description": "At 3rd level, choose two of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies.",
+    "modifiers": []
+  },
+  {
+    "id": "expertise-rogue",
+    "name": "Expertise",
+    "classId": "rogue",
+    "level": 1,
+    "description": "At 1st level, choose two of your skill proficiencies, or one of your skill proficiencies and your proficiency with thieves’ tools. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies.",
+    "modifiers": []
+  },
+  {
+    "id": "extra-attack",
+    "name": "Extra Attack",
+    "classId": "fighter",
+    "level": 5,
+    "description": "Beginning at 5th level, you can attack twice, instead of once, whenever you take the Attack action on your turn.",
+    "modifiers": [
+      {
+        "type": "extra_attack",
+        "attacksPerAction": 2
+      }
+    ]
+  },
+  {
+    "id": "extra-attack-2",
+    "name": "Extra Attack (2)",
+    "classId": "fighter",
+    "level": 11,
+    "description": "At 11th level, you can attack three times whenever you take the Attack action on your turn.",
+    "modifiers": [
+      {
+        "type": "extra_attack",
+        "attacksPerAction": 3
+      }
+    ]
+  },
+  {
+    "id": "extra-attack-3",
+    "name": "Extra Attack (3)",
+    "classId": "fighter",
+    "level": 20,
+    "description": "At 20th level, you can attack four times whenever you take the Attack action on your turn.",
+    "modifiers": [
+      {
+        "type": "extra_attack",
+        "attacksPerAction": 4
+      }
+    ]
+  },
+  {
+    "id": "extra-attack-barbarian",
+    "name": "Extra Attack",
+    "classId": "barbarian",
+    "level": 5,
+    "description": "Beginning at 5th level, you can attack twice, instead of once, whenever you take the Attack action on your turn.",
+    "modifiers": [
+      {
+        "type": "extra_attack",
+        "attacksPerAction": 2
+      }
+    ]
+  },
+  {
+    "id": "extra-attack-monk",
+    "name": "Extra Attack",
+    "classId": "monk",
+    "level": 5,
+    "description": "Beginning at 5th level, you can attack twice, instead of once, whenever you take the Attack action on your turn.",
+    "modifiers": [
+      {
+        "type": "extra_attack",
+        "attacksPerAction": 2
+      }
+    ]
+  },
+  {
+    "id": "extra-attack-paladin",
+    "name": "Extra Attack",
+    "classId": "paladin",
+    "level": 5,
+    "description": "Beginning at 5th level, you can attack twice, instead of once, whenever you take the Attack action on your turn.",
+    "modifiers": [
+      {
+        "type": "extra_attack",
+        "attacksPerAction": 2
+      }
+    ]
+  },
+  {
+    "id": "extra-attack-ranger",
+    "name": "Extra Attack",
+    "classId": "ranger",
+    "level": 5,
+    "description": "Beginning at 5th level, you can attack twice, instead of once, whenever you take the Attack action on your turn.",
+    "modifiers": [
+      {
+        "type": "extra_attack",
+        "attacksPerAction": 2
+      }
+    ]
+  },
+  {
+    "id": "fast-hands",
+    "name": "Fast Hands",
+    "classId": "rogue",
+    "subclassId": "thief",
+    "level": 3,
+    "description": "Starting at 3rd level, you can use the bonus action granted by your Cunning Action to make a Dexterity (Sleight of Hand) check, use your thieves’ tools to disarm a trap or open a lock, or take the Use an Object action.",
+    "modifiers": []
+  },
+  {
+    "id": "fast-movement",
+    "name": "Fast Movement",
+    "classId": "barbarian",
+    "level": 5,
+    "description": "Starting at 5th level, your speed increases by 10 feet while you aren’t wearing heavy armor.",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "speed",
+        "value": 10,
+        "condition": "not_wearing_heavy_armor"
+      }
+    ]
+  },
+  {
+    "id": "favored-enemy",
+    "name": "Favored Enemy",
+    "classId": "ranger",
+    "level": 1,
+    "description": "Beginning at 1st level, you have significant experience studying, tracking, hunting, and even talking to a certain type of enemy.",
+    "modifiers": []
+  },
+  {
+    "id": "feral-instinct",
+    "name": "Feral Instinct",
+    "classId": "barbarian",
+    "level": 7,
+    "description": "By 7th level, your instincts are so honed that you have advantage on initiative rolls.",
+    "modifiers": [
+      {
+        "type": "roll_mode",
+        "mode": "advantage",
+        "target": "initiative"
+      }
+    ]
+  },
+  {
+    "id": "feral-senses",
+    "name": "Feral Senses",
+    "classId": "ranger",
+    "level": 18,
+    "description": "At 18th level, you gain preternatural senses that help you fight creatures you can’t see.",
+    "modifiers": []
+  },
+  {
+    "id": "fiendish-resilience",
+    "name": "Fiendish Resilience",
+    "classId": "warlock",
+    "subclassId": "fiend",
+    "level": 10,
+    "description": "Starting at 10th level, you can choose one damage type when you finish a short or long rest and gain resistance to that damage type.",
+    "modifiers": []
+  },
+  {
+    "id": "fighting-style-archery",
+    "name": "Fighting Style: Archery",
+    "classId": "fighter",
+    "level": 1,
+    "featureGroup": "fighting-style",
+    "description": "You gain a +2 bonus to attack rolls you make with ranged weapons.",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ranged_attack",
+        "value": 2,
+        "condition": "wielding_ranged_weapon"
+      }
+    ]
+  },
+  {
+    "id": "fighting-style-defense",
+    "name": "Fighting Style: Defense",
+    "classId": "fighter",
+    "level": 1,
+    "featureGroup": "fighting-style",
+    "description": "While you are wearing armor, you gain a +1 bonus to AC.",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 1,
+        "condition": "wearing_armor"
+      }
+    ]
+  },
+  {
+    "id": "fighting-style-dueling",
+    "name": "Fighting Style: Dueling",
+    "classId": "fighter",
+    "level": 1,
+    "featureGroup": "fighting-style",
+    "description": "When you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon.",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "melee_damage",
+        "value": 2,
+        "condition": "one_handed_melee_no_other_weapon"
+      }
+    ]
+  },
+  {
+    "id": "fighting-style-fighter",
+    "name": "Fighting Style",
+    "classId": "fighter",
+    "level": 1,
+    "description": "You adopt a particular style of fighting as your specialty.",
+    "choices": [
+      {
+        "id": "fighter-fighting-style",
+        "label": "Choose a Fighting Style",
+        "count": 1,
+        "type": "feature_option",
+        "featureGroup": "fighting-style",
+        "options": [
+          "fighting-style-archery",
+          "fighting-style-defense",
+          "fighting-style-dueling",
+          "fighting-style-great-weapon-fighting",
+          "fighting-style-protection",
+          "fighting-style-two-weapon-fighting"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "fighting-style-great-weapon-fighting",
+    "name": "Fighting Style: Great Weapon Fighting",
+    "classId": "fighter",
+    "level": 1,
+    "featureGroup": "fighting-style",
+    "description": "When you roll a 1 or 2 on a damage die for an attack you make with a melee weapon that you are wielding with two hands, you can reroll the die and must use the new roll.",
+    "modifiers": [
+      {
+        "type": "die_manipulation",
+        "rule": "great_weapon_fighting"
+      }
+    ]
+  },
+  {
+    "id": "fighting-style-paladin",
+    "name": "Fighting Style",
+    "classId": "paladin",
+    "level": 2,
+    "description": "At 2nd level, you adopt a style of fighting as your specialty.",
+    "choices": [
+      {
+        "id": "paladin-fighting-style",
+        "label": "Choose a Fighting Style",
+        "count": 1,
+        "type": "feature_option",
+        "featureGroup": "fighting-style",
+        "options": [
+          "fighting-style-defense",
+          "fighting-style-dueling",
+          "fighting-style-great-weapon-fighting",
+          "fighting-style-protection"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "fighting-style-protection",
+    "name": "Fighting Style: Protection",
+    "classId": "fighter",
+    "level": 1,
+    "featureGroup": "fighting-style",
+    "description": "When a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.",
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "protection-reaction",
+        "name": "Protection",
+        "description": "When a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.",
+        "actionCost": "reaction",
+        "reactionTrigger": {
+          "event": "ally_within_5ft_targeted_by_attack",
+          "rangeFeet": 5
+        },
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "protection-disadvantage",
+            "name": "Protection (Disadvantage)",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "roll_mode",
+                "mode": "disadvantage",
+                "target": "attack_rolls"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fighting-style-ranger",
+    "name": "Fighting Style",
+    "classId": "ranger",
+    "level": 2,
+    "description": "At 2nd level, you adopt a particular style of fighting as your specialty.",
+    "choices": [
+      {
+        "id": "ranger-fighting-style",
+        "label": "Choose a Fighting Style",
+        "count": 1,
+        "type": "feature_option",
+        "featureGroup": "fighting-style",
+        "options": [
+          "fighting-style-archery",
+          "fighting-style-defense",
+          "fighting-style-dueling",
+          "fighting-style-two-weapon-fighting"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "fighting-style-two-weapon-fighting",
+    "name": "Fighting Style: Two-Weapon Fighting",
+    "classId": "fighter",
+    "level": 1,
+    "featureGroup": "fighting-style",
+    "description": "When you engage in two-weapon fighting, you can add your ability modifier to the damage of the second attack.",
+    "modifiers": []
+  },
+  {
+    "id": "foe-slayer",
+    "name": "Foe Slayer",
+    "classId": "ranger",
+    "level": 20,
+    "description": "At 20th level, you become an unparalleled hunter of your enemies, adding your Wisdom modifier to an attack roll or damage roll against a favored enemy once on each of your turns.",
+    "modifiers": []
+  },
+  {
+    "id": "font-of-inspiration",
+    "name": "Font of Inspiration",
+    "classId": "bard",
+    "level": 5,
+    "description": "Beginning when you reach 5th level, you regain all of your expended uses of Bardic Inspiration when you finish a short or long rest.",
+    "modifiers": []
+  },
+  {
+    "id": "font-of-magic",
+    "name": "Font of Magic",
+    "classId": "sorcerer",
+    "level": 2,
+    "description": "At 2nd level, you tap into a deep wellspring of magic within yourself, represented by sorcery points.",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "sorcery_points",
+        "name": "Sorcery Points",
+        "maxFormula": "@classLevel",
+        "recovery": "long_rest"
+      }
+    ]
+  },
+  {
+    "id": "frenzy",
+    "name": "Frenzy",
+    "classId": "barbarian",
+    "subclassId": "berserker",
+    "level": 3,
+    "description": "Starting when you choose this path at 3rd level, you can go into a frenzy when you rage, allowing a single melee weapon attack as a bonus action on each turn.",
+    "modifiers": []
+  },
+  {
+    "id": "hide-in-plain-sight",
+    "name": "Hide in Plain Sight",
+    "classId": "ranger",
+    "level": 10,
+    "description": "Starting at 10th level, you can spend 1 minute creating camouflage for yourself (+10 to Dexterity (Stealth) checks).",
+    "modifiers": []
+  },
+  {
+    "id": "holy-nimbus",
+    "name": "Holy Nimbus",
+    "classId": "paladin",
+    "subclassId": "devotion",
+    "level": 20,
+    "description": "At 20th level, as an action, you can emanate an aura of sunlight for 1 minute.",
+    "modifiers": []
+  },
+  {
+    "id": "hunters-prey",
+    "name": "Hunter's Prey",
+    "classId": "ranger",
+    "subclassId": "hunter",
+    "level": 3,
+    "description": "At 3rd level, you gain one of the following features of your choice: Colossus Slayer, Giant Killer, or Horde Breaker.",
+    "choices": [
+      {
+        "id": "hunter-prey-choice",
+        "label": "Choose your Hunter's Prey feature",
+        "count": 1,
+        "type": "feature_option",
+        "featureGroup": "hunters-prey",
+        "options": [
+          "colossus-slayer",
+          "giant-killer",
+          "horde-breaker"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "hurl-through-hell",
+    "name": "Hurl Through Hell",
+    "classId": "warlock",
+    "subclassId": "fiend",
+    "level": 14,
+    "description": "Starting at 14th level, when you hit a creature with an attack, you can use this feature to instantly transport the target through the lower planes (10d10 psychic damage if not a fiend).",
+    "modifiers": []
+  },
+  {
+    "id": "improved-critical",
+    "name": "Improved Critical",
+    "classId": "fighter",
+    "subclassId": "champion",
+    "level": 3,
+    "description": "Beginning when you choose this archetype at 3rd level, your weapon attacks score a critical hit on a roll of 19 or 20.",
+    "modifiers": [
+      {
+        "type": "die_manipulation",
+        "rule": "expanded_crit_range",
+        "params": {
+          "minCritRoll": 19
+        }
+      }
+    ]
+  },
+  {
+    "id": "improved-divine-smite",
+    "name": "Improved Divine Smite",
+    "classId": "paladin",
+    "level": 11,
+    "description": "By 11th level, whenever you hit a creature with a melee weapon, the creature takes an extra 1d8 radiant damage.",
+    "modifiers": []
+  },
+  {
+    "id": "indomitable",
+    "name": "Indomitable",
+    "classId": "fighter",
+    "level": 9,
+    "description": "Beginning at 9th level, you can reroll a saving throw that you fail. If you do so, you must use the new roll.",
+    "modifiers": []
+  },
+  {
+    "id": "indomitable-might",
+    "name": "Indomitable Might",
+    "classId": "barbarian",
+    "level": 18,
+    "description": "Beginning at 18th level, if your total for a Strength check is less than your Strength score, you can use that score in place of the total.",
+    "modifiers": []
+  },
+  {
+    "id": "intimidating-presence",
+    "name": "Intimidating Presence",
+    "classId": "barbarian",
+    "subclassId": "berserker",
+    "level": 10,
+    "description": "Beginning at 10th level, you can use your action to frighten someone with your menacing presence.",
+    "modifiers": []
+  },
+  {
+    "id": "jack-of-all-trades",
+    "name": "Jack of All Trades",
+    "classId": "bard",
+    "level": 2,
+    "description": "Starting at 2nd level, you can add half your proficiency bonus, rounded down, to any ability check you make that doesn’t already include your proficiency bonus.",
+    "modifiers": []
+  },
+  {
+    "id": "ki",
+    "name": "Ki",
+    "classId": "monk",
+    "level": 2,
+    "description": "Starting at 2nd level, your training allows you to harness the mystic energy of ki (Flurry of Blows, Patient Defense, Step of the Wind).",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "ki",
+        "name": "Ki Points",
+        "maxFormula": "@classLevel",
+        "recovery": "short_rest"
+      }
+    ]
+  },
+  {
+    "id": "ki-empowered-strikes",
+    "name": "Ki-Empowered Strikes",
+    "classId": "monk",
+    "level": 6,
+    "description": "Starting at 6th level, your unarmed strikes count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage.",
+    "modifiers": []
+  },
+  {
+    "id": "lands-stride",
+    "name": "Land's Stride",
+    "classId": "druid",
+    "subclassId": "land",
+    "level": 6,
+    "description": "Starting at 6th level, moving through nonmagical difficult terrain costs you no extra movement.",
+    "modifiers": []
+  },
+  {
+    "id": "lands-stride-ranger",
+    "name": "Land's Stride",
+    "classId": "ranger",
+    "level": 8,
+    "description": "Starting at 8th level, moving through nonmagical difficult terrain costs you no extra movement.",
+    "modifiers": []
+  },
+  {
+    "id": "lay-on-hands",
+    "name": "Lay on Hands",
+    "classId": "paladin",
+    "level": 1,
+    "description": "Your blessed touch can heal wounds. You have a pool of healing power that replenishes when you take a long rest (5 * paladin level HP).",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "lay_on_hands",
+        "name": "Lay on Hands Pool",
+        "maxFormula": "5 * @classLevel",
+        "recovery": "long_rest"
+      }
+    ]
+  },
+  {
+    "id": "magical-secrets",
+    "name": "Magical Secrets",
+    "classId": "bard",
+    "level": 10,
+    "description": "By 10th level, you have plundered magical knowledge from a wide spectrum of disciplines. Choose two spells from any class.",
+    "modifiers": []
+  },
+  {
+    "id": "martial-archetype",
+    "name": "Martial Archetype",
+    "classId": "fighter",
+    "level": 3,
+    "description": "At 3rd level, you choose an archetype that you strive to emulate in your combat styles and techniques, such as Champion.",
+    "modifiers": []
+  },
+  {
+    "id": "martial-arts",
+    "name": "Martial Arts",
+    "classId": "monk",
+    "level": 1,
+    "description": "At 1st level, your practice of martial arts gives you mastery of combat styles that use unarmed strikes and monk weapons.",
+    "modifiers": []
+  },
+  {
+    "id": "metamagic",
+    "name": "Metamagic",
+    "classId": "sorcerer",
+    "level": 3,
+    "description": "At 3rd level, you gain the ability to twist your spells to suit your needs. You gain two Metamagic options of your choice.",
+    "choices": [
+      {
+        "id": "sorcerer-metamagic",
+        "label": "Choose two Metamagic options",
+        "count": 2,
+        "type": "feature_option",
+        "featureGroup": "metamagic",
+        "options": [
+          "careful",
+          "distant",
+          "empowered",
+          "extended",
+          "heightened",
+          "quickened",
+          "subtle",
+          "twinned"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "mindless-rage",
+    "name": "Mindless Rage",
+    "classId": "barbarian",
+    "subclassId": "berserker",
+    "level": 6,
+    "description": "Beginning at 6th level, you can’t be charmed or frightened while raging.",
+    "modifiers": [
+      {
+        "type": "condition_immunity",
+        "conditions": [
+          "charmed",
+          "frightened"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monastic-tradition",
+    "name": "Monastic Tradition",
+    "classId": "monk",
+    "level": 3,
+    "description": "When you reach 3rd level, you commit yourself to a monastic tradition, such as the Way of the Open Hand.",
+    "modifiers": []
+  },
+  {
+    "id": "monk-unarmored-defense",
+    "name": "Unarmored Defense",
+    "classId": "monk",
+    "level": 1,
+    "description": "Beginning at 1st level, while you are wearing no armor and not wielding a shield, your AC equals 10 + your Dexterity modifier + your Wisdom modifier.",
+    "modifiers": [
+      {
+        "type": "ac_calculation",
+        "id": "unarmored_monk",
+        "formula": "10 + @dexMod + @wisMod",
+        "allowsShield": false,
+        "requiresNoArmor": true
+      }
+    ]
+  },
+  {
+    "id": "multiattack-hunter",
+    "name": "Multiattack",
+    "classId": "ranger",
+    "subclassId": "hunter",
+    "level": 11,
+    "description": "At 11th level, you gain one of the following features of your choice: Volley or Whirlwind Attack.",
+    "modifiers": []
+  },
+  {
+    "id": "mystic-arcanum-6",
+    "name": "Mystic Arcanum (6th Level)",
+    "classId": "warlock",
+    "level": 11,
+    "description": "At 11th level, your patron bestows upon you a magical secret called an arcanum (one 6th-level warlock spell once per long rest).",
+    "modifiers": []
+  },
+  {
+    "id": "mystic-arcanum-7",
+    "name": "Mystic Arcanum (7th Level)",
+    "classId": "warlock",
+    "level": 13,
+    "description": "At 13th level, you gain a 7th-level warlock spell that you can cast once per long rest without expending a spell slot.",
+    "modifiers": []
+  },
+  {
+    "id": "mystic-arcanum-8",
+    "name": "Mystic Arcanum (8th Level)",
+    "classId": "warlock",
+    "level": 15,
+    "description": "At 15th level, you gain an 8th-level warlock spell that you can cast once per long rest without expending a spell slot.",
+    "modifiers": []
+  },
+  {
+    "id": "mystic-arcanum-9",
+    "name": "Mystic Arcanum (9th Level)",
+    "classId": "warlock",
+    "level": 17,
+    "description": "At 17th level, you gain a 9th-level warlock spell that you can cast once per long rest without expending a spell slot.",
+    "modifiers": []
+  },
+  {
+    "id": "natural-explorer",
+    "name": "Natural Explorer",
+    "classId": "ranger",
+    "level": 1,
+    "description": "You are particularly familiar with one type of natural environment and are adept at traveling and surviving in such regions.",
+    "modifiers": []
+  },
+  {
+    "id": "natural-recovery",
+    "name": "Natural Recovery",
+    "classId": "druid",
+    "subclassId": "land",
+    "level": 2,
+    "description": "Starting at 2nd level, you can regain some of your magical energy by sitting in meditation and communing with nature during a short rest.",
+    "modifiers": []
+  },
+  {
+    "id": "natures-sanctuary",
+    "name": "Nature's Sanctuary",
+    "classId": "druid",
+    "subclassId": "land",
+    "level": 14,
+    "description": "When you reach 14th level, creatures of the natural world sense your connection to nature and become hesitant to attack you.",
+    "modifiers": []
+  },
+  {
+    "id": "natures-ward",
+    "name": "Nature's Ward",
+    "classId": "druid",
+    "subclassId": "land",
+    "level": 10,
+    "description": "When you reach 10th level, you can’t be charmed or frightened by elementals or fey, and you are immune to poison and disease.",
+    "modifiers": []
+  },
+  {
+    "id": "open-hand-technique",
+    "name": "Open Hand Technique",
+    "classId": "monk",
+    "subclassId": "open-hand",
+    "level": 3,
+    "description": "Starting when you choose this tradition at 3rd level, you can manipulate your enemy’s ki when you harness your own. Whenever you hit a creature with one of the attacks granted by your Flurry of Blows, you can impose one of three effects on that target.",
+    "modifiers": []
+  },
+  {
+    "id": "otherworldly-patron",
+    "name": "Otherworldly Patron",
+    "classId": "warlock",
+    "level": 1,
+    "description": "At 1st level, you have struck a bargain with an otherworldly being of your choice, such as the Fiend.",
+    "modifiers": []
+  },
+  {
+    "id": "overchannel",
+    "name": "Overchannel",
+    "classId": "wizard",
+    "subclassId": "evocation",
+    "level": 14,
+    "description": "Starting at 14th level, you can increase the power of your simpler spells, dealing maximum damage with a wizard spell of 1st through 5th level.",
+    "modifiers": []
+  },
+  {
+    "id": "pact-boon",
+    "name": "Pact Boon",
+    "classId": "warlock",
+    "level": 3,
+    "description": "At 3rd level, your otherworldly patron bestows a gift upon you for your loyal service: Pact of the Chain, Pact of the Blade, or Pact of the Tome.",
+    "choices": [
+      {
+        "id": "warlock-pact-boon",
+        "label": "Choose your Pact Boon",
+        "count": 1,
+        "type": "feature_option",
+        "featureGroup": "pact-boon",
+        "options": [
+          "pact-of-the-chain",
+          "pact-of-the-blade",
+          "pact-of-the-tome"
+        ]
+      }
+    ],
+    "modifiers": []
+  },
+  {
+    "id": "pact-magic",
+    "name": "Pact Magic",
+    "classId": "warlock",
+    "level": 1,
+    "description": "Your arcane research and the magic bestowed on you by your patron have given you facility with spells. You regain all expended Pact Magic spell slots when you finish a short or long rest.",
+    "modifiers": []
+  },
+  {
+    "id": "peerless-skill",
+    "name": "Peerless Skill",
+    "classId": "bard",
+    "subclassId": "lore",
+    "level": 14,
+    "description": "Starting at 14th level, when you make an ability check, you can expend one use of Bardic Inspiration and add it to the check.",
+    "modifiers": []
+  },
+  {
+    "id": "perfect-self",
+    "name": "Perfect Self",
+    "classId": "monk",
+    "level": 20,
+    "description": "At 20th level, when you roll for initiative and have no ki points remaining, you regain 4 ki points.",
+    "modifiers": []
+  },
+  {
+    "id": "persistent-rage",
+    "name": "Persistent Rage",
+    "classId": "barbarian",
+    "level": 15,
+    "description": "Beginning at 15th level, your rage is so fierce that it ends early only if you fall unconscious or if you choose to end it.",
+    "modifiers": []
+  },
+  {
+    "id": "potent-cantrip",
+    "name": "Potent Cantrip",
+    "classId": "wizard",
+    "subclassId": "evocation",
+    "level": 6,
+    "description": "Starting at 6th level, your damaging cantrips affect even creatures that avoid the brunt of the effect (taking half damage on a successful saving throw).",
+    "modifiers": []
+  },
+  {
+    "id": "primal-champion",
+    "name": "Primal Champion",
+    "classId": "barbarian",
+    "level": 20,
+    "description": "At 20th level, your Strength and Constitution scores increase by 4. Your maximum for those scores is now 24.",
+    "modifiers": [
+      {
+        "type": "ability_score",
+        "ability": "str",
+        "bonus": 4,
+        "maxCap": 24
+      },
+      {
+        "type": "ability_score",
+        "ability": "con",
+        "bonus": 4,
+        "maxCap": 24
+      }
+    ]
+  },
+  {
+    "id": "primal-path",
+    "name": "Primal Path",
+    "classId": "barbarian",
+    "level": 3,
+    "description": "At 3rd level, you choose a path that shapes the nature of your rage, such as the Path of the Berserker.",
+    "modifiers": []
+  },
+  {
+    "id": "primeval-awareness",
+    "name": "Primeval Awareness",
+    "classId": "ranger",
+    "level": 3,
+    "description": "Beginning at 3rd level, you can use your action and expend one ranger spell slot to focus your awareness on the region around you.",
+    "modifiers": []
+  },
+  {
+    "id": "purity-of-body",
+    "name": "Purity of Body",
+    "classId": "monk",
+    "level": 10,
+    "description": "At 10th level, your mastery of the ki flowing through you makes you immune to disease and poison.",
+    "modifiers": [
+      {
+        "type": "damage_mitigation",
+        "mitigation": "immunity",
+        "damageTypes": [
+          "poison"
+        ]
+      },
+      {
+        "type": "condition_immunity",
+        "conditions": [
+          "poisoned"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "purity-of-spirit",
+    "name": "Purity of Spirit",
+    "classId": "paladin",
+    "subclassId": "devotion",
+    "level": 15,
+    "description": "Beginning at 15th level, you are always under the effects of a protection from evil and good spell.",
+    "modifiers": []
+  },
+  {
+    "id": "quivering-palm",
+    "name": "Quivering Palm",
+    "classId": "monk",
+    "subclassId": "open-hand",
+    "level": 17,
+    "description": "At 17th level, you gain the ability to set up lethal vibrations in someone’s body (spend 3 ki points).",
+    "modifiers": []
+  },
+  {
+    "id": "rage",
+    "name": "Rage",
+    "classId": "barbarian",
+    "level": 1,
+    "description": "In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action.",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "rage",
+        "name": "Rage",
+        "maxFormula": "2",
+        "recovery": "long_rest"
+      }
+    ],
+    "activatedAbilities": [
+      {
+        "id": "enter-rage",
+        "name": "Enter Rage",
+        "description": "Enter a rage as a bonus action for 1 minute (10 rounds): gain advantage on STR checks and saves, bonus melee STR damage, and resistance to bludgeoning, piercing, and slashing damage.",
+        "actionCost": "bonus_action",
+        "resourceCost": {
+          "resourceId": "rage",
+          "amount": 1
+        },
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "barbarian-rage",
+            "name": "Rage",
+            "durationRounds": 10,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "roll_mode",
+                "mode": "advantage",
+                "target": "save:str"
+              },
+              {
+                "type": "flat_bonus",
+                "target": "melee_damage",
+                "value": 2,
+                "condition": "not_wearing_heavy_armor"
+              },
+              {
+                "type": "damage_mitigation",
+                "mitigation": "resistance",
+                "damageTypes": [
+                  "bludgeoning",
+                  "piercing",
+                  "slashing"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ranger-archetype",
+    "name": "Ranger Archetype",
+    "classId": "ranger",
+    "level": 3,
+    "description": "At 3rd level, you choose an archetype that you strive to emulate, such as the Hunter.",
+    "modifiers": []
+  },
+  {
+    "id": "reckless-attack",
+    "name": "Reckless Attack",
+    "classId": "barbarian",
+    "level": 2,
+    "description": "When you make your first attack on your turn, you can decide to attack recklessly, gaining advantage on melee weapon attack rolls using Strength during this turn, but attack rolls against you have advantage until your next turn.",
+    "modifiers": []
+  },
+  {
+    "id": "relentless-rage",
+    "name": "Relentless Rage",
+    "classId": "barbarian",
+    "level": 11,
+    "description": "Starting at 11th level, your rage can keep you fighting despite grievous wounds.",
+    "modifiers": []
+  },
+  {
+    "id": "reliable-talent",
+    "name": "Reliable Talent",
+    "classId": "rogue",
+    "level": 11,
+    "description": "By 11th level, whenever you make an ability check that lets you add your proficiency bonus, you can treat a d20 roll of 9 or lower as a 10.",
+    "modifiers": []
+  },
+  {
+    "id": "remarkable-athlete",
+    "name": "Remarkable Athlete",
+    "classId": "fighter",
+    "subclassId": "champion",
+    "level": 7,
+    "description": "Starting at 7th level, you can add half your proficiency bonus (round up) to any Strength, Dexterity, or Constitution check you make that doesn’t already use your proficiency bonus.",
+    "modifiers": []
+  },
+  {
+    "id": "retaliation",
+    "name": "Retaliation",
+    "classId": "barbarian",
+    "subclassId": "berserker",
+    "level": 14,
+    "description": "Starting at 14th level, when you take damage from a creature that is within 5 feet of you, you can use your reaction to make a melee weapon attack against that creature.",
+    "modifiers": []
+  },
+  {
+    "id": "roguish-archetype",
+    "name": "Roguish Archetype",
+    "classId": "rogue",
+    "level": 3,
+    "description": "At 3rd level, you choose an archetype that you emulate in the exercise of your rogue abilities, such as Thief.",
+    "modifiers": []
+  },
+  {
+    "id": "sacred-oath",
+    "name": "Sacred Oath",
+    "classId": "paladin",
+    "level": 3,
+    "description": "When you reach 3rd level, you swear the oath that binds you as a paladin forever, such as the Oath of Devotion.",
+    "modifiers": []
+  },
+  {
+    "id": "sacred-weapon",
+    "name": "Channel Divinity: Sacred Weapon",
+    "classId": "paladin",
+    "subclassId": "devotion",
+    "level": 3,
+    "description": "As an action, you can imbue one weapon that you are holding with positive energy, adding your Charisma modifier to attack rolls for 1 minute.",
+    "modifiers": []
+  },
+  {
+    "id": "sculpt-spells",
+    "name": "Sculpt Spells",
+    "classId": "wizard",
+    "subclassId": "evocation",
+    "level": 2,
+    "description": "Beginning at 2nd level, you can create pockets of relative safety within the effects of your evocation spells so chosen allies automatically succeed on their saving throws and take no damage.",
+    "modifiers": []
+  },
+  {
+    "id": "second-story-work",
+    "name": "Second-Story Work",
+    "classId": "rogue",
+    "subclassId": "thief",
+    "level": 3,
+    "description": "When you choose this archetype at 3rd level, climbing no longer costs you extra movement.",
+    "modifiers": []
+  },
+  {
+    "id": "second-wind",
+    "name": "Second Wind",
+    "classId": "fighter",
+    "level": 1,
+    "description": "You have a limited well of stamina that you can draw on to protect yourself from harm. On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level.",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "second_wind",
+        "name": "Second Wind",
+        "maxFormula": "1",
+        "recovery": "short_rest"
+      }
+    ],
+    "activatedAbilities": [
+      {
+        "id": "use-second-wind",
+        "name": "Second Wind",
+        "description": "On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level.",
+        "actionCost": "bonus_action",
+        "resourceCost": {
+          "resourceId": "second_wind",
+          "amount": 1
+        },
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "heal",
+            "diceFormula": "1d10 + @classLevel"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "signature-spells",
+    "name": "Signature Spells",
+    "classId": "wizard",
+    "level": 20,
+    "description": "When you reach 20th level, you gain mastery over two powerful 3rd-level wizard spells and can cast them with minimal effort.",
+    "modifiers": []
+  },
+  {
+    "id": "slippery-mind",
+    "name": "Slippery Mind",
+    "classId": "rogue",
+    "level": 15,
+    "description": "By 15th level, you have acquired greater mental strength. You gain proficiency in Wisdom saving throws.",
+    "modifiers": []
+  },
+  {
+    "id": "slow-fall",
+    "name": "Slow Fall",
+    "classId": "monk",
+    "level": 4,
+    "description": "Beginning at 4th level, you can use your reaction when you fall to reduce any falling damage you take by an amount equal to five times your monk level.",
+    "modifiers": []
+  },
+  {
+    "id": "sneak-attack",
+    "name": "Sneak Attack",
+    "classId": "rogue",
+    "level": 1,
+    "description": "Beginning at 1st level, you know how to strike subtly and exploit a foe’s distraction. Once per turn, you can deal an extra 1d6 damage to one creature you hit with an attack if you have advantage on the attack roll or an ally is within 5 feet of the target.",
+    "modifiers": []
+  },
+  {
+    "id": "song-of-rest",
+    "name": "Song of Rest",
+    "classId": "bard",
+    "level": 2,
+    "description": "Beginning at 2nd level, you can use soothing music or oration to help revitalize your wounded allies during a short rest.",
+    "modifiers": []
+  },
+  {
+    "id": "sorcerous-origin",
+    "name": "Sorcerous Origin",
+    "classId": "sorcerer",
+    "level": 1,
+    "description": "Choose a sorcerous origin, which describes the source of your innate magical power, such as Draconic Bloodline.",
+    "modifiers": []
+  },
+  {
+    "id": "sorcerous-restoration",
+    "name": "Sorcerous Restoration",
+    "classId": "sorcerer",
+    "level": 20,
+    "description": "At 20th level, you regain 4 expended sorcery points whenever you finish a short rest.",
+    "modifiers": []
+  },
+  {
+    "id": "spell-mastery",
+    "name": "Spell Mastery",
+    "classId": "wizard",
+    "level": 18,
+    "description": "At 18th level, you have achieved such mastery over certain spells that you can cast them at will (one 1st-level and one 2nd-level wizard spell).",
+    "modifiers": []
+  },
+  {
+    "id": "spellcasting-bard",
+    "name": "Spellcasting",
+    "classId": "bard",
+    "level": 1,
+    "description": "You have learned to untangle and reshape the fabric of reality in harmony with your wishes and music.",
+    "modifiers": []
+  },
+  {
+    "id": "spellcasting-cleric",
+    "name": "Spellcasting",
+    "classId": "cleric",
+    "level": 1,
+    "description": "As a conduit for divine power, you can cast cleric spells.",
+    "modifiers": []
+  },
+  {
+    "id": "spellcasting-druid",
+    "name": "Spellcasting",
+    "classId": "druid",
+    "level": 1,
+    "description": "Drawing on the divine essence of nature itself, you can cast spells to shape that essence to your will.",
+    "modifiers": []
+  },
+  {
+    "id": "spellcasting-paladin",
+    "name": "Spellcasting",
+    "classId": "paladin",
+    "level": 2,
+    "description": "By 2nd level, you have learned to draw on divine magic through meditation and prayer to cast spells as a cleric does.",
+    "modifiers": []
+  },
+  {
+    "id": "spellcasting-ranger",
+    "name": "Spellcasting",
+    "classId": "ranger",
+    "level": 2,
+    "description": "By the time you reach 2nd level, you have learned to use the magical essence of nature to cast spells, much as a druid does.",
+    "modifiers": []
+  },
+  {
+    "id": "spellcasting-sorcerer",
+    "name": "Spellcasting",
+    "classId": "sorcerer",
+    "level": 1,
+    "description": "An event in your past, or in the life of a parent or ancestor, left an indelible mark on you, infusing you with arcane magic.",
+    "modifiers": []
+  },
+  {
+    "id": "spellcasting-wizard",
+    "name": "Spellcasting",
+    "classId": "wizard",
+    "level": 1,
+    "description": "As a student of arcane magic, you have a spellbook containing spells that show the first glimmerings of your true power.",
+    "modifiers": []
+  },
+  {
+    "id": "stillness-of-mind",
+    "name": "Stillness of Mind",
+    "classId": "monk",
+    "level": 7,
+    "description": "Starting at 7th level, you can use your action to end one effect on yourself that is causing you to be charmed or frightened.",
+    "modifiers": []
+  },
+  {
+    "id": "stroke-of-luck",
+    "name": "Stroke of Luck",
+    "classId": "rogue",
+    "level": 20,
+    "description": "At 20th level, you have an uncanny knack for succeeding when you need to (turn a missed attack into a hit or treat an ability check roll as a 20 once per short or long rest).",
+    "modifiers": []
+  },
+  {
+    "id": "stunning-strike",
+    "name": "Stunning Strike",
+    "classId": "monk",
+    "level": 5,
+    "description": "Starting at 5th level, you can interfere with the flow of ki in an opponent’s body. When you hit another creature with a melee weapon attack, you can spend 1 ki point to attempt a stunning strike.",
+    "modifiers": []
+  },
+  {
+    "id": "superior-critical",
+    "name": "Superior Critical",
+    "classId": "fighter",
+    "subclassId": "champion",
+    "level": 15,
+    "description": "Starting at 15th level, your weapon attacks score a critical hit on a roll of 18–20.",
+    "modifiers": [
+      {
+        "type": "die_manipulation",
+        "rule": "expanded_crit_range",
+        "params": {
+          "minCritRoll": 18
+        }
+      }
+    ]
+  },
+  {
+    "id": "superior-hunters-defense",
+    "name": "Superior Hunter's Defense",
+    "classId": "ranger",
+    "subclassId": "hunter",
+    "level": 15,
+    "description": "At 15th level, you gain one of the following features of your choice: Evasion, Stand Against the Tide, or Uncanny Dodge.",
+    "modifiers": []
+  },
+  {
+    "id": "superior-inspiration",
+    "name": "Superior Inspiration",
+    "classId": "bard",
+    "level": 20,
+    "description": "At 20th level, when you roll initiative and have no uses of Bardic Inspiration left, you regain one use.",
+    "modifiers": []
+  },
+  {
+    "id": "supreme-healing",
+    "name": "Supreme Healing",
+    "classId": "cleric",
+    "subclassId": "life",
+    "level": 17,
+    "description": "Starting at 17th level, when you would normally roll one or more dice to restore hit points with a spell, you instead use the highest number possible for each die.",
+    "modifiers": []
+  },
+  {
+    "id": "supreme-sneak",
+    "name": "Supreme Sneak",
+    "classId": "rogue",
+    "subclassId": "thief",
+    "level": 9,
+    "description": "Starting at 9th level, you have advantage on a Dexterity (Stealth) check if you move no more than half your speed on the same turn.",
+    "modifiers": []
+  },
+  {
+    "id": "survivor",
+    "name": "Survivor",
+    "classId": "fighter",
+    "subclassId": "champion",
+    "level": 18,
+    "description": "At 18th level, you attain the pinnacle of resilience in battle, regaining 5 + CON modifier hit points at the start of each turn if you have no more than half your hit points left.",
+    "modifiers": []
+  },
+  {
+    "id": "thiefs-reflexes",
+    "name": "Thief's Reflexes",
+    "classId": "rogue",
+    "subclassId": "thief",
+    "level": 17,
+    "description": "When you reach 17th level, you can take two turns during the first round of any combat.",
+    "modifiers": []
+  },
+  {
+    "id": "thieves-cant-feature",
+    "name": "Thieves' Cant",
+    "classId": "rogue",
+    "level": 1,
+    "description": "During your rogue training you learned thieves’ cant, a secret mix of dialect, jargon, and code that allows you to hide messages in seemingly normal conversation.",
+    "modifiers": []
+  },
+  {
+    "id": "timeless-body-druid",
+    "name": "Timeless Body",
+    "classId": "druid",
+    "level": 18,
+    "description": "Starting at 18th level, the primal magic that you wield causes you to age more slowly.",
+    "modifiers": []
+  },
+  {
+    "id": "timeless-body-monk",
+    "name": "Timeless Body",
+    "classId": "monk",
+    "level": 15,
+    "description": "At 15th level, your ki sustains you so that you suffer none of the frailty of old age.",
+    "modifiers": []
+  },
+  {
+    "id": "tongue-of-the-sun-and-moon",
+    "name": "Tongue of the Sun and Moon",
+    "classId": "monk",
+    "level": 13,
+    "description": "Starting at 13th level, you learn to touch the ki of other minds so that you understand all spoken languages.",
+    "modifiers": []
+  },
+  {
+    "id": "tranquility",
+    "name": "Tranquility",
+    "classId": "monk",
+    "subclassId": "open-hand",
+    "level": 11,
+    "description": "Beginning at 11th level, you can enter a special meditation that surrounds you with an aura of peace (sanctuary effect after a long rest).",
+    "modifiers": []
+  },
+  {
+    "id": "turn-the-unholy",
+    "name": "Channel Divinity: Turn the Unholy",
+    "classId": "paladin",
+    "subclassId": "devotion",
+    "level": 3,
+    "description": "As an action, you present your holy symbol and speak a prayer censuring fiends and undead.",
+    "modifiers": []
+  },
+  {
+    "id": "unarmored-movement",
+    "name": "Unarmored Movement",
+    "classId": "monk",
+    "level": 2,
+    "description": "Starting at 2nd level, your speed increases by 10 feet while you are not wearing armor or wielding a shield.",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "speed",
+        "value": 10,
+        "condition": "wearing_no_armor"
+      }
+    ]
+  },
+  {
+    "id": "uncanny-dodge",
+    "name": "Uncanny Dodge",
+    "classId": "rogue",
+    "level": 5,
+    "description": "Starting at 5th level, when an attacker that you can see hits you with an attack, you can use your reaction to halve the attack’s damage against you.",
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "use-uncanny-dodge",
+        "name": "Uncanny Dodge",
+        "description": "When an attacker that you can see hits you with an attack, you can use your reaction to halve the attack’s damage against you.",
+        "actionCost": "reaction",
+        "reactionTrigger": {
+          "event": "hit_by_attack"
+        },
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "uncanny-dodge-halve-damage",
+            "name": "Uncanny Dodge",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "damage_mitigation",
+                "mitigation": "resistance",
+                "damageTypes": [
+                  "acid",
+                  "bludgeoning",
+                  "cold",
+                  "fire",
+                  "force",
+                  "lightning",
+                  "necrotic",
+                  "piercing",
+                  "poison",
+                  "psychic",
+                  "radiant",
+                  "slashing",
+                  "thunder"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "use-magic-device",
+    "name": "Use Magic Device",
+    "classId": "rogue",
+    "subclassId": "thief",
+    "level": 13,
+    "description": "By 13th level, you have learned enough about the workings of magic that you can improvise the use of items even when they are not intended for you.",
+    "modifiers": []
+  },
+  {
+    "id": "vanish",
+    "name": "Vanish",
+    "classId": "ranger",
+    "level": 14,
+    "description": "Starting at 14th level, you can use the Hide action as a bonus action on your turn.",
+    "modifiers": []
+  },
+  {
+    "id": "wholeness-of-body",
+    "name": "Wholeness of Body",
+    "classId": "monk",
+    "subclassId": "open-hand",
+    "level": 6,
+    "description": "At 6th level, you gain the ability to heal yourself. As an action, you can regain hit points equal to three times your monk level once per long rest.",
+    "modifiers": []
+  },
+  {
+    "id": "wild-shape",
+    "name": "Wild Shape",
+    "classId": "druid",
+    "level": 2,
+    "description": "Starting at 2nd level, you can use your action to magically assume the shape of a beast that you have seen before twice per short or long rest.",
+    "modifiers": []
+  }
+]

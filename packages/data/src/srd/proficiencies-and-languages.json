@@ -1,0 +1,306 @@
+{
+  "proficiencies": [
+    {
+      "id": "artisans-tools",
+      "name": "Artisan's Tools",
+      "category": "tool"
+    },
+    {
+      "id": "gaming-sets",
+      "name": "Gaming Sets",
+      "category": "tool"
+    },
+    {
+      "id": "heavy-armor",
+      "name": "Heavy Armor",
+      "category": "armor",
+      "equipmentIds": [
+        "ring-mail",
+        "chain-mail",
+        "splint-armor",
+        "plate-armor"
+      ]
+    },
+    {
+      "id": "light-armor",
+      "name": "Light Armor",
+      "category": "armor",
+      "equipmentIds": [
+        "padded-armor",
+        "leather-armor",
+        "studded-leather-armor"
+      ]
+    },
+    {
+      "id": "martial-weapons",
+      "name": "Martial Weapons",
+      "category": "weapon",
+      "equipmentIds": [
+        "battleaxe",
+        "flail",
+        "glaive",
+        "greataxe",
+        "greatsword",
+        "halberd",
+        "lance",
+        "longsword",
+        "maul",
+        "morningstar",
+        "pike",
+        "rapier",
+        "scimitar",
+        "shortsword",
+        "trident",
+        "war-pick",
+        "warhammer",
+        "whip",
+        "blowgun",
+        "hand-crossbow",
+        "heavy-crossbow",
+        "longbow",
+        "net"
+      ]
+    },
+    {
+      "id": "medium-armor",
+      "name": "Medium Armor",
+      "category": "armor",
+      "equipmentIds": [
+        "hide-armor",
+        "chain-shirt",
+        "scale-mail",
+        "breastplate",
+        "half-plate"
+      ]
+    },
+    {
+      "id": "musical-instruments",
+      "name": "Musical Instruments",
+      "category": "tool"
+    },
+    {
+      "id": "saving-throw-cha",
+      "name": "Saving Throw: CHA",
+      "category": "saving_throw"
+    },
+    {
+      "id": "saving-throw-con",
+      "name": "Saving Throw: CON",
+      "category": "saving_throw"
+    },
+    {
+      "id": "saving-throw-dex",
+      "name": "Saving Throw: DEX",
+      "category": "saving_throw"
+    },
+    {
+      "id": "saving-throw-int",
+      "name": "Saving Throw: INT",
+      "category": "saving_throw"
+    },
+    {
+      "id": "saving-throw-str",
+      "name": "Saving Throw: STR",
+      "category": "saving_throw"
+    },
+    {
+      "id": "saving-throw-wis",
+      "name": "Saving Throw: WIS",
+      "category": "saving_throw"
+    },
+    {
+      "id": "shields",
+      "name": "Shields",
+      "category": "armor",
+      "equipmentIds": [
+        "shield"
+      ]
+    },
+    {
+      "id": "simple-weapons",
+      "name": "Simple Weapons",
+      "category": "weapon",
+      "equipmentIds": [
+        "club",
+        "dagger",
+        "greatclub",
+        "handaxe",
+        "javelin",
+        "light-hammer",
+        "mace",
+        "quarterstaff",
+        "sickle",
+        "spear",
+        "light-crossbow",
+        "dart",
+        "shortbow",
+        "sling"
+      ]
+    }
+  ],
+  "languages": [
+    {
+      "id": "abyssal",
+      "name": "Abyssal",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Demons"
+      ],
+      "script": "Infernal"
+    },
+    {
+      "id": "celestial",
+      "name": "Celestial",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Celestials"
+      ],
+      "script": "Celestial"
+    },
+    {
+      "id": "common",
+      "name": "Common",
+      "category": "standard",
+      "typicalSpeakers": [
+        "Humans"
+      ],
+      "script": "Common"
+    },
+    {
+      "id": "deep-speech",
+      "name": "Deep Speech",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Aberrations"
+      ]
+    },
+    {
+      "id": "draconic",
+      "name": "Draconic",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Dragons",
+        "Dragonborn"
+      ],
+      "script": "Draconic"
+    },
+    {
+      "id": "druidic",
+      "name": "Druidic",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Druids"
+      ],
+      "script": "Elvish"
+    },
+    {
+      "id": "dwarvish",
+      "name": "Dwarvish",
+      "category": "standard",
+      "typicalSpeakers": [
+        "Dwarves"
+      ],
+      "script": "Dwarvish"
+    },
+    {
+      "id": "elvish",
+      "name": "Elvish",
+      "category": "standard",
+      "typicalSpeakers": [
+        "Elves"
+      ],
+      "script": "Elvish"
+    },
+    {
+      "id": "giant",
+      "name": "Giant",
+      "category": "standard",
+      "typicalSpeakers": [
+        "Ogres",
+        "Giants"
+      ],
+      "script": "Dwarvish"
+    },
+    {
+      "id": "gnomish",
+      "name": "Gnomish",
+      "category": "standard",
+      "typicalSpeakers": [
+        "Gnomes"
+      ],
+      "script": "Dwarvish"
+    },
+    {
+      "id": "goblin",
+      "name": "Goblin",
+      "category": "standard",
+      "typicalSpeakers": [
+        "Goblinoids"
+      ],
+      "script": "Dwarvish"
+    },
+    {
+      "id": "halfling",
+      "name": "Halfling",
+      "category": "standard",
+      "typicalSpeakers": [
+        "Halflings"
+      ],
+      "script": "Common"
+    },
+    {
+      "id": "infernal",
+      "name": "Infernal",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Devils",
+        "Tieflings"
+      ],
+      "script": "Infernal"
+    },
+    {
+      "id": "orc",
+      "name": "Orc",
+      "category": "standard",
+      "typicalSpeakers": [
+        "Orcs"
+      ],
+      "script": "Dwarvish"
+    },
+    {
+      "id": "primordial",
+      "name": "Primordial",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Elementals"
+      ],
+      "script": "Dwarvish"
+    },
+    {
+      "id": "sylvan",
+      "name": "Sylvan",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Fey creatures"
+      ],
+      "script": "Elvish"
+    },
+    {
+      "id": "thieves-cant",
+      "name": "Thieves' Cant",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Rogues"
+      ]
+    },
+    {
+      "id": "undercommon",
+      "name": "Undercommon",
+      "category": "exotic",
+      "typicalSpeakers": [
+        "Underdark traders"
+      ],
+      "script": "Elvish"
+    }
+  ]
+}

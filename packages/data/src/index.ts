@@ -11,3 +11,5 @@ export const SRD_LICENSE = 'CC-BY-4.0' as const;
 export * from './schemas/index.js';
 export * from './ingestion/index.js';
 export * from './overlays/index.js';
+export * from './validation/index.js';
+export * from './srd/index.js';

@@ -1,0 +1,116 @@
+[
+  {
+    "id": "high-elf",
+    "parentRaceId": "elf",
+    "name": "High Elf",
+    "abilityBonuses": {
+      "int": 1
+    },
+    "choices": [
+      {
+        "id": "high-elf-cantrip",
+        "label": "Choose one cantrip from the Wizard spell list",
+        "count": 1,
+        "type": "spell",
+        "classList": "wizard",
+        "maxSpellLevel": 0
+      },
+      {
+        "id": "high-elf-extra-language",
+        "label": "Choose one extra language of your choice",
+        "count": 1,
+        "type": "language",
+        "from": {
+          "mode": "category",
+          "category": "all_languages"
+        }
+      }
+    ],
+    "proficiencies": [
+      "longsword",
+      "shortsword",
+      "shortbow",
+      "longbow"
+    ],
+    "traits": [
+      {
+        "id": "elf-weapon-training",
+        "name": "Elf Weapon Training",
+        "description": "You have proficiency with the longsword, shortsword, shortbow, and longbow.",
+        "modifiers": []
+      }
+    ],
+    "description": "As a high elf, you have a keen mind and a mastery of at least the basics of magic."
+  },
+  {
+    "id": "hill-dwarf",
+    "parentRaceId": "dwarf",
+    "name": "Hill Dwarf",
+    "abilityBonuses": {
+      "wis": 1
+    },
+    "choices": [],
+    "proficiencies": [],
+    "traits": [
+      {
+        "id": "dwarven-toughness",
+        "name": "Dwarven Toughness",
+        "description": "Your hit point maximum increases by 1, and it increases by 1 every time you gain a level.",
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "hp_per_level",
+            "value": 1
+          }
+        ]
+      }
+    ],
+    "description": "As a hill dwarf, you have keen senses, deep intuition, and remarkable resilience."
+  },
+  {
+    "id": "lightfoot-halfling",
+    "parentRaceId": "halfling",
+    "name": "Lightfoot Halfling",
+    "abilityBonuses": {
+      "cha": 1
+    },
+    "choices": [],
+    "proficiencies": [],
+    "traits": [
+      {
+        "id": "naturally-stealthy",
+        "name": "Naturally Stealthy",
+        "description": "You can attempt to hide even when you are obscured only by a creature that is at least one size larger than you.",
+        "modifiers": []
+      }
+    ],
+    "description": "As a lightfoot halfling, you can easily hide from notice, even using other people as cover."
+  },
+  {
+    "id": "rock-gnome",
+    "parentRaceId": "gnome",
+    "name": "Rock Gnome",
+    "abilityBonuses": {
+      "con": 1
+    },
+    "choices": [],
+    "proficiencies": [
+      "tinkers-tools"
+    ],
+    "traits": [
+      {
+        "id": "artificers-lore",
+        "name": "Artificer's Lore",
+        "description": "Whenever you make an Intelligence (History) check related to magic items, alchemical objects, or technological devices, you can add twice your proficiency bonus.",
+        "modifiers": []
+      },
+      {
+        "id": "tinker",
+        "name": "Tinker",
+        "description": "You have proficiency with artisan's tools (tinker's tools). Using those tools, you can spend 1 hour and 10 gp worth of materials to construct a Tiny clockwork device.",
+        "modifiers": []
+      }
+    ],
+    "description": "As a rock gnome, you have a natural inventiveness and hardiness beyond that of other gnomes."
+  }
+]

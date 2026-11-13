@@ -1,0 +1,43 @@
+[
+  {
+    "id": "grappler",
+    "name": "Grappler",
+    "description": "You’ve developed the skills necessary to hold your own in close-quarters grappling. You have advantage on attack rolls against a creature you are grappling, and you can use your action to try to pin a creature grappled by you.",
+    "prerequisites": [
+      {
+        "type": "ability_minimum",
+        "ability": "str",
+        "minimum": 13
+      }
+    ],
+    "modifiers": [
+      {
+        "type": "roll_mode",
+        "mode": "advantage",
+        "target": "attack_rolls",
+        "condition": {
+          "type": "target_grappled_by_self"
+        }
+      }
+    ],
+    "activatedAbilities": [
+      {
+        "id": "grappler-pin",
+        "name": "Pin Grappled Creature",
+        "description": "You can use your action to try to pin a creature grappled by you. To do so, make another grapple check. If you succeed, you and the creature are both restrained until the grapple ends.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "touch",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "apply_condition",
+            "conditionId": "restrained"
+          }
+        ]
+      }
+    ]
+  }
+]

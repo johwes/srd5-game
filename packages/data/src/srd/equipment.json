@@ -1,0 +1,2173 @@
+[
+  {
+    "id": "acid-vial",
+    "kind": "gear",
+    "name": "Acid (vial)",
+    "category": "consumable",
+    "costCopper": 2500,
+    "weightLb": 1,
+    "activatedAbilities": [
+      {
+        "id": "throw-acid-vial",
+        "name": "Throw Acid Vial",
+        "description": "Make a ranged attack against a creature or object within 20 feet, treating the acid as an improvised weapon. On a hit, the target takes 2d6 acid damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 20,
+          "targetFilter": "object_or_creature"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6",
+                "damageType": "acid"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alchemists-fire",
+    "kind": "gear",
+    "name": "Alchemist's Fire (flask)",
+    "category": "consumable",
+    "costCopper": 5000,
+    "weightLb": 1,
+    "activatedAbilities": [
+      {
+        "id": "throw-alchemists-fire",
+        "name": "Throw Alchemist's Fire",
+        "description": "Make a ranged attack against a creature or object within 20 feet. On a hit, the target takes 1d4 fire damage at the start of each of its turns.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 20,
+          "targetFilter": "object_or_creature"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4",
+                "damageType": "fire"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alchemists-supplies",
+    "kind": "tool",
+    "name": "Alchemist's Supplies",
+    "category": "artisans_tools",
+    "costCopper": 5000,
+    "weightLb": 8,
+    "defaultAbility": "int"
+  },
+  {
+    "id": "alms-box",
+    "kind": "gear",
+    "name": "Alms Box",
+    "category": "standard_gear",
+    "costCopper": 100,
+    "weightLb": 1
+  },
+  {
+    "id": "amulet",
+    "kind": "gear",
+    "name": "Amulet (Holy Symbol)",
+    "category": "holy_symbol",
+    "costCopper": 500,
+    "weightLb": 1
+  },
+  {
+    "id": "antitoxin",
+    "kind": "gear",
+    "name": "Antitoxin (vial)",
+    "category": "consumable",
+    "costCopper": 5000,
+    "weightLb": 0,
+    "activatedAbilities": [
+      {
+        "id": "drink-antitoxin",
+        "name": "Drink Antitoxin",
+        "description": "A creature that drinks this vial of liquid gains advantage on saving throws against poison for 1 hour.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "antitoxin-buff",
+            "name": "Antitoxin (Advantage vs Poison)",
+            "durationRounds": 600,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "roll_mode",
+                "mode": "advantage",
+                "target": "save:con",
+                "condition": "save_against_poison"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "arrow",
+    "kind": "gear",
+    "name": "Arrow",
+    "category": "ammunition",
+    "costCopper": 5,
+    "weightLb": 0.05
+  },
+  {
+    "id": "backpack",
+    "kind": "gear",
+    "name": "Backpack",
+    "category": "container",
+    "costCopper": 200,
+    "weightLb": 5
+  },
+  {
+    "id": "bagpipes",
+    "kind": "tool",
+    "name": "Bagpipes",
+    "category": "musical_instrument",
+    "costCopper": 3000,
+    "weightLb": 6,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "ball-bearings",
+    "kind": "gear",
+    "name": "Ball Bearings (bag of 1,000)",
+    "category": "standard_gear",
+    "costCopper": 100,
+    "weightLb": 2
+  },
+  {
+    "id": "battleaxe",
+    "kind": "weapon",
+    "name": "Battleaxe",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 1000,
+    "weightLb": 4,
+    "damageDice": "1d8",
+    "damageType": "slashing",
+    "versatileDamageDice": "1d10",
+    "properties": [
+      "versatile"
+    ]
+  },
+  {
+    "id": "bedroll",
+    "kind": "gear",
+    "name": "Bedroll",
+    "category": "standard_gear",
+    "costCopper": 100,
+    "weightLb": 7
+  },
+  {
+    "id": "bell",
+    "kind": "gear",
+    "name": "Bell",
+    "category": "standard_gear",
+    "costCopper": 100,
+    "weightLb": 0
+  },
+  {
+    "id": "blanket",
+    "kind": "gear",
+    "name": "Blanket",
+    "category": "standard_gear",
+    "costCopper": 50,
+    "weightLb": 3
+  },
+  {
+    "id": "blowgun",
+    "kind": "weapon",
+    "name": "Blowgun",
+    "category": "martial",
+    "rangeType": "ranged",
+    "costCopper": 1000,
+    "weightLb": 1,
+    "damageDice": "1",
+    "damageType": "piercing",
+    "properties": [
+      "ammunition",
+      "loading",
+      "range"
+    ],
+    "rangeFeet": {
+      "normal": 25,
+      "long": 100
+    }
+  },
+  {
+    "id": "book",
+    "kind": "gear",
+    "name": "Book",
+    "category": "standard_gear",
+    "costCopper": 2500,
+    "weightLb": 5
+  },
+  {
+    "id": "breastplate",
+    "kind": "armor",
+    "name": "Breastplate",
+    "category": "medium",
+    "costCopper": 40000,
+    "weightLb": 20,
+    "baseAc": 14,
+    "addDexModifier": true,
+    "maxDexBonus": 2,
+    "stealthDisadvantage": false
+  },
+  {
+    "id": "brewers-supplies",
+    "kind": "tool",
+    "name": "Brewer's Supplies",
+    "category": "artisans_tools",
+    "costCopper": 2000,
+    "weightLb": 9,
+    "defaultAbility": "int"
+  },
+  {
+    "id": "burglars-pack",
+    "kind": "pack",
+    "name": "Burglar's Pack",
+    "costCopper": 1600,
+    "weightLb": 44.5,
+    "contents": [
+      {
+        "itemId": "backpack",
+        "quantity": 1
+      },
+      {
+        "itemId": "ball-bearings",
+        "quantity": 1
+      },
+      {
+        "itemId": "string-10ft",
+        "quantity": 1
+      },
+      {
+        "itemId": "bell",
+        "quantity": 1
+      },
+      {
+        "itemId": "candle",
+        "quantity": 5
+      },
+      {
+        "itemId": "crowbar",
+        "quantity": 1
+      },
+      {
+        "itemId": "hammer",
+        "quantity": 1
+      },
+      {
+        "itemId": "piton",
+        "quantity": 10
+      },
+      {
+        "itemId": "hooded-lantern",
+        "quantity": 1
+      },
+      {
+        "itemId": "oil-flask",
+        "quantity": 2
+      },
+      {
+        "itemId": "rations-1-day",
+        "quantity": 5
+      },
+      {
+        "itemId": "tinderbox",
+        "quantity": 1
+      },
+      {
+        "itemId": "waterskin",
+        "quantity": 1
+      },
+      {
+        "itemId": "hempen-rope-50ft",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "calligraphers-supplies",
+    "kind": "tool",
+    "name": "Calligrapher's Supplies",
+    "category": "artisans_tools",
+    "costCopper": 1000,
+    "weightLb": 5,
+    "defaultAbility": "dex"
+  },
+  {
+    "id": "caltrops",
+    "kind": "gear",
+    "name": "Caltrops (bag of 20)",
+    "category": "standard_gear",
+    "costCopper": 100,
+    "weightLb": 2
+  },
+  {
+    "id": "candle",
+    "kind": "gear",
+    "name": "Candle",
+    "category": "standard_gear",
+    "costCopper": 1,
+    "weightLb": 0
+  },
+  {
+    "id": "carpenters-tools",
+    "kind": "tool",
+    "name": "Carpenter's Tools",
+    "category": "artisans_tools",
+    "costCopper": 800,
+    "weightLb": 6,
+    "defaultAbility": "str"
+  },
+  {
+    "id": "cartographers-tools",
+    "kind": "tool",
+    "name": "Cartographer's Tools",
+    "category": "artisans_tools",
+    "costCopper": 1500,
+    "weightLb": 6,
+    "defaultAbility": "wis"
+  },
+  {
+    "id": "censer",
+    "kind": "gear",
+    "name": "Censer",
+    "category": "standard_gear",
+    "costCopper": 500,
+    "weightLb": 1
+  },
+  {
+    "id": "chain-10ft",
+    "kind": "gear",
+    "name": "Chain (10 feet)",
+    "category": "standard_gear",
+    "costCopper": 500,
+    "weightLb": 10
+  },
+  {
+    "id": "chain-mail",
+    "kind": "armor",
+    "name": "Chain Mail",
+    "category": "heavy",
+    "costCopper": 7500,
+    "weightLb": 55,
+    "baseAc": 16,
+    "addDexModifier": false,
+    "strengthRequirement": 13,
+    "stealthDisadvantage": true
+  },
+  {
+    "id": "chain-shirt",
+    "kind": "armor",
+    "name": "Chain Shirt",
+    "category": "medium",
+    "costCopper": 5000,
+    "weightLb": 20,
+    "baseAc": 13,
+    "addDexModifier": true,
+    "maxDexBonus": 2,
+    "stealthDisadvantage": false
+  },
+  {
+    "id": "chest",
+    "kind": "gear",
+    "name": "Chest",
+    "category": "container",
+    "costCopper": 500,
+    "weightLb": 25
+  },
+  {
+    "id": "climbers-kit",
+    "kind": "gear",
+    "name": "Climber's Kit",
+    "category": "kit",
+    "costCopper": 2500,
+    "weightLb": 12
+  },
+  {
+    "id": "club",
+    "kind": "weapon",
+    "name": "Club",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 10,
+    "weightLb": 2,
+    "damageDice": "1d4",
+    "damageType": "bludgeoning",
+    "properties": [
+      "light"
+    ]
+  },
+  {
+    "id": "cobblers-tools",
+    "kind": "tool",
+    "name": "Cobbler's Tools",
+    "category": "artisans_tools",
+    "costCopper": 500,
+    "weightLb": 5,
+    "defaultAbility": "dex"
+  },
+  {
+    "id": "common-clothes",
+    "kind": "gear",
+    "name": "Clothes, Common",
+    "category": "clothing",
+    "costCopper": 50,
+    "weightLb": 3
+  },
+  {
+    "id": "component-pouch",
+    "kind": "gear",
+    "name": "Component Pouch",
+    "category": "standard_gear",
+    "costCopper": 2500,
+    "weightLb": 2
+  },
+  {
+    "id": "cooks-utensils",
+    "kind": "tool",
+    "name": "Cook's Utensils",
+    "category": "artisans_tools",
+    "costCopper": 100,
+    "weightLb": 8,
+    "defaultAbility": "wis"
+  },
+  {
+    "id": "costume-clothes",
+    "kind": "gear",
+    "name": "Clothes, Costume",
+    "category": "clothing",
+    "costCopper": 500,
+    "weightLb": 4
+  },
+  {
+    "id": "crossbow-bolt",
+    "kind": "gear",
+    "name": "Crossbow Bolt",
+    "category": "ammunition",
+    "costCopper": 5,
+    "weightLb": 0.075
+  },
+  {
+    "id": "crowbar",
+    "kind": "gear",
+    "name": "Crowbar",
+    "category": "standard_gear",
+    "costCopper": 200,
+    "weightLb": 5
+  },
+  {
+    "id": "crystal",
+    "kind": "gear",
+    "name": "Crystal (Arcane Focus)",
+    "category": "arcane_focus",
+    "costCopper": 1000,
+    "weightLb": 1
+  },
+  {
+    "id": "dagger",
+    "kind": "weapon",
+    "name": "Dagger",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 200,
+    "weightLb": 1,
+    "damageDice": "1d4",
+    "damageType": "piercing",
+    "properties": [
+      "finesse",
+      "light",
+      "thrown"
+    ],
+    "rangeFeet": {
+      "normal": 20,
+      "long": 60
+    }
+  },
+  {
+    "id": "dart",
+    "kind": "weapon",
+    "name": "Dart",
+    "category": "simple",
+    "rangeType": "ranged",
+    "costCopper": 5,
+    "weightLb": 0.25,
+    "damageDice": "1d4",
+    "damageType": "piercing",
+    "properties": [
+      "finesse",
+      "thrown"
+    ],
+    "rangeFeet": {
+      "normal": 20,
+      "long": 60
+    }
+  },
+  {
+    "id": "dice-set",
+    "kind": "tool",
+    "name": "Dice Set",
+    "category": "gaming_set",
+    "costCopper": 10,
+    "weightLb": 0
+  },
+  {
+    "id": "diplomats-pack",
+    "kind": "pack",
+    "name": "Diplomat's Pack",
+    "costCopper": 3900,
+    "weightLb": 36,
+    "contents": [
+      {
+        "itemId": "chest",
+        "quantity": 1
+      },
+      {
+        "itemId": "map-or-scroll-case",
+        "quantity": 2
+      },
+      {
+        "itemId": "fine-clothes",
+        "quantity": 1
+      },
+      {
+        "itemId": "ink-bottle",
+        "quantity": 1
+      },
+      {
+        "itemId": "ink-pen",
+        "quantity": 1
+      },
+      {
+        "itemId": "lamp",
+        "quantity": 1
+      },
+      {
+        "itemId": "oil-flask",
+        "quantity": 2
+      },
+      {
+        "itemId": "paper-sheet",
+        "quantity": 5
+      },
+      {
+        "itemId": "perfume-vial",
+        "quantity": 1
+      },
+      {
+        "itemId": "sealing-wax",
+        "quantity": 1
+      },
+      {
+        "itemId": "soap",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "disguise-kit",
+    "kind": "tool",
+    "name": "Disguise Kit",
+    "category": "other",
+    "costCopper": 2500,
+    "weightLb": 3,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "drum",
+    "kind": "tool",
+    "name": "Drum",
+    "category": "musical_instrument",
+    "costCopper": 600,
+    "weightLb": 3,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "dulcimer",
+    "kind": "tool",
+    "name": "Dulcimer",
+    "category": "musical_instrument",
+    "costCopper": 2500,
+    "weightLb": 10,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "dungeoneers-pack",
+    "kind": "pack",
+    "name": "Dungeoneer's Pack",
+    "costCopper": 1200,
+    "weightLb": 61.5,
+    "contents": [
+      {
+        "itemId": "backpack",
+        "quantity": 1
+      },
+      {
+        "itemId": "crowbar",
+        "quantity": 1
+      },
+      {
+        "itemId": "hammer",
+        "quantity": 1
+      },
+      {
+        "itemId": "piton",
+        "quantity": 10
+      },
+      {
+        "itemId": "torch",
+        "quantity": 10
+      },
+      {
+        "itemId": "tinderbox",
+        "quantity": 1
+      },
+      {
+        "itemId": "rations-1-day",
+        "quantity": 10
+      },
+      {
+        "itemId": "waterskin",
+        "quantity": 1
+      },
+      {
+        "itemId": "hempen-rope-50ft",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "emblem",
+    "kind": "gear",
+    "name": "Emblem (Holy Symbol)",
+    "category": "holy_symbol",
+    "costCopper": 500,
+    "weightLb": 0
+  },
+  {
+    "id": "entertainers-pack",
+    "kind": "pack",
+    "name": "Entertainer's Pack",
+    "costCopper": 4000,
+    "weightLb": 38,
+    "contents": [
+      {
+        "itemId": "backpack",
+        "quantity": 1
+      },
+      {
+        "itemId": "bedroll",
+        "quantity": 1
+      },
+      {
+        "itemId": "costume-clothes",
+        "quantity": 2
+      },
+      {
+        "itemId": "candle",
+        "quantity": 5
+      },
+      {
+        "itemId": "rations-1-day",
+        "quantity": 5
+      },
+      {
+        "itemId": "waterskin",
+        "quantity": 1
+      },
+      {
+        "itemId": "disguise-kit",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "explorers-pack",
+    "kind": "pack",
+    "name": "Explorer's Pack",
+    "costCopper": 1000,
+    "weightLb": 59,
+    "contents": [
+      {
+        "itemId": "backpack",
+        "quantity": 1
+      },
+      {
+        "itemId": "bedroll",
+        "quantity": 1
+      },
+      {
+        "itemId": "mess-kit",
+        "quantity": 1
+      },
+      {
+        "itemId": "tinderbox",
+        "quantity": 1
+      },
+      {
+        "itemId": "torch",
+        "quantity": 10
+      },
+      {
+        "itemId": "rations-1-day",
+        "quantity": 10
+      },
+      {
+        "itemId": "waterskin",
+        "quantity": 1
+      },
+      {
+        "itemId": "hempen-rope-50ft",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "fine-clothes",
+    "kind": "gear",
+    "name": "Clothes, Fine",
+    "category": "clothing",
+    "costCopper": 1500,
+    "weightLb": 6
+  },
+  {
+    "id": "flail",
+    "kind": "weapon",
+    "name": "Flail",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 1000,
+    "weightLb": 2,
+    "damageDice": "1d8",
+    "damageType": "bludgeoning",
+    "properties": []
+  },
+  {
+    "id": "flute",
+    "kind": "tool",
+    "name": "Flute",
+    "category": "musical_instrument",
+    "costCopper": 200,
+    "weightLb": 1,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "forgery-kit",
+    "kind": "tool",
+    "name": "Forgery Kit",
+    "category": "other",
+    "costCopper": 1500,
+    "weightLb": 5,
+    "defaultAbility": "dex"
+  },
+  {
+    "id": "glaive",
+    "kind": "weapon",
+    "name": "Glaive",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 2000,
+    "weightLb": 6,
+    "damageDice": "1d10",
+    "damageType": "slashing",
+    "properties": [
+      "heavy",
+      "reach",
+      "two-handed"
+    ]
+  },
+  {
+    "id": "glassblowers-tools",
+    "kind": "tool",
+    "name": "Glassblower's Tools",
+    "category": "artisans_tools",
+    "costCopper": 3000,
+    "weightLb": 5,
+    "defaultAbility": "int"
+  },
+  {
+    "id": "grappling-hook",
+    "kind": "gear",
+    "name": "Grappling Hook",
+    "category": "standard_gear",
+    "costCopper": 200,
+    "weightLb": 4
+  },
+  {
+    "id": "greataxe",
+    "kind": "weapon",
+    "name": "Greataxe",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 3000,
+    "weightLb": 7,
+    "damageDice": "1d12",
+    "damageType": "slashing",
+    "properties": [
+      "heavy",
+      "two-handed"
+    ]
+  },
+  {
+    "id": "greatclub",
+    "kind": "weapon",
+    "name": "Greatclub",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 20,
+    "weightLb": 10,
+    "damageDice": "1d8",
+    "damageType": "bludgeoning",
+    "properties": [
+      "two-handed"
+    ]
+  },
+  {
+    "id": "greatsword",
+    "kind": "weapon",
+    "name": "Greatsword",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 5000,
+    "weightLb": 6,
+    "damageDice": "2d6",
+    "damageType": "slashing",
+    "properties": [
+      "heavy",
+      "two-handed"
+    ]
+  },
+  {
+    "id": "halberd",
+    "kind": "weapon",
+    "name": "Halberd",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 2000,
+    "weightLb": 6,
+    "damageDice": "1d10",
+    "damageType": "slashing",
+    "properties": [
+      "heavy",
+      "reach",
+      "two-handed"
+    ]
+  },
+  {
+    "id": "half-plate",
+    "kind": "armor",
+    "name": "Half Plate",
+    "category": "medium",
+    "costCopper": 75000,
+    "weightLb": 40,
+    "baseAc": 15,
+    "addDexModifier": true,
+    "maxDexBonus": 2,
+    "stealthDisadvantage": true
+  },
+  {
+    "id": "hammer",
+    "kind": "gear",
+    "name": "Hammer",
+    "category": "standard_gear",
+    "costCopper": 100,
+    "weightLb": 3
+  },
+  {
+    "id": "hand-crossbow",
+    "kind": "weapon",
+    "name": "Crossbow, Hand",
+    "category": "martial",
+    "rangeType": "ranged",
+    "costCopper": 7500,
+    "weightLb": 3,
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "properties": [
+      "ammunition",
+      "light",
+      "loading",
+      "range"
+    ],
+    "rangeFeet": {
+      "normal": 30,
+      "long": 120
+    }
+  },
+  {
+    "id": "handaxe",
+    "kind": "weapon",
+    "name": "Handaxe",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 500,
+    "weightLb": 2,
+    "damageDice": "1d6",
+    "damageType": "slashing",
+    "properties": [
+      "light",
+      "thrown"
+    ],
+    "rangeFeet": {
+      "normal": 20,
+      "long": 60
+    }
+  },
+  {
+    "id": "healers-kit",
+    "kind": "gear",
+    "name": "Healer's Kit",
+    "category": "kit",
+    "costCopper": 500,
+    "weightLb": 3
+  },
+  {
+    "id": "heavy-crossbow",
+    "kind": "weapon",
+    "name": "Crossbow, Heavy",
+    "category": "martial",
+    "rangeType": "ranged",
+    "costCopper": 5000,
+    "weightLb": 18,
+    "damageDice": "1d10",
+    "damageType": "piercing",
+    "properties": [
+      "ammunition",
+      "heavy",
+      "loading",
+      "range",
+      "two-handed"
+    ],
+    "rangeFeet": {
+      "normal": 100,
+      "long": 400
+    }
+  },
+  {
+    "id": "hempen-rope-50ft",
+    "kind": "gear",
+    "name": "Rope, Hempen (50 feet)",
+    "category": "standard_gear",
+    "costCopper": 100,
+    "weightLb": 10
+  },
+  {
+    "id": "herbalism-kit",
+    "kind": "tool",
+    "name": "Herbalism Kit",
+    "category": "other",
+    "costCopper": 500,
+    "weightLb": 3,
+    "defaultAbility": "int"
+  },
+  {
+    "id": "hide-armor",
+    "kind": "armor",
+    "name": "Hide",
+    "category": "medium",
+    "costCopper": 1000,
+    "weightLb": 12,
+    "baseAc": 12,
+    "addDexModifier": true,
+    "maxDexBonus": 2,
+    "stealthDisadvantage": false
+  },
+  {
+    "id": "holy-water",
+    "kind": "gear",
+    "name": "Holy Water (flask)",
+    "category": "consumable",
+    "costCopper": 2500,
+    "weightLb": 1
+  },
+  {
+    "id": "hooded-lantern",
+    "kind": "gear",
+    "name": "Lantern, Hooded",
+    "category": "standard_gear",
+    "costCopper": 500,
+    "weightLb": 2
+  },
+  {
+    "id": "horn",
+    "kind": "tool",
+    "name": "Horn",
+    "category": "musical_instrument",
+    "costCopper": 300,
+    "weightLb": 2,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "hunting-trap",
+    "kind": "gear",
+    "name": "Hunting Trap",
+    "category": "standard_gear",
+    "costCopper": 500,
+    "weightLb": 25
+  },
+  {
+    "id": "incense-block",
+    "kind": "gear",
+    "name": "Block of Incense",
+    "category": "standard_gear",
+    "costCopper": 10,
+    "weightLb": 0.1
+  },
+  {
+    "id": "ink-bottle",
+    "kind": "gear",
+    "name": "Ink (1 ounce bottle)",
+    "category": "standard_gear",
+    "costCopper": 1000,
+    "weightLb": 0
+  },
+  {
+    "id": "ink-pen",
+    "kind": "gear",
+    "name": "Ink Pen",
+    "category": "standard_gear",
+    "costCopper": 2,
+    "weightLb": 0
+  },
+  {
+    "id": "iron-pot",
+    "kind": "gear",
+    "name": "Pot, Iron",
+    "category": "standard_gear",
+    "costCopper": 200,
+    "weightLb": 10
+  },
+  {
+    "id": "iron-spikes",
+    "kind": "gear",
+    "name": "Spikes, Iron (10)",
+    "category": "standard_gear",
+    "costCopper": 100,
+    "weightLb": 5
+  },
+  {
+    "id": "javelin",
+    "kind": "weapon",
+    "name": "Javelin",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 50,
+    "weightLb": 2,
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "properties": [
+      "thrown"
+    ],
+    "rangeFeet": {
+      "normal": 30,
+      "long": 120
+    }
+  },
+  {
+    "id": "jewelers-tools",
+    "kind": "tool",
+    "name": "Jeweler's Tools",
+    "category": "artisans_tools",
+    "costCopper": 2500,
+    "weightLb": 2,
+    "defaultAbility": "int"
+  },
+  {
+    "id": "lamp",
+    "kind": "gear",
+    "name": "Lamp",
+    "category": "standard_gear",
+    "costCopper": 50,
+    "weightLb": 1
+  },
+  {
+    "id": "lance",
+    "kind": "weapon",
+    "name": "Lance",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 1000,
+    "weightLb": 6,
+    "damageDice": "1d12",
+    "damageType": "piercing",
+    "properties": [
+      "reach",
+      "special"
+    ],
+    "specialDescription": "You have disadvantage when you use a lance to attack a target within 5 feet of you. Also, a lance requires two hands to wield when you aren’t mounted."
+  },
+  {
+    "id": "leather-armor",
+    "kind": "armor",
+    "name": "Leather",
+    "category": "light",
+    "costCopper": 1000,
+    "weightLb": 10,
+    "baseAc": 11,
+    "addDexModifier": true,
+    "stealthDisadvantage": false
+  },
+  {
+    "id": "leatherworkers-tools",
+    "kind": "tool",
+    "name": "Leatherworker's Tools",
+    "category": "artisans_tools",
+    "costCopper": 500,
+    "weightLb": 5,
+    "defaultAbility": "dex"
+  },
+  {
+    "id": "light-crossbow",
+    "kind": "weapon",
+    "name": "Crossbow, Light",
+    "category": "simple",
+    "rangeType": "ranged",
+    "costCopper": 2500,
+    "weightLb": 5,
+    "damageDice": "1d8",
+    "damageType": "piercing",
+    "properties": [
+      "ammunition",
+      "loading",
+      "range",
+      "two-handed"
+    ],
+    "rangeFeet": {
+      "normal": 80,
+      "long": 320
+    }
+  },
+  {
+    "id": "light-hammer",
+    "kind": "weapon",
+    "name": "Light Hammer",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 200,
+    "weightLb": 2,
+    "damageDice": "1d4",
+    "damageType": "bludgeoning",
+    "properties": [
+      "light",
+      "thrown"
+    ],
+    "rangeFeet": {
+      "normal": 20,
+      "long": 60
+    }
+  },
+  {
+    "id": "lock",
+    "kind": "gear",
+    "name": "Lock",
+    "category": "standard_gear",
+    "costCopper": 1000,
+    "weightLb": 1
+  },
+  {
+    "id": "longbow",
+    "kind": "weapon",
+    "name": "Longbow",
+    "category": "martial",
+    "rangeType": "ranged",
+    "costCopper": 5000,
+    "weightLb": 2,
+    "damageDice": "1d8",
+    "damageType": "piercing",
+    "properties": [
+      "ammunition",
+      "heavy",
+      "range",
+      "two-handed"
+    ],
+    "rangeFeet": {
+      "normal": 150,
+      "long": 600
+    }
+  },
+  {
+    "id": "longsword",
+    "kind": "weapon",
+    "name": "Longsword",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 1500,
+    "weightLb": 3,
+    "damageDice": "1d8",
+    "damageType": "slashing",
+    "versatileDamageDice": "1d10",
+    "properties": [
+      "versatile"
+    ]
+  },
+  {
+    "id": "lute",
+    "kind": "tool",
+    "name": "Lute",
+    "category": "musical_instrument",
+    "costCopper": 3500,
+    "weightLb": 2,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "lyre",
+    "kind": "tool",
+    "name": "Lyre",
+    "category": "musical_instrument",
+    "costCopper": 3000,
+    "weightLb": 2,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "mace",
+    "kind": "weapon",
+    "name": "Mace",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 500,
+    "weightLb": 4,
+    "damageDice": "1d6",
+    "damageType": "bludgeoning",
+    "properties": []
+  },
+  {
+    "id": "magnifying-glass",
+    "kind": "gear",
+    "name": "Magnifying Glass",
+    "category": "standard_gear",
+    "costCopper": 10000,
+    "weightLb": 0
+  },
+  {
+    "id": "manacles",
+    "kind": "gear",
+    "name": "Manacles",
+    "category": "standard_gear",
+    "costCopper": 200,
+    "weightLb": 6
+  },
+  {
+    "id": "map-or-scroll-case",
+    "kind": "gear",
+    "name": "Case, Map or Scroll",
+    "category": "container",
+    "costCopper": 100,
+    "weightLb": 1
+  },
+  {
+    "id": "masons-tools",
+    "kind": "tool",
+    "name": "Mason's Tools",
+    "category": "artisans_tools",
+    "costCopper": 1000,
+    "weightLb": 8,
+    "defaultAbility": "str"
+  },
+  {
+    "id": "maul",
+    "kind": "weapon",
+    "name": "Maul",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 1000,
+    "weightLb": 10,
+    "damageDice": "2d6",
+    "damageType": "bludgeoning",
+    "properties": [
+      "heavy",
+      "two-handed"
+    ]
+  },
+  {
+    "id": "mess-kit",
+    "kind": "gear",
+    "name": "Mess Kit",
+    "category": "kit",
+    "costCopper": 20,
+    "weightLb": 1
+  },
+  {
+    "id": "mirror-steel",
+    "kind": "gear",
+    "name": "Mirror, Steel",
+    "category": "standard_gear",
+    "costCopper": 500,
+    "weightLb": 0.5
+  },
+  {
+    "id": "morningstar",
+    "kind": "weapon",
+    "name": "Morningstar",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 1500,
+    "weightLb": 4,
+    "damageDice": "1d8",
+    "damageType": "piercing",
+    "properties": []
+  },
+  {
+    "id": "navigators-tools",
+    "kind": "tool",
+    "name": "Navigator's Tools",
+    "category": "other",
+    "costCopper": 2500,
+    "weightLb": 2,
+    "defaultAbility": "wis"
+  },
+  {
+    "id": "net",
+    "kind": "weapon",
+    "name": "Net",
+    "category": "martial",
+    "rangeType": "ranged",
+    "costCopper": 100,
+    "weightLb": 3,
+    "damageDice": "0",
+    "damageType": "bludgeoning",
+    "properties": [
+      "special",
+      "thrown"
+    ],
+    "rangeFeet": {
+      "normal": 5,
+      "long": 15
+    },
+    "specialDescription": "A Large or smaller creature hit by a net is restrained until it is freed."
+  },
+  {
+    "id": "oil-flask",
+    "kind": "gear",
+    "name": "Oil (flask)",
+    "category": "consumable",
+    "costCopper": 10,
+    "weightLb": 1
+  },
+  {
+    "id": "orb",
+    "kind": "gear",
+    "name": "Orb (Arcane Focus)",
+    "category": "arcane_focus",
+    "costCopper": 2000,
+    "weightLb": 3
+  },
+  {
+    "id": "padded-armor",
+    "kind": "armor",
+    "name": "Padded",
+    "category": "light",
+    "costCopper": 500,
+    "weightLb": 8,
+    "baseAc": 11,
+    "addDexModifier": true,
+    "stealthDisadvantage": true
+  },
+  {
+    "id": "painters-supplies",
+    "kind": "tool",
+    "name": "Painter's Supplies",
+    "category": "artisans_tools",
+    "costCopper": 1000,
+    "weightLb": 5,
+    "defaultAbility": "wis"
+  },
+  {
+    "id": "pan-flute",
+    "kind": "tool",
+    "name": "Pan Flute",
+    "category": "musical_instrument",
+    "costCopper": 1200,
+    "weightLb": 2,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "paper-sheet",
+    "kind": "gear",
+    "name": "Paper (one sheet)",
+    "category": "standard_gear",
+    "costCopper": 20,
+    "weightLb": 0
+  },
+  {
+    "id": "parchment-sheet",
+    "kind": "gear",
+    "name": "Parchment (one sheet)",
+    "category": "standard_gear",
+    "costCopper": 10,
+    "weightLb": 0
+  },
+  {
+    "id": "perfume-vial",
+    "kind": "gear",
+    "name": "Perfume (vial)",
+    "category": "standard_gear",
+    "costCopper": 500,
+    "weightLb": 0
+  },
+  {
+    "id": "pike",
+    "kind": "weapon",
+    "name": "Pike",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 500,
+    "weightLb": 18,
+    "damageDice": "1d10",
+    "damageType": "piercing",
+    "properties": [
+      "heavy",
+      "reach",
+      "two-handed"
+    ]
+  },
+  {
+    "id": "piton",
+    "kind": "gear",
+    "name": "Piton",
+    "category": "standard_gear",
+    "costCopper": 5,
+    "weightLb": 0.25
+  },
+  {
+    "id": "plate-armor",
+    "kind": "armor",
+    "name": "Plate",
+    "category": "heavy",
+    "costCopper": 150000,
+    "weightLb": 65,
+    "baseAc": 18,
+    "addDexModifier": false,
+    "strengthRequirement": 15,
+    "stealthDisadvantage": true
+  },
+  {
+    "id": "playing-card-set",
+    "kind": "tool",
+    "name": "Playing Card Set",
+    "category": "gaming_set",
+    "costCopper": 50,
+    "weightLb": 0
+  },
+  {
+    "id": "poisoners-kit",
+    "kind": "tool",
+    "name": "Poisoner's Kit",
+    "category": "other",
+    "costCopper": 5000,
+    "weightLb": 2,
+    "defaultAbility": "int"
+  },
+  {
+    "id": "potion-of-healing",
+    "kind": "gear",
+    "name": "Potion of Healing",
+    "category": "consumable",
+    "costCopper": 5000,
+    "weightLb": 0.5,
+    "activatedAbilities": [
+      {
+        "id": "drink-potion-of-healing",
+        "name": "Drink Potion of Healing",
+        "description": "You regain 2d4 + 2 hit points when you drink this potion.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "heal",
+            "diceFormula": "2d4 + 2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "potters-tools",
+    "kind": "tool",
+    "name": "Potter's Tools",
+    "category": "artisans_tools",
+    "costCopper": 1000,
+    "weightLb": 3,
+    "defaultAbility": "int"
+  },
+  {
+    "id": "pouch",
+    "kind": "gear",
+    "name": "Pouch",
+    "category": "container",
+    "costCopper": 50,
+    "weightLb": 1
+  },
+  {
+    "id": "priests-pack",
+    "kind": "pack",
+    "name": "Priest's Pack",
+    "costCopper": 1900,
+    "weightLb": 24,
+    "contents": [
+      {
+        "itemId": "backpack",
+        "quantity": 1
+      },
+      {
+        "itemId": "blanket",
+        "quantity": 1
+      },
+      {
+        "itemId": "candle",
+        "quantity": 10
+      },
+      {
+        "itemId": "tinderbox",
+        "quantity": 1
+      },
+      {
+        "itemId": "alms-box",
+        "quantity": 1
+      },
+      {
+        "itemId": "incense-block",
+        "quantity": 2
+      },
+      {
+        "itemId": "censer",
+        "quantity": 1
+      },
+      {
+        "itemId": "vestments",
+        "quantity": 1
+      },
+      {
+        "itemId": "rations-1-day",
+        "quantity": 2
+      },
+      {
+        "itemId": "waterskin",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "quarterstaff",
+    "kind": "weapon",
+    "name": "Quarterstaff",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 20,
+    "weightLb": 4,
+    "damageDice": "1d6",
+    "damageType": "bludgeoning",
+    "versatileDamageDice": "1d8",
+    "properties": [
+      "versatile"
+    ]
+  },
+  {
+    "id": "quiver",
+    "kind": "gear",
+    "name": "Quiver",
+    "category": "container",
+    "costCopper": 100,
+    "weightLb": 1
+  },
+  {
+    "id": "rapier",
+    "kind": "weapon",
+    "name": "Rapier",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 2500,
+    "weightLb": 2,
+    "damageDice": "1d8",
+    "damageType": "piercing",
+    "properties": [
+      "finesse"
+    ]
+  },
+  {
+    "id": "rations-1-day",
+    "kind": "gear",
+    "name": "Rations (1 day)",
+    "category": "consumable",
+    "costCopper": 50,
+    "weightLb": 2
+  },
+  {
+    "id": "reliquary",
+    "kind": "gear",
+    "name": "Reliquary (Holy Symbol)",
+    "category": "holy_symbol",
+    "costCopper": 500,
+    "weightLb": 2
+  },
+  {
+    "id": "ring-mail",
+    "kind": "armor",
+    "name": "Ring Mail",
+    "category": "heavy",
+    "costCopper": 3000,
+    "weightLb": 40,
+    "baseAc": 14,
+    "addDexModifier": false,
+    "stealthDisadvantage": true
+  },
+  {
+    "id": "rod",
+    "kind": "gear",
+    "name": "Rod (Arcane Focus)",
+    "category": "arcane_focus",
+    "costCopper": 1000,
+    "weightLb": 2
+  },
+  {
+    "id": "sand-bag",
+    "kind": "gear",
+    "name": "Little Bag of Sand",
+    "category": "standard_gear",
+    "costCopper": 10,
+    "weightLb": 0.5
+  },
+  {
+    "id": "scale-mail",
+    "kind": "armor",
+    "name": "Scale Mail",
+    "category": "medium",
+    "costCopper": 5000,
+    "weightLb": 45,
+    "baseAc": 14,
+    "addDexModifier": true,
+    "maxDexBonus": 2,
+    "stealthDisadvantage": true
+  },
+  {
+    "id": "scale-merchants",
+    "kind": "gear",
+    "name": "Scale, Merchant's",
+    "category": "standard_gear",
+    "costCopper": 500,
+    "weightLb": 3
+  },
+  {
+    "id": "scholars-pack",
+    "kind": "pack",
+    "name": "Scholar's Pack",
+    "costCopper": 4000,
+    "weightLb": 10,
+    "contents": [
+      {
+        "itemId": "backpack",
+        "quantity": 1
+      },
+      {
+        "itemId": "book",
+        "quantity": 1
+      },
+      {
+        "itemId": "ink-bottle",
+        "quantity": 1
+      },
+      {
+        "itemId": "ink-pen",
+        "quantity": 1
+      },
+      {
+        "itemId": "parchment-sheet",
+        "quantity": 10
+      },
+      {
+        "itemId": "sand-bag",
+        "quantity": 1
+      },
+      {
+        "itemId": "small-knife",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "scimitar",
+    "kind": "weapon",
+    "name": "Scimitar",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 2500,
+    "weightLb": 3,
+    "damageDice": "1d6",
+    "damageType": "slashing",
+    "properties": [
+      "finesse",
+      "light"
+    ]
+  },
+  {
+    "id": "sealing-wax",
+    "kind": "gear",
+    "name": "Sealing Wax",
+    "category": "standard_gear",
+    "costCopper": 50,
+    "weightLb": 0
+  },
+  {
+    "id": "shawm",
+    "kind": "tool",
+    "name": "Shawm",
+    "category": "musical_instrument",
+    "costCopper": 200,
+    "weightLb": 1,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "shield",
+    "kind": "armor",
+    "name": "Shield",
+    "category": "shield",
+    "costCopper": 1000,
+    "weightLb": 6,
+    "baseAc": 2,
+    "addDexModifier": false,
+    "stealthDisadvantage": false
+  },
+  {
+    "id": "shortbow",
+    "kind": "weapon",
+    "name": "Shortbow",
+    "category": "simple",
+    "rangeType": "ranged",
+    "costCopper": 2500,
+    "weightLb": 2,
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "properties": [
+      "ammunition",
+      "range",
+      "two-handed"
+    ],
+    "rangeFeet": {
+      "normal": 80,
+      "long": 320
+    }
+  },
+  {
+    "id": "shortsword",
+    "kind": "weapon",
+    "name": "Shortsword",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 1000,
+    "weightLb": 2,
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "properties": [
+      "finesse",
+      "light"
+    ]
+  },
+  {
+    "id": "shovel",
+    "kind": "gear",
+    "name": "Shovel",
+    "category": "standard_gear",
+    "costCopper": 200,
+    "weightLb": 5
+  },
+  {
+    "id": "sickle",
+    "kind": "weapon",
+    "name": "Sickle",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 100,
+    "weightLb": 2,
+    "damageDice": "1d4",
+    "damageType": "slashing",
+    "properties": [
+      "light"
+    ]
+  },
+  {
+    "id": "signet-ring",
+    "kind": "gear",
+    "name": "Signet Ring",
+    "category": "standard_gear",
+    "costCopper": 500,
+    "weightLb": 0
+  },
+  {
+    "id": "silk-rope-50ft",
+    "kind": "gear",
+    "name": "Rope, Silk (50 feet)",
+    "category": "standard_gear",
+    "costCopper": 1000,
+    "weightLb": 5
+  },
+  {
+    "id": "sling",
+    "kind": "weapon",
+    "name": "Sling",
+    "category": "simple",
+    "rangeType": "ranged",
+    "costCopper": 10,
+    "weightLb": 0,
+    "damageDice": "1d4",
+    "damageType": "bludgeoning",
+    "properties": [
+      "ammunition",
+      "range"
+    ],
+    "rangeFeet": {
+      "normal": 30,
+      "long": 120
+    }
+  },
+  {
+    "id": "sling-bullet",
+    "kind": "gear",
+    "name": "Sling Bullet",
+    "category": "ammunition",
+    "costCopper": 1,
+    "weightLb": 0.075
+  },
+  {
+    "id": "small-knife",
+    "kind": "gear",
+    "name": "Small Knife",
+    "category": "standard_gear",
+    "costCopper": 50,
+    "weightLb": 0.25
+  },
+  {
+    "id": "smiths-tools",
+    "kind": "tool",
+    "name": "Smith's Tools",
+    "category": "artisans_tools",
+    "costCopper": 2000,
+    "weightLb": 8,
+    "defaultAbility": "str"
+  },
+  {
+    "id": "soap",
+    "kind": "gear",
+    "name": "Soap",
+    "category": "standard_gear",
+    "costCopper": 2,
+    "weightLb": 0
+  },
+  {
+    "id": "spear",
+    "kind": "weapon",
+    "name": "Spear",
+    "category": "simple",
+    "rangeType": "melee",
+    "costCopper": 100,
+    "weightLb": 3,
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "versatileDamageDice": "1d8",
+    "properties": [
+      "thrown",
+      "versatile"
+    ],
+    "rangeFeet": {
+      "normal": 20,
+      "long": 60
+    }
+  },
+  {
+    "id": "spellbook",
+    "kind": "gear",
+    "name": "Spellbook",
+    "category": "standard_gear",
+    "costCopper": 5000,
+    "weightLb": 3
+  },
+  {
+    "id": "splint-armor",
+    "kind": "armor",
+    "name": "Splint",
+    "category": "heavy",
+    "costCopper": 20000,
+    "weightLb": 60,
+    "baseAc": 17,
+    "addDexModifier": false,
+    "strengthRequirement": 15,
+    "stealthDisadvantage": true
+  },
+  {
+    "id": "sprig-of-mistletoe",
+    "kind": "gear",
+    "name": "Sprig of Mistletoe (Druidic Focus)",
+    "category": "druidic_focus",
+    "costCopper": 100,
+    "weightLb": 0
+  },
+  {
+    "id": "spyglass",
+    "kind": "gear",
+    "name": "Spyglass",
+    "category": "standard_gear",
+    "costCopper": 100000,
+    "weightLb": 1
+  },
+  {
+    "id": "staff",
+    "kind": "gear",
+    "name": "Staff (Arcane Focus)",
+    "category": "arcane_focus",
+    "costCopper": 500,
+    "weightLb": 4
+  },
+  {
+    "id": "string-10ft",
+    "kind": "gear",
+    "name": "String (10 feet)",
+    "category": "standard_gear",
+    "costCopper": 1,
+    "weightLb": 0
+  },
+  {
+    "id": "studded-leather-armor",
+    "kind": "armor",
+    "name": "Studded Leather",
+    "category": "light",
+    "costCopper": 4500,
+    "weightLb": 13,
+    "baseAc": 12,
+    "addDexModifier": true,
+    "stealthDisadvantage": false
+  },
+  {
+    "id": "thieves-tools",
+    "kind": "tool",
+    "name": "Thieves' Tools",
+    "category": "thieves_tools",
+    "costCopper": 2500,
+    "weightLb": 1,
+    "defaultAbility": "dex"
+  },
+  {
+    "id": "tinderbox",
+    "kind": "gear",
+    "name": "Tinderbox",
+    "category": "standard_gear",
+    "costCopper": 50,
+    "weightLb": 1
+  },
+  {
+    "id": "tinkers-tools",
+    "kind": "tool",
+    "name": "Tinker's Tools",
+    "category": "artisans_tools",
+    "costCopper": 5000,
+    "weightLb": 10,
+    "defaultAbility": "dex"
+  },
+  {
+    "id": "torch",
+    "kind": "gear",
+    "name": "Torch",
+    "category": "standard_gear",
+    "costCopper": 1,
+    "weightLb": 1
+  },
+  {
+    "id": "totem",
+    "kind": "gear",
+    "name": "Totem (Druidic Focus)",
+    "category": "druidic_focus",
+    "costCopper": 100,
+    "weightLb": 0
+  },
+  {
+    "id": "travelers-clothes",
+    "kind": "gear",
+    "name": "Clothes, Traveler's",
+    "category": "clothing",
+    "costCopper": 200,
+    "weightLb": 4
+  },
+  {
+    "id": "trident",
+    "kind": "weapon",
+    "name": "Trident",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 500,
+    "weightLb": 4,
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "versatileDamageDice": "1d8",
+    "properties": [
+      "thrown",
+      "versatile"
+    ],
+    "rangeFeet": {
+      "normal": 20,
+      "long": 60
+    }
+  },
+  {
+    "id": "two-person-tent",
+    "kind": "gear",
+    "name": "Tent, Two-Person",
+    "category": "standard_gear",
+    "costCopper": 200,
+    "weightLb": 20
+  },
+  {
+    "id": "vestments",
+    "kind": "gear",
+    "name": "Vestments",
+    "category": "clothing",
+    "costCopper": 100,
+    "weightLb": 3
+  },
+  {
+    "id": "vial",
+    "kind": "gear",
+    "name": "Vial",
+    "category": "container",
+    "costCopper": 100,
+    "weightLb": 0
+  },
+  {
+    "id": "viol",
+    "kind": "tool",
+    "name": "Viol",
+    "category": "musical_instrument",
+    "costCopper": 3000,
+    "weightLb": 1,
+    "defaultAbility": "cha"
+  },
+  {
+    "id": "wand",
+    "kind": "gear",
+    "name": "Wand (Arcane Focus)",
+    "category": "arcane_focus",
+    "costCopper": 1000,
+    "weightLb": 1
+  },
+  {
+    "id": "war-pick",
+    "kind": "weapon",
+    "name": "War Pick",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 500,
+    "weightLb": 2,
+    "damageDice": "1d8",
+    "damageType": "piercing",
+    "properties": []
+  },
+  {
+    "id": "warhammer",
+    "kind": "weapon",
+    "name": "Warhammer",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 1500,
+    "weightLb": 2,
+    "damageDice": "1d8",
+    "damageType": "bludgeoning",
+    "versatileDamageDice": "1d10",
+    "properties": [
+      "versatile"
+    ]
+  },
+  {
+    "id": "waterskin",
+    "kind": "gear",
+    "name": "Waterskin",
+    "category": "container",
+    "costCopper": 20,
+    "weightLb": 5
+  },
+  {
+    "id": "weavers-tools",
+    "kind": "tool",
+    "name": "Weaver's Tools",
+    "category": "artisans_tools",
+    "costCopper": 100,
+    "weightLb": 5,
+    "defaultAbility": "dex"
+  },
+  {
+    "id": "whip",
+    "kind": "weapon",
+    "name": "Whip",
+    "category": "martial",
+    "rangeType": "melee",
+    "costCopper": 200,
+    "weightLb": 3,
+    "damageDice": "1d4",
+    "damageType": "slashing",
+    "properties": [
+      "finesse",
+      "reach"
+    ]
+  },
+  {
+    "id": "whistle",
+    "kind": "gear",
+    "name": "Signal Whistle",
+    "category": "standard_gear",
+    "costCopper": 5,
+    "weightLb": 0
+  },
+  {
+    "id": "woodcarvers-tools",
+    "kind": "tool",
+    "name": "Woodcarver's Tools",
+    "category": "artisans_tools",
+    "costCopper": 100,
+    "weightLb": 5,
+    "defaultAbility": "dex"
+  },
+  {
+    "id": "wooden-staff",
+    "kind": "gear",
+    "name": "Wooden Staff (Druidic Focus)",
+    "category": "druidic_focus",
+    "costCopper": 500,
+    "weightLb": 4
+  },
+  {
+    "id": "yew-wand",
+    "kind": "gear",
+    "name": "Yew Wand (Druidic Focus)",
+    "category": "druidic_focus",
+    "costCopper": 1000,
+    "weightLb": 1
+  }
+]

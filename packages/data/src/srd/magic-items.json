@@ -1,0 +1,498 @@
+[
+  {
+    "id": "amulet-of-health",
+    "name": "Amulet of Health",
+    "category": "wondrous",
+    "rarity": "rare",
+    "requiresAttunement": true,
+    "modifiers": [
+      {
+        "type": "set_ability_minimum",
+        "ability": "con",
+        "minimum": 19
+      }
+    ],
+    "description": "Your Constitution score is 19 while you wear this amulet. It has no effect on you if your Constitution is already 19 or higher without it."
+  },
+  {
+    "id": "armor-plus-1",
+    "name": "Armor, +1",
+    "category": "armor",
+    "rarity": "rare",
+    "requiresAttunement": false,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 1,
+        "condition": "wearing_armor"
+      }
+    ],
+    "description": "You have a +1 bonus to AC while wearing this armor."
+  },
+  {
+    "id": "armor-plus-2",
+    "name": "Armor, +2",
+    "category": "armor",
+    "rarity": "very_rare",
+    "requiresAttunement": false,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 2,
+        "condition": "wearing_armor"
+      }
+    ],
+    "description": "You have a +2 bonus to AC while wearing this armor."
+  },
+  {
+    "id": "armor-plus-3",
+    "name": "Armor, +3",
+    "category": "armor",
+    "rarity": "legendary",
+    "requiresAttunement": false,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 3,
+        "condition": "wearing_armor"
+      }
+    ],
+    "description": "You have a +3 bonus to AC while wearing this armor."
+  },
+  {
+    "id": "bag-of-holding",
+    "name": "Bag of Holding",
+    "category": "wondrous",
+    "rarity": "uncommon",
+    "requiresAttunement": false,
+    "modifiers": [],
+    "description": "This bag has an interior space considerably larger than its outside dimensions, holding up to 500 pounds while always weighing 15 pounds."
+  },
+  {
+    "id": "belt-of-hill-giant-strength",
+    "name": "Belt of Hill Giant Strength",
+    "category": "wondrous",
+    "rarity": "rare",
+    "requiresAttunement": true,
+    "modifiers": [
+      {
+        "type": "set_ability_minimum",
+        "ability": "str",
+        "minimum": 21
+      }
+    ],
+    "description": "While wearing this belt, your Strength score changes to 21."
+  },
+  {
+    "id": "boots-of-elvenkind",
+    "name": "Boots of Elvenkind",
+    "category": "wondrous",
+    "rarity": "uncommon",
+    "requiresAttunement": false,
+    "modifiers": [
+      {
+        "type": "roll_mode",
+        "mode": "advantage",
+        "target": "skill:stealth"
+      }
+    ],
+    "description": "While you wear these boots, your steps make no sound, and you have advantage on Dexterity (Stealth) checks that rely on moving silently."
+  },
+  {
+    "id": "bracers-of-defense",
+    "name": "Bracers of Defense",
+    "category": "wondrous",
+    "rarity": "rare",
+    "requiresAttunement": true,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 2,
+        "condition": "wearing_no_armor"
+      }
+    ],
+    "description": "While wearing these bracers, you gain a +2 bonus to AC if you are wearing no armor and using no shield."
+  },
+  {
+    "id": "cloak-of-elvenkind",
+    "name": "Cloak of Elvenkind",
+    "category": "wondrous",
+    "rarity": "uncommon",
+    "requiresAttunement": true,
+    "modifiers": [
+      {
+        "type": "roll_mode",
+        "mode": "advantage",
+        "target": "skill:stealth"
+      }
+    ],
+    "description": "While you wear this cloak with its hood up, Wisdom (Perception) checks made to see you have disadvantage, and you have advantage on Dexterity (Stealth) checks made to hide."
+  },
+  {
+    "id": "cloak-of-protection",
+    "name": "Cloak of Protection",
+    "category": "wondrous",
+    "rarity": "uncommon",
+    "requiresAttunement": true,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 1
+      },
+      {
+        "type": "flat_bonus",
+        "target": "all_saving_throws",
+        "value": 1
+      }
+    ],
+    "description": "You gain a +1 bonus to AC and saving throws while you wear this cloak."
+  },
+  {
+    "id": "flame-tongue",
+    "name": "Flame Tongue",
+    "category": "weapon",
+    "rarity": "rare",
+    "requiresAttunement": true,
+    "baseEquipmentId": "longsword",
+    "modifiers": [],
+    "description": "You can use a bonus action to speak this magic sword’s command word, causing flames to erupt from the blade and deal an extra 2d6 fire damage on a hit."
+  },
+  {
+    "id": "gauntlets-of-ogre-power",
+    "name": "Gauntlets of Ogre Power",
+    "category": "wondrous",
+    "rarity": "uncommon",
+    "requiresAttunement": true,
+    "modifiers": [
+      {
+        "type": "set_ability_minimum",
+        "ability": "str",
+        "minimum": 19
+      }
+    ],
+    "description": "Your Strength score is 19 while you wear these gauntlets."
+  },
+  {
+    "id": "longsword-plus-1",
+    "name": "Longsword, +1",
+    "category": "weapon",
+    "rarity": "uncommon",
+    "requiresAttunement": false,
+    "baseEquipmentId": "longsword",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "melee_attack",
+        "value": 1
+      },
+      {
+        "type": "flat_bonus",
+        "target": "melee_damage",
+        "value": 1
+      }
+    ],
+    "description": "You have a +1 bonus to attack and damage rolls made with this magic longsword."
+  },
+  {
+    "id": "periapt-of-wound-closure",
+    "name": "Periapt of Wound Closure",
+    "category": "wondrous",
+    "rarity": "uncommon",
+    "requiresAttunement": true,
+    "modifiers": [],
+    "description": "While you wear this pendant, you stabilize whenever you are dying at the start of your turn. In addition, whenever you roll a Hit Die to regain hit points, double the number of hit points it restores."
+  },
+  {
+    "id": "potion-of-greater-healing",
+    "name": "Potion of Greater Healing",
+    "category": "potion",
+    "rarity": "uncommon",
+    "requiresAttunement": false,
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "drink-potion-of-greater-healing",
+        "name": "Drink Potion of Greater Healing",
+        "description": "You regain 4d4 + 4 hit points when you drink this potion.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "heal",
+            "diceFormula": "4d4 + 4"
+          }
+        ]
+      }
+    ],
+    "description": "You regain 4d4 + 4 hit points when you drink this potion."
+  },
+  {
+    "id": "potion-of-superior-healing",
+    "name": "Potion of Superior Healing",
+    "category": "potion",
+    "rarity": "rare",
+    "requiresAttunement": false,
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "drink-potion-of-superior-healing",
+        "name": "Drink Potion of Superior Healing",
+        "description": "You regain 8d4 + 8 hit points when you drink this potion.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "heal",
+            "diceFormula": "8d4 + 8"
+          }
+        ]
+      }
+    ],
+    "description": "You regain 8d4 + 8 hit points when you drink this potion."
+  },
+  {
+    "id": "potion-of-supreme-healing",
+    "name": "Potion of Supreme Healing",
+    "category": "potion",
+    "rarity": "very_rare",
+    "requiresAttunement": false,
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "drink-potion-of-supreme-healing",
+        "name": "Drink Potion of Supreme Healing",
+        "description": "You regain 10d4 + 20 hit points when you drink this potion.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "heal",
+            "diceFormula": "10d4 + 20"
+          }
+        ]
+      }
+    ],
+    "description": "You regain 10d4 + 20 hit points when you drink this potion."
+  },
+  {
+    "id": "ring-of-protection",
+    "name": "Ring of Protection",
+    "category": "ring",
+    "rarity": "rare",
+    "requiresAttunement": true,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 1
+      },
+      {
+        "type": "flat_bonus",
+        "target": "all_saving_throws",
+        "value": 1
+      }
+    ],
+    "description": "You gain a +1 bonus to AC and saving throws while wearing this ring."
+  },
+  {
+    "id": "scroll-of-fireball",
+    "name": "Spell Scroll (Fireball)",
+    "category": "scroll",
+    "rarity": "uncommon",
+    "requiresAttunement": false,
+    "modifiers": [],
+    "description": "A spell scroll bears the words of the fireball spell, written in a mystical cipher (Save DC 15)."
+  },
+  {
+    "id": "shield-plus-1",
+    "name": "Shield, +1",
+    "category": "armor",
+    "rarity": "uncommon",
+    "requiresAttunement": false,
+    "baseEquipmentId": "shield",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 1,
+        "condition": "wielding_shield"
+      }
+    ],
+    "description": "While holding this shield, you have a +1 bonus to AC in addition to the shield’s normal bonus to AC."
+  },
+  {
+    "id": "shield-plus-2",
+    "name": "Shield, +2",
+    "category": "armor",
+    "rarity": "rare",
+    "requiresAttunement": false,
+    "baseEquipmentId": "shield",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 2,
+        "condition": "wielding_shield"
+      }
+    ],
+    "description": "While holding this shield, you have a +2 bonus to AC in addition to the shield’s normal bonus to AC."
+  },
+  {
+    "id": "shield-plus-3",
+    "name": "Shield, +3",
+    "category": "armor",
+    "rarity": "very_rare",
+    "requiresAttunement": false,
+    "baseEquipmentId": "shield",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "ac",
+        "value": 3,
+        "condition": "wielding_shield"
+      }
+    ],
+    "description": "While holding this shield, you have a +3 bonus to AC in addition to the shield’s normal bonus to AC."
+  },
+  {
+    "id": "wand-of-magic-missiles",
+    "name": "Wand of Magic Missiles",
+    "category": "wand",
+    "rarity": "uncommon",
+    "requiresAttunement": false,
+    "charges": {
+      "max": 7,
+      "rechargeFormula": "1d6 + 1",
+      "rechargeTiming": "dawn"
+    },
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "wand-cast-magic-missile",
+        "name": "Magic Missile (1 Charge)",
+        "description": "Expend 1 charge to cast magic missile as a 1st-level spell (3 darts dealing 1d4 + 1 force damage each).",
+        "actionCost": "action",
+        "targeting": {
+          "type": "multiple",
+          "rangeFeet": 120,
+          "requiresSight": true,
+          "targetFilter": "creature",
+          "maxTargets": 3
+        },
+        "effects": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "1d4 + 1",
+            "damageType": "force",
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "description": "This wand has 7 charges. While holding it, you can use an action to expend 1 or more of its charges to cast the magic missile spell from it."
+  },
+  {
+    "id": "weapon-plus-1",
+    "name": "Weapon, +1",
+    "category": "weapon",
+    "rarity": "uncommon",
+    "requiresAttunement": false,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "melee_attack",
+        "value": 1
+      },
+      {
+        "type": "flat_bonus",
+        "target": "ranged_attack",
+        "value": 1
+      },
+      {
+        "type": "flat_bonus",
+        "target": "melee_damage",
+        "value": 1
+      },
+      {
+        "type": "flat_bonus",
+        "target": "ranged_damage",
+        "value": 1
+      }
+    ],
+    "description": "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+  },
+  {
+    "id": "weapon-plus-2",
+    "name": "Weapon, +2",
+    "category": "weapon",
+    "rarity": "rare",
+    "requiresAttunement": false,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "melee_attack",
+        "value": 2
+      },
+      {
+        "type": "flat_bonus",
+        "target": "ranged_attack",
+        "value": 2
+      },
+      {
+        "type": "flat_bonus",
+        "target": "melee_damage",
+        "value": 2
+      },
+      {
+        "type": "flat_bonus",
+        "target": "ranged_damage",
+        "value": 2
+      }
+    ],
+    "description": "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+  },
+  {
+    "id": "weapon-plus-3",
+    "name": "Weapon, +3",
+    "category": "weapon",
+    "rarity": "very_rare",
+    "requiresAttunement": false,
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "melee_attack",
+        "value": 3
+      },
+      {
+        "type": "flat_bonus",
+        "target": "ranged_attack",
+        "value": 3
+      },
+      {
+        "type": "flat_bonus",
+        "target": "melee_damage",
+        "value": 3
+      },
+      {
+        "type": "flat_bonus",
+        "target": "ranged_damage",
+        "value": 3
+      }
+    ],
+    "description": "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+  }
+]

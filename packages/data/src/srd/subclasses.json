@@ -1,0 +1,582 @@
+[
+  {
+    "id": "berserker",
+    "classId": "barbarian",
+    "name": "Path of the Berserker",
+    "subclassFlavor": "Primal Path",
+    "description": "For some barbarians, rage is a means to an end—that end being violence. The Path of the Berserker is a path of untrammeled fury, slick with blood.",
+    "levels": [
+      {
+        "level": 3,
+        "featureIds": [
+          "frenzy"
+        ]
+      },
+      {
+        "level": 6,
+        "featureIds": [
+          "mindless-rage"
+        ]
+      },
+      {
+        "level": 10,
+        "featureIds": [
+          "intimidating-presence"
+        ]
+      },
+      {
+        "level": 14,
+        "featureIds": [
+          "retaliation"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "champion",
+    "classId": "fighter",
+    "name": "Champion",
+    "subclassFlavor": "Martial Archetype",
+    "description": "The archetypal Champion focuses on the development of raw physical power honed to deadly perfection.",
+    "levels": [
+      {
+        "level": 3,
+        "featureIds": [
+          "improved-critical"
+        ]
+      },
+      {
+        "level": 7,
+        "featureIds": [
+          "remarkable-athlete"
+        ]
+      },
+      {
+        "level": 10,
+        "featureIds": [
+          "additional-fighting-style"
+        ]
+      },
+      {
+        "level": 15,
+        "featureIds": [
+          "superior-critical"
+        ]
+      },
+      {
+        "level": 18,
+        "featureIds": [
+          "survivor"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "devotion",
+    "classId": "paladin",
+    "name": "Oath of Devotion",
+    "subclassFlavor": "Sacred Oath",
+    "description": "The Oath of Devotion binds a paladin to the loftiest ideals of justice, virtue, and order.",
+    "levels": [
+      {
+        "level": 3,
+        "featureIds": [
+          "sacred-weapon",
+          "turn-the-unholy"
+        ]
+      },
+      {
+        "level": 7,
+        "featureIds": [
+          "aura-of-devotion"
+        ]
+      },
+      {
+        "level": 15,
+        "featureIds": [
+          "purity-of-spirit"
+        ]
+      },
+      {
+        "level": 20,
+        "featureIds": [
+          "holy-nimbus"
+        ]
+      }
+    ],
+    "spells": [
+      {
+        "classLevel": 3,
+        "spellIds": [
+          "protection-from-evil-and-good",
+          "sanctuary"
+        ],
+        "mode": "always_prepared"
+      },
+      {
+        "classLevel": 5,
+        "spellIds": [
+          "lesser-restoration",
+          "zone-of-truth"
+        ],
+        "mode": "always_prepared"
+      },
+      {
+        "classLevel": 9,
+        "spellIds": [
+          "beacon-of-hope",
+          "dispel-magic"
+        ],
+        "mode": "always_prepared"
+      },
+      {
+        "classLevel": 13,
+        "spellIds": [
+          "freedom-of-movement",
+          "guardian-of-faith"
+        ],
+        "mode": "always_prepared"
+      },
+      {
+        "classLevel": 17,
+        "spellIds": [
+          "commune",
+          "flame-strike"
+        ],
+        "mode": "always_prepared"
+      }
+    ]
+  },
+  {
+    "id": "draconic",
+    "classId": "sorcerer",
+    "name": "Draconic Bloodline",
+    "subclassFlavor": "Sorcerous Origin",
+    "description": "Your innate magic comes from draconic magic that was mingled with your blood or that of your ancestors.",
+    "levels": [
+      {
+        "level": 1,
+        "featureIds": [
+          "dragon-ancestor",
+          "draconic-resilience"
+        ]
+      },
+      {
+        "level": 6,
+        "featureIds": [
+          "elemental-affinity"
+        ]
+      },
+      {
+        "level": 14,
+        "featureIds": [
+          "dragon-wings"
+        ]
+      },
+      {
+        "level": 18,
+        "featureIds": [
+          "draconic-presence"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "evocation",
+    "classId": "wizard",
+    "name": "School of Evocation",
+    "subclassFlavor": "Arcane Tradition",
+    "description": "You focus your study on magic that creates powerful elemental effects such as bitter cold, searing flame, rolling thunder, crackling lightning, and burning acid.",
+    "levels": [
+      {
+        "level": 2,
+        "featureIds": [
+          "evocation-savant",
+          "sculpt-spells"
+        ]
+      },
+      {
+        "level": 6,
+        "featureIds": [
+          "potent-cantrip"
+        ]
+      },
+      {
+        "level": 10,
+        "featureIds": [
+          "empowered-evocation"
+        ]
+      },
+      {
+        "level": 14,
+        "featureIds": [
+          "overchannel"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fiend",
+    "classId": "warlock",
+    "name": "The Fiend",
+    "subclassFlavor": "Otherworldly Patron",
+    "description": "You have made a pact with a fiend from the lower planes of existence, a being whose aims are evil, even if you strive against those aims.",
+    "levels": [
+      {
+        "level": 1,
+        "featureIds": [
+          "dark-ones-blessing"
+        ]
+      },
+      {
+        "level": 6,
+        "featureIds": [
+          "dark-ones-own-luck"
+        ]
+      },
+      {
+        "level": 10,
+        "featureIds": [
+          "fiendish-resilience"
+        ]
+      },
+      {
+        "level": 14,
+        "featureIds": [
+          "hurl-through-hell"
+        ]
+      }
+    ],
+    "spells": [
+      {
+        "classLevel": 1,
+        "spellIds": [
+          "burning-hands",
+          "command"
+        ],
+        "mode": "expanded_spell_list"
+      },
+      {
+        "classLevel": 3,
+        "spellIds": [
+          "blindness-deafness",
+          "scorching-ray"
+        ],
+        "mode": "expanded_spell_list"
+      },
+      {
+        "classLevel": 5,
+        "spellIds": [
+          "fireball",
+          "stinking-cloud"
+        ],
+        "mode": "expanded_spell_list"
+      },
+      {
+        "classLevel": 7,
+        "spellIds": [
+          "fire-shield",
+          "wall-of-fire"
+        ],
+        "mode": "expanded_spell_list"
+      },
+      {
+        "classLevel": 9,
+        "spellIds": [
+          "flame-strike",
+          "hallow"
+        ],
+        "mode": "expanded_spell_list"
+      }
+    ]
+  },
+  {
+    "id": "hunter",
+    "classId": "ranger",
+    "name": "Hunter",
+    "subclassFlavor": "Ranger Archetype",
+    "description": "Emulating the Hunter archetype means accepting your place as a bulwark between civilization and the terrors of the wilderness.",
+    "levels": [
+      {
+        "level": 3,
+        "featureIds": [
+          "hunters-prey"
+        ]
+      },
+      {
+        "level": 7,
+        "featureIds": [
+          "defensive-tactics"
+        ]
+      },
+      {
+        "level": 11,
+        "featureIds": [
+          "multiattack-hunter"
+        ]
+      },
+      {
+        "level": 15,
+        "featureIds": [
+          "superior-hunters-defense"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "land",
+    "classId": "druid",
+    "name": "Circle of the Land",
+    "subclassFlavor": "Druid Circle",
+    "description": "The Circle of the Land is made up of mystics and sages who safeguard ancient knowledge and rites through a vast oral tradition.",
+    "levels": [
+      {
+        "level": 2,
+        "featureIds": [
+          "bonus-cantrip-land",
+          "natural-recovery"
+        ]
+      },
+      {
+        "level": 3,
+        "featureIds": [
+          "circle-spells"
+        ]
+      },
+      {
+        "level": 6,
+        "featureIds": [
+          "lands-stride"
+        ]
+      },
+      {
+        "level": 10,
+        "featureIds": [
+          "natures-ward"
+        ]
+      },
+      {
+        "level": 14,
+        "featureIds": [
+          "natures-sanctuary"
+        ]
+      }
+    ],
+    "spells": [
+      {
+        "classLevel": 3,
+        "spellIds": [
+          "barkskin",
+          "misty-step",
+          "web"
+        ],
+        "mode": "always_prepared",
+        "terrain": "forest"
+      },
+      {
+        "classLevel": 5,
+        "spellIds": [
+          "call-lightning",
+          "lightning-bolt"
+        ],
+        "mode": "always_prepared",
+        "terrain": "forest"
+      },
+      {
+        "classLevel": 7,
+        "spellIds": [
+          "freedom-of-movement",
+          "stoneskin"
+        ],
+        "mode": "always_prepared",
+        "terrain": "forest"
+      },
+      {
+        "classLevel": 9,
+        "spellIds": [
+          "cone-of-cold",
+          "tree-stride"
+        ],
+        "mode": "always_prepared",
+        "terrain": "forest"
+      }
+    ]
+  },
+  {
+    "id": "life",
+    "classId": "cleric",
+    "name": "Life Domain",
+    "subclassFlavor": "Divine Domain",
+    "description": "The Life domain focuses on the vibrant positive energy—one of the fundamental forces of the universe—that sustains all life.",
+    "levels": [
+      {
+        "level": 1,
+        "featureIds": [
+          "bonus-proficiency-life",
+          "disciple-of-life"
+        ]
+      },
+      {
+        "level": 2,
+        "featureIds": [
+          "channel-divinity-preserve-life"
+        ]
+      },
+      {
+        "level": 6,
+        "featureIds": [
+          "blessed-healer"
+        ]
+      },
+      {
+        "level": 8,
+        "featureIds": [
+          "divine-strike-life"
+        ]
+      },
+      {
+        "level": 17,
+        "featureIds": [
+          "supreme-healing"
+        ]
+      }
+    ],
+    "spells": [
+      {
+        "classLevel": 1,
+        "spellIds": [
+          "bless",
+          "cure-wounds"
+        ],
+        "mode": "always_prepared"
+      },
+      {
+        "classLevel": 3,
+        "spellIds": [
+          "lesser-restoration",
+          "spiritual-weapon"
+        ],
+        "mode": "always_prepared"
+      },
+      {
+        "classLevel": 5,
+        "spellIds": [
+          "beacon-of-hope",
+          "revivify"
+        ],
+        "mode": "always_prepared"
+      },
+      {
+        "classLevel": 7,
+        "spellIds": [
+          "death-ward",
+          "guardian-of-faith"
+        ],
+        "mode": "always_prepared"
+      },
+      {
+        "classLevel": 9,
+        "spellIds": [
+          "mass-cure-wounds",
+          "raise-dead"
+        ],
+        "mode": "always_prepared"
+      }
+    ]
+  },
+  {
+    "id": "lore",
+    "classId": "bard",
+    "name": "College of Lore",
+    "subclassFlavor": "Bard College",
+    "description": "Bards of the College of Lore know something about most things, collecting bits of knowledge from sources as diverse as scholarly tomes and peasant tales.",
+    "levels": [
+      {
+        "level": 3,
+        "featureIds": [
+          "bonus-proficiencies-lore",
+          "cutting-words"
+        ]
+      },
+      {
+        "level": 6,
+        "featureIds": [
+          "additional-magical-secrets"
+        ]
+      },
+      {
+        "level": 14,
+        "featureIds": [
+          "peerless-skill"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "open-hand",
+    "classId": "monk",
+    "name": "Way of the Open Hand",
+    "subclassFlavor": "Monastic Tradition",
+    "description": "Monks of the Way of the Open Hand are the ultimate masters of martial arts combat, whether armed or unarmed.",
+    "levels": [
+      {
+        "level": 3,
+        "featureIds": [
+          "open-hand-technique"
+        ]
+      },
+      {
+        "level": 6,
+        "featureIds": [
+          "wholeness-of-body"
+        ]
+      },
+      {
+        "level": 11,
+        "featureIds": [
+          "tranquility"
+        ]
+      },
+      {
+        "level": 17,
+        "featureIds": [
+          "quivering-palm"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "thief",
+    "classId": "rogue",
+    "name": "Thief",
+    "subclassFlavor": "Roguish Archetype",
+    "description": "You hone your skills in the larcenous arts. Burglars, bandits, cutpurses, and other criminals typically follow this archetype.",
+    "levels": [
+      {
+        "level": 3,
+        "featureIds": [
+          "fast-hands",
+          "second-story-work"
+        ]
+      },
+      {
+        "level": 9,
+        "featureIds": [
+          "supreme-sneak"
+        ]
+      },
+      {
+        "level": 13,
+        "featureIds": [
+          "use-magic-device"
+        ]
+      },
+      {
+        "level": 17,
+        "featureIds": [
+          "thiefs-reflexes"
+        ]
+      }
+    ]
+  }
+]
