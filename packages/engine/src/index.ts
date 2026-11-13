@@ -9,3 +9,5 @@ export function getEngineMetadata() {
     attribution: SRD_LEGAL_ATTRIBUTION,
   };
 }
+
+export * from './dice/index.js';
