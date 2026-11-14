@@ -1,0 +1,291 @@
+import { Container, Graphics, Text } from 'pixi.js';
+import type { TileTerrainType } from '@srd5/engine';
+import type { CanvasCellInput, CanvasGridInput, Point, TerrainRenderOptions } from '../types.js';
+
+export const TERRAIN_PALETTE: Record<TileTerrainType, { fill: number; border?: number }> = {
+  void: { fill: 0x020617 },
+  floor_stone: { fill: 0x334155, border: 0x1e293b },
+  floor_wood: { fill: 0x78350f, border: 0x451a03 },
+  wall_solid: { fill: 0x0f172a, border: 0x020617 },
+  chasm: { fill: 0x020617, border: 0x334155 },
+  water_shallow: { fill: 0x0284c7, border: 0x0369a1 },
+  water_deep: { fill: 0x1e3a8a, border: 0x172554 },
+  rubble: { fill: 0x475569, border: 0x334155 },
+  lava: { fill: 0xdc2626, border: 0xb91c1c },
+};
+
+/**
+ * Handles rendering the terrain tiles, 5-ft grid lines overlay, coordinates, and cell highlights.
+ */
+export class TerrainTileRenderer {
+  public readonly container: Container;
+  private tilesGraphics: Graphics;
+  private gridLinesGraphics: Graphics;
+  private highlightsGraphics: Graphics;
+  private coordsContainer: Container;
+
+  private lastGridWidth = -1;
+  private lastGridHeight = -1;
+  private lastCellSize = -1;
+  private lastShowGridLines: boolean | undefined;
+  private lastShowCoords: boolean | undefined;
+
+  constructor(parent?: Container) {
+    this.container = new Container();
+    this.container.label = 'TerrainTileRenderer';
+
+    this.tilesGraphics = new Graphics();
+    this.tilesGraphics.label = 'TilesGraphics';
+
+    this.gridLinesGraphics = new Graphics();
+    this.gridLinesGraphics.label = 'GridLinesGraphics';
+
+    this.highlightsGraphics = new Graphics();
+    this.highlightsGraphics.label = 'HighlightsGraphics';
+
+    this.coordsContainer = new Container();
+    this.coordsContainer.label = 'CoordsContainer';
+
+    this.container.addChild(this.tilesGraphics);
+    this.container.addChild(this.gridLinesGraphics);
+    this.container.addChild(this.coordsContainer);
+    this.container.addChild(this.highlightsGraphics);
+
+    if (parent) {
+      parent.addChild(this.container);
+    }
+  }
+
+  /**
+   * Renders or updates the terrain layer with the specified options.
+   */
+  public render(options: TerrainRenderOptions): void {
+    const {
+      grid,
+      cellSize,
+      showGridLines = true,
+      showCoordinates = false,
+      hoveredCell,
+      selectedCell,
+    } = options;
+
+    const gridChanged =
+      this.lastGridWidth !== grid.width ||
+      this.lastGridHeight !== grid.height ||
+      this.lastCellSize !== cellSize;
+
+    if (gridChanged) {
+      this.lastGridWidth = grid.width;
+      this.lastGridHeight = grid.height;
+      this.lastCellSize = cellSize;
+      this.drawTiles(grid, cellSize);
+    }
+
+    if (gridChanged || this.lastShowGridLines !== showGridLines) {
+      this.lastShowGridLines = showGridLines;
+      this.drawGridLines(grid.width, grid.height, cellSize, showGridLines);
+    }
+
+    if (gridChanged || this.lastShowCoords !== showCoordinates) {
+      this.lastShowCoords = showCoordinates;
+      this.drawCoordinates(grid.width, grid.height, cellSize, showCoordinates);
+    }
+
+    this.drawHighlights(grid.width, grid.height, cellSize, hoveredCell, selectedCell);
+  }
+
+  /**
+   * Redraws all individual terrain tiles.
+   */
+  public drawTiles(grid: CanvasGridInput, cellSize: number): void {
+    this.tilesGraphics.clear();
+
+    const cellMap = new Map<string, CanvasCellInput>();
+    for (const cell of grid.cells) {
+      cellMap.set(`${cell.x},${cell.y}`, cell);
+    }
+
+    for (let y = 0; y < grid.height; y++) {
+      for (let x = 0; x < grid.width; x++) {
+        const cell = cellMap.get(`${x},${y}`);
+        const px = x * cellSize;
+        const py = y * cellSize;
+        const terrain: TileTerrainType = cell?.terrain ?? 'floor_stone';
+        const palette = TERRAIN_PALETTE[terrain] ?? TERRAIN_PALETTE.floor_stone;
+
+        // Base tile fill
+        this.tilesGraphics.rect(px, py, cellSize, cellSize).fill(palette.fill);
+
+        // Subtle tile inner border
+        if (palette.border !== undefined) {
+          this.tilesGraphics.rect(px, py, cellSize, cellSize).stroke({
+            color: palette.border,
+            width: 1,
+            alpha: 0.5,
+          });
+        }
+
+        // Distinct styling details by terrain type
+        if (terrain === 'wall_solid') {
+          // Thick wall bevel
+          this.tilesGraphics
+            .rect(px + 3, py + 3, cellSize - 6, cellSize - 6)
+            .fill(0x020617);
+        } else if (terrain === 'floor_wood') {
+          // Horizontal wood plank line
+          this.tilesGraphics
+            .moveTo(px, py + cellSize / 2)
+            .lineTo(px + cellSize, py + cellSize / 2)
+            .stroke({ color: 0x451a03, width: 1, alpha: 0.4 });
+        } else if (terrain === 'water_shallow') {
+          // Subtle wave ripple
+          this.tilesGraphics
+            .moveTo(px + 6, py + cellSize / 2)
+            .lineTo(px + cellSize - 6, py + cellSize / 2)
+            .stroke({ color: 0x38bdf8, width: 1.5, alpha: 0.6 });
+        } else if (terrain === 'rubble') {
+          // Debris markings
+          this.tilesGraphics
+            .rect(px + 8, py + 8, 6, 6)
+            .fill(0x1e293b);
+          this.tilesGraphics
+            .rect(px + cellSize - 14, py + cellSize - 14, 5, 5)
+            .fill(0x1e293b);
+        } else if (terrain === 'lava') {
+          // Inner molten glow
+          this.tilesGraphics
+            .rect(px + 4, py + 4, cellSize - 8, cellSize - 8)
+            .fill(0xf97316);
+        }
+
+        // Difficult terrain diagonal hatching
+        if (cell?.difficultTerrain) {
+          this.tilesGraphics
+            .moveTo(px + 4, py + cellSize - 4)
+            .lineTo(px + cellSize - 4, py + 4)
+            .stroke({ color: 0xf59e0b, width: 1.5, alpha: 0.5 });
+        }
+      }
+    }
+  }
+
+  /**
+   * Draws the 5-ft tactical grid lines overlay across the map.
+   */
+  public drawGridLines(
+    width: number,
+    height: number,
+    cellSize: number,
+    showGridLines: boolean,
+  ): void {
+    this.gridLinesGraphics.clear();
+    if (!showGridLines) return;
+
+    const totalW = width * cellSize;
+    const totalH = height * cellSize;
+
+    // Vertical lines
+    for (let x = 0; x <= width; x++) {
+      const px = x * cellSize;
+      this.gridLinesGraphics
+        .moveTo(px, 0)
+        .lineTo(px, totalH)
+        .stroke({ color: 0x94a3b8, width: 1, alpha: 0.22 });
+    }
+
+    // Horizontal lines
+    for (let y = 0; y <= height; y++) {
+      const py = y * cellSize;
+      this.gridLinesGraphics
+        .moveTo(0, py)
+        .lineTo(totalW, py)
+        .stroke({ color: 0x94a3b8, width: 1, alpha: 0.22 });
+    }
+  }
+
+  /**
+   * Draws coordinate labels on each cell when enabled.
+   */
+  public drawCoordinates(
+    width: number,
+    height: number,
+    cellSize: number,
+    showCoordinates: boolean,
+  ): void {
+    this.coordsContainer.removeChildren();
+    if (!showCoordinates) return;
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const text = new Text({
+          text: `${x},${y}`,
+          style: {
+            fontSize: 9,
+            fill: 0x94a3b8,
+            fontFamily: 'monospace',
+          },
+        });
+        text.position.set(x * cellSize + 3, y * cellSize + 3);
+        text.alpha = 0.6;
+        this.coordsContainer.addChild(text);
+      }
+    }
+  }
+
+  /**
+   * Draws hover and selection highlight frames over the grid.
+   */
+  public drawHighlights(
+    width: number,
+    height: number,
+    cellSize: number,
+    hoveredCell?: Point | null,
+    selectedCell?: Point | null,
+  ): void {
+    this.highlightsGraphics.clear();
+
+    // Hovered cell highlight (cyan glow)
+    if (
+      hoveredCell &&
+      hoveredCell.x >= 0 &&
+      hoveredCell.x < width &&
+      hoveredCell.y >= 0 &&
+      hoveredCell.y < height
+    ) {
+      const px = hoveredCell.x * cellSize;
+      const py = hoveredCell.y * cellSize;
+
+      this.highlightsGraphics
+        .rect(px, py, cellSize, cellSize)
+        .fill({ color: 0x38bdf8, alpha: 0.22 });
+
+      this.highlightsGraphics
+        .rect(px, py, cellSize, cellSize)
+        .stroke({ color: 0x38bdf8, width: 2, alpha: 0.85 });
+    }
+
+    // Selected cell highlight (golden ring)
+    if (
+      selectedCell &&
+      selectedCell.x >= 0 &&
+      selectedCell.x < width &&
+      selectedCell.y >= 0 &&
+      selectedCell.y < height
+    ) {
+      const px = selectedCell.x * cellSize;
+      const py = selectedCell.y * cellSize;
+
+      this.highlightsGraphics
+        .rect(px, py, cellSize, cellSize)
+        .fill({ color: 0xfacc15, alpha: 0.25 });
+
+      this.highlightsGraphics
+        .rect(px, py, cellSize, cellSize)
+        .stroke({ color: 0xfacc15, width: 3, alpha: 0.95 });
+    }
+  }
+
+  public destroy(): void {
+    this.container.destroy({ children: true });
+  }
+}
