@@ -1,6 +1,7 @@
 import type {
   ConditionId,
   DamageType,
+  EffectStepSpec,
   WeaponProperty,
 } from '@srd5/data';
 import {
@@ -41,6 +42,8 @@ import {
 } from './turn-budget.js';
 import { evaluateCombatVictory } from './state-machine.js';
 import { applyDamage } from './damage.js';
+import { applyConditionToCombatant } from './conditions.js';
+import { getTargetSavingThrowBonus } from './spellcasting.js';
 import {
   detectProtectionTrigger,
   detectAttackHitReactions,
@@ -85,6 +88,7 @@ export interface ResolvedAttackDetails {
   properties: WeaponProperty[];
   isOffHand: boolean;
   versatileTwoHanded?: boolean;
+  secondaryOnHit?: EffectStepSpec[];
 }
 
 export interface ExecuteAttackOptions {
@@ -342,6 +346,7 @@ export function resolveCombatantAttackProfile(
       critRange: attackStep.critRange ?? 20,
       properties: [],
       isOffHand: false,
+      secondaryOnHit: attackStep.onHit.filter((e) => e !== damageStep),
     };
   }
 
@@ -621,7 +626,17 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   }
 
   const coverAcBonus = COVER_AC_BONUS[cover];
-  const targetEffectiveAc = target.armorClass + coverAcBonus;
+  let activeAcBonus = 0;
+  if (target.activeEffects) {
+    for (const eff of target.activeEffects) {
+      for (const mod of eff.modifiers) {
+        if (mod.type === 'flat_bonus' && mod.target === 'ac') {
+          activeAcBonus += typeof mod.value === 'number' ? mod.value : parseInt(String(mod.value), 10) || 0;
+        }
+      }
+    }
+  }
+  const targetEffectiveAc = target.armorClass + coverAcBonus + activeAcBonus;
 
   // 5. Protection Fighting Style check
   let forcedDisadvantage = Boolean(options.forcedProtectionDisadvantage);
@@ -903,6 +918,69 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     currentState = dmgAppliedRes.state.rngState;
     nextTarget = dmgAppliedRes.state.combatants[target.id]!;
     events.push(...dmgAppliedRes.events);
+
+    // Secondary on-hit steps (e.g. monster saves vs prone, poison, or paralysis)
+    if (attack.secondaryOnHit && attack.secondaryOnHit.length > 0 && !nextTarget.isDead) {
+      for (const step of attack.secondaryOnHit) {
+        if (step.step === 'saving_throw') {
+          const saveBonus = getTargetSavingThrowBonus(nextTarget, step.ability);
+          const saveD20 = rollD20(currentState, { modifier: saveBonus, mode: 'normal' });
+          currentState = saveD20.nextState;
+          const dc = parseInt(step.dcFormula, 10) || 10;
+          const passed = saveD20.total >= dc;
+          events.push({
+            type: 'SAVING_THROW_RESOLVED',
+            entityId: nextTarget.id,
+            ability: step.ability,
+            dc,
+            roll: saveD20.naturalRoll,
+            total: saveD20.total,
+            outcome: passed ? 'success' : 'failure',
+            sourceSpellOrAbilityName: attack.name,
+          });
+          const followSteps = passed ? (step.onSuccess ?? []) : step.onFail;
+          for (const sub of followSteps) {
+            if (sub.step === 'apply_condition') {
+              const condRes = applyConditionToCombatant(nextTarget, sub.conditionId, {
+                sourceId: attacker.id,
+                sourceName: attack.name,
+                sourceEntityId: attacker.id,
+                durationRounds: sub.durationRounds,
+              });
+              nextTarget = condRes.combatant;
+              events.push(...condRes.events);
+            } else if (sub.step === 'deal_damage') {
+              const subDmg = rollDamage(currentState, sub.diceFormula);
+              currentState = subDmg.nextState;
+              const subApplied = applyDamage({
+                state: {
+                  ...currentCombatState,
+                  rngState: currentState,
+                  combatants: { ...currentCombatState.combatants, [target.id]: nextTarget },
+                },
+                targetId: nextTarget.id,
+                rawAmount: subDmg.total,
+                damageType: sub.damageType,
+                attackerId: attacker.id,
+                sourceName: attack.name,
+              });
+              currentState = subApplied.state.rngState;
+              nextTarget = subApplied.state.combatants[target.id]!;
+              events.push(...subApplied.events);
+            }
+          }
+        } else if (step.step === 'apply_condition') {
+          const condRes = applyConditionToCombatant(nextTarget, step.conditionId, {
+            sourceId: attacker.id,
+            sourceName: attack.name,
+            sourceEntityId: attacker.id,
+            durationRounds: step.durationRounds,
+          });
+          nextTarget = condRes.combatant;
+          events.push(...condRes.events);
+        }
+      }
+    }
   }
 
   events.push({

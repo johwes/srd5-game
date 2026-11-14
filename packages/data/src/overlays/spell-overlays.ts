@@ -936,7 +936,16 @@ export const SRD_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlaySpec>> = {
       requiresSight: true,
       targetFilter: 'enemy',
     },
-    effects: [],
+    effects: [
+      {
+        step: 'apply_active_effect',
+        effectId: 'counterspell-intercept',
+        name: 'Counterspell',
+        durationRounds: 0,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
   },
   fireball: {
     subclasses: ['fiend'],
@@ -1099,5 +1108,982 @@ export const SRD_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlaySpec>> = {
       mode: 'slot_level',
       bonusDicePerSlotAboveBase: '1d8',
     },
+  },
+
+  // --- Combat Tier A Spells (Level 0 - Level 3 additions) ---
+  aid: {
+    targeting: {
+      type: "multiple",
+      rangeFeet: 30,
+      targetFilter: "ally",
+      maxTargets: 3,
+    },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "aid-buff",
+        name: "Aid (+5 HP)",
+        durationRounds: 4800,
+        requiresConcentration: false,
+        modifiers: [
+          {
+            type: "flat_bonus",
+            target: "hp_per_level",
+            value: 0,
+          },
+        ],
+      },
+      {
+        step: "heal",
+        diceFormula: "5",
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusDicePerSlotAboveBase: "5",
+    },
+  },
+  "arcanists-magic-aura": {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "object_or_creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "arcanists-magic-aura-active",
+        name: "Arcanist Magic Aura",
+        durationRounds: 14400,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  barkskin: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "barkskin-buff",
+        name: "Barkskin",
+        durationRounds: 600,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "ac_calculation",
+            id: "barkskin",
+            formula: "16",
+            allowsShield: true,
+            requiresNoArmor: false,
+          },
+        ],
+      },
+    ],
+  },
+  "beacon-of-hope": {
+    targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "sphere", sizeFeet: 30 }, targetFilter: "ally" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "beacon-of-hope-buff",
+        name: "Beacon of Hope",
+        durationRounds: 10,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "save:wis",
+          },
+        ],
+      },
+    ],
+  },
+  "blindness-deafness": {
+    targeting: { type: "single", rangeFeet: 30, targetFilter: "creature" },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "con",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_condition",
+            conditionId: "blinded",
+            durationRounds: 10,
+            repeatSaveAtTurnEnd: {
+              ability: "con",
+              dcFormula: "@spellSaveDC",
+            },
+          },
+        ],
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusTargetsPerSlotAboveBase: 1,
+    },
+  },
+  "call-lightning": {
+    targeting: { type: "point_aoe", rangeFeet: 120, aoe: { shape: "cylinder", sizeFeet: 5 } },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "dex",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "deal_damage",
+            diceFormula: "3d10",
+            damageType: "lightning",
+            halfOnSaveSuccess: true,
+            isMagical: true,
+          },
+        ],
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusDicePerSlotAboveBase: "1d10",
+    },
+  },
+  "charm-person": {
+    targeting: { type: "single", rangeFeet: 30, targetFilter: "creature" },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "wis",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_condition",
+            conditionId: "charmed",
+            durationRounds: 600,
+          },
+        ],
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusTargetsPerSlotAboveBase: 1,
+    },
+  },
+  command: {
+    targeting: { type: "single", rangeFeet: 60, targetFilter: "creature" },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "wis",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_active_effect",
+            effectId: "command-compelled",
+            name: "Command",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusTargetsPerSlotAboveBase: 1,
+    },
+  },
+  "dancing-lights": {
+    targeting: { type: "point_aoe", rangeFeet: 120 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "dancing-lights-active",
+        name: "Dancing Lights",
+        durationRounds: 10,
+        requiresConcentration: true,
+        modifiers: [],
+      },
+    ],
+  },
+  darkness: {
+    targeting: { type: "point_aoe", rangeFeet: 60, aoe: { shape: "sphere", sizeFeet: 15 } },
+    effects: [
+      {
+        step: "create_hazard_zone",
+        zoneId: "darkness-zone",
+        shape: "sphere",
+        sizeFeet: 15,
+        durationRounds: 100,
+        requiresConcentration: true,
+        difficultTerrain: false,
+        obscurement: "heavy",
+        onEnterOrStartTurn: [],
+      },
+    ],
+  },
+  "detect-magic": {
+    targeting: { type: "self", rangeFeet: 0 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "detect-magic-active",
+        name: "Detect Magic",
+        durationRounds: 100,
+        requiresConcentration: true,
+        modifiers: [],
+      },
+    ],
+  },
+  "dispel-magic": {
+    targeting: { type: "single", rangeFeet: 120, targetFilter: "object_or_creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "dispel-magic-resolved",
+        name: "Dispel Magic",
+        durationRounds: 0,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  druidcraft: {
+    targeting: { type: "point_aoe", rangeFeet: 30 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "druidcraft-effect",
+        name: "Druidcraft",
+        durationRounds: 1,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  entangle: {
+    targeting: { type: "point_aoe", rangeFeet: 90, aoe: { shape: "cube", sizeFeet: 20 } },
+    effects: [
+      {
+        step: "create_hazard_zone",
+        zoneId: "entangle-zone",
+        shape: "cube",
+        sizeFeet: 20,
+        durationRounds: 10,
+        requiresConcentration: true,
+        difficultTerrain: true,
+        onEnterOrStartTurn: [
+          {
+            step: "saving_throw",
+            ability: "str",
+            dcFormula: "@spellSaveDC",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "restrained",
+                durationRounds: 10,
+                repeatSaveAtTurnEnd: {
+                  ability: "str",
+                  dcFormula: "@spellSaveDC",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "faerie-fire": {
+    targeting: { type: "point_aoe", rangeFeet: 60, aoe: { shape: "cube", sizeFeet: 20 } },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "dex",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_active_effect",
+            effectId: "faerie-fire-glowing",
+            name: "Faerie Fire",
+            durationRounds: 10,
+            requiresConcentration: true,
+            modifiers: [
+              {
+                type: "roll_mode",
+                mode: "advantage",
+                target: "attacks_against_self",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  fear: {
+    targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "cone", sizeFeet: 30 } },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "wis",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_condition",
+            conditionId: "frightened",
+            durationRounds: 10,
+            repeatSaveAtTurnEnd: {
+              ability: "wis",
+              dcFormula: "@spellSaveDC",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "feather-fall": {
+    reactionTrigger: {
+      event: "creature_falls",
+      rangeFeet: 60,
+    },
+    targeting: { type: "multiple", rangeFeet: 60, maxTargets: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "feather-fall-buff",
+        name: "Feather Fall",
+        durationRounds: 10,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "flaming-sphere": {
+    targeting: { type: "point_aoe", rangeFeet: 60, aoe: { shape: "sphere", sizeFeet: 5 } },
+    effects: [
+      {
+        step: "create_hazard_zone",
+        zoneId: "flaming-sphere-zone",
+        shape: "sphere",
+        sizeFeet: 5,
+        durationRounds: 10,
+        requiresConcentration: true,
+        difficultTerrain: false,
+        onEnterOrStartTurn: [
+          {
+            step: "saving_throw",
+            ability: "dex",
+            dcFormula: "@spellSaveDC",
+            onFail: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6",
+                damageType: "fire",
+                halfOnSaveSuccess: true,
+                isMagical: true,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusDicePerSlotAboveBase: "1d6",
+    },
+  },
+  "floating-disk": {
+    targeting: { type: "self", rangeFeet: 0 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "floating-disk-active",
+        name: "Floating Disk",
+        durationRounds: 600,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  fly: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "fly-buff",
+        name: "Fly",
+        durationRounds: 100,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "flat_bonus",
+            target: "speed",
+            value: 30,
+          },
+        ],
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusTargetsPerSlotAboveBase: 1,
+    },
+  },
+  grease: {
+    targeting: { type: "point_aoe", rangeFeet: 60, aoe: { shape: "cube", sizeFeet: 10 } },
+    effects: [
+      {
+        step: "create_hazard_zone",
+        zoneId: "grease-zone",
+        shape: "cube",
+        sizeFeet: 10,
+        durationRounds: 10,
+        requiresConcentration: false,
+        difficultTerrain: true,
+        onEnterOrStartTurn: [
+          {
+            step: "saving_throw",
+            ability: "dex",
+            dcFormula: "@spellSaveDC",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "prone",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  guidance: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "guidance-buff",
+        name: "Guidance",
+        durationRounds: 10,
+        requiresConcentration: true,
+        modifiers: [],
+      },
+    ],
+  },
+  heroism: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "heroism-buff",
+        name: "Heroism",
+        durationRounds: 10,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "condition_immunity",
+            conditions: ["frightened"],
+          },
+        ],
+      },
+      {
+        step: "grant_temp_hp",
+        amountFormula: "max(1, @spellMod)",
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusTargetsPerSlotAboveBase: 1,
+    },
+  },
+  "hideous-laughter": {
+    targeting: { type: "single", rangeFeet: 30, targetFilter: "creature" },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "wis",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_condition",
+            conditionId: "incapacitated",
+            durationRounds: 10,
+            repeatSaveAtTurnEnd: {
+              ability: "wis",
+              dcFormula: "@spellSaveDC",
+            },
+          },
+          {
+            step: "apply_condition",
+            conditionId: "prone",
+          },
+        ],
+      },
+    ],
+  },
+  "hunters-mark": {
+    targeting: { type: "single", rangeFeet: 90, targetFilter: "creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "hunters-mark-target",
+        name: "Hunters Mark",
+        durationRounds: 600,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "flat_bonus",
+            target: "ranged_damage",
+            value: "1d6",
+          },
+          {
+            type: "flat_bonus",
+            target: "melee_damage",
+            value: "1d6",
+          },
+        ],
+      },
+    ],
+  },
+  "hypnotic-pattern": {
+    targeting: { type: "point_aoe", rangeFeet: 120, aoe: { shape: "cube", sizeFeet: 30 } },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "wis",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_condition",
+            conditionId: "charmed",
+            durationRounds: 10,
+          },
+          {
+            step: "apply_condition",
+            conditionId: "incapacitated",
+            durationRounds: 10,
+          },
+        ],
+      },
+    ],
+  },
+  identify: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "object_or_creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "identify-done",
+        name: "Identify",
+        durationRounds: 0,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  invisibility: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_condition",
+        conditionId: "invisible",
+        durationRounds: 600,
+        requiresConcentration: true,
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusTargetsPerSlotAboveBase: 1,
+    },
+  },
+  knock: {
+    targeting: { type: "single", rangeFeet: 60, targetFilter: "object_or_creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "knock-unlocked",
+        name: "Knock",
+        durationRounds: 0,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "lesser-restoration": {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "lesser-restoration-cure",
+        name: "Lesser Restoration",
+        durationRounds: 0,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  light: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "object_or_creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "light-active",
+        name: "Light",
+        durationRounds: 600,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "mage-hand": {
+    targeting: { type: "point_aoe", rangeFeet: 30 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "mage-hand-active",
+        name: "Mage Hand",
+        durationRounds: 10,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  mending: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "object_or_creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "mending-repair",
+        name: "Mending",
+        durationRounds: 0,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "minor-illusion": {
+    targeting: { type: "point_aoe", rangeFeet: 30 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "minor-illusion-active",
+        name: "Minor Illusion",
+        durationRounds: 10,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "mirror-image": {
+    targeting: { type: "self", rangeFeet: 0 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "mirror-image-buff",
+        name: "Mirror Image",
+        durationRounds: 10,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "pass-without-trace": {
+    targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "sphere", sizeFeet: 30 }, targetFilter: "ally" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "pass-without-trace-buff",
+        name: "Pass without Trace",
+        durationRounds: 600,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "flat_bonus",
+            target: "skill:stealth",
+            value: 10,
+          },
+        ],
+      },
+    ],
+  },
+  prestidigitation: {
+    targeting: { type: "point_aoe", rangeFeet: 10 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "prestidigitation-active",
+        name: "Prestidigitation",
+        durationRounds: 600,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "protection-from-evil-and-good": {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "protection-evil-good-buff",
+        name: "Protection from Evil and Good",
+        durationRounds: 100,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "condition_immunity",
+            conditions: ["charmed", "frightened"],
+          },
+        ],
+      },
+    ],
+  },
+  resistance: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "resistance-buff",
+        name: "Resistance",
+        durationRounds: 10,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "flat_bonus",
+            target: "all_saving_throws",
+            value: "1d4",
+          },
+        ],
+      },
+    ],
+  },
+  sanctuary: {
+    targeting: { type: "single", rangeFeet: 30, targetFilter: "creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "sanctuary-ward",
+        name: "Sanctuary",
+        durationRounds: 10,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  shillelagh: {
+    targeting: { type: "touch", rangeFeet: 5 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "shillelagh-buff",
+        name: "Shillelagh",
+        durationRounds: 10,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  silence: {
+    targeting: { type: "point_aoe", rangeFeet: 120, aoe: { shape: "sphere", sizeFeet: 20 } },
+    effects: [
+      {
+        step: "create_hazard_zone",
+        zoneId: "silence-zone",
+        shape: "sphere",
+        sizeFeet: 20,
+        durationRounds: 100,
+        requiresConcentration: true,
+        difficultTerrain: false,
+        onEnterOrStartTurn: [],
+      },
+    ],
+  },
+  sleep: {
+    targeting: { type: "point_aoe", rangeFeet: 90, aoe: { shape: "sphere", sizeFeet: 20 } },
+    effects: [
+      {
+        step: "apply_condition",
+        conditionId: "unconscious",
+        durationRounds: 10,
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      bonusDicePerSlotAboveBase: "2d8",
+    },
+  },
+  slow: {
+    targeting: { type: "point_aoe", rangeFeet: 120, aoe: { shape: "cube", sizeFeet: 40 }, maxTargets: 6 },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "wis",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_active_effect",
+            effectId: "slow-debuff",
+            name: "Slow",
+            durationRounds: 10,
+            requiresConcentration: true,
+            modifiers: [
+              {
+                type: "flat_bonus",
+                target: "ac",
+                value: -2,
+              },
+              {
+                type: "flat_bonus",
+                target: "save:dex",
+                value: -2,
+              },
+              {
+                type: "flat_bonus",
+                target: "speed",
+                value: -15,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "spare-the-dying": {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "spare-the-dying-stabilized",
+        name: "Spare the Dying",
+        durationRounds: 0,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "spike-growth": {
+    targeting: { type: "point_aoe", rangeFeet: 150, aoe: { shape: "sphere", sizeFeet: 20 } },
+    effects: [
+      {
+        step: "create_hazard_zone",
+        zoneId: "spike-growth-zone",
+        shape: "sphere",
+        sizeFeet: 20,
+        durationRounds: 100,
+        requiresConcentration: true,
+        difficultTerrain: true,
+        onEnterOrStartTurn: [
+          {
+            step: "deal_damage",
+            diceFormula: "2d4",
+            damageType: "piercing",
+            isMagical: true,
+          },
+        ],
+      },
+    ],
+  },
+  "stinking-cloud": {
+    targeting: { type: "point_aoe", rangeFeet: 90, aoe: { shape: "sphere", sizeFeet: 20 } },
+    effects: [
+      {
+        step: "create_hazard_zone",
+        zoneId: "stinking-cloud-zone",
+        shape: "sphere",
+        sizeFeet: 20,
+        durationRounds: 10,
+        requiresConcentration: true,
+        difficultTerrain: false,
+        obscurement: "heavy",
+        onEnterOrStartTurn: [
+          {
+            step: "saving_throw",
+            ability: "con",
+            dcFormula: "@spellSaveDC",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "incapacitated",
+                durationRounds: 1,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  suggestion: {
+    targeting: { type: "single", rangeFeet: 30, targetFilter: "creature" },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "wis",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_condition",
+            conditionId: "charmed",
+            durationRounds: 4800,
+            requiresConcentration: true,
+          },
+        ],
+      },
+    ],
+  },
+  thaumaturgy: {
+    targeting: { type: "point_aoe", rangeFeet: 30 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "thaumaturgy-wonder",
+        name: "Thaumaturgy",
+        durationRounds: 10,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "tiny-hut": {
+    targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "sphere", sizeFeet: 10 } },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "tiny-hut-dome",
+        name: "Tiny Hut",
+        durationRounds: 4800,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  "true-strike": {
+    targeting: { type: "single", rangeFeet: 30, targetFilter: "creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "true-strike-advantage",
+        name: "True Strike",
+        durationRounds: 1,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "attack_rolls",
+          },
+        ],
+      },
+    ],
+  },
+  "zone-of-truth": {
+    targeting: { type: "point_aoe", rangeFeet: 60, aoe: { shape: "sphere", sizeFeet: 15 } },
+    effects: [
+      {
+        step: "saving_throw",
+        ability: "cha",
+        dcFormula: "@spellSaveDC",
+        onFail: [
+          {
+            step: "apply_active_effect",
+            effectId: "zone-of-truth-bound",
+            name: "Zone of Truth",
+            durationRounds: 100,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    ],
   },
 };

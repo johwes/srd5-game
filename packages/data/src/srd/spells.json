@@ -135,9 +135,33 @@
     "targeting": {
       "type": "multiple",
       "rangeFeet": 30,
+      "targetFilter": "ally",
       "maxTargets": 3
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "aid-buff",
+        "name": "Aid (+5 HP)",
+        "durationRounds": 4800,
+        "requiresConcentration": false,
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "hp_per_level",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "step": "heal",
+        "diceFormula": "5"
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "5"
+    },
     "description": "Your spell bolsters your allies with toughness and resolve, increasing up to three creatures’ hit point maximum and current hit points by 5 for the duration."
   },
   {
@@ -217,9 +241,19 @@
     ],
     "targeting": {
       "type": "touch",
-      "rangeFeet": 5
+      "rangeFeet": 5,
+      "targetFilter": "object_or_creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "arcanists-magic-aura-active",
+        "name": "Arcanist Magic Aura",
+        "durationRounds": 14400,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You place an illusion on a creature or an object you touch so that divination spells reveal false information about it."
   },
   {
@@ -354,7 +388,24 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "barkskin-buff",
+        "name": "Barkskin",
+        "durationRounds": 600,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "ac_calculation",
+            "id": "barkskin",
+            "formula": "16",
+            "allowsShield": true,
+            "requiresNoArmor": false
+          }
+        ]
+      }
+    ],
     "description": "You touch a willing creature. Until the spell ends, the target’s skin has a rough, bark-like appearance, and the target’s AC can’t be less than 16."
   },
   {
@@ -382,10 +433,30 @@
       "devotion"
     ],
     "targeting": {
-      "type": "multiple",
-      "rangeFeet": 30
+      "type": "self_aoe",
+      "rangeFeet": 0,
+      "targetFilter": "ally",
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 30
+      }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "beacon-of-hope-buff",
+        "name": "Beacon of Hope",
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "save:wis"
+          }
+        ]
+      }
+    ],
     "description": "This spell bestows hope and vitality. Choose any number of creatures within range; targets have advantage on Wisdom saving throws and death saving throws, and regain the maximum number of hit points possible from any healing."
   },
   {
@@ -543,9 +614,31 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 30
+      "rangeFeet": 30,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "con",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "blinded",
+            "durationRounds": 10,
+            "repeatSaveAtTurnEnd": {
+              "ability": "con",
+              "dcFormula": "@spellSaveDC"
+            }
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusTargetsPerSlotAboveBase": 1
+    },
     "description": "You can blind or deafen a foe within range."
   },
   {
@@ -629,10 +722,29 @@
       "rangeFeet": 120,
       "aoe": {
         "shape": "cylinder",
-        "sizeFeet": 60
+        "sizeFeet": 5
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "3d10",
+            "damageType": "lightning",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d10"
+    },
     "description": "A storm cloud appears in the shape of a cylinder that is 10 feet tall with a 60-foot radius, centered on a point you can see 100 feet directly above you."
   },
   {
@@ -704,9 +816,27 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 30
+      "rangeFeet": 30,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "charmed",
+            "durationRounds": 600
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusTargetsPerSlotAboveBase": 1
+    },
     "description": "You attempt to charm a humanoid you can see within range."
   },
   {
@@ -823,9 +953,30 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 60
+      "rangeFeet": 60,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "command-compelled",
+            "name": "Command",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": []
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusTargetsPerSlotAboveBase": 1
+    },
     "description": "You speak a one-word command to a creature you can see within range."
   },
   {
@@ -973,7 +1124,16 @@
       "requiresSight": true,
       "targetFilter": "enemy"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "counterspell-intercept",
+        "name": "Counterspell",
+        "durationRounds": 0,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You attempt to interrupt a creature in the process of casting a spell."
   },
   {
@@ -1042,10 +1202,19 @@
       "wizard"
     ],
     "targeting": {
-      "type": "single",
+      "type": "point_aoe",
       "rangeFeet": 120
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "dancing-lights-active",
+        "name": "Dancing Lights",
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "modifiers": []
+      }
+    ],
     "description": "You create up to four torch-sized lights within range."
   },
   {
@@ -1078,7 +1247,19 @@
         "sizeFeet": 15
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "darkness-zone",
+        "shape": "sphere",
+        "sizeFeet": 15,
+        "durationRounds": 100,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "obscurement": "heavy",
+        "onEnterOrStartTurn": []
+      }
+    ],
     "description": "Magical darkness spreads from a point you choose within range to fill a 15-foot-radius sphere for the duration."
   },
   {
@@ -1142,7 +1323,16 @@
       "type": "self",
       "rangeFeet": 0
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "detect-magic-active",
+        "name": "Detect Magic",
+        "durationRounds": 100,
+        "requiresConcentration": true,
+        "modifiers": []
+      }
+    ],
     "description": "For the duration, you sense the presence of magic within 30 feet of you."
   },
   {
@@ -1245,9 +1435,19 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 120
+      "rangeFeet": 120,
+      "targetFilter": "object_or_creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "dispel-magic-resolved",
+        "name": "Dispel Magic",
+        "durationRounds": 0,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "Choose one creature, object, or magical effect within range. Any spell of 3rd level or lower on the target ends."
   },
   {
@@ -1329,10 +1529,19 @@
       "druid"
     ],
     "targeting": {
-      "type": "single",
+      "type": "point_aoe",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "druidcraft-effect",
+        "name": "Druidcraft",
+        "durationRounds": 1,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "Whispering to the spirits of nature, you create a harmless sensory effect within range."
   },
   {
@@ -1418,7 +1627,35 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "entangle-zone",
+        "shape": "cube",
+        "sizeFeet": 20,
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "difficultTerrain": true,
+        "onEnterOrStartTurn": [
+          {
+            "step": "saving_throw",
+            "ability": "str",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "restrained",
+                "durationRounds": 10,
+                "repeatSaveAtTurnEnd": {
+                  "ability": "str",
+                  "dcFormula": "@spellSaveDC"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "Grasping weeds and vines sprout from the ground in a 20-foot square starting from a point within range."
   },
   {
@@ -1450,7 +1687,29 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "faerie-fire-glowing",
+            "name": "Faerie Fire",
+            "durationRounds": 10,
+            "requiresConcentration": true,
+            "modifiers": [
+              {
+                "type": "roll_mode",
+                "mode": "advantage",
+                "target": "attacks_against_self"
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "Each object in a 20-foot cube within range is outlined in blue, green, or violet light."
   },
   {
@@ -1544,7 +1803,24 @@
         "sizeFeet": 30
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "frightened",
+            "durationRounds": 10,
+            "repeatSaveAtTurnEnd": {
+              "ability": "wis",
+              "dcFormula": "@spellSaveDC"
+            }
+          }
+        ]
+      }
+    ],
     "description": "You project a phantasmal image of a creature’s worst fears in a 30-foot cone."
   },
   {
@@ -1574,10 +1850,21 @@
       "wizard"
     ],
     "targeting": {
-      "type": "single",
-      "rangeFeet": 60
+      "type": "multiple",
+      "rangeFeet": 60,
+      "targetFilter": "willing",
+      "maxTargets": 5
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "feather-fall-buff",
+        "name": "Feather Fall",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "Choose up to five falling creatures within range. A falling creature’s rate of descent slows to 60 feet per round."
   },
   {
@@ -1846,7 +2133,37 @@
         "sizeFeet": 5
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "flaming-sphere-zone",
+        "shape": "sphere",
+        "sizeFeet": 5,
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "onEnterOrStartTurn": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6",
+                "damageType": "fire",
+                "halfOnSaveSuccess": true,
+                "isMagical": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d6"
+    },
     "description": "A 5-foot-diameter sphere of fire appears in an unoccupied space of your choice within range and lasts for the duration."
   },
   {
@@ -1870,10 +2187,19 @@
       "wizard"
     ],
     "targeting": {
-      "type": "single",
-      "rangeFeet": 30
+      "type": "self",
+      "rangeFeet": 0
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "floating-disk-active",
+        "name": "Floating Disk",
+        "durationRounds": 600,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "This spell creates a circular, horizontal plane of force, 3 feet in diameter and 1 inch thick, that floats 3 feet above the ground."
   },
   {
@@ -1903,7 +2229,26 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "fly-buff",
+        "name": "Fly",
+        "durationRounds": 100,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "speed",
+            "value": 30
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusTargetsPerSlotAboveBase": 1
+    },
     "description": "You touch a willing creature. The target gains a flying speed of 60 feet for the duration."
   },
   {
@@ -2062,7 +2407,30 @@
         "sizeFeet": 10
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "grease-zone",
+        "shape": "cube",
+        "sizeFeet": 10,
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "difficultTerrain": true,
+        "onEnterOrStartTurn": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "prone"
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "Slick grease covers the ground in a 10-foot square centered on a point within range and turns it into difficult terrain."
   },
   {
@@ -2180,7 +2548,16 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "guidance-buff",
+        "name": "Guidance",
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "modifiers": []
+      }
+    ],
     "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice."
   },
   {
@@ -2478,7 +2855,31 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "heroism-buff",
+        "name": "Heroism",
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "condition_immunity",
+            "conditions": [
+              "frightened"
+            ]
+          }
+        ]
+      },
+      {
+        "step": "grant_temp_hp",
+        "amountFormula": "max(1, @spellMod)"
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusTargetsPerSlotAboveBase": 1
+    },
     "description": "A willing creature you touch is imbued with bravery, becoming immune to being frightened and gaining temporary hit points each turn."
   },
   {
@@ -2504,9 +2905,31 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 30
+      "rangeFeet": 30,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "incapacitated",
+            "durationRounds": 10,
+            "repeatSaveAtTurnEnd": {
+              "ability": "wis",
+              "dcFormula": "@spellSaveDC"
+            }
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "prone"
+          }
+        ]
+      }
+    ],
     "description": "A creature of your choice that you can see within range perceives everything as hilariously funny and falls prone, incapacitated."
   },
   {
@@ -2617,9 +3040,30 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 90
+      "rangeFeet": 90,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "hunters-mark-target",
+        "name": "Hunters Mark",
+        "durationRounds": 600,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "ranged_damage",
+            "value": "1d6"
+          },
+          {
+            "type": "flat_bonus",
+            "target": "melee_damage",
+            "value": "1d6"
+          }
+        ]
+      }
+    ],
     "description": "You choose a creature you can see within range and mystically mark it as your quarry, dealing an extra 1d6 damage whenever you hit it with a weapon attack."
   },
   {
@@ -2653,7 +3097,25 @@
         "sizeFeet": 30
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "charmed",
+            "durationRounds": 10
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "incapacitated",
+            "durationRounds": 10
+          }
+        ]
+      }
+    ],
     "description": "You create a twisting pattern of colors that weaves through the air inside a 30-foot cube within range."
   },
   {
@@ -2710,9 +3172,19 @@
     ],
     "targeting": {
       "type": "touch",
-      "rangeFeet": 5
+      "rangeFeet": 5,
+      "targetFilter": "object_or_creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "identify-done",
+        "name": "Identify",
+        "durationRounds": 0,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You choose one object that you must touch throughout the casting of the spell to learn its magical properties."
   },
   {
@@ -2813,7 +3285,18 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_condition",
+        "conditionId": "invisible",
+        "durationRounds": 600,
+        "requiresConcentration": true
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusTargetsPerSlotAboveBase": 1
+    },
     "description": "A creature you touch becomes invisible until the spell ends."
   },
   {
@@ -2867,9 +3350,19 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 60
+      "rangeFeet": 60,
+      "targetFilter": "object_or_creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "knock-unlocked",
+        "name": "Knock",
+        "durationRounds": 0,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "Choose an object that you can see within range. The object can be a door, a box, a chest, a set of manacles, a padlock, or another object that contains a mundane or magical means that prevents access."
   },
   {
@@ -2901,9 +3394,19 @@
     ],
     "targeting": {
       "type": "touch",
-      "rangeFeet": 5
+      "rangeFeet": 5,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "lesser-restoration-cure",
+        "name": "Lesser Restoration",
+        "durationRounds": 0,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You touch a creature and can end either one disease or one condition afflicting it (blinded, deafened, paralyzed, or poisoned)."
   },
   {
@@ -2931,9 +3434,19 @@
     ],
     "targeting": {
       "type": "touch",
-      "rangeFeet": 5
+      "rangeFeet": 5,
+      "targetFilter": "object_or_creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "light-active",
+        "name": "Light",
+        "durationRounds": 600,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet."
   },
   {
@@ -3060,10 +3573,19 @@
       "wizard"
     ],
     "targeting": {
-      "type": "single",
+      "type": "point_aoe",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "mage-hand-active",
+        "name": "Mage Hand",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "A spectral, floating hand appears at a point you choose within range."
   },
   {
@@ -3238,9 +3760,19 @@
     ],
     "targeting": {
       "type": "touch",
-      "rangeFeet": 5
+      "rangeFeet": 5,
+      "targetFilter": "object_or_creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "mending-repair",
+        "name": "Mending",
+        "durationRounds": 0,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "This spell repairs a single break or tear in an object you touch."
   },
   {
@@ -3320,10 +3852,19 @@
       "wizard"
     ],
     "targeting": {
-      "type": "single",
+      "type": "point_aoe",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "minor-illusion-active",
+        "name": "Minor Illusion",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You create a sound or an image of an object within range that lasts for the duration."
   },
   {
@@ -3352,7 +3893,16 @@
       "type": "self",
       "rangeFeet": 0
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "mirror-image-buff",
+        "name": "Mirror Image",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "Three illusory duplicates of yourself appear in your space."
   },
   {
@@ -3415,12 +3965,28 @@
     "targeting": {
       "type": "self_aoe",
       "rangeFeet": 0,
+      "targetFilter": "ally",
       "aoe": {
         "shape": "sphere",
         "sizeFeet": 30
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "pass-without-trace-buff",
+        "name": "Pass without Trace",
+        "durationRounds": 600,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "skill:stealth",
+            "value": 10
+          }
+        ]
+      }
+    ],
     "description": "A veil of shadows and silence radiates from you, masking you and your companions from detection (+10 bonus to Dexterity (Stealth) checks)."
   },
   {
@@ -3594,10 +4160,19 @@
       "wizard"
     ],
     "targeting": {
-      "type": "single",
+      "type": "point_aoe",
       "rangeFeet": 10
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "prestidigitation-active",
+        "name": "Prestidigitation",
+        "durationRounds": 600,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "This spell is a minor magical trick that novice spellcasters use for practice."
   },
   {
@@ -3716,7 +4291,24 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "protection-evil-good-buff",
+        "name": "Protection from Evil and Good",
+        "durationRounds": 100,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "condition_immunity",
+            "conditions": [
+              "charmed",
+              "frightened"
+            ]
+          }
+        ]
+      }
+    ],
     "description": "Until the spell ends, one willing creature you touch is protected against aberrations, celestials, elementals, fey, fiends, and undead."
   },
   {
@@ -3873,7 +4465,22 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "resistance-buff",
+        "name": "Resistance",
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "all_saving_throws",
+            "value": "1d4"
+          }
+        ]
+      }
+    ],
     "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice."
   },
   {
@@ -3996,9 +4603,19 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 30
+      "rangeFeet": 30,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "sanctuary-ward",
+        "name": "Sanctuary",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You ward a creature within range against attack."
   },
   {
@@ -4244,10 +4861,19 @@
       "druid"
     ],
     "targeting": {
-      "type": "self",
-      "rangeFeet": 0
+      "type": "touch",
+      "rangeFeet": 5
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "shillelagh-buff",
+        "name": "Shillelagh",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "The wood of a club or quarterstaff you are holding is imbued with nature’s power."
   },
   {
@@ -4335,7 +4961,18 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "silence-zone",
+        "shape": "sphere",
+        "sizeFeet": 20,
+        "durationRounds": 100,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "onEnterOrStartTurn": []
+      }
+    ],
     "description": "For the duration, no sound can be created within or pass through a 20-foot-radius sphere centered on a point you choose within range."
   },
   {
@@ -4368,7 +5005,17 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_condition",
+        "conditionId": "unconscious",
+        "durationRounds": 10
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "2d8"
+    },
     "description": "This spell sends creatures into a magical slumber in a 20-foot-radius sphere."
   },
   {
@@ -4395,12 +5042,45 @@
     "targeting": {
       "type": "point_aoe",
       "rangeFeet": 120,
+      "maxTargets": 6,
       "aoe": {
         "shape": "cube",
         "sizeFeet": 40
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "slow-debuff",
+            "name": "Slow",
+            "durationRounds": 10,
+            "requiresConcentration": true,
+            "modifiers": [
+              {
+                "type": "flat_bonus",
+                "target": "ac",
+                "value": -2
+              },
+              {
+                "type": "flat_bonus",
+                "target": "save:dex",
+                "value": -2
+              },
+              {
+                "type": "flat_bonus",
+                "target": "speed",
+                "value": -15
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "You alter time around up to six creatures of your choice in a 40-foot cube within range."
   },
   {
@@ -4424,9 +5104,19 @@
     ],
     "targeting": {
       "type": "touch",
-      "rangeFeet": 5
+      "rangeFeet": 5,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "spare-the-dying-stabilized",
+        "name": "Spare the Dying",
+        "durationRounds": 0,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You touch a living creature that has 0 hit points. The creature becomes stable."
   },
   {
@@ -4458,7 +5148,25 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "spike-growth-zone",
+        "shape": "sphere",
+        "sizeFeet": 20,
+        "durationRounds": 100,
+        "requiresConcentration": true,
+        "difficultTerrain": true,
+        "onEnterOrStartTurn": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "2d4",
+            "damageType": "piercing",
+            "isMagical": true
+          }
+        ]
+      }
+    ],
     "description": "The ground in a 20-foot radius centered on a point within range twists and sprouts hard spikes and thorns."
   },
   {
@@ -4599,7 +5307,32 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "stinking-cloud-zone",
+        "shape": "sphere",
+        "sizeFeet": 20,
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "obscurement": "heavy",
+        "onEnterOrStartTurn": [
+          {
+            "step": "saving_throw",
+            "ability": "con",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "incapacitated",
+                "durationRounds": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "You create a 20-foot-radius sphere of yellow, nauseating gas centered on a point within range."
   },
   {
@@ -4661,9 +5394,24 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 30
+      "rangeFeet": 30,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "charmed",
+            "durationRounds": 4800,
+            "requiresConcentration": true
+          }
+        ]
+      }
+    ],
     "description": "You suggest a course of activity (limited to a sentence or two) and magically influence a creature you can see within range."
   },
   {
@@ -4715,10 +5463,19 @@
       "cleric"
     ],
     "targeting": {
-      "type": "single",
+      "type": "point_aoe",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "thaumaturgy-wonder",
+        "name": "Thaumaturgy",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "You manifest a minor wonder, a sign of supernatural power, within range."
   },
   {
@@ -4834,7 +5591,16 @@
         "sizeFeet": 10
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "tiny-hut-dome",
+        "name": "Tiny Hut",
+        "durationRounds": 4800,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
     "description": "A 10-foot-radius immobile dome of force springs into existence around and above you and remains stationary for the duration."
   },
   {
@@ -4921,9 +5687,25 @@
     ],
     "targeting": {
       "type": "single",
-      "rangeFeet": 30
+      "rangeFeet": 30,
+      "targetFilter": "creature"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "true-strike-advantage",
+        "name": "True Strike",
+        "durationRounds": 1,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls"
+          }
+        ]
+      }
+    ],
     "description": "You extend your hand and point a finger at a target in range, gaining insight into the target’s defenses."
   },
   {
@@ -5154,7 +5936,23 @@
         "sizeFeet": 15
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "cha",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "zone-of-truth-bound",
+            "name": "Zone of Truth",
+            "durationRounds": 100,
+            "requiresConcentration": false,
+            "modifiers": []
+          }
+        ]
+      }
+    ],
     "description": "You create a magical zone that guards against deception in a 15-foot-radius sphere centered on a point of your choice within range."
   }
 ]

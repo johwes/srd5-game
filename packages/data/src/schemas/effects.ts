@@ -393,9 +393,9 @@ export const EffectStepSpecSchema: z.ZodType<EffectStepSpec> = z.lazy(() =>
       step: z.literal('apply_active_effect'),
       effectId: z.string().min(1),
       name: z.string().min(1),
-      durationRounds: z.number().int().positive(),
+      durationRounds: z.number().int().nonnegative(),
       requiresConcentration: z.boolean(),
-      modifiers: z.array(ModifierSpecSchema).min(1),
+      modifiers: z.array(ModifierSpecSchema),
     }),
     z.object({
       step: z.literal('forced_movement'),

@@ -1183,6 +1183,47 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         Object.assign(target, condRes.combatant);
         combatantsMap[target.id] = target;
         events.push(...condRes.events);
+      } else if (step.step === 'apply_active_effect') {
+        const existingEffects = target.activeEffects ? [...target.activeEffects] : [];
+        const newEffect = {
+          effectId: step.effectId,
+          name: step.name,
+          requiresConcentration: step.requiresConcentration,
+          remainingRounds: step.durationRounds,
+          modifiers: step.modifiers,
+        };
+        const updatedEffects = [...existingEffects.filter((e) => e.effectId !== step.effectId), newEffect];
+        target.activeEffects = updatedEffects;
+        combatantsMap[target.id] = { ...target, activeEffects: updatedEffects };
+      } else if (step.step === 'teleport') {
+        const dest = originCell ?? caster.position;
+        if (dest) {
+          nextCaster.position = { ...dest };
+          combatantsMap[nextCaster.id] = { ...nextCaster, position: { ...dest } };
+          events.push({
+            type: 'ENTITY_MOVED',
+            entityId: nextCaster.id,
+            path: [{ ...dest }],
+            mode: 'teleport',
+          });
+        }
+      } else if (step.step === 'forced_movement') {
+        const dirX = Math.sign(target.position.x - nextCaster.position.x) || 1;
+        const dirY = Math.sign(target.position.y - nextCaster.position.y);
+        const stepsCount = Math.floor(step.distanceFeet / 5);
+        const mult = step.direction === 'pull_to_actor' ? -1 : 1;
+        const newPos = {
+          x: Math.max(0, target.position.x + dirX * stepsCount * mult),
+          y: Math.max(0, target.position.y + dirY * stepsCount * mult),
+        };
+        target.position = newPos;
+        combatantsMap[target.id] = { ...target, position: newPos };
+        events.push({
+          type: 'ENTITY_MOVED',
+          entityId: target.id,
+          path: [newPos],
+          mode: 'forced',
+        });
       }
     }
   }

@@ -479,12 +479,26 @@
       {
         "id": "brute",
         "name": "Brute",
-        "description": "A melee weapon deals one extra die of its damage when the bugbear hits with it (included in the attack)."
+        "description": "A melee weapon deals one extra die of its damage when the bugbear hits with it (included in the attack).",
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "melee_damage",
+            "value": 4
+          }
+        ]
       },
       {
         "id": "surprise-attack",
         "name": "Surprise Attack",
-        "description": "If the bugbear surprises a creature and hits it with an attack during the first round of combat, the target takes an extra 7 (2d6) damage from the attack."
+        "description": "If the bugbear surprises a creature and hits it with an attack during the first round of combat, the target takes an extra 7 (2d6) damage from the attack.",
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "melee_damage",
+            "value": 7
+          }
+        ]
       }
     ],
     "actions": [
@@ -592,7 +606,14 @@
       {
         "id": "dark-devotion",
         "name": "Dark Devotion",
-        "description": "The fanatic has advantage on saving throws against being charmed or frightened."
+        "description": "The fanatic has advantage on saving throws against being charmed or frightened.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "save:wis"
+          }
+        ]
       }
     ],
     "spellcasting": {
@@ -712,7 +733,14 @@
       {
         "id": "dark-devotion",
         "name": "Dark Devotion",
-        "description": "The cultist has advantage on saving throws against being charmed or frightened."
+        "description": "The cultist has advantage on saving throws against being charmed or frightened.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "save:wis"
+          }
+        ]
       }
     ],
     "actions": [
@@ -788,7 +816,14 @@
       {
         "id": "keen-hearing-and-smell",
         "name": "Keen Hearing and Smell",
-        "description": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+        "description": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "skill:perception"
+          }
+        ]
       },
       {
         "id": "pack-tactics",
@@ -798,8 +833,7 @@
           {
             "type": "roll_mode",
             "mode": "advantage",
-            "target": "attack_rolls",
-            "condition": "ally_within_5ft_of_target"
+            "target": "attack_rolls"
           }
         ]
       }
@@ -825,6 +859,17 @@
                 "step": "deal_damage",
                 "diceFormula": "2d6 + 3",
                 "damageType": "piercing"
+              },
+              {
+                "step": "saving_throw",
+                "ability": "str",
+                "dcFormula": "13",
+                "onFail": [
+                  {
+                    "step": "apply_condition",
+                    "conditionId": "prone"
+                  }
+                ]
               }
             ]
           }
@@ -882,12 +927,14 @@
       {
         "id": "ooze-cube",
         "name": "Ooze Cube",
-        "description": "The cube takes up its entire space. Other creatures can enter the space, but a creature that does so is subjected to the cube’s Engulf."
+        "description": "The cube takes up its entire space. Other creatures can enter the space, but a creature that does so is subjected to the cube’s Engulf.",
+        "modifiers": []
       },
       {
         "id": "transparent",
         "name": "Transparent",
-        "description": "Even when the cube is in plain sight, it takes a successful DC 15 Wisdom (Perception) check to spot a cube that has neither moved nor attacked."
+        "description": "Even when the cube is in plain sight, it takes a successful DC 15 Wisdom (Perception) check to spot a cube that has neither moved nor attacked.",
+        "modifiers": []
       }
     ],
     "actions": [
@@ -1078,7 +1125,14 @@
       {
         "id": "keen-smell",
         "name": "Keen Smell",
-        "description": "The rat has advantage on Wisdom (Perception) checks that rely on smell."
+        "description": "The rat has advantage on Wisdom (Perception) checks that rely on smell.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "skill:perception"
+          }
+        ]
       },
       {
         "id": "pack-tactics",
@@ -1088,8 +1142,7 @@
           {
             "type": "roll_mode",
             "mode": "advantage",
-            "target": "attack_rolls",
-            "condition": "ally_within_5ft_of_target"
+            "target": "attack_rolls"
           }
         ]
       }
@@ -1169,7 +1222,8 @@
       {
         "id": "spider-climb",
         "name": "Spider Climb",
-        "description": "The spider can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check."
+        "description": "The spider can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check.",
+        "modifiers": []
       }
     ],
     "actions": [
@@ -1195,9 +1249,23 @@
                 "damageType": "piercing"
               },
               {
-                "step": "deal_damage",
-                "diceFormula": "2d8",
-                "damageType": "poison"
+                "step": "saving_throw",
+                "ability": "con",
+                "dcFormula": "11",
+                "onFail": [
+                  {
+                    "step": "deal_damage",
+                    "diceFormula": "2d8",
+                    "damageType": "poison"
+                  }
+                ],
+                "onSuccess": [
+                  {
+                    "step": "deal_damage",
+                    "diceFormula": "1d8",
+                    "damageType": "poison"
+                  }
+                ]
               }
             ]
           }
@@ -1289,7 +1357,25 @@
         "id": "nimble-escape",
         "name": "Nimble Escape",
         "description": "The goblin can take the Disengage or Hide action as a bonus action on each of its turns.",
-        "modifiers": []
+        "modifiers": [],
+        "activatedAbilities": [
+          {
+            "id": "nimble-escape-disengage",
+            "name": "Nimble Escape (Disengage)",
+            "description": "Take Disengage action as bonus action.",
+            "actionCost": "bonus_action",
+            "effects": [
+              {
+                "step": "apply_active_effect",
+                "effectId": "disengaged",
+                "name": "Disengaged",
+                "durationRounds": 1,
+                "requiresConcentration": false,
+                "modifiers": []
+              }
+            ]
+          }
+        ]
       }
     ],
     "actions": [
@@ -1399,7 +1485,25 @@
       {
         "id": "nimble-escape",
         "name": "Nimble Escape",
-        "description": "The goblin can take the Disengage or Hide action as a bonus action on each of its turns."
+        "description": "The goblin can take the Disengage or Hide action as a bonus action on each of its turns.",
+        "activatedAbilities": [
+          {
+            "id": "nimble-escape-disengage",
+            "name": "Nimble Escape (Disengage)",
+            "description": "Take Disengage action as bonus action.",
+            "actionCost": "bonus_action",
+            "effects": [
+              {
+                "step": "apply_active_effect",
+                "effectId": "disengaged",
+                "name": "Disengaged",
+                "durationRounds": 1,
+                "requiresConcentration": false,
+                "modifiers": []
+              }
+            ]
+          }
+        ]
       }
     ],
     "actions": [
@@ -1457,11 +1561,11 @@
           {
             "step": "attack_roll",
             "attackType": "ranged_weapon",
-            "attackBonusOverride": 2,
+            "attackBonusOverride": 4,
             "onHit": [
               {
                 "step": "deal_damage",
-                "diceFormula": "1d6",
+                "diceFormula": "1d6 + 2",
                 "damageType": "piercing"
               }
             ]
@@ -1588,8 +1692,8 @@
         "description": "The harpy sings a magical melody. Every humanoid and giant within 300 feet of the harpy that can hear the song must succeed on a DC 11 Wisdom saving throw or be charmed until the song ends.",
         "actionCost": "action",
         "targeting": {
-          "type": "self_aoe",
-          "rangeFeet": 0,
+          "type": "point_aoe",
+          "rangeFeet": 300,
           "aoe": {
             "shape": "sphere",
             "sizeFeet": 300
@@ -1604,6 +1708,11 @@
               {
                 "step": "apply_condition",
                 "conditionId": "charmed",
+                "durationRounds": 10
+              },
+              {
+                "step": "apply_condition",
+                "conditionId": "incapacitated",
                 "durationRounds": 10
               }
             ]
@@ -1775,7 +1884,14 @@
       {
         "id": "martial-advantage",
         "name": "Martial Advantage",
-        "description": "Once per turn, the hobgoblin can deal an extra 7 (2d6) damage to a creature it hits with a weapon attack if that creature is within 5 feet of an ally of the hobgoblin that isn’t incapacitated."
+        "description": "Once per turn, the hobgoblin can deal an extra 7 (2d6) damage to a creature it hits with a weapon attack if that creature is within 5 feet of an ally of the hobgoblin that isn’t incapacitated.",
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "melee_damage",
+            "value": 7
+          }
+        ]
       }
     ],
     "actions": [
@@ -1883,14 +1999,12 @@
           {
             "type": "roll_mode",
             "mode": "disadvantage",
-            "target": "attack_rolls",
-            "condition": "in_sunlight"
+            "target": "attack_rolls"
           },
           {
             "type": "roll_mode",
             "mode": "disadvantage",
-            "target": "skill:perception",
-            "condition": "in_sunlight"
+            "target": "skill:perception"
           }
         ]
       },
@@ -1902,8 +2016,7 @@
           {
             "type": "roll_mode",
             "mode": "advantage",
-            "target": "attack_rolls",
-            "condition": "ally_within_5ft_of_target"
+            "target": "attack_rolls"
           }
         ]
       }
@@ -2121,7 +2234,8 @@
       {
         "id": "tail-spike-regrowth",
         "name": "Tail Spike Regrowth",
-        "description": "The manticore has twenty-four tail spikes. Used spikes regrow when the manticore finishes a long rest."
+        "description": "The manticore has twenty-four tail spikes. Used spikes regrow when the manticore finishes a long rest.",
+        "modifiers": []
       }
     ],
     "actions": [
@@ -2424,12 +2538,26 @@
       {
         "id": "charge",
         "name": "Charge",
-        "description": "If the minotaur moves at least 10 feet straight toward a target and then hits it with a gore attack on the same turn, the target takes an extra 9 (2d8) piercing damage."
+        "description": "If the minotaur moves at least 10 feet straight toward a target and then hits it with a gore attack on the same turn, the target takes an extra 9 (2d8) piercing damage.",
+        "modifiers": [
+          {
+            "type": "flat_bonus",
+            "target": "melee_damage",
+            "value": 9
+          }
+        ]
       },
       {
         "id": "reckless",
         "name": "Reckless",
-        "description": "At the start of its turn, the minotaur can gain advantage on all melee weapon attack rolls it makes during that turn, but attack rolls against it have advantage until the start of its next turn."
+        "description": "At the start of its turn, the minotaur can gain advantage on all melee weapon attack rolls it makes during that turn, but attack rolls against it have advantage until the start of its next turn.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls"
+          }
+        ]
       }
     ],
     "actions": [
@@ -2636,7 +2764,25 @@
       {
         "id": "aggressive",
         "name": "Aggressive",
-        "description": "As a bonus action, the orc can move up to its speed toward a hostile creature that it can see."
+        "description": "As a bonus action, the orc can move up to its speed toward a hostile creature that it can see.",
+        "activatedAbilities": [
+          {
+            "id": "aggressive-dash",
+            "name": "Aggressive",
+            "description": "Move up to speed toward hostile as bonus action.",
+            "actionCost": "bonus_action",
+            "effects": [
+              {
+                "step": "apply_active_effect",
+                "effectId": "aggressive-moved",
+                "name": "Aggressive",
+                "durationRounds": 1,
+                "requiresConcentration": false,
+                "modifiers": []
+              }
+            ]
+          }
+        ]
       }
     ],
     "actions": [
@@ -2737,7 +2883,14 @@
       {
         "id": "keen-sight-and-smell",
         "name": "Keen Sight and Smell",
-        "description": "The owlbear has advantage on Wisdom (Perception) checks that rely on sight or smell."
+        "description": "The owlbear has advantage on Wisdom (Perception) checks that rely on sight or smell.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "skill:perception"
+          }
+        ]
       }
     ],
     "actions": [
@@ -2865,7 +3018,31 @@
       {
         "id": "divine-eminence",
         "name": "Divine Eminence",
-        "description": "As a bonus action, the priest can expend a spell slot to cause its melee weapon attacks to magically deal an extra 10 (3d6) radiant damage to a target on a hit."
+        "description": "As a bonus action, the priest can expend a spell slot to cause its melee weapon attacks to magically deal an extra 10 (3d6) radiant damage to a target on a hit.",
+        "activatedAbilities": [
+          {
+            "id": "divine-eminence-activate",
+            "name": "Divine Eminence",
+            "description": "Spend 1st-level spell slot to deal extra 3d6 radiant damage on melee weapon hit.",
+            "actionCost": "bonus_action",
+            "effects": [
+              {
+                "step": "apply_active_effect",
+                "effectId": "divine-eminence-buff",
+                "name": "Divine Eminence",
+                "durationRounds": 1,
+                "requiresConcentration": false,
+                "modifiers": [
+                  {
+                    "type": "flat_bonus",
+                    "target": "melee_damage",
+                    "value": "3d6"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ],
     "spellcasting": {
@@ -3085,7 +3262,19 @@
       {
         "id": "sunlight-sensitivity",
         "name": "Sunlight Sensitivity",
-        "description": "While in sunlight, the wight has disadvantage on attack rolls, as well as on Wisdom (Perception) checks that rely on sight."
+        "description": "While in sunlight, the wight has disadvantage on attack rolls, as well as on Wisdom (Perception) checks that rely on sight.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "disadvantage",
+            "target": "attack_rolls"
+          },
+          {
+            "type": "roll_mode",
+            "mode": "disadvantage",
+            "target": "skill:perception"
+          }
+        ]
       }
     ],
     "actions": [
@@ -3128,6 +3317,21 @@
                 "step": "deal_damage",
                 "diceFormula": "1d6 + 2",
                 "damageType": "necrotic"
+              },
+              {
+                "step": "saving_throw",
+                "ability": "con",
+                "dcFormula": "13",
+                "onFail": [
+                  {
+                    "step": "apply_active_effect",
+                    "effectId": "life-drained",
+                    "name": "Life Drained",
+                    "durationRounds": 4800,
+                    "requiresConcentration": false,
+                    "modifiers": []
+                  }
+                ]
               }
             ]
           }
@@ -3230,7 +3434,14 @@
       {
         "id": "keen-hearing-and-smell",
         "name": "Keen Hearing and Smell",
-        "description": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell."
+        "description": "The wolf has advantage on Wisdom (Perception) checks that rely on hearing or smell.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "skill:perception"
+          }
+        ]
       },
       {
         "id": "pack-tactics",
@@ -3240,8 +3451,7 @@
           {
             "type": "roll_mode",
             "mode": "advantage",
-            "target": "attack_rolls",
-            "condition": "ally_within_5ft_of_target"
+            "target": "attack_rolls"
           }
         ]
       }
@@ -3267,6 +3477,17 @@
                 "step": "deal_damage",
                 "diceFormula": "2d4 + 2",
                 "damageType": "piercing"
+              },
+              {
+                "step": "saving_throw",
+                "ability": "str",
+                "dcFormula": "11",
+                "onFail": [
+                  {
+                    "step": "apply_condition",
+                    "conditionId": "prone"
+                  }
+                ]
               }
             ]
           }
@@ -3498,7 +3719,8 @@
       {
         "id": "undead-fortitude",
         "name": "Undead Fortitude",
-        "description": "If damage reduces the zombie to 0 hit points, it must make a Constitution saving throw with a DC of 5 + the damage taken, unless the damage is radiant or from a critical hit. On a success, the zombie drops to 1 hit point instead."
+        "description": "If damage reduces the zombie to 0 hit points, it must make a Constitution saving throw with a DC of 5 + the damage taken, unless the damage is radiant or from a critical hit. On a success, the zombie drops to 1 hit point instead.",
+        "modifiers": []
       }
     ],
     "actions": [

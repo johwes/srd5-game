@@ -11,3 +11,5 @@ export * from './attack.js';
 export * from './spellcasting.js';
 export * from './damage.js';
 export * from './reactions.js';
+export * from './features.js';
+export * from './monster-actions.js';

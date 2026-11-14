@@ -390,6 +390,40 @@
         "maxFormula": "1",
         "recovery": "short_rest"
       }
+    ],
+    "activatedAbilities": [
+      {
+        "id": "turn-undead",
+        "name": "Channel Divinity: Turn Undead",
+        "description": "Each undead that can see or hear you within 30 feet must make a Wisdom saving throw or be turned for 1 minute.",
+        "actionCost": "action",
+        "resourceCost": {
+          "resourceId": "channel_divinity",
+          "amount": 1
+        },
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "sphere",
+            "sizeFeet": 30
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "wis",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "frightened",
+                "durationRounds": 10
+              }
+            ]
+          }
+        ]
+      }
     ]
   },
   {
@@ -483,7 +517,34 @@
     "subclassId": "lore",
     "level": 3,
     "description": "At 3rd level, you learn how to use your wit to distract, confuse, and otherwise sap the confidence and competence of others.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "cutting-words",
+        "name": "Cutting Words",
+        "description": "Subtract Bardic Inspiration die from enemy attack roll, damage roll, or ability check.",
+        "actionCost": "reaction",
+        "reactionTrigger": {
+          "event": "custom",
+          "rangeFeet": 60,
+          "description": "Enemy rolls attack, ability check, or damage roll"
+        },
+        "resourceCost": {
+          "resourceId": "bardic_inspiration",
+          "amount": 1
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "cutting-words-debuff",
+            "name": "Cutting Words",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": []
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "danger-sense",
@@ -533,7 +594,29 @@
     "classId": "monk",
     "level": 3,
     "description": "Starting at 3rd level, you can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "deflect-missiles",
+        "name": "Deflect Missiles",
+        "description": "Reduce ranged weapon attack damage.",
+        "actionCost": "reaction",
+        "reactionTrigger": {
+          "event": "hit_by_attack",
+          "rangeFeet": 60
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "deflect-missiles-reduction",
+            "name": "Deflect Missiles",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": []
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "destroy-undead",
@@ -590,7 +673,15 @@
     "classId": "paladin",
     "level": 1,
     "description": "The presence of strong evil registers on your senses like a noxious odor, and powerful good rings like heavenly music in your ears.",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "divine_sense",
+        "name": "Divine Sense",
+        "maxFormula": "1 + @chaMod",
+        "recovery": "long_rest"
+      }
+    ]
   },
   {
     "id": "divine-smite",
@@ -598,7 +689,23 @@
     "classId": "paladin",
     "level": 2,
     "description": "Starting at 2nd level, when you hit a creature with a melee weapon attack, you can expend one spell slot to deal radiant damage to the target, in addition to the weapon’s damage (2d8 for a 1st-level slot, plus 1d8 for each spell level higher than 1st).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "divine-smite",
+        "name": "Divine Smite",
+        "description": "Deal extra radiant damage on melee hit.",
+        "actionCost": "special",
+        "effects": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "2d8",
+            "damageType": "radiant",
+            "isMagical": true
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "divine-strike-life",
@@ -903,7 +1010,13 @@
     "classId": "ranger",
     "level": 1,
     "description": "Beginning at 1st level, you have significant experience studying, tracking, hunting, and even talking to a certain type of enemy.",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "roll_mode",
+        "mode": "advantage",
+        "target": "skill:survival"
+      }
+    ]
   },
   {
     "id": "feral-instinct",
@@ -1159,7 +1272,25 @@
     "subclassId": "berserker",
     "level": 3,
     "description": "Starting when you choose this path at 3rd level, you can go into a frenzy when you rage, allowing a single melee weapon attack as a bonus action on each turn.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "frenzy-attack",
+        "name": "Frenzy Attack",
+        "description": "While raging, make a single melee weapon attack as a bonus action.",
+        "actionCost": "bonus_action",
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "frenzy-active",
+            "name": "Frenzy",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": []
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "hide-in-plain-sight",
@@ -1199,7 +1330,13 @@
         ]
       }
     ],
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "melee_damage",
+        "value": "1d8"
+      }
+    ]
   },
   {
     "id": "hurl-through-hell",
@@ -1266,7 +1403,13 @@
     "classId": "bard",
     "level": 2,
     "description": "Starting at 2nd level, you can add half your proficiency bonus, rounded down, to any ability check you make that doesn’t already include your proficiency bonus.",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "initiative",
+        "value": "floor(@prof / 2)"
+      }
+    ]
   },
   {
     "id": "ki",
@@ -1347,7 +1490,39 @@
     "classId": "monk",
     "level": 1,
     "description": "At 1st level, your practice of martial arts gives you mastery of combat styles that use unarmed strikes and monk weapons.",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "melee_damage",
+        "value": 0
+      }
+    ],
+    "activatedAbilities": [
+      {
+        "id": "martial-arts-bonus-strike",
+        "name": "Martial Arts Unarmed Strike",
+        "description": "Make an unarmed strike as a bonus action.",
+        "actionCost": "bonus_action",
+        "targeting": {
+          "type": "touch",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + @dexMod",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "metamagic",
@@ -1737,7 +1912,36 @@
     "classId": "barbarian",
     "level": 2,
     "description": "When you make your first attack on your turn, you can decide to attack recklessly, gaining advantage on melee weapon attack rolls using Strength during this turn, but attack rolls against you have advantage until your next turn.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "reckless-attack",
+        "name": "Reckless Attack",
+        "description": "Gain advantage on melee weapon attack rolls using Strength during this turn, but attack rolls against you have advantage until your next turn.",
+        "actionCost": "special",
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "reckless-attack-buff",
+            "name": "Reckless Attack",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "roll_mode",
+                "mode": "advantage",
+                "target": "attack_rolls"
+              },
+              {
+                "type": "roll_mode",
+                "mode": "advantage",
+                "target": "attacks_against_self"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "relentless-rage",
@@ -1796,7 +2000,35 @@
     "subclassId": "devotion",
     "level": 3,
     "description": "As an action, you can imbue one weapon that you are holding with positive energy, adding your Charisma modifier to attack rolls for 1 minute.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "sacred-weapon",
+        "name": "Channel Divinity: Sacred Weapon",
+        "description": "Add Charisma modifier to attack rolls.",
+        "actionCost": "action",
+        "resourceCost": {
+          "resourceId": "channel_divinity",
+          "amount": 1
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "sacred-weapon-buff",
+            "name": "Sacred Weapon",
+            "durationRounds": 10,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "flat_bonus",
+                "target": "melee_attack",
+                "value": "@chaMod"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "sculpt-spells",
@@ -1876,7 +2108,29 @@
     "classId": "monk",
     "level": 4,
     "description": "Beginning at 4th level, you can use your reaction when you fall to reduce any falling damage you take by an amount equal to five times your monk level.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "slow-fall",
+        "name": "Slow Fall",
+        "description": "Reduce falling damage as a reaction.",
+        "actionCost": "reaction",
+        "reactionTrigger": {
+          "event": "creature_falls",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "slow-fall-active",
+            "name": "Slow Fall",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": []
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "sneak-attack",
@@ -1884,7 +2138,18 @@
     "classId": "rogue",
     "level": 1,
     "description": "Beginning at 1st level, you know how to strike subtly and exploit a foe’s distraction. Once per turn, you can deal an extra 1d6 damage to one creature you hit with an attack if you have advantage on the attack roll or an ally is within 5 feet of the target.",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "melee_damage",
+        "value": "1d6"
+      },
+      {
+        "type": "flat_bonus",
+        "target": "ranged_damage",
+        "value": "1d6"
+      }
+    ]
   },
   {
     "id": "song-of-rest",
@@ -1996,7 +2261,33 @@
     "classId": "monk",
     "level": 5,
     "description": "Starting at 5th level, you can interfere with the flow of ki in an opponent’s body. When you hit another creature with a melee weapon attack, you can spend 1 ki point to attempt a stunning strike.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "stunning-strike",
+        "name": "Stunning Strike",
+        "description": "Target must make CON save or be stunned.",
+        "actionCost": "special",
+        "resourceCost": {
+          "resourceId": "ki",
+          "amount": 1
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "con",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "stunned",
+                "durationRounds": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "superior-critical",
@@ -2116,7 +2407,41 @@
     "subclassId": "devotion",
     "level": 3,
     "description": "As an action, you present your holy symbol and speak a prayer censuring fiends and undead.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "turn-the-unholy",
+        "name": "Channel Divinity: Turn the Unholy",
+        "description": "Turn fiends and undead within 30 ft.",
+        "actionCost": "action",
+        "resourceCost": {
+          "resourceId": "channel_divinity",
+          "amount": 1
+        },
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "sphere",
+            "sizeFeet": 30
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "wis",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "frightened",
+                "durationRounds": 10
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "unarmored-movement",
@@ -2218,6 +2543,14 @@
     "classId": "druid",
     "level": 2,
     "description": "Starting at 2nd level, you can use your action to magically assume the shape of a beast that you have seen before twice per short or long rest.",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "wild_shape",
+        "name": "Wild Shape",
+        "maxFormula": "2",
+        "recovery": "short_rest"
+      }
+    ]
   }
 ]

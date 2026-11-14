@@ -144,6 +144,30 @@ export const SRD_FEATURE_OVERLAYS: Readonly<Record<string, FeatureOverlaySpec>> 
         recovery: 'short_rest',
       },
     ],
+    activatedAbilities: [
+      {
+        id: 'turn-undead',
+        name: 'Channel Divinity: Turn Undead',
+        description: 'Each undead that can see or hear you within 30 feet must make a Wisdom saving throw or be turned for 1 minute.',
+        actionCost: 'action',
+        resourceCost: { resourceId: 'channel_divinity', amount: 1 },
+        targeting: { type: 'self_aoe', rangeFeet: 0, aoe: { shape: 'sphere', sizeFeet: 30 } },
+        effects: [
+          {
+            step: 'saving_throw',
+            ability: 'wis',
+            dcFormula: '@spellSaveDC',
+            onFail: [
+              {
+                step: 'apply_condition',
+                conditionId: 'frightened',
+                durationRounds: 10,
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   'channel-divinity-preserve-life': {
     activatedAbilities: [
@@ -521,11 +545,421 @@ export const SRD_FEATURE_OVERLAYS: Readonly<Record<string, FeatureOverlaySpec>> 
       },
     ],
   },
+
+  "reckless-attack": {
+    activatedAbilities: [
+      {
+        id: "reckless-attack",
+        name: "Reckless Attack",
+        description: "Gain advantage on melee weapon attack rolls using Strength during this turn, but attack rolls against you have advantage until your next turn.",
+        actionCost: "special",
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "reckless-attack-buff",
+            name: "Reckless Attack",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [
+              {
+                type: "roll_mode",
+                mode: "advantage",
+                target: "attack_rolls",
+              },
+              {
+                type: "roll_mode",
+                mode: "advantage",
+                target: "attacks_against_self",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  frenzy: {
+    activatedAbilities: [
+      {
+        id: "frenzy-attack",
+        name: "Frenzy Attack",
+        description: "While raging, make a single melee weapon attack as a bonus action.",
+        actionCost: "bonus_action",
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "frenzy-active",
+            name: "Frenzy",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    ],
+  },
+  "totem-spirit": {
+    modifiers: [
+      {
+        type: "damage_mitigation",
+        mitigation: "resistance",
+        damageTypes: [
+          "acid",
+          "cold",
+          "fire",
+          "force",
+          "lightning",
+          "necrotic",
+          "poison",
+          "radiant",
+          "thunder",
+        ],
+      },
+    ],
+  },
+  "extra-attack-barbarian": {
+    modifiers: [{ type: "extra_attack", attacksPerAction: 2 }],
+  },
+  "extra-attack-monk": {
+    modifiers: [{ type: "extra_attack", attacksPerAction: 2 }],
+  },
+  "extra-attack-paladin": {
+    modifiers: [{ type: "extra_attack", attacksPerAction: 2 }],
+  },
+  "extra-attack-ranger": {
+    modifiers: [{ type: "extra_attack", attacksPerAction: 2 }],
+  },
+  "extra-attack-fighter": {
+    modifiers: [{ type: "extra_attack", attacksPerAction: 2 }],
+  },
+  "jack-of-all-trades": {
+    modifiers: [
+      {
+        type: "flat_bonus",
+        target: "initiative",
+        value: "floor(@prof / 2)",
+      },
+    ],
+  },
+  "song-of-rest": {
+    modifiers: [],
+  },
+  "cutting-words": {
+    activatedAbilities: [
+      {
+        id: "cutting-words",
+        name: "Cutting Words",
+        description: "Subtract Bardic Inspiration die from enemy attack roll, damage roll, or ability check.",
+        actionCost: "reaction",
+        reactionTrigger: {
+          event: "custom",
+          description: "Enemy rolls attack, ability check, or damage roll",
+          rangeFeet: 60,
+        },
+        resourceCost: { resourceId: "bardic_inspiration", amount: 1 },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "cutting-words-debuff",
+            name: "Cutting Words",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    ],
+  },
+  "font-of-inspiration": {
+    modifiers: [],
+  },
+  "disciple-of-life": {
+    modifiers: [],
+  },
+  "bonus-proficiency-life": {
+    modifiers: [],
+  },
+  "destroy-undead": {
+    modifiers: [],
+  },
+  "natural-recovery": {
+    modifiers: [],
+  },
+  "wild-shape": {
+    modifiers: [
+      {
+        type: "grant_resource",
+        resourceId: "wild_shape",
+        name: "Wild Shape",
+        maxFormula: "2",
+        recovery: "short_rest",
+      },
+    ],
+  },
+  "martial-arts": {
+    modifiers: [
+      {
+        type: "flat_bonus",
+        target: "melee_damage",
+        value: 0,
+      },
+    ],
+    activatedAbilities: [
+      {
+        id: "martial-arts-bonus-strike",
+        name: "Martial Arts Unarmed Strike",
+        description: "Make an unarmed strike as a bonus action.",
+        actionCost: "bonus_action",
+        targeting: { type: "touch", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d4 + @dexMod",
+                damageType: "bludgeoning",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "open-hand-technique": {
+    modifiers: [],
+  },
+  "deflect-missiles": {
+    activatedAbilities: [
+      {
+        id: "deflect-missiles",
+        name: "Deflect Missiles",
+        description: "Reduce ranged weapon attack damage.",
+        actionCost: "reaction",
+        reactionTrigger: {
+          event: "hit_by_attack",
+          rangeFeet: 60,
+        },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "deflect-missiles-reduction",
+            name: "Deflect Missiles",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    ],
+  },
+  "slow-fall": {
+    activatedAbilities: [
+      {
+        id: "slow-fall",
+        name: "Slow Fall",
+        description: "Reduce falling damage as a reaction.",
+        actionCost: "reaction",
+        reactionTrigger: {
+          event: "creature_falls",
+          rangeFeet: 0,
+        },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "slow-fall-active",
+            name: "Slow Fall",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    ],
+  },
+  "stunning-strike": {
+    activatedAbilities: [
+      {
+        id: "stunning-strike",
+        name: "Stunning Strike",
+        description: "Target must make CON save or be stunned.",
+        actionCost: "special",
+        resourceCost: { resourceId: "ki", amount: 1 },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "con",
+            dcFormula: "@spellSaveDC",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "stunned",
+                durationRounds: 1,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "divine-sense": {
+    modifiers: [
+      {
+        type: "grant_resource",
+        resourceId: "divine_sense",
+        name: "Divine Sense",
+        maxFormula: "1 + @chaMod",
+        recovery: "long_rest",
+      },
+    ],
+  },
+  "divine-smite": {
+    activatedAbilities: [
+      {
+        id: "divine-smite",
+        name: "Divine Smite",
+        description: "Deal extra radiant damage on melee hit.",
+        actionCost: "special",
+        effects: [
+          {
+            step: "deal_damage",
+            diceFormula: "2d8",
+            damageType: "radiant",
+            isMagical: true,
+          },
+        ],
+      },
+    ],
+  },
+  "divine-health": {
+    modifiers: [],
+  },
+  "sacred-weapon": {
+    activatedAbilities: [
+      {
+        id: "sacred-weapon",
+        name: "Channel Divinity: Sacred Weapon",
+        description: "Add Charisma modifier to attack rolls.",
+        actionCost: "action",
+        resourceCost: { resourceId: "channel_divinity", amount: 1 },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "sacred-weapon-buff",
+            name: "Sacred Weapon",
+            durationRounds: 10,
+            requiresConcentration: false,
+            modifiers: [
+              {
+                type: "flat_bonus",
+                target: "melee_attack",
+                value: "@chaMod",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "turn-the-unholy": {
+    activatedAbilities: [
+      {
+        id: "turn-the-unholy",
+        name: "Channel Divinity: Turn the Unholy",
+        description: "Turn fiends and undead within 30 ft.",
+        actionCost: "action",
+        resourceCost: { resourceId: "channel_divinity", amount: 1 },
+        targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "sphere", sizeFeet: 30 } },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "wis",
+            dcFormula: "@spellSaveDC",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "frightened",
+                durationRounds: 10,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "favored-enemy": {
+    modifiers: [
+      {
+        type: "roll_mode",
+        mode: "advantage",
+        target: "skill:survival",
+      },
+    ],
+  },
+  "natural-explorer": {
+    modifiers: [],
+  },
+  "primeval-awareness": {
+    modifiers: [],
+  },
+  "hunters-prey": {
+    modifiers: [
+      {
+        type: "flat_bonus",
+        target: "melee_damage",
+        value: "1d8",
+      },
+    ],
+  },
+  "sneak-attack": {
+    modifiers: [
+      {
+        type: "flat_bonus",
+        target: "melee_damage",
+        value: "1d6",
+      },
+      {
+        type: "flat_bonus",
+        target: "ranged_damage",
+        value: "1d6",
+      },
+    ],
+  },
+  "fast-hands": {
+    modifiers: [],
+  },
+  "second-story-work": {
+    modifiers: [],
+  },
+  metamagic: {
+    modifiers: [],
+  },
+  "dark-ones-blessing": {
+    modifiers: [],
+  },
+  "eldritch-invocations": {
+    modifiers: [],
+  },
+  "pact-boon": {
+    modifiers: [],
+  },
+  "sculpt-spells": {
+    modifiers: [],
+  },
+  "asi-barbarian": { modifiers: [] },
+  "asi-bard": { modifiers: [] },
+  "asi-cleric": { modifiers: [] },
+  "asi-druid": { modifiers: [] },
+  "asi-fighter": { modifiers: [] },
+  "asi-monk": { modifiers: [] },
+  "asi-paladin": { modifiers: [] },
+  "asi-ranger": { modifiers: [] },
+  "asi-rogue": { modifiers: [] },
+  "asi-sorcerer": { modifiers: [] },
+  "asi-warlock": { modifiers: [] },
+  "asi-wizard": { modifiers: [] },
 };
 
-/**
- * Declarative Effect & Modifier DSL overlays for SRD 5.1 Feats.
- */
 export const SRD_FEAT_OVERLAYS: Readonly<Record<string, FeatOverlaySpec>> = {
   grappler: {
     prerequisites: [
