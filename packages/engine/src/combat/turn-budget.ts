@@ -204,6 +204,46 @@ export function applyStandUp(budget: TurnBudget, speedFeet: number): TurnBudget 
   return spendMovement(budget, cost);
 }
 
+/**
+ * Spends 1 attack from the budget.
+ * If extra attacks from the Attack action are available, consumes 1 extra attack.
+ * Otherwise, spends 1 main Action, marks attackActionTaken, and sets extraAttacksRemaining.
+ */
+export function spendAttack(budget: TurnBudget, attacksPerAction = 1): TurnBudget {
+  if (budget.extraAttacksRemaining > 0) {
+    return {
+      ...budget,
+      extraAttacksRemaining: budget.extraAttacksRemaining - 1,
+    };
+  }
+  if (budget.action <= 0) {
+    throw new Error('No actions remaining this turn to take the Attack action');
+  }
+  return {
+    ...budget,
+    action: budget.action - 1,
+    attackActionTaken: true,
+    extraAttacksRemaining: Math.max(0, attacksPerAction - 1),
+  };
+}
+
+/**
+ * Spends 1 bonus action for a Two-Weapon Fighting off-hand attack.
+ * Enforces the SRD 5.1 rule that the Attack action must already have been taken this turn.
+ */
+export function spendTwoWeaponFightingBonusAttack(budget: TurnBudget): TurnBudget {
+  if (!budget.attackActionTaken) {
+    throw new Error('Two-Weapon Fighting bonus attack requires taking the Attack action first');
+  }
+  if (budget.bonusAction <= 0) {
+    throw new Error('No bonus action remaining this turn');
+  }
+  return {
+    ...budget,
+    bonusAction: budget.bonusAction - 1,
+  };
+}
+
 export type SpellCastingTime = 'action' | 'bonus_action' | 'reaction';
 
 export interface SpellCastCheckResult {

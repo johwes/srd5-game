@@ -4,6 +4,7 @@ import {
   CreatureSizeSchema,
   type ConditionId,
   type CreatureSize,
+  type DamageType,
   type MonsterData,
 } from '@srd5/data';
 import {
@@ -19,6 +20,7 @@ import {
   GridPointSchema,
   type GridPoint,
 } from '../grid/model.js';
+import { type CoverLevel } from '../grid/vision.js';
 
 /**
  * Combatant allegiance sides.
@@ -71,11 +73,14 @@ export const CombatantStateSchema = z.object({
   armorClass: z.number().int().positive(),
   dexterityScore: z.number().int().min(1).max(30),
   dexterityModifier: z.number().int(),
+  strengthScore: z.number().int().min(1).max(30).optional(),
+  strengthModifier: z.number().int().optional(),
   initiativeBonus: z.number().int(),
   initiativeRollMode: z.enum(['normal', 'advantage', 'disadvantage']),
   passivePerception: z.number().int(),
   stealthModifier: z.number().int(),
   isSurprised: z.boolean(),
+  isDodging: z.boolean().optional(),
   conditions: z.array(ConditionIdSchema),
   deathSaves: DeathSavesStateSchema,
   isDead: z.boolean(),
@@ -196,6 +201,58 @@ export type CombatEvent =
       actionName: 'dash' | 'disengage' | 'dodge' | 'stand_up' | 'action_surge' | 'custom';
       cost: 'action' | 'bonus_action' | 'free' | 'movement';
       movementCostFeet?: number;
+    }
+  | {
+      type: 'ATTACK_RESOLVED';
+      attackerId: string;
+      targetId: string;
+      weaponOrSpellName: string;
+      attackType: 'melee_weapon' | 'ranged_weapon' | 'melee_spell' | 'ranged_spell';
+      roll: number;
+      totalToHit: number;
+      targetAc: number;
+      outcome: 'miss' | 'hit' | 'critical_hit';
+      damage?: {
+        total: number;
+        damageType: DamageType;
+        diceFormula: string;
+      };
+      cover?: CoverLevel;
+    }
+  | {
+      type: 'GRAPPLE_RESOLVED';
+      attackerId: string;
+      targetId: string;
+      success: boolean;
+      attackerAthleticsTotal: number;
+      targetContestTotal: number;
+      targetSkillUsed: 'athletics' | 'acrobatics';
+    }
+  | {
+      type: 'SHOVE_RESOLVED';
+      attackerId: string;
+      targetId: string;
+      success: boolean;
+      shoveType: 'knock_prone' | 'push_away';
+      attackerAthleticsTotal: number;
+      targetContestTotal: number;
+      targetSkillUsed: 'athletics' | 'acrobatics';
+      destination?: GridPoint;
+    }
+  | {
+      type: 'ENTITY_MOVED';
+      entityId: string;
+      path: GridPoint[];
+      mode: 'walk' | 'dash' | 'teleport' | 'forced';
+    }
+  | {
+      type: 'DAMAGE_APPLIED';
+      targetId: string;
+      rawAmount: number;
+      finalAmount: number;
+      damageType: DamageType;
+      tempHpAbsorbed: number;
+      hpRemaining: number;
     }
   | {
       type: 'ENCOUNTER_VICTORY';

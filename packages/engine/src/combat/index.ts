@@ -4,3 +4,4 @@ export * from './surprise.js';
 export * from './turn-budget.js';
 export * from './combatant.js';
 export * from './state-machine.js';
+export * from './attack.js';

@@ -175,6 +175,7 @@ export function startTurn(
   // Clear Dodge condition / state from previous turn (SRD 5.1 Dodge ends at start of next turn)
   let updatedCombatant: Combatant = {
     ...currentCombatant,
+    isDodging: false,
   };
 
   // If at 0 HP and not stable, roll start-of-turn Death Saving Throw
@@ -460,6 +461,7 @@ export function executeDodge(state: CombatState, actorId: string): CombatTransit
   }
 
   const nextBudget = applyDodge(state.turnBudget);
+  const combatant = state.combatants[actorId];
   const events: CombatEvent[] = [
     {
       type: 'ACTION_USED',
@@ -473,6 +475,10 @@ export function executeDodge(state: CombatState, actorId: string): CombatTransit
     state: {
       ...state,
       turnBudget: nextBudget,
+      combatants: {
+        ...state.combatants,
+        ...(combatant ? { [actorId]: { ...combatant, isDodging: true } } : {}),
+      },
     },
     events,
   };
