@@ -7,12 +7,16 @@ import {
 } from '@srd5/data';
 import {
   type Combatant,
+  type DeepDescentRunState,
   type GameState,
   type GridPoint,
   type InteractiveProp,
+  type RogueliteRunSession,
   computeDerivedCharacter,
   createCharacterCombatant,
   createDungeonGameState,
+  startRogueliteRun,
+  advanceRogueliteFloor,
 } from '@srd5/engine';
 import { LocalTransport, type PlayerViewProp } from '@srd5/transport';
 
@@ -174,4 +178,30 @@ export function isFinalCampaignBossDefeated(gameState: GameState): boolean {
     return gameState.mode === 'exploration' && Object.keys(gameState.monsters).length === 0;
   }
   return boss.isDead || boss.currentHp <= 0;
+}
+
+/**
+ * Initializes a new Deep Descent Roguelite run session and LocalTransport (Spec 06 Section 3.1).
+ */
+export function buildRogueliteSession(
+  partyCharacters: CharacterBuildState[] = [],
+  compendium: SrdCompendium = defaultCompendium,
+  seed?: number,
+): {
+  transport: LocalTransport;
+  initialState: GameState;
+  session: RogueliteRunSession;
+} {
+  const session = startRogueliteRun({
+    partyCharacters,
+    compendium,
+    seed: seed ?? 1337,
+  });
+
+  const transport = new LocalTransport({
+    initialState: session.gameState,
+    defaultPlayerId: 'player-1',
+  });
+
+  return { transport, initialState: session.gameState, session };
 }

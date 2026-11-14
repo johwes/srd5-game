@@ -78,6 +78,7 @@ export interface PlayerViewProp {
   state: PropState;
   blocksMovement: boolean;
   blocksSight: boolean;
+  shrineType?: string;
 }
 
 /**

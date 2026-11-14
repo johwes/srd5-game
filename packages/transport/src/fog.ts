@@ -303,6 +303,7 @@ export function projectPlayerView(
       state: prop.state,
       blocksMovement: prop.blocksMovement,
       blocksSight: prop.blocksSight,
+      shrineType: prop.shrineType,
     });
   }
 

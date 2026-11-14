@@ -5,4 +5,7 @@ export { RestCampModal } from './RestCampModal.js';
 export { LootInventoryModal } from './LootInventoryModal.js';
 export { SaveLoadModal } from './SaveLoadModal.js';
 export { DungeonExplorationHud } from './DungeonExplorationHud.js';
+export { ShrineModal } from './ShrineModal.js';
+export { GraveyardModal } from './GraveyardModal.js';
+export { RogueliteHud } from './RogueliteHud.js';
 export { DungeonView } from './DungeonView.js';

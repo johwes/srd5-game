@@ -88,6 +88,7 @@ export interface InteractiveProp {
   trapSaveAbility?: AbilityId;
   trapHalfDamageOnSave?: boolean;
   lootTable?: LootBundleSpec;
+  shrineType?: string;
 }
 
 /**
@@ -140,6 +141,11 @@ export type GameCommand =
         | 'force_open'
         | 'search'
         | 'attack';
+    }
+  | {
+      type: 'ACTIVATE_SHRINE';
+      actorId: string;
+      shrineId: string;
     }
   | {
       type: 'EXPLORE_SEARCH';
@@ -423,6 +429,20 @@ export type GameEvent =
       characterId: string;
       inventory: InventoryItemInstance[];
       currency?: CharacterCurrency;
+    }
+  | {
+      type: 'SHRINE_ACTIVATED';
+      shrineId: string;
+      shrineType: string;
+      actorId: string;
+      effectDescription: string;
+    }
+  | {
+      type: 'ROGUELITE_STARVATION';
+      actorId: string;
+      rationsConsumed: number;
+      rationsShort: number;
+      exhaustionLevel: number;
     };
 
 /**

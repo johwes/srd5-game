@@ -31,7 +31,7 @@ import {
   upsertRosterCharacter,
 } from './persistence/index.js';
 
-export type AppViewMode = 'builder' | 'roster' | 'compendium' | 'arena' | 'dungeon';
+export type AppViewMode = 'builder' | 'roster' | 'compendium' | 'arena' | 'dungeon' | 'roguelite';
 
 export interface AppProps {
   initialView?: AppViewMode;
@@ -235,6 +235,19 @@ export function App({
               >
                 🏰 Dungeon Delve
               </button>
+              <button
+                type="button"
+                data-testid="app-nav-roguelite"
+                aria-pressed={activeView === 'roguelite'}
+                onClick={() => setActiveView('roguelite')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  activeView === 'roguelite'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                💀 Deep Descent
+              </button>
             </div>
 
             <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-amber-300 text-xs font-medium">
@@ -308,6 +321,26 @@ export function App({
               roster.activePartyIds.includes(c.id),
             )}
             compendium={defaultCompendium}
+            gameMode="campaign"
+            onOpenCharacterSheet={(charId) => {
+              const char =
+                roster.characters.find((c) => c.id === charId) ??
+                getPregenCharacter(charId);
+              if (char) {
+                handleInspectCharacter(char);
+              }
+            }}
+            onExitToRoster={() => setActiveView('roster')}
+          />
+        )}
+
+        {activeView === 'roguelite' && (
+          <DungeonView
+            partyCharacters={roster.characters.filter((c) =>
+              roster.activePartyIds.includes(c.id),
+            )}
+            compendium={defaultCompendium}
+            gameMode="roguelite"
             onOpenCharacterSheet={(charId) => {
               const char =
                 roster.characters.find((c) => c.id === charId) ??

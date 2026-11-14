@@ -1032,11 +1032,18 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
     };
     const key = `${shrinePt.x},${shrinePt.y}`;
     if (!propOccupied.has(key)) {
+      const shrineTypes = [
+        'shrine_blood_god',
+        'shrine_arcane_weave',
+        'fountain_restoration',
+      ] as const;
+      const shrineType = shrineTypes[Math.floor(nextFloat() * shrineTypes.length)];
       props.push({
         id: `shrine_${config.depth}`,
         x: shrinePt.x,
         y: shrinePt.y,
         kind: 'shrine',
+        shrineType,
         state: 'closed',
         blocksMovement: false,
         blocksSight: false,

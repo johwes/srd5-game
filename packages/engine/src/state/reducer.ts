@@ -48,6 +48,7 @@ import {
 import { resolveRest } from '../dungeon/rest.js';
 import { claimPropLoot, awardLootToCharacter } from '../dungeon/loot.js';
 import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
+import { activateShrine } from '../dungeon/roguelite.js';
 import { applyBetweenCombatLevelUp } from '../dungeon/level-up-flow.js';
 import { computeDerivedCharacter } from '../character/derived.js';
 import {
@@ -670,6 +671,31 @@ export function reduceGame(
     }
 
     case 'INTERACT_PROP': {
+      const targetProp = nextState.props.find((p) => p.id === command.propId);
+      if (targetProp && targetProp.kind === 'shrine') {
+        const dummyRun = {
+          runId: 'shrine_use',
+          seed: nextState.rngState,
+          currentDepth: 1,
+          maxDepthReached: 1,
+          party: nextState.party,
+          suppliesRemaining: 10,
+          goldCollected: 0,
+          monstersSlain: 0,
+          totalXp: 0,
+          turnsTaken: 0,
+          shrineBlessings: [],
+          activeCurses: [],
+          restCount: { short: 0, long: 0 },
+          score: 0,
+          isComplete: false,
+        };
+        const shrineRes = activateShrine(dummyRun, nextState, command.propId, command.actorId);
+        nextState = shrineRes.nextGameState;
+        events.push(...shrineRes.events);
+        break;
+      }
+
       const interactionRes = resolvePropInteraction({
         state: nextState,
         actorId: command.actorId,
@@ -692,6 +718,30 @@ export function reduceGame(
           events.push(...encCheck.events);
         }
       }
+      break;
+    }
+
+    case 'ACTIVATE_SHRINE': {
+      const dummyRun = {
+        runId: 'shrine_use',
+        seed: nextState.rngState,
+        currentDepth: 1,
+        maxDepthReached: 1,
+        party: nextState.party,
+        suppliesRemaining: 10,
+        goldCollected: 0,
+        monstersSlain: 0,
+        totalXp: 0,
+        turnsTaken: 0,
+        shrineBlessings: [],
+        activeCurses: [],
+        restCount: { short: 0, long: 0 },
+        score: 0,
+        isComplete: false,
+      };
+      const shrineRes = activateShrine(dummyRun, nextState, command.shrineId, command.actorId);
+      nextState = shrineRes.nextGameState;
+      events.push(...shrineRes.events);
       break;
     }
 

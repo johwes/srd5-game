@@ -198,6 +198,19 @@ export function getCombatantAcrobaticsBonus(combatant: Combatant): number {
 /**
  * Resolves an attack profile from character sheet, monster data, or custom override.
  */
+function getBlessingAttackBonus(attacker: Combatant): number {
+  if (
+    attacker.blessings?.includes('shrine_blood_god') ||
+    attacker.blessings?.includes('blessing_blood_god') ||
+    attacker.activeEffects?.some(
+      (e) => e.effectId === 'shrine_blood_god' || e.effectId === 'blessing_blood_god',
+    )
+  ) {
+    return 2;
+  }
+  return 0;
+}
+
 export function resolveCombatantAttackProfile(
   attacker: Combatant,
   options: {
@@ -208,6 +221,8 @@ export function resolveCombatantAttackProfile(
     versatileTwoHanded?: boolean;
   },
 ): ResolvedAttackDetails {
+  const blessingBonus = getBlessingAttackBonus(attacker);
+
   if (options.customAttack) {
     const c = options.customAttack;
     const isTwoHanded = Boolean(options.versatileTwoHanded);
@@ -218,7 +233,7 @@ export function resolveCombatantAttackProfile(
     return {
       name: c.name,
       attackType: c.attackType,
-      toHitBonus: c.toHitBonus,
+      toHitBonus: c.toHitBonus + blessingBonus,
       damageDice: dice,
       damageBonus: bonus,
       damageFormula: formula,
@@ -268,7 +283,7 @@ export function resolveCombatantAttackProfile(
     return {
       name: profile.name,
       attackType: profile.rangeType === 'ranged' ? 'ranged_weapon' : 'melee_weapon',
-      toHitBonus: profile.toHitBonus,
+      toHitBonus: profile.toHitBonus + blessingBonus,
       damageDice,
       damageBonus: profile.damageBonus,
       damageFormula,
@@ -337,7 +352,7 @@ export function resolveCombatantAttackProfile(
     return {
       name: selectedAction.name,
       attackType: isRanged ? 'ranged_weapon' : 'melee_weapon',
-      toHitBonus: attackStep.attackBonusOverride ?? 0,
+      toHitBonus: (attackStep.attackBonusOverride ?? 0) + blessingBonus,
       damageDice: damageFormula,
       damageBonus: 0,
       damageFormula,
@@ -356,7 +371,7 @@ export function resolveCombatantAttackProfile(
   return {
     name: 'Unarmed Strike',
     attackType: 'melee_weapon',
-    toHitBonus: strMod + 2,
+    toHitBonus: strMod + 2 + blessingBonus,
     damageDice: '1',
     damageBonus: Math.max(0, strMod),
     damageFormula: strMod > 0 ? `1 + ${strMod}` : '1',

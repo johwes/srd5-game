@@ -13,6 +13,7 @@ import {
   type ActiveConditionInstance,
   ActiveEffectInstanceSchema,
   type ActiveEffectInstance,
+  type LootBundleSpec,
   AoeShapeTypeSchema,
   type AoeShapeType,
   type EffectStepSpec,
@@ -165,6 +166,7 @@ export const CombatantStateSchema = z.object({
   playerId: z.string().min(1).optional(),
   roomId: z.string().optional(),
   levelUpAvailable: z.boolean().optional(),
+  blessings: z.array(z.string()).optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
@@ -564,6 +566,7 @@ export type CombatEvent =
       xpAwarded?: number;
       survivingHeroIds?: string[];
       encounterId?: string;
+      lootBundle?: LootBundleSpec;
     };
 
 /**

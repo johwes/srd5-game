@@ -23,6 +23,8 @@ export type DungeonModalMode =
   | 'level_up'
   | 'victory'
   | 'defeat'
+  | 'shrine'
+  | 'graveyard'
   | null;
 
 export interface DungeonConfig {

@@ -127,6 +127,7 @@ export const InteractivePropSpecSchema = z.object({
   hp: z.number().int().positive().optional(),
   targetFloorId: z.string().optional(),
   targetSpawnPoint: GridPointSchema.optional(),
+  shrineType: z.string().optional(),
 });
 export type InteractivePropSpec = z.infer<typeof InteractivePropSpecSchema>;
 

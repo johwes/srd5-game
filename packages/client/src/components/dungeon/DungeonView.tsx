@@ -10,15 +10,25 @@ import {
 } from '@srd5/data';
 import {
   type Combatant,
+  type DeepDescentRunState,
   type DiceRollRecord,
   type GameCommand,
   type GameEvent,
   type GameState,
+  type GraveyardEntry,
   type GridPoint,
+  type InteractiveProp,
+  activateShrine,
+  advanceRogueliteFloor,
+  calculateGoldFromLoot,
+  checkRogueliteWipe,
+  endRogueliteRun,
   findPath,
   planAiTurn,
+  recordRunMonstersSlain,
+  resolveRogueliteLongRest,
 } from '@srd5/engine';
-import { LocalTransport, type PlayerViewState } from '@srd5/transport';
+import { LocalTransport, type PlayerViewProp, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { TacticalCombatHud } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
@@ -27,18 +37,24 @@ import { LootInventoryModal } from './LootInventoryModal.js';
 import { MarchingOrderModal } from './MarchingOrderModal.js';
 import { RestCampModal } from './RestCampModal.js';
 import { SaveLoadModal } from './SaveLoadModal.js';
+import { ShrineModal } from './ShrineModal.js';
+import { GraveyardModal } from './GraveyardModal.js';
+import { RogueliteHud } from './RogueliteHud.js';
 import {
   buildDungeonSession,
+  buildRogueliteSession,
   getAdjacentProps,
   isFinalCampaignBossDefeated,
   transitionToNextFloor,
 } from './dungeonEngine.js';
+import { saveGraveyardEntry } from '../../persistence/index.js';
 import type { DungeonModalMode } from './types.js';
 
 export interface DungeonViewProps {
   partyCharacters?: CharacterBuildState[];
   compendium?: SrdCompendium;
   initialFloorId?: string;
+  gameMode?: 'campaign' | 'roguelite';
   onExitToRoster: () => void;
   onOpenCharacterSheet?: (characterId: string) => void;
 }
@@ -47,17 +63,38 @@ export function DungeonView({
   partyCharacters = [],
   compendium = defaultCompendium,
   initialFloorId = 'kaelen-floor-1',
+  gameMode = 'campaign',
   onExitToRoster,
   onOpenCharacterSheet,
 }: DungeonViewProps) {
   const campaignModule = getSunkenCryptModule();
+  const [dungeonMode, setDungeonMode] = useState<'campaign' | 'roguelite'>(gameMode);
   const [currentFloorId, setCurrentFloorId] = useState<string>(initialFloorId);
 
+  const [rogueliteState, setRogueliteState] = useState<{
+    runState: DeepDescentRunState;
+    floor: DungeonFloorSpec;
+  } | null>(() => {
+    if (gameMode === 'roguelite') {
+      const sess = buildRogueliteSession(partyCharacters, compendium);
+      return {
+        runState: sess.session.runState,
+        floor: sess.session.generatedFloor.floor,
+      };
+    }
+    return null;
+  });
+
   const floorSpec =
-    getCampaignFloor(campaignModule, currentFloorId) ??
-    campaignModule.floors[0]!;
+    dungeonMode === 'roguelite' && rogueliteState
+      ? rogueliteState.floor
+      : (getCampaignFloor(campaignModule, currentFloorId) ?? campaignModule.floors[0]!);
 
   const [transport, setTransport] = useState<LocalTransport>(() => {
+    if (gameMode === 'roguelite') {
+      const sess = buildRogueliteSession(partyCharacters, compendium);
+      return sess.transport;
+    }
     return buildDungeonSession(floorSpec, partyCharacters, compendium).transport;
   });
 
@@ -77,6 +114,9 @@ export function DungeonView({
     sourceName?: string;
     bundle: any;
   } | null>(null);
+  const [activeShrine, setActiveShrine] =
+    useState<InteractiveProp | PlayerViewProp | null>(null);
+  const [graveyardEntry, setGraveyardEntry] = useState<GraveyardEntry | null>(null);
   const [campaignVictory, setCampaignVictory] = useState(false);
 
   // AI automation for combat
@@ -151,12 +191,43 @@ export function DungeonView({
             setModalState('loot_inventory');
           }
         }
+
+        // Encounter victory in roguelite mode
+        if (ev.type === 'ENCOUNTER_VICTORY' && dungeonMode === 'roguelite') {
+          setRogueliteState((prev) => {
+            if (!prev) return null;
+            const updated = recordRunMonstersSlain(
+              prev.runState,
+              1,
+              ev.xpAwarded ?? 0,
+              calculateGoldFromLoot('lootBundle' in ev ? ev.lootBundle : undefined),
+            );
+            return { ...prev, runState: updated };
+          });
+        }
       }
 
-      // Check if boss defeated on Floor 3
+      // Check if boss defeated on Floor 3 in campaign mode
       const auth = transport.getAuthoritativeState();
-      if (isFinalCampaignBossDefeated(auth)) {
+      if (dungeonMode === 'campaign' && isFinalCampaignBossDefeated(auth)) {
         setCampaignVictory(true);
+      }
+
+      // Check for party wipe in roguelite mode
+      if (dungeonMode === 'roguelite' && rogueliteState && !rogueliteState.runState.isComplete) {
+        if (checkRogueliteWipe(rogueliteState.runState, auth)) {
+          const completed = endRogueliteRun(
+            rogueliteState.runState,
+            auth,
+            'Overcome by the Dungeons',
+          );
+          if (completed.graveyardEntry) {
+            saveGraveyardEntry(completed.graveyardEntry);
+            setGraveyardEntry(completed.graveyardEntry);
+          }
+          setRogueliteState((prev) => (prev ? { ...prev, runState: completed } : null));
+          setModalState('graveyard');
+        }
       }
     });
 
@@ -263,6 +334,11 @@ export function DungeonView({
           });
           return;
         }
+        if (clickedProp.kind === 'shrine') {
+          setActiveShrine(clickedProp);
+          setModalState('shrine');
+          return;
+        }
         if (clickedProp.kind === 'chest') {
           if (clickedProp.state === 'open') {
             setModalState('loot_inventory');
@@ -354,6 +430,26 @@ export function DungeonView({
 
   // Descend stairs handler
   const handleDescendStairs = () => {
+    if (dungeonMode === 'roguelite') {
+      if (!rogueliteState) return;
+      const currentAuth = getAuthState();
+      const nextSess = advanceRogueliteFloor(
+        rogueliteState.runState,
+        currentAuth,
+        compendium,
+      );
+      const nextTransport = new LocalTransport({
+        initialState: nextSess.gameState,
+        defaultPlayerId: 'player-1',
+      });
+      setRogueliteState({
+        runState: nextSess.runState,
+        floor: nextSess.generatedFloor.floor,
+      });
+      setTransport(nextTransport);
+      return;
+    }
+
     let nextFloorId: string | null = null;
     if (currentFloorId === 'kaelen-floor-1') nextFloorId = 'kaelen-floor-2';
     else if (currentFloorId === 'kaelen-floor-2') nextFloorId = 'kaelen-floor-3';
@@ -372,6 +468,46 @@ export function DungeonView({
 
     setCurrentFloorId(nextFloorId);
     setTransport(nextTransport);
+  };
+
+  // Shrine activation handler
+  const handleActivateShrine = async (propId: string) => {
+    if (dungeonMode === 'roguelite' && rogueliteState) {
+      const currentAuth = getAuthState();
+      const shrineRes = activateShrine(
+        rogueliteState.runState,
+        currentAuth,
+        propId,
+        leadExplorerId,
+      );
+      const nextTransport = new LocalTransport({
+        initialState: shrineRes.nextGameState,
+        defaultPlayerId: 'player-1',
+      });
+      setRogueliteState((prev) =>
+        prev ? { ...prev, runState: shrineRes.nextRunState } : null,
+      );
+      setTransport(nextTransport);
+      setEvents((prev) => [...prev, ...shrineRes.events]);
+      return;
+    }
+    await handleDispatch({
+      type: 'ACTIVATE_SHRINE',
+      actorId: leadExplorerId,
+      shrineId: propId,
+    });
+  };
+
+  // Start new roguelite descent from Graveyard
+  const handleStartNewDescent = () => {
+    const sess = buildRogueliteSession(partyCharacters, compendium);
+    setRogueliteState({
+      runState: sess.session.runState,
+      floor: sess.session.generatedFloor.floor,
+    });
+    setTransport(sess.transport);
+    setModalState(null);
+    setGraveyardEntry(null);
   };
 
   // Ascend stairs handler
@@ -401,6 +537,14 @@ export function DungeonView({
       data-testid="dungeon-view-container"
       className="relative w-full h-[calc(100vh-140px)] min-h-[580px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col"
     >
+      {/* Roguelite Top Status HUD */}
+      {dungeonMode === 'roguelite' && rogueliteState && (
+        <RogueliteHud
+          runState={rogueliteState.runState}
+          onOpenRestCamp={() => setModalState('rest_camp')}
+        />
+      )}
+
       {/* PixiJS Tactical Canvas Viewport */}
       <TacticalCanvasViewport
         grid={viewState.grid}
@@ -453,14 +597,20 @@ export function DungeonView({
             })
           }
           onInspectCharacter={onOpenCharacterSheet}
-          onInteractProp={(propId, interaction) =>
+          onInteractProp={(propId, interaction) => {
+            const p = adjacentProps.find((pr) => pr.id === propId);
+            if (p && p.kind === 'shrine') {
+              setActiveShrine(p);
+              setModalState('shrine');
+              return;
+            }
             handleDispatch({
               type: 'INTERACT_PROP',
               actorId: leadExplorerId,
               propId,
               interaction,
-            })
-          }
+            });
+          }}
           onDescendStairs={
             adjacentProps.some((p) => p.kind === 'stairs_down')
               ? handleDescendStairs
@@ -621,13 +771,42 @@ export function DungeonView({
             hitDiceToSpend,
           })
         }
-        onStartLongRest={(options) =>
+        onStartLongRest={(options) => {
+          if (dungeonMode === 'roguelite' && rogueliteState) {
+            const currentAuth = getAuthState();
+            const restRes = resolveRogueliteLongRest(
+              rogueliteState.runState,
+              currentAuth,
+              {
+                forceSafe: options?.forceSafe,
+                compendium,
+              },
+            );
+            const nextTransport = new LocalTransport({
+              initialState: restRes.nextGameState,
+              defaultPlayerId: 'player-1',
+            });
+            setRogueliteState((prev) =>
+              prev ? { ...prev, runState: restRes.nextRunState } : null,
+            );
+            setTransport(nextTransport);
+            setEvents((prev) => [...prev, ...restRes.events]);
+            if (
+              restRes.nextRunState.isComplete &&
+              restRes.nextRunState.graveyardEntry
+            ) {
+              saveGraveyardEntry(restRes.nextRunState.graveyardEntry);
+              setGraveyardEntry(restRes.nextRunState.graveyardEntry);
+              setModalState('graveyard');
+            }
+            return;
+          }
           handleDispatch({
             type: 'START_REST',
             restType: 'long',
             forceSafe: options?.forceSafe,
-          })
-        }
+          });
+        }}
       />
 
       {/* Loot & Inventory Modal */}
@@ -759,6 +938,26 @@ export function DungeonView({
           </div>
         </div>
       )}
+
+      {/* Shrine of Fate Modal */}
+      <ShrineModal
+        isOpen={modalState === 'shrine'}
+        shrine={activeShrine}
+        actorName={leadCombatant?.name ?? 'Party Lead'}
+        onClose={() => {
+          setModalState(null);
+          setActiveShrine(null);
+        }}
+        onActivate={handleActivateShrine}
+      />
+
+      {/* Roguelite Graveyard & Hall of the Slain Modal */}
+      <GraveyardModal
+        isOpen={modalState === 'graveyard'}
+        currentEntry={graveyardEntry}
+        onStartNewRun={handleStartNewDescent}
+        onExitToRoster={onExitToRoster}
+      />
     </div>
   );
 }
