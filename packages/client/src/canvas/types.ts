@@ -1,6 +1,7 @@
 import type { Container } from 'pixi.js';
-import type { GridCell, TacticalGrid, TileTerrainType } from '@srd5/engine';
-import type { PlayerViewCell, PlayerViewGrid } from '@srd5/transport';
+import type { ConditionId, CreatureSize } from '@srd5/data';
+import type { CombatantSide, GridCell, TacticalGrid, TileTerrainType } from '@srd5/engine';
+import type { GameEvent, PlayerViewCell, PlayerViewCombatant, PlayerViewGrid } from '@srd5/transport';
 
 /**
  * Standard pixel dimensions for a 5-ft tactical square on the canvas.
@@ -96,6 +97,83 @@ export type CanvasGridInput = TacticalGrid | PlayerViewGrid;
 export type CanvasCellInput = GridCell | PlayerViewCell;
 
 /**
+ * Cardinal and ordinal creature facing directions.
+ */
+export const CREATURE_FACINGS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] as const;
+export type CreatureFacing = (typeof CREATURE_FACINGS)[number];
+
+/**
+ * Normalized combatant data for rendering creature tokens on the PixiJS canvas.
+ * Directly compatible with PlayerViewCombatant from @srd5/transport.
+ */
+export interface CreatureTokenData {
+  id: string;
+  name: string;
+  side: CombatantSide;
+  size: CreatureSize;
+  position: Point;
+  currentHp: number;
+  maxHp: number;
+  tempHp?: number;
+  armorClass?: number;
+  conditions?: ConditionId[];
+  isDead?: boolean;
+  isStable?: boolean;
+  facing?: CreatureFacing;
+  label?: string;
+  color?: number;
+  teamId?: string;
+  avatarUrl?: string;
+}
+
+/**
+ * Options for configuring and updating the CreatureTokenLayer.
+ */
+export interface TokenRenderOptions {
+  combatants:
+    | Record<string, CreatureTokenData | PlayerViewCombatant>
+    | Array<CreatureTokenData | PlayerViewCombatant>;
+  cellSize: number;
+  selectedId?: string | null;
+  activeId?: string | null;
+  hoveredId?: string | null;
+  showHpArc?: boolean;
+  showConditionBadges?: boolean;
+  showFacing?: boolean;
+  showNameTags?: boolean;
+}
+
+/**
+ * Configuration options for path movement animations.
+ */
+export interface TokenMoveAnimationOptions {
+  path?: Point[];
+  durationMs?: number;
+  speedCellsPerSec?: number;
+  onStep?: (currentPos: Point, stepIndex: number) => void;
+}
+
+/**
+ * Categories of floating combat text.
+ */
+export type FloatingTextType = 'damage' | 'heal' | 'crit' | 'miss' | 'condition' | 'info';
+
+/**
+ * Parameters for spawning an animated floating text entry.
+ */
+export interface FloatingTextOptions {
+  id?: string;
+  text: string;
+  worldX: number;
+  worldY: number;
+  type?: FloatingTextType;
+  color?: number;
+  durationMs?: number;
+  driftY?: number;
+  fontSize?: number;
+}
+
+/**
  * Options for rendering the terrain layer.
  */
 export interface TerrainRenderOptions {
@@ -118,8 +196,20 @@ export interface TacticalCanvasViewportProps {
   showCoordinates?: boolean;
   selectedCell?: Point | null;
   hoveredCell?: Point | null;
+  combatants?:
+    | Record<string, CreatureTokenData | PlayerViewCombatant>
+    | Array<CreatureTokenData | PlayerViewCombatant>;
+  selectedCombatantId?: string | null;
+  activeCombatantId?: string | null;
+  hoveredCombatantId?: string | null;
+  showTokenHpArcs?: boolean;
+  showConditionBadges?: boolean;
+  showTokenFacing?: boolean;
+  showTokenNames?: boolean;
   onCellHover?: (cell: Point | null) => void;
   onCellClick?: (cell: Point, button: number) => void;
+  onCombatantHover?: (combatantId: string | null) => void;
+  onCombatantClick?: (combatantId: string) => void;
   onCameraChange?: (camera: CameraState) => void;
   cameraRef?: React.MutableRefObject<ViewportCameraControls | null>;
   initialCamera?: Partial<CameraState>;

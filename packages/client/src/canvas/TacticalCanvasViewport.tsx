@@ -3,6 +3,8 @@ import { Application } from 'pixi.js';
 import { ViewportCamera } from './camera.js';
 import { createSceneGraph } from './layers/SceneGraph.js';
 import { TerrainTileRenderer } from './layers/TerrainTileLayer.js';
+import { CreatureTokenRenderer } from './layers/CreatureTokenLayer.js';
+import { FloatingTextRenderer } from './layers/FloatingTextLayer.js';
 import {
   DEFAULT_CELL_SIZE,
   DEFAULT_ZOOM,
@@ -27,8 +29,18 @@ export function TacticalCanvasViewport({
   showCoordinates: initialShowCoordinates = false,
   selectedCell = null,
   hoveredCell: controlledHoveredCell,
+  combatants,
+  selectedCombatantId = null,
+  activeCombatantId = null,
+  hoveredCombatantId = null,
+  showTokenHpArcs = true,
+  showConditionBadges = true,
+  showTokenFacing = true,
+  showTokenNames = true,
   onCellHover,
   onCellClick,
+  onCombatantHover,
+  onCombatantClick,
   onCameraChange,
   cameraRef,
   initialCamera,
@@ -73,6 +85,8 @@ export function TacticalCanvasViewport({
   const appRef = useRef<Application | null>(null);
   const sceneGraphRef = useRef<TacticalSceneGraph | null>(null);
   const terrainRendererRef = useRef<TerrainTileRenderer | null>(null);
+  const tokenRendererRef = useRef<CreatureTokenRenderer | null>(null);
+  const floatingTextRendererRef = useRef<FloatingTextRenderer | null>(null);
 
   // Drag pan tracking
   const dragRef = useRef<{
@@ -139,6 +153,25 @@ export function TacticalCanvasViewport({
         const terrainRenderer = new TerrainTileRenderer(sceneGraph.terrainLayer);
         terrainRendererRef.current = terrainRenderer;
 
+        const tokenRenderer = new CreatureTokenRenderer(sceneGraph.tokenLayer);
+        tokenRendererRef.current = tokenRenderer;
+
+        const floatingTextRenderer = new FloatingTextRenderer(sceneGraph.floatingTextLayer);
+        floatingTextRendererRef.current = floatingTextRenderer;
+
+        tokenRenderer.onTokenClick = (tokenId) => {
+          onCombatantClick?.(tokenId);
+        };
+        tokenRenderer.onTokenHover = (tokenId) => {
+          onCombatantHover?.(tokenId);
+        };
+
+        // Continuous ticker animation
+        app.ticker.add((ticker) => {
+          tokenRenderer.update(ticker.deltaMS, cellSize);
+          floatingTextRenderer.update(ticker.deltaMS);
+        });
+
         // Apply initial camera transform
         camera.applyToContainer(sceneGraph.viewport);
         setPixiReady(true);
@@ -153,6 +186,14 @@ export function TacticalCanvasViewport({
 
     return () => {
       isMounted = false;
+      if (tokenRendererRef.current) {
+        tokenRendererRef.current.destroy();
+        tokenRendererRef.current = null;
+      }
+      if (floatingTextRendererRef.current) {
+        floatingTextRendererRef.current.destroy();
+        floatingTextRendererRef.current = null;
+      }
       if (terrainRendererRef.current) {
         terrainRendererRef.current.destroy();
         terrainRendererRef.current = null;
@@ -167,7 +208,7 @@ export function TacticalCanvasViewport({
       }
       sceneGraphRef.current = null;
     };
-  }, [camera]);
+  }, [camera, cellSize, onCombatantClick, onCombatantHover]);
 
   // Update Terrain Rendering whenever grid, highlights, or visibility toggles change
   useEffect(() => {
@@ -182,6 +223,46 @@ export function TacticalCanvasViewport({
       });
     }
   }, [grid, cellSize, showGridLines, showCoordinates, activeHoveredCell, selectedCell, pixiReady]);
+
+  // Sync token click and hover listeners
+  useEffect(() => {
+    if (tokenRendererRef.current) {
+      tokenRendererRef.current.onTokenClick = (tokenId) => {
+        onCombatantClick?.(tokenId);
+      };
+      tokenRendererRef.current.onTokenHover = (tokenId) => {
+        onCombatantHover?.(tokenId);
+      };
+    }
+  }, [onCombatantClick, onCombatantHover]);
+
+  // Update Creature Token rendering whenever combatants or highlights change
+  useEffect(() => {
+    if (tokenRendererRef.current && combatants) {
+      tokenRendererRef.current.render({
+        combatants,
+        cellSize,
+        selectedId: selectedCombatantId,
+        activeId: activeCombatantId,
+        hoveredId: hoveredCombatantId,
+        showHpArc: showTokenHpArcs,
+        showConditionBadges,
+        showFacing: showTokenFacing,
+        showNameTags: showTokenNames,
+      });
+    }
+  }, [
+    combatants,
+    cellSize,
+    selectedCombatantId,
+    activeCombatantId,
+    hoveredCombatantId,
+    showTokenHpArcs,
+    showConditionBadges,
+    showTokenFacing,
+    showTokenNames,
+    pixiReady,
+  ]);
 
   // Container resize observer
   useEffect(() => {
