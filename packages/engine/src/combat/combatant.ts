@@ -60,6 +60,23 @@ export function createCharacterCombatant(
           remainingRounds: sheet.concentratingOn.remainingRounds,
         }
       : undefined,
+    spellSlots:
+      sheet.spellcasting?.isSpellcaster && sheet.spellcasting.spellSlots
+        ? Object.fromEntries(
+            Object.entries(sheet.spellcasting.spellSlots).map(([lvl, pool]) => [
+              lvl,
+              { max: pool.max, expended: pool.expended, available: pool.available },
+            ]),
+          )
+        : undefined,
+    pactMagic: sheet.spellcasting?.pactMagic
+      ? {
+          slotLevel: sheet.spellcasting.pactMagic.slotLevel,
+          maxSlots: sheet.spellcasting.pactMagic.maxSlots,
+          expendedSlots: sheet.spellcasting.pactMagic.expendedSlots,
+          availableSlots: sheet.spellcasting.pactMagic.availableSlots,
+        }
+      : undefined,
     characterSheet: sheet,
   };
 }
@@ -76,6 +93,17 @@ export function createMonsterCombatant(
   const dexMod = Math.floor((monster.abilities.dex - 10) / 2);
   const stealthMod = monster.skills.stealth ?? dexMod;
   const hp = monster.hitPoints.average;
+
+  const monsterSpellSlots: Record<string, { max: number; expended: number; available: number }> = {};
+  if (monster.spellcasting?.slotsByLevel) {
+    for (const [lvl, count] of Object.entries(monster.spellcasting.slotsByLevel)) {
+      monsterSpellSlots[lvl] = {
+        max: count,
+        expended: 0,
+        available: count,
+      };
+    }
+  }
 
   return {
     id: instanceId,
@@ -103,6 +131,7 @@ export function createMonsterCombatant(
     isDead: hp <= 0,
     isStable: false,
     attacksPerAction: 1,
+    spellSlots: Object.keys(monsterSpellSlots).length > 0 ? monsterSpellSlots : undefined,
     monsterData: monster,
   };
 }

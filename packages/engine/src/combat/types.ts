@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import {
+  type AbilityId,
+  AbilityIdSchema,
   ConditionIdSchema,
   CreatureSizeSchema,
   type ConditionId,
@@ -58,6 +60,27 @@ export const ActiveConcentrationSchema = z.object({
 export type ActiveConcentration = z.infer<typeof ActiveConcentrationSchema>;
 
 /**
+ * Tracked spell slot pool on a Combatant.
+ */
+export const CombatantSpellSlotPoolSchema = z.object({
+  max: z.number().int().nonnegative(),
+  expended: z.number().int().nonnegative(),
+  available: z.number().int().nonnegative(),
+});
+export type CombatantSpellSlotPool = z.infer<typeof CombatantSpellSlotPoolSchema>;
+
+/**
+ * Tracked pact magic slots on a Combatant.
+ */
+export const CombatantPactMagicSchema = z.object({
+  slotLevel: z.number().int().min(1).max(9),
+  maxSlots: z.number().int().nonnegative(),
+  expendedSlots: z.number().int().nonnegative(),
+  availableSlots: z.number().int().nonnegative(),
+});
+export type CombatantPactMagic = z.infer<typeof CombatantPactMagicSchema>;
+
+/**
  * Serializable Combatant state participating in tactical combat.
  */
 export const CombatantStateSchema = z.object({
@@ -87,6 +110,8 @@ export const CombatantStateSchema = z.object({
   isStable: z.boolean(),
   attacksPerAction: z.number().int().min(1).max(4),
   concentratingOn: ActiveConcentrationSchema.optional(),
+  spellSlots: z.record(z.string(), CombatantSpellSlotPoolSchema).optional(),
+  pactMagic: CombatantPactMagicSchema.optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
@@ -253,6 +278,48 @@ export type CombatEvent =
       damageType: DamageType;
       tempHpAbsorbed: number;
       hpRemaining: number;
+    }
+  | {
+      type: 'SPELL_CAST';
+      actorId: string;
+      spellId: string;
+      spellName: string;
+      spellLevel: number;
+      castAtLevel: number;
+      actionCost: 'action' | 'bonus_action' | 'reaction' | string;
+      slotExpended?: number | undefined;
+      targetEntityIds: string[];
+    }
+  | {
+      type: 'SAVING_THROW_RESOLVED';
+      entityId: string;
+      ability: AbilityId;
+      dc: number;
+      roll: number;
+      total: number;
+      outcome: 'success' | 'failure';
+      sourceSpellOrAbilityName?: string | undefined;
+    }
+  | {
+      type: 'HEAL_APPLIED';
+      targetId: string;
+      amount: number;
+      hpBefore: number;
+      hpAfter: number;
+      sourceName?: string | undefined;
+    }
+  | {
+      type: 'CONCENTRATION_STARTED';
+      entityId: string;
+      spellId: string;
+      spellName: string;
+      targetEntityIds: string[];
+    }
+  | {
+      type: 'CONCENTRATION_ENDED';
+      entityId: string;
+      spellId?: string | undefined;
+      reason: 'new_spell' | 'damaged' | 'incapacitated' | 'turn_expiry' | 'manual';
     }
   | {
       type: 'ENCOUNTER_VICTORY';
