@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  AbilityIdSchema,
   DamageTypeSchema,
   EffectStepSpecSchema,
 } from '@srd5/data';
@@ -48,14 +49,17 @@ export const InteractivePropSpecSchema = z.object({
   y: z.number().int(),
   kind: PropKindSchema,
   state: PropStateSchema.default('closed'),
-  blocksMovement: z.boolean(),
-  blocksSight: z.boolean(),
+  blocksMovement: z.boolean().default(false),
+  blocksSight: z.boolean().default(false),
   lockDc: z.number().int().positive().optional(),
   detectionDc: z.number().int().positive().optional(),
   disarmDc: z.number().int().positive().optional(),
   trapEffect: z.array(EffectStepSpecSchema).optional(),
   trapDamageFormula: z.string().optional(),
   trapDamageType: DamageTypeSchema.optional(),
+  trapSaveDc: z.number().int().positive().optional(),
+  trapSaveAbility: AbilityIdSchema.optional(),
+  trapHalfDamageOnSave: z.boolean().optional(),
   lootTable: LootBundleSpecSchema.optional(),
   discovered: z.boolean().optional(),
   ac: z.number().int().positive().optional(),

@@ -22,7 +22,11 @@ import {
 } from '../grid/model.js';
 import { type LightSource } from '../grid/vision.js';
 import { type CharacterClassEntry, type EquippedSlots } from '../character/schemas.js';
-import { type MarchingFormation, type MarchingOrderConfig } from '../dungeon/schemas.js';
+import {
+  type LootBundleSpec,
+  type MarchingFormation,
+  type MarchingOrderConfig,
+} from '../dungeon/schemas.js';
 import { type DungeonFloorState } from '../dungeon/state.js';
 
 /**
@@ -73,8 +77,13 @@ export interface InteractiveProp {
   discovered?: boolean;
   ac?: number;
   hp?: number;
+  maxHp?: number;
   trapDamageFormula?: string;
   trapDamageType?: DamageType;
+  trapSaveDc?: number;
+  trapSaveAbility?: AbilityId;
+  trapHalfDamageOnSave?: boolean;
+  lootTable?: LootBundleSpec;
 }
 
 /**
@@ -107,7 +116,18 @@ export type GameCommand =
       type: 'INTERACT_PROP';
       actorId: string;
       propId: string;
-      interaction: 'open' | 'close' | 'pick_lock' | 'disarm_trap' | 'force_open' | 'search';
+      interaction:
+        | 'open'
+        | 'close'
+        | 'pick_lock'
+        | 'disarm_trap'
+        | 'force_open'
+        | 'search'
+        | 'attack';
+    }
+  | {
+      type: 'EXPLORE_SEARCH';
+      actorId: string;
     }
   | {
       type: 'START_REST';
@@ -239,6 +259,32 @@ export type GameEvent =
       targetId: string;
       damage?: number;
       damageType?: DamageType;
+      saveMade?: boolean;
+      saveSuccess?: boolean;
+    }
+  | {
+      type: 'CHECK_RESOLVED';
+      actorId: string;
+      checkType:
+        | 'perception'
+        | 'investigation'
+        | 'thieves_tools'
+        | 'athletics'
+        | 'attack'
+        | 'saving_throw';
+      targetId?: string;
+      dc?: number;
+      roll: number;
+      modifier: number;
+      total: number;
+      success: boolean;
+      triggered?: boolean;
+    }
+  | {
+      type: 'LOOT_ACQUIRED';
+      actorId: string;
+      propId: string;
+      loot: LootBundleSpec;
     }
   | {
       type: 'ROOM_DISCOVERED';

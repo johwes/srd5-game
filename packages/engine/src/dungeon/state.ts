@@ -199,8 +199,13 @@ export function createDungeonGameState(options: CreateDungeonGameOptions): GameS
       discovered: p.discovered ?? (p.detectionDc === undefined),
       ac: p.ac,
       hp: p.hp,
+      maxHp: p.hp,
       trapDamageFormula: p.trapDamageFormula,
       trapDamageType: p.trapDamageType,
+      trapSaveDc: p.trapSaveDc,
+      trapSaveAbility: p.trapSaveAbility,
+      trapHalfDamageOnSave: p.trapHalfDamageOnSave,
+      lootTable: p.lootTable ? structuredClone(p.lootTable) : undefined,
     });
 
     if (p.blocksMovement || p.blocksSight) {

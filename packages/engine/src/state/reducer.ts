@@ -32,6 +32,12 @@ import { hasLineOfSight } from '../grid/vision.js';
 import { calculateMarchingMovements } from '../dungeon/marching-order.js';
 import { updateDungeonRoomDiscovery } from '../dungeon/state.js';
 import {
+  checkPassivePerceptionForProps,
+  triggerTrapEffect,
+  resolveActiveSearch,
+  resolvePropInteraction,
+} from '../dungeon/props.js';
+import {
   type GameCommand,
   type GameEvent,
   type GameState,
@@ -507,79 +513,34 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
         haltPoint = pt;
 
         // Check passive perception detection against hidden props (Spec 04 Section 3.1)
-        // Check all conscious, non-blinded heroes in the party
         const observers = Object.values(nextState.party).filter(
           (c) => !c.isDead && c.currentHp > 0 && !c.conditions.includes('blinded'),
         );
+        const passiveRes = checkPassivePerceptionForProps({
+          grid: nextState.grid,
+          observers,
+          props: nextState.props,
+        });
+        events.push(...passiveRes.events);
 
-        for (const prop of nextState.props) {
-          if (
-            !prop.discovered &&
-            prop.detectionDc !== undefined &&
-            (prop.kind === 'trap' || prop.kind === 'secret_door')
-          ) {
-            for (const obs of observers) {
-              const dist = Math.max(
-                Math.abs(obs.position.x - prop.x),
-                Math.abs(obs.position.y - prop.y),
-              );
-              // 15 feet = 3 cells on a 5-ft grid
-              if (dist <= 3) {
-                const canSee = hasLineOfSight(
-                  nextState.grid,
-                  { id: obs.id, x: obs.position.x, y: obs.position.y, size: obs.size },
-                  { id: prop.id, x: prop.x, y: prop.y, size: 'medium' },
-                );
-                if (canSee && obs.passivePerception >= prop.detectionDc) {
-                  prop.discovered = true;
-                  events.push({
-                    type: 'SECRET_DISCOVERED',
-                    propId: prop.id,
-                    finderId: obs.id,
-                    kind: prop.kind,
-                  });
-
-                  if (prop.kind === 'trap') {
-                    // Party movement halts immediately before walking into the trap
-                    movementHalted = true;
-                    haltReason = 'trap_detected';
-                    break;
-                  }
-                }
-              }
-            }
-          }
-          if (movementHalted) break;
+        if (passiveRes.haltedByTrap) {
+          movementHalted = true;
+          haltReason = 'trap_detected';
+          break;
         }
-
-        if (movementHalted) break;
 
         // Check if actor stepped on an active (closed) trap
         const activeTrap = nextState.props.find(
           (p) => p.kind === 'trap' && p.x === pt.x && p.y === pt.y && p.state === 'closed',
         );
         if (activeTrap) {
-          activeTrap.state = 'triggered';
-          activeTrap.discovered = true;
-
-          let damage = 0;
-          if (activeTrap.trapDamageFormula) {
-            const rollRes = rollDamage(nextState.rngState, activeTrap.trapDamageFormula);
-            damage = rollRes.total;
-            nextState.rngState = rollRes.nextState;
-          }
-
-          if (damage > 0) {
-            actor.currentHp = Math.max(0, actor.currentHp - damage);
-          }
-
-          events.push({
-            type: 'TRAP_TRIGGERED',
-            propId: activeTrap.id,
-            targetId: command.actorId,
-            damage,
-            damageType: activeTrap.trapDamageType ?? 'piercing',
+          const trapRes = triggerTrapEffect({
+            trap: activeTrap,
+            target: actor,
+            rngState: nextState.rngState,
           });
+          nextState.rngState = trapRes.nextRngState;
+          events.push(...trapRes.events);
 
           movementHalted = true;
           haltReason = 'trap_triggered';
@@ -633,24 +594,13 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
               (p) => p.kind === 'trap' && p.x === cellPt.x && p.y === cellPt.y && p.state === 'closed',
             );
             if (trap) {
-              trap.state = 'triggered';
-              trap.discovered = true;
-              let dmg = 0;
-              if (trap.trapDamageFormula) {
-                const rollRes = rollDamage(nextState.rngState, trap.trapDamageFormula);
-                dmg = rollRes.total;
-                nextState.rngState = rollRes.nextState;
-              }
-              if (dmg > 0) {
-                follower.currentHp = Math.max(0, follower.currentHp - dmg);
-              }
-              events.push({
-                type: 'TRAP_TRIGGERED',
-                propId: trap.id,
-                targetId: fMove.actorId,
-                damage: dmg,
-                damageType: trap.trapDamageType ?? 'piercing',
+              const trapRes = triggerTrapEffect({
+                trap,
+                target: follower,
+                rngState: nextState.rngState,
               });
+              nextState.rngState = trapRes.nextRngState;
+              events.push(...trapRes.events);
               break;
             }
           }
@@ -675,119 +625,24 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
     }
 
     case 'INTERACT_PROP': {
-      const actor = nextState.party[command.actorId] ?? nextState.combat?.combatants[command.actorId];
-      if (!actor) {
-        throw new Error(`Actor not found for prop interaction: ${command.actorId}`);
-      }
+      const interactionRes = resolvePropInteraction({
+        state: nextState,
+        actorId: command.actorId,
+        propId: command.propId,
+        interaction: command.interaction,
+      });
+      nextState = interactionRes.nextState;
+      events.push(...interactionRes.events);
+      break;
+    }
 
-      const prop = nextState.props.find((p) => p.id === command.propId);
-      if (!prop) {
-        throw new Error(`Interactive prop not found: ${command.propId}`);
-      }
-
-      const prevState = prop.state;
-
-      switch (command.interaction) {
-        case 'open': {
-          if (prop.state === 'locked') {
-            throw new Error(`Prop ${prop.id} is locked`);
-          }
-          prop.state = 'open';
-          prop.blocksMovement = false;
-          prop.blocksSight = false;
-          nextState.grid = setGridCell(nextState.grid, {
-            x: prop.x,
-            y: prop.y,
-            blocksMovement: false,
-            blocksSight: false,
-          });
-          events.push({
-            type: 'PROP_STATE_CHANGED',
-            propId: prop.id,
-            prevState,
-            nextState: 'open',
-            actorId: command.actorId,
-          });
-          break;
-        }
-        case 'close': {
-          prop.state = 'closed';
-          prop.blocksMovement = true;
-          prop.blocksSight = true;
-          nextState.grid = setGridCell(nextState.grid, {
-            x: prop.x,
-            y: prop.y,
-            blocksMovement: true,
-            blocksSight: true,
-          });
-          events.push({
-            type: 'PROP_STATE_CHANGED',
-            propId: prop.id,
-            prevState,
-            nextState: 'closed',
-            actorId: command.actorId,
-          });
-          break;
-        }
-        case 'pick_lock': {
-          if (prop.state === 'locked') {
-            prop.state = 'closed'; // Unlocked
-            events.push({
-              type: 'PROP_STATE_CHANGED',
-              propId: prop.id,
-              prevState,
-              nextState: 'closed',
-              actorId: command.actorId,
-            });
-          }
-          break;
-        }
-        case 'disarm_trap': {
-          if (prop.kind === 'trap') {
-            prop.state = 'disarmed';
-            prop.discovered = true;
-            events.push({
-              type: 'PROP_STATE_CHANGED',
-              propId: prop.id,
-              prevState,
-              nextState: 'disarmed',
-              actorId: command.actorId,
-            });
-          }
-          break;
-        }
-        case 'force_open': {
-          prop.state = 'destroyed';
-          prop.blocksMovement = false;
-          prop.blocksSight = false;
-          nextState.grid = setGridCell(nextState.grid, {
-            x: prop.x,
-            y: prop.y,
-            blocksMovement: false,
-            blocksSight: false,
-          });
-          events.push({
-            type: 'PROP_STATE_CHANGED',
-            propId: prop.id,
-            prevState,
-            nextState: 'destroyed',
-            actorId: command.actorId,
-          });
-          break;
-        }
-        case 'search': {
-          if (prop.detectionDc !== undefined) {
-            prop.discovered = true;
-            events.push({
-              type: 'SECRET_DISCOVERED',
-              propId: prop.id,
-              finderId: command.actorId,
-              kind: prop.kind,
-            });
-          }
-          break;
-        }
-      }
+    case 'EXPLORE_SEARCH': {
+      const searchRes = resolveActiveSearch({
+        state: nextState,
+        actorId: command.actorId,
+      });
+      nextState = searchRes.nextState;
+      events.push(...searchRes.events);
       break;
     }
 
