@@ -13,6 +13,7 @@ export function TacticalCombatHud({
   viewState,
   compendium = defaultCompendium,
   selectedCombatantId: controlledSelectedId,
+  isPlayerControlled: controlledIsPlayerControlled,
   title = 'Tactical Combat',
   subtitle,
   events = [],
@@ -90,11 +91,16 @@ export function TacticalCombatHud({
     : null;
 
   // Determine if active combatant belongs to current player's party or team
-  const isPlayerControlled = Boolean(
-    activeCombatant &&
-      (activeCombatant.side === 'party' ||
-        Boolean(viewState.party[activeCombatant.id])),
-  );
+  const isPlayerControlled =
+    controlledIsPlayerControlled !== undefined
+      ? controlledIsPlayerControlled
+      : Boolean(
+          activeCombatant &&
+            (activeCombatant.side === 'party' ||
+              Boolean(viewState.party[activeCombatant.id]) ||
+              (activeCombatant.playerId &&
+                activeCombatant.playerId === viewState.playerId)),
+        );
 
   const pendingReactionPrompt = combat?.pendingReactionPrompt ?? null;
   const reactorEntity = pendingReactionPrompt

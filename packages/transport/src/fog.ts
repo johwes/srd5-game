@@ -58,6 +58,8 @@ export function toPlayerViewCombatant(c: Combatant): PlayerViewCombatant {
     id: c.id,
     name: c.name,
     side: c.side,
+    teamId: c.teamId,
+    playerId: c.playerId,
     size: c.size,
     position: { x: c.position.x, y: c.position.y },
     speedFeet: c.speedFeet,
@@ -254,7 +256,7 @@ export function projectPlayerView(
   const visibleMonsterIds = new Set<string>();
 
   for (const c of allCombatants) {
-    if (c.side === 'party') {
+    if (c.side === 'party' || controlledIds.has(c.id)) {
       combatantsView[c.id] = toPlayerViewCombatant(c);
       continue;
     }

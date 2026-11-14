@@ -33,6 +33,7 @@ export interface PartyRosterViewProps {
   onLevelUpCharacter: (character: CharacterBuildState) => void;
   onEditInBuilder?: (character: CharacterBuildState) => void;
   onCreateNewHero?: () => void;
+  onEnterArena?: () => void;
 }
 
 export function PartyRosterView({
@@ -44,6 +45,7 @@ export function PartyRosterView({
   onLevelUpCharacter,
   onEditInBuilder,
   onCreateNewHero,
+  onEnterArena,
 }: PartyRosterViewProps) {
   const [jsonModalMode, setJsonModalMode] = useState<'export' | 'import' | null>(
     null,
@@ -183,6 +185,16 @@ export function PartyRosterView({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {onEnterArena && (
+            <button
+              type="button"
+              data-testid="roster-enter-arena-btn"
+              onClick={onEnterArena}
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-bold hover:from-amber-400 hover:to-amber-500 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              <span>⚔️</span> Enter Arena
+            </button>
+          )}
           {onCreateNewHero && (
             <button
               type="button"

@@ -145,6 +145,7 @@ export interface TacticalCombatHudProps {
   rollHistory?: DiceRollRecord[];
   showCombatLog?: boolean;
   showDiceTray?: boolean;
+  isPlayerControlled?: boolean;
   onToggleCombatLog?: () => void;
   onToggleDiceTray?: () => void;
   onSelectCombatant?: (combatantId: string) => void;

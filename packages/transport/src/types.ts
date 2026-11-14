@@ -87,6 +87,8 @@ export interface PlayerViewCombatant {
   id: string;
   name: string;
   side: CombatantSide;
+  teamId?: string | undefined;
+  playerId?: string | undefined;
   size: CreatureSize;
   position: GridPoint;
   speedFeet: number;

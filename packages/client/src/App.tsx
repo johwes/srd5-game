@@ -4,6 +4,7 @@ import {
   SRD_LEGAL_ATTRIBUTION,
   SRD_VERSION,
   defaultCompendium,
+  getPregenCharacter,
 } from '@srd5/data';
 import { getTransportInfo } from '@srd5/transport';
 import { CharacterBuilderWizard } from './components/builder/index.js';
@@ -13,6 +14,7 @@ import {
   LevelUpModal,
   PartyRosterView,
 } from './components/roster/index.js';
+import { ArenaView } from './components/arena/index.js';
 import {
   MAX_PARTY_SIZE,
   type PersistedRosterData,
@@ -28,7 +30,7 @@ import {
   upsertRosterCharacter,
 } from './persistence/index.js';
 
-export type AppViewMode = 'builder' | 'roster' | 'compendium';
+export type AppViewMode = 'builder' | 'roster' | 'compendium' | 'arena';
 
 export interface AppProps {
   initialView?: AppViewMode;
@@ -206,6 +208,19 @@ export function App({
               >
                 SRD 5.1 Compendium
               </button>
+              <button
+                type="button"
+                data-testid="app-nav-arena"
+                aria-pressed={activeView === 'arena'}
+                onClick={() => setActiveView('arena')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  activeView === 'arena'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                ⚔️ The Arena
+              </button>
             </div>
 
             <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-amber-300 text-xs font-medium">
@@ -238,6 +253,7 @@ export function App({
             }}
             onInspectCharacter={handleInspectCharacter}
             onLevelUpCharacter={(hero) => setLevelUpCharacterId(hero.id)}
+            onEnterArena={() => setActiveView('arena')}
             onEditInBuilder={(hero) => {
               setBuilderTargetCharacter(hero);
               setActiveView('builder');
@@ -251,6 +267,24 @@ export function App({
 
         {activeView === 'compendium' && (
           <CompendiumBrowser compendium={defaultCompendium} />
+        )}
+
+        {activeView === 'arena' && (
+          <ArenaView
+            rosterCharacters={roster.characters.filter((c) =>
+              roster.activePartyIds.includes(c.id),
+            )}
+            compendium={defaultCompendium}
+            onOpenCharacterSheet={(charId) => {
+              const char =
+                roster.characters.find((c) => c.id === charId) ??
+                getPregenCharacter(charId);
+              if (char) {
+                handleInspectCharacter(char);
+              }
+            }}
+            onBackToRoster={() => setActiveView('roster')}
+          />
         )}
       </div>
 
