@@ -132,6 +132,7 @@ export interface CreateDungeonGameOptions {
   leadExplorerId?: string;
   slots?: PlayerSlotAssignment[];
   rngState?: number;
+  partyInStealth?: boolean;
 }
 
 /**
@@ -271,6 +272,7 @@ export function createDungeonGameState(options: CreateDungeonGameOptions): GameS
     rngState: options.rngState ?? 123456789,
     dungeon: dungeonState,
     marchingOrder: marchingConfig,
+    partyInStealth: options.partyInStealth ?? false,
   };
 
   // Seed fog of war explored cells from initial party positions

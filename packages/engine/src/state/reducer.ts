@@ -38,6 +38,11 @@ import {
   resolvePropInteraction,
 } from '../dungeon/props.js';
 import {
+  checkDungeonEncounterTriggers,
+  triggerDungeonEncounter,
+  transitionCombatToExploration,
+} from '../dungeon/encounters.js';
+import {
   type GameCommand,
   type GameEvent,
   type GameState,
@@ -452,6 +457,17 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
       }
 
       events.push(...res.events);
+
+      // In dungeon mode, if all monsters are defeated, transition back to exploration
+      if (
+        nextState.dungeon &&
+        res.state.phase === 'combat_ended' &&
+        res.state.outcome === 'party_victory'
+      ) {
+        const combatEndRes = transitionCombatToExploration(nextState);
+        nextState = combatEndRes.nextState;
+        events.push(...combatEndRes.events);
+      }
       break;
     }
 
@@ -496,8 +512,9 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
 
       const executedPath: GridPoint[] = [];
       let movementHalted = false;
-      let haltReason: 'trap_detected' | 'trap_triggered' | 'obstacle' | null = null;
+      let haltReason: 'trap_detected' | 'trap_triggered' | 'obstacle' | 'encounter_spotted' | null = null;
       let haltPoint: GridPoint = startPos;
+      let spottedEncounterId: string | undefined;
 
       for (const pt of command.path) {
         const cell = getGridCell(nextState.grid, pt.x, pt.y);
@@ -544,6 +561,15 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
 
           movementHalted = true;
           haltReason = 'trap_triggered';
+          break;
+        }
+
+        // Check untriggered encounters (Spec 04 Section 3.1 & SRD-503)
+        const encCheck = checkDungeonEncounterTriggers(nextState);
+        if (encCheck.triggered) {
+          movementHalted = true;
+          haltReason = 'encounter_spotted';
+          spottedEncounterId = encCheck.encounterId;
           break;
         }
       }
@@ -621,6 +647,13 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
         }
       }
 
+      // If an unspawned encounter was spotted during movement, transition to combat now
+      if (spottedEncounterId) {
+        const triggerRes = triggerDungeonEncounter(nextState, spottedEncounterId);
+        nextState = triggerRes.nextState;
+        events.push(...triggerRes.events);
+      }
+
       break;
     }
 
@@ -633,6 +666,45 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
       });
       nextState = interactionRes.nextState;
       events.push(...interactionRes.events);
+
+      // Opening a door/secret door may establish Line of Sight to an untriggered encounter
+      if (
+        (command.interaction === 'open' ||
+          command.interaction === 'force_open' ||
+          command.interaction === 'pick_lock') &&
+        nextState.mode === 'exploration'
+      ) {
+        const encCheck = checkDungeonEncounterTriggers(nextState);
+        if (encCheck.triggered) {
+          nextState = encCheck.nextState;
+          events.push(...encCheck.events);
+        }
+      }
+      break;
+    }
+
+    case 'SET_PARTY_STEALTH': {
+      nextState.partyInStealth = command.inStealth;
+      events.push({
+        type: 'PARTY_STEALTH_CHANGED',
+        inStealth: command.inStealth,
+      });
+      break;
+    }
+
+    case 'TRIGGER_DUNGEON_ENCOUNTER': {
+      const encRes = triggerDungeonEncounter(nextState, command.encounterId, {
+        explicitSurprisedEntityIds: command.explicitSurprisedEntityIds,
+      });
+      nextState = encRes.nextState;
+      events.push(...encRes.events);
+      break;
+    }
+
+    case 'END_COMBAT': {
+      const endRes = transitionCombatToExploration(nextState);
+      nextState = endRes.nextState;
+      events.push(...endRes.events);
       break;
     }
 

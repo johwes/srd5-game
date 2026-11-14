@@ -113,6 +113,18 @@ export type GameCommand =
       leadExplorerId?: string;
     }
   | {
+      type: 'SET_PARTY_STEALTH';
+      inStealth: boolean;
+    }
+  | {
+      type: 'TRIGGER_DUNGEON_ENCOUNTER';
+      encounterId: string;
+      explicitSurprisedEntityIds?: string[];
+    }
+  | {
+      type: 'END_COMBAT';
+    }
+  | {
       type: 'INTERACT_PROP';
       actorId: string;
       propId: string;
@@ -306,8 +318,25 @@ export type GameEvent =
   | {
       type: 'MOVEMENT_HALTED';
       actorId: string;
-      reason: 'trap_detected' | 'trap_triggered' | 'obstacle';
+      reason: 'trap_detected' | 'trap_triggered' | 'obstacle' | 'encounter_spotted';
       at: GridPoint;
+    }
+  | {
+      type: 'PARTY_STEALTH_CHANGED';
+      inStealth: boolean;
+    }
+  | {
+      type: 'ENCOUNTER_TRIGGERED';
+      encounterId: string;
+      roomId: string;
+      monsterIds: string[];
+      isSurprisedParty: boolean;
+      isSurprisedMonsters: boolean;
+    }
+  | {
+      type: 'ROOM_CLEARED';
+      roomId: string;
+      roomName: string;
     }
   | {
       type: 'REST_COMPLETED';
@@ -337,4 +366,5 @@ export interface GameState {
   rngState: number;
   dungeon?: DungeonFloorState;
   marchingOrder?: MarchingOrderConfig;
+  partyInStealth?: boolean;
 }
