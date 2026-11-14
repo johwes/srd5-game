@@ -1,5 +1,8 @@
 import { z } from 'zod';
 export {
+  BIOME_TIERS,
+  BiomeTierSchema,
+  type BiomeTier,
   LootBundleSpecSchema,
   type LootBundleSpec,
   DungeonCellSpecSchema,

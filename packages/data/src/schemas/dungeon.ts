@@ -12,6 +12,19 @@ export const GridPointSchema = z.object({
 export type GridPoint = z.infer<typeof GridPointSchema>;
 
 /**
+ * Procedural dungeon biomes by depth tier (Spec 06 Section 3.1).
+ */
+export const BIOME_TIERS = [
+  'catacombs',
+  'sunken_tombs',
+  'magma_caverns',
+  'deep_vaults',
+  'abyssal_rift',
+] as const;
+export const BiomeTierSchema = z.enum(BIOME_TIERS);
+export type BiomeTier = z.infer<typeof BiomeTierSchema>;
+
+/**
  * Tactical lighting levels.
  */
 export const LIGHT_LEVELS = ['bright', 'dim', 'darkness'] as const;
