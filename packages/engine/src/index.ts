@@ -12,3 +12,4 @@ export function getEngineMetadata() {
 
 export * from './dice/index.js';
 export * from './character/index.js';
+export * from './grid/index.js';
