@@ -100,6 +100,56 @@ export interface ArenaConfig {
   ```
 - **Victory Condition**: An arena match ends when all members of one team have `currentHp === 0` and are either dead or unconscious.
 
+### 2.3 Generalized Allegiance: Dynamic Teams, Factions & Disposition Matrix
+
+To power PvP Arena, multi-faction dungeon brawls, summoned allies, and Civilization-style world maps without hardcoding a binary `'party' | 'monster'` split, the engine generalizes combatant allegiance into **dynamic Team and Faction IDs** evaluated via a pure **Disposition Matrix**:
+
+```ts
+export type Disposition = 'allied' | 'hostile' | 'neutral';
+
+export type DispositionMatrix = Record<string, Record<string, Disposition>>;
+
+export interface CombatantAllegiance {
+  teamId: string;       // e.g. 'party', 'team_red', 'team_blue', 'goblins', 'cultists'
+  factionId?: string;   // Optional macro-faction ID for Overworld reputation (e.g. 'iron_guild', 'sun_order')
+}
+
+export function getDisposition(
+  a: { teamId: string; factionId?: string; id?: string },
+  b: { teamId: string; factionId?: string; id?: string },
+  matrix?: DispositionMatrix
+): Disposition {
+  // Same creature or same tactical team are always allied
+  if (a.id && b.id && a.id === b.id) return 'allied';
+  if (a.teamId === b.teamId) return 'allied';
+
+  // Check explicit faction relationship if matrix provided
+  if (matrix && a.factionId && b.factionId) {
+    const relation = matrix[a.factionId]?.[b.factionId];
+    if (relation) return relation;
+  }
+
+  // Default: Different teams in active combat are hostile
+  return 'hostile';
+}
+
+export const areAllied = (a: CombatantState, b: CombatantState, matrix?: DispositionMatrix): boolean =>
+  getDisposition(a, b, matrix) === 'allied';
+
+export const areHostile = (a: CombatantState, b: CombatantState, matrix?: DispositionMatrix): boolean =>
+  getDisposition(a, b, matrix) === 'hostile';
+```
+
+#### Multi-Mode Allegiance Matrix
+| Game Mode | Combatants Present | Teams & Factions | Friend / Foe Resolution |
+| :--- | :--- | :--- | :--- |
+| **Standard Dungeon** | 4 Heroes + Summoned Wolf vs 6 Skeletons | Heroes & Wolf: `teamId: 'party'`<br>Skeletons: `teamId: 'dungeon_undead'` | Wolf is allied with heroes; Skeletons are hostile to both. |
+| **Arena PvP** | Red Team (2 Heroes) vs Blue Team (2 Heroes) | Red: `teamId: 'team_red'`<br>Blue: `teamId: 'team_blue'` | Each team acts against the other; no "monsters" required. |
+| **Three-Way Skirmish** | Party vs Goblins vs Giant Spiders | Party: `teamId: 'party'`<br>Goblins: `teamId: 'goblins'`<br>Spiders: `teamId: 'wild_beasts'` | Goblins and Spiders attack each other as well as the party. |
+| **Overworld / Civ Realm** | Party + Town Guard vs Orc Warband | Party: `factionId: 'player_guild'`<br>Guards: `factionId: 'crown_loyalists'`<br>Orcs: `factionId: 'blood_clan'` | Matrix determines that Crown Loyalists fight alongside the party against the Blood Clan. |
+
+All rules engine subroutines (AOE target filters, Opportunity Attacks, Cover calculation against intervening creatures, Help action, and Victory checks) evaluate `areHostile()` and `areAllied()` rather than static side strings.
+
 ---
 
 ## 3. Mode 2: The Deep Descent (NetHack Roguelite Specification)
