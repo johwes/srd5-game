@@ -26,6 +26,22 @@ import {
   spendMovement,
 } from './turn-budget.js';
 import { executeDeathSave } from './damage.js';
+import {
+  resolveConditionTurnEndSaves,
+  canFrightenedCreatureMove,
+} from './conditions.js';
+import {
+  triggerHazardZonesAtTurnStart,
+  triggerHazardZonesOnMove,
+  tickHazardZones,
+  isCellInHazardDifficultTerrain,
+} from './hazard-zone.js';
+import { tickConcentration } from './concentration.js';
+import {
+  computeStepCostFeet,
+  isFootprintStepDifficultTerrain,
+} from '../grid/pathfinding.js';
+import type { GridPoint, TacticalGrid } from '../grid/model.js';
 
 export interface StartCombatEncounterOptions {
   encounterId: string;
@@ -212,6 +228,33 @@ export function startTurn(
     }
   }
 
+  let intermediateState: CombatState = {
+    ...state,
+    rngState: currentState,
+    combatants: {
+      ...state.combatants,
+      [combatantId]: updatedCombatant,
+    },
+  };
+
+  // Trigger Hazard Zones covering combatant at start of turn
+  if (!updatedCombatant.isDead && intermediateState.hazardZones) {
+    const hzRes = triggerHazardZonesAtTurnStart(intermediateState, combatantId);
+    intermediateState = hzRes.state;
+    currentState = intermediateState.rngState;
+    events.push(...hzRes.events);
+    updatedCombatant = intermediateState.combatants[combatantId]!;
+    if (updatedCombatant.isDead) {
+      return endTurn(
+        {
+          ...intermediateState,
+          activeCombatantId: combatantId,
+        },
+        events,
+      );
+    }
+  }
+
   // Create Turn Budget
   const turnBudget = createTurnBudget(updatedCombatant, updatedCombatant.isSurprised);
 
@@ -222,12 +265,12 @@ export function startTurn(
   });
 
   const nextCombatants = {
-    ...state.combatants,
+    ...intermediateState.combatants,
     [combatantId]: updatedCombatant,
   };
 
   const nextState: CombatState = {
-    ...state,
+    ...intermediateState,
     activeCombatantId: combatantId,
     turnBudget,
     combatants: nextCombatants,
@@ -244,6 +287,8 @@ export function startTurn(
  * Ends the active combatant's turn and advances the combat state:
  * - Emits TURN_ENDED
  * - Clears surprise if combatant was surprised (surprise ends at the end of first turn)
+ * - Resolves end-of-turn repeat saves on active conditions
+ * - Ticks down hazard zones and concentration
  * - Checks victory / defeat conditions
  * - Advances to the next eligible combatant in initiative order (incrementing round if wrapped)
  */
@@ -255,6 +300,8 @@ export function endTurn(
   const activeId = state.activeCombatantId;
 
   let nextCombatants = { ...state.combatants };
+  let nextHazardZones = state.hazardZones;
+  let currentState = state.rngState;
 
   if (activeId && nextCombatants[activeId]) {
     const activeCombatant = nextCombatants[activeId]!;
@@ -275,6 +322,47 @@ export function endTurn(
         entityId: activeId,
       });
     }
+
+    // 1. Condition turn-end saves (e.g. repeat saves against web, hold person, etc.)
+    const turnEndSaveRes = resolveConditionTurnEndSaves(
+      {
+        ...state,
+        rngState: currentState,
+        combatants: nextCombatants,
+        hazardZones: nextHazardZones,
+      },
+      activeId,
+    );
+    nextCombatants = turnEndSaveRes.state.combatants;
+    currentState = turnEndSaveRes.state.rngState;
+    events.push(...turnEndSaveRes.events);
+
+    // 2. Tick hazard zones owned by active combatant
+    const hzTickRes = tickHazardZones(
+      {
+        ...state,
+        rngState: currentState,
+        combatants: nextCombatants,
+        hazardZones: nextHazardZones,
+      },
+      activeId,
+    );
+    nextHazardZones = hzTickRes.state.hazardZones;
+    events.push(...hzTickRes.events);
+
+    // 3. Tick concentration of active combatant
+    const concTickRes = tickConcentration(
+      {
+        ...hzTickRes.state,
+        rngState: currentState,
+        combatants: nextCombatants,
+        hazardZones: nextHazardZones,
+      },
+      activeId,
+    );
+    nextCombatants = concTickRes.state.combatants;
+    nextHazardZones = concTickRes.state.hazardZones;
+    events.push(...concTickRes.events);
   }
 
   // Check victory / defeat
@@ -292,6 +380,7 @@ export function endTurn(
         phase: 'combat_ended',
         outcome: victoryOutcome,
         combatants: nextCombatants,
+        hazardZones: nextHazardZones,
         turnBudget: null,
       },
       events,
@@ -335,6 +424,8 @@ export function endTurn(
     activeCombatantIndex: nextInfo.nextIndex,
     activeCombatantId: nextActiveEntry.entityId,
     combatants: nextCombatants,
+    hazardZones: nextHazardZones,
+    rngState: currentState,
     turnBudget: null,
   };
 
@@ -541,4 +632,117 @@ export function executeSpendMovement(
     },
     events: [],
   };
+}
+
+export interface ExecuteMoveCombatantOptions {
+  actorId: string;
+  path: GridPoint[];
+  grid?: TacticalGrid | undefined;
+}
+
+/**
+ * Moves a combatant along a path on the grid during their active turn:
+ * - Checks frightened movement restrictions (cannot move closer to source of fear).
+ * - Computes movement cost accounting for difficult terrain from grid and active hazard zones.
+ * - Deducts feet from turn budget.
+ * - Updates combatant position.
+ * - Emits ENTITY_MOVED.
+ * - Checks and triggers any active hazard zones entered along the movement path.
+ */
+export function executeMoveCombatant(
+  state: CombatState,
+  options: ExecuteMoveCombatantOptions,
+): CombatTransitionResult {
+  const { actorId, path, grid } = options;
+  if (state.activeCombatantId !== actorId) {
+    throw new Error(`It is not ${actorId}'s turn`);
+  }
+  if (!state.turnBudget) {
+    throw new Error('No active turn budget');
+  }
+  const mover = state.combatants[actorId];
+  if (!mover || mover.isDead) {
+    throw new Error(`Mover "${actorId}" not found or dead`);
+  }
+  if (path.length === 0) {
+    return { state, events: [] };
+  }
+
+  // Frightened condition check: cannot willingly move closer to source of fear
+  if (mover.conditions.includes('frightened') && mover.frightenedByEntityId) {
+    const fearSource = state.combatants[mover.frightenedByEntityId];
+    if (fearSource) {
+      let currentPos = mover.position;
+      for (const step of path) {
+        if (!canFrightenedCreatureMove(mover, fearSource.position, currentPos, step)) {
+          throw new Error('A frightened creature cannot willingly move closer to the source of its fear');
+        }
+        currentPos = step;
+      }
+    }
+  }
+
+  // Compute movement cost step-by-step
+  let totalCostFeet = 0;
+  let prevPos = mover.position;
+  const isProne = mover.conditions.includes('prone');
+
+  for (const step of path) {
+    const isDifficult =
+      (grid && isFootprintStepDifficultTerrain(grid, { id: mover.id, x: step.x, y: step.y, size: mover.size }, step)) ||
+      isCellInHazardDifficultTerrain(state.hazardZones, step);
+
+    const stepResult = computeStepCostFeet({
+      from: prevPos,
+      to: step,
+      difficultTerrain: Boolean(isDifficult),
+      isProne,
+    });
+    totalCostFeet += stepResult.stepCostFeet;
+    prevPos = step;
+  }
+
+  if (totalCostFeet > state.turnBudget.movementRemainingFeet) {
+    throw new Error(
+      `Not enough movement remaining (requires ${totalCostFeet} ft, has ${state.turnBudget.movementRemainingFeet} ft)`,
+    );
+  }
+
+  let currentState = state;
+  const events: CombatEvent[] = [];
+
+  const finalPos = path[path.length - 1]!;
+  const nextBudget = spendMovement(state.turnBudget, totalCostFeet);
+
+  const updatedMover: Combatant = {
+    ...mover,
+    position: finalPos,
+  };
+
+  currentState = {
+    ...currentState,
+    turnBudget: nextBudget,
+    combatants: {
+      ...currentState.combatants,
+      [actorId]: updatedMover,
+    },
+  };
+
+  events.push({
+    type: 'ENTITY_MOVED',
+    entityId: actorId,
+    path,
+    mode: 'walk',
+  });
+
+  // Check and trigger hazard zones entered along path
+  let currentPos = mover.position;
+  for (const step of path) {
+    const hzMoveRes = triggerHazardZonesOnMove(currentState, actorId, currentPos, step);
+    currentState = hzMoveRes.state;
+    events.push(...hzMoveRes.events);
+    currentPos = step;
+  }
+
+  return { state: currentState, events };
 }

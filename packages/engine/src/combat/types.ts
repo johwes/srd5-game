@@ -9,6 +9,13 @@ import {
   type DamageType,
   DamageTypeSchema,
   type MonsterData,
+  ActiveConditionInstanceSchema,
+  type ActiveConditionInstance,
+  ActiveEffectInstanceSchema,
+  type ActiveEffectInstance,
+  AoeShapeTypeSchema,
+  type AoeShapeType,
+  type EffectStepSpec,
 } from '@srd5/data';
 import {
   type DiceRollRecord,
@@ -55,8 +62,10 @@ export type TurnBudget = z.infer<typeof TurnBudgetSchema>;
  */
 export const ActiveConcentrationSchema = z.object({
   sourceId: z.string().min(1),
+  sourceName: z.string().min(1).optional(),
   targetEntityIds: z.array(z.string().min(1)),
   remainingRounds: z.number().int().nonnegative(),
+  hazardZoneIds: z.array(z.string().min(1)).optional(),
 });
 export type ActiveConcentration = z.infer<typeof ActiveConcentrationSchema>;
 
@@ -80,6 +89,31 @@ export const CombatantPactMagicSchema = z.object({
   availableSlots: z.number().int().nonnegative(),
 });
 export type CombatantPactMagic = z.infer<typeof CombatantPactMagicSchema>;
+
+/**
+ * Active ground hazard zone state.
+ */
+export const HazardZoneSchema = z.object({
+  id: z.string().min(1),
+  zoneId: z.string().min(1),
+  casterId: z.string().min(1),
+  sourceName: z.string().min(1),
+  shape: AoeShapeTypeSchema,
+  origin: GridPointSchema,
+  targetPoint: GridPointSchema.optional(),
+  sizeFeet: z.number().positive(),
+  cells: z.array(GridPointSchema),
+  durationRounds: z.number().int().positive(),
+  remainingRounds: z.number().int().nonnegative(),
+  requiresConcentration: z.boolean(),
+  difficultTerrain: z.boolean(),
+  obscurement: z.enum(['light', 'heavy']).optional(),
+  saveDc: z.number().int().positive().optional(),
+  spellLevel: z.number().int().nonnegative().optional(),
+  onEnterOrStartTurn: z.array(z.any()),
+  triggeredCreaturesThisTurn: z.array(z.string()).optional().default([]),
+});
+export type HazardZone = z.infer<typeof HazardZoneSchema>;
 
 /**
  * Serializable Combatant state participating in tactical combat.
@@ -117,6 +151,12 @@ export const CombatantStateSchema = z.object({
   damageImmunities: z.array(DamageTypeSchema).default([]),
   damageVulnerabilities: z.array(DamageTypeSchema).default([]),
   conditionImmunities: z.array(ConditionIdSchema).default([]),
+  exhaustionLevel: z.number().int().min(0).max(6).optional(),
+  activeConditions: z.array(ActiveConditionInstanceSchema).optional(),
+  activeEffects: z.array(ActiveEffectInstanceSchema).optional(),
+  charmedByEntityId: z.string().optional(),
+  frightenedByEntityId: z.string().optional(),
+  grappledByEntityId: z.string().optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
@@ -346,6 +386,40 @@ export type CombatEvent =
       reason: 'new_spell' | 'damaged' | 'incapacitated' | 'turn_expiry' | 'manual';
     }
   | {
+      type: 'HAZARD_ZONE_CREATED';
+      instanceId: string;
+      zoneId: string;
+      casterId: string;
+      sourceName: string;
+      shape: AoeShapeType;
+      origin: GridPoint;
+      sizeFeet: number;
+      cells: GridPoint[];
+      durationRounds: number;
+      difficultTerrain: boolean;
+      obscurement?: 'light' | 'heavy' | undefined;
+    }
+  | {
+      type: 'HAZARD_ZONE_REMOVED';
+      instanceId: string;
+      zoneId: string;
+      casterId: string;
+      reason: 'expired' | 'concentration_ended' | 'dispelled' | 'cleared';
+    }
+  | {
+      type: 'HAZARD_ZONE_TRIGGERED';
+      instanceId: string;
+      zoneId: string;
+      entityId: string;
+      trigger: 'enter' | 'start_turn';
+    }
+  | {
+      type: 'EXHAUSTION_CHANGED';
+      entityId: string;
+      oldLevel: number;
+      newLevel: number;
+    }
+  | {
       type: 'ENCOUNTER_VICTORY';
       outcome: 'party_victory' | 'monsters_victory' | 'draw';
       round: number;
@@ -366,5 +440,6 @@ export interface CombatState {
   surprisedCombatantIds: string[];
   outcome: CombatVictoryOutcome;
   rngState: number;
+  hazardZones?: Record<string, HazardZone>;
   roundHistory?: Array<{ round: number; turns: Array<{ entityId: string; timestamp: number }> }>;
 }

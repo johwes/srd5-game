@@ -1,7 +1,7 @@
 import type { ConditionId, DamageType } from '@srd5/data';
-import { rollD20, type RollMode } from '../dice/evaluator.js';
+import { rollD20, resolveRollMode, type RollMode } from '../dice/evaluator.js';
 import type { DeathSavesState } from '../character/schemas.js';
-import type { CombatEvent, CombatState, Combatant } from './types.js';
+import type { CombatEvent, CombatState, Combatant, HazardZone } from './types.js';
 import { evaluateCombatVictory } from './state-machine.js';
 
 export interface DamageMitigationOptions {
@@ -310,7 +310,28 @@ export function applyDamage(options: ApplyDamageOptions): ApplyDamageResult {
           target.monsterData?.savingThrows?.con ??
           Math.floor(((target.characterSheet?.abilities.con.score ?? target.monsterData?.abilities.con ?? 10) - 10) / 2);
 
-        const conRollRes = rollD20(currentState, { modifier: conBonus });
+        const hasWarCaster =
+          target.characterSheet?.traitIds?.some(
+            (t: string) => t.toLowerCase().includes('war-caster') || t.toLowerCase().includes('war_caster'),
+          ) ||
+          target.characterSheet?.activeModifiers?.some((m) =>
+            m.sourceName.toLowerCase().includes('war caster'),
+          ) ||
+          false;
+        const advantageSources: string[] = [];
+        const disadvantageSources: string[] = [];
+        if (hasWarCaster) advantageSources.push('war_caster');
+        if ((target.exhaustionLevel ?? 0) >= 3 || target.conditions.includes('exhaustion')) {
+          disadvantageSources.push('exhaustion');
+        }
+        const mode = resolveRollMode({ advantageSources, disadvantageSources });
+
+        const conRollRes = rollD20(currentState, {
+          modifier: conBonus,
+          mode,
+          advantageSources,
+          disadvantageSources,
+        });
         currentState = conRollRes.nextState;
 
         events.push({
@@ -322,7 +343,7 @@ export function applyDamage(options: ApplyDamageOptions): ApplyDamageResult {
           kept: conRollRes.record.kept,
           modifier: conRollRes.record.modifier,
           total: conRollRes.total,
-          mode: 'normal',
+          mode,
           naturalCrit: conRollRes.isCrit,
           naturalFumble: conRollRes.isFumble,
         });
@@ -393,6 +414,54 @@ export function applyDamage(options: ApplyDamageOptions): ApplyDamageResult {
     [target.id]: updatedTarget,
   };
 
+  // Clean up concentration-linked hazard zones and conditions across all combatants
+  const nextHazardZones: Record<string, HazardZone> = {};
+  if (state.hazardZones) {
+    for (const [zid, zone] of Object.entries(state.hazardZones)) {
+      if (concentrationBroken && zone.casterId === target.id && zone.requiresConcentration) {
+        events.push({
+          type: 'HAZARD_ZONE_REMOVED',
+          instanceId: zone.id,
+          zoneId: zone.zoneId,
+          casterId: zone.casterId,
+          reason: 'concentration_ended',
+        });
+      } else {
+        nextHazardZones[zid] = zone;
+      }
+    }
+  }
+
+  if (concentrationBroken) {
+    for (const [cid, comb] of Object.entries(nextCombatants)) {
+      if (comb.activeConditions) {
+        let modified = false;
+        let cConds = [...comb.conditions];
+        const rem = comb.activeConditions.filter((ac) => {
+          if (ac.sourceEntityId === target.id && ac.requiresConcentration) {
+            modified = true;
+            cConds = cConds.filter((c) => c !== ac.conditionId);
+            events.push({
+              type: 'CONDITION_REMOVED',
+              targetId: comb.id,
+              conditionId: ac.conditionId,
+              sourceName: ac.sourceName,
+            });
+            return false;
+          }
+          return true;
+        });
+        if (modified) {
+          nextCombatants[cid] = {
+            ...comb,
+            conditions: cConds,
+            activeConditions: rem,
+          };
+        }
+      }
+    }
+  }
+
   // 6. Evaluate Victory
   const victoryOutcome = evaluateCombatVictory(nextCombatants);
   let nextPhase = state.phase;
@@ -410,6 +479,7 @@ export function applyDamage(options: ApplyDamageOptions): ApplyDamageResult {
     phase: nextPhase,
     outcome: victoryOutcome,
     combatants: nextCombatants,
+    hazardZones: nextHazardZones,
     rngState: currentState,
   };
 

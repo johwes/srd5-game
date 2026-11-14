@@ -49,6 +49,9 @@ import {
 } from './turn-budget.js';
 import { evaluateCombatVictory } from './state-machine.js';
 import { applyDamage, applyHealing } from './damage.js';
+import { applyConditionToCombatant } from './conditions.js';
+import { breakConcentration } from './concentration.js';
+import { createHazardZone } from './hazard-zone.js';
 
 let defaultCompendium: SrdCompendium | null = null;
 function getDefaultCompendium(): SrdCompendium {
@@ -602,19 +605,29 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
   }
 
   // 3. Concentration Management
+  let combatantsMap: Record<string, Combatant> = { ...state.combatants };
   let nextCaster = { ...caster };
+  let currentHazardZones = state.hazardZones ? { ...state.hazardZones } : {};
   if (spell.concentration) {
     if (nextCaster.concentratingOn) {
-      events.push({
-        type: 'CONCENTRATION_ENDED',
-        entityId: nextCaster.id,
-        spellId: nextCaster.concentratingOn.sourceId,
-        reason: 'new_spell',
-      });
+      const breakRes = breakConcentration(
+        {
+          ...state,
+          combatants: combatantsMap,
+          hazardZones: currentHazardZones,
+        },
+        nextCaster.id,
+        'new_spell',
+      );
+      events.push(...breakRes.events);
+      combatantsMap = breakRes.state.combatants;
+      currentHazardZones = breakRes.state.hazardZones ?? {};
+      nextCaster = combatantsMap[casterId]!;
     }
     const rounds = getDurationRounds(spell.duration);
     nextCaster.concentratingOn = {
       sourceId: spell.id,
+      sourceName: spell.name,
       targetEntityIds: [...resolvedTargetIds],
       remainingRounds: rounds,
     };
@@ -758,10 +771,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
   const totalDamageByTarget: Record<string, number> = {};
   const totalHealingByTarget: Record<string, number> = {};
 
-  const combatantsMap: Record<string, Combatant> = {
-    ...state.combatants,
-    [nextCaster.id]: nextCaster,
-  };
+  combatantsMap[nextCaster.id] = nextCaster;
 
   const formulaVars: FormulaContext = {
     '@spellMod': casterCtx.spellMod,
@@ -1037,15 +1047,22 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         currentState = hpRes.nextState;
         target.tempHp = Math.max(target.tempHp, hpRes.total);
       } else if (step.step === 'apply_condition') {
-        if (!target.conditions.includes(step.conditionId)) {
-          target.conditions = [...target.conditions, step.conditionId];
-          events.push({
-            type: 'CONDITION_ADDED',
-            targetId: target.id,
-            conditionId: step.conditionId,
-            sourceName: spell.name,
-          });
-        }
+        const condRes = applyConditionToCombatant(target, step.conditionId, {
+          sourceId: spell.id,
+          sourceName: spell.name,
+          sourceEntityId: caster.id,
+          durationRounds: step.durationRounds,
+          requiresConcentration: step.requiresConcentration,
+          repeatSaveAtTurnEnd: step.repeatSaveAtTurnEnd
+            ? {
+                ability: step.repeatSaveAtTurnEnd.ability,
+                dc: casterCtx.spellSaveDc,
+              }
+            : undefined,
+        });
+        Object.assign(target, condRes.combatant);
+        combatantsMap[target.id] = target;
+        events.push(...condRes.events);
       }
     }
   }
@@ -1055,6 +1072,42 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     const target = combatantsMap[tid];
     if (target && !target.isDead) {
       executeSteps(scaledEffects, target);
+    }
+  }
+
+  // Create active hazard zones defined by spell
+  for (const step of scaledEffects) {
+    if (step.step === 'create_hazard_zone') {
+      const hzOrigin = originCell ?? caster.position;
+      const createRes = createHazardZone(
+        {
+          ...state,
+          rngState: currentState,
+          combatants: combatantsMap,
+          hazardZones: currentHazardZones,
+        },
+        {
+          zoneId: step.zoneId,
+          casterId: caster.id,
+          sourceName: spell.name,
+          shape: step.shape,
+          origin: hzOrigin,
+          targetPoint: originCell,
+          sizeFeet: step.sizeFeet,
+          durationRounds: step.durationRounds,
+          requiresConcentration: step.requiresConcentration,
+          difficultTerrain: step.difficultTerrain,
+          obscurement: step.obscurement,
+          onEnterOrStartTurn: step.onEnterOrStartTurn,
+          saveDc: casterCtx.spellSaveDc,
+          spellLevel: effectiveSlotLevel,
+          triggerImmediatelyOnPlacement: true,
+        },
+      );
+      events.push(...createRes.events);
+      combatantsMap = createRes.state.combatants;
+      currentState = createRes.state.rngState;
+      currentHazardZones = createRes.state.hazardZones ?? {};
     }
   }
 
@@ -1072,6 +1125,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     ...state,
     turnBudget: nextBudget,
     combatants: combatantsMap,
+    hazardZones: currentHazardZones,
     outcome,
     rngState: currentState,
   };

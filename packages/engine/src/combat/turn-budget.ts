@@ -1,32 +1,19 @@
 import type { ConditionId } from '@srd5/data';
 import type { Combatant, TurnBudget } from './types.js';
+import {
+  INCAPACITATING_CONDITIONS,
+  IMMOBILIZING_CONDITIONS,
+  isIncapacitated,
+  isImmobilized,
+  getConditionSpeed,
+} from './conditions.js';
 
-export const INCAPACITATING_CONDITIONS: ReadonlySet<ConditionId> = new Set<ConditionId>([
-  'incapacitated',
-  'paralyzed',
-  'petrified',
-  'stunned',
-  'unconscious',
-]);
-
-export const IMMOBILIZING_CONDITIONS: ReadonlySet<ConditionId> = new Set<ConditionId>([
-  'grappled',
-  'restrained',
-]);
-
-/**
- * Checks whether the combatant has any condition that prevents actions/reactions.
- */
-export function isIncapacitated(combatant: Combatant): boolean {
-  return combatant.conditions.some((c) => INCAPACITATING_CONDITIONS.has(c));
-}
-
-/**
- * Checks whether the combatant has any condition that reduces speed to 0.
- */
-export function isImmobilized(combatant: Combatant): boolean {
-  return combatant.conditions.some((c) => IMMOBILIZING_CONDITIONS.has(c));
-}
+export {
+  INCAPACITATING_CONDITIONS,
+  IMMOBILIZING_CONDITIONS,
+  isIncapacitated,
+  isImmobilized,
+};
 
 /**
  * Initializes a new TurnBudget for a combatant at the beginning of their turn.
@@ -34,7 +21,6 @@ export function isImmobilized(combatant: Combatant): boolean {
  */
 export function createTurnBudget(combatant: Combatant, isSurprised = false): TurnBudget {
   const incapacitated = isIncapacitated(combatant);
-  const immobilized = isImmobilized(combatant);
 
   // If surprised or incapacitated, creature cannot take actions or move on its turn
   if (isSurprised || incapacitated) {
@@ -53,8 +39,8 @@ export function createTurnBudget(combatant: Combatant, isSurprised = false): Tur
     };
   }
 
-  // Speed is 0 if immobilized or exhaustion level 5
-  const movementRemainingFeet = immobilized ? 0 : combatant.speedFeet;
+  // Speed is 0 if immobilized or exhaustion level 5; halved if exhaustion level 2..4
+  const movementRemainingFeet = getConditionSpeed(combatant);
 
   return {
     action: 1,

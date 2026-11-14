@@ -526,6 +526,12 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   if (target.isDead) {
     throw new Error(`Target "${target.name}" is already dead`);
   }
+  if (attacker.conditions.some((c) => ['incapacitated', 'paralyzed', 'petrified', 'stunned', 'unconscious'].includes(c))) {
+    throw new Error(`Attacker "${attacker.name}" is incapacitated and cannot attack`);
+  }
+  if (attacker.conditions.includes('charmed') && attacker.charmedByEntityId === target.id) {
+    throw new Error(`A charmed creature cannot attack the charmer`);
+  }
 
   let currentState = state.rngState;
   const events: CombatEvent[] = [];
@@ -809,6 +815,9 @@ export function executeGrapple(options: ExecuteGrappleOptions): GrappleResolutio
   const target = state.combatants[targetId];
   if (!target) throw new Error(`Target "${targetId}" not found`);
   if (target.isDead) throw new Error(`Target "${target.name}" is already dead`);
+  if (attacker.conditions.includes('charmed') && attacker.charmedByEntityId === target.id) {
+    throw new Error('A charmed creature cannot attack the charmer');
+  }
 
   // Target size check: at most one size larger
   const attackerRank = CREATURE_SIZE_RANK[attacker.size];
@@ -966,6 +975,9 @@ export function executeShove(options: ExecuteShoveOptions): ShoveResolutionResul
   const target = state.combatants[targetId];
   if (!target) throw new Error(`Target "${targetId}" not found`);
   if (target.isDead) throw new Error(`Target "${target.name}" is already dead`);
+  if (attacker.conditions.includes('charmed') && attacker.charmedByEntityId === target.id) {
+    throw new Error('A charmed creature cannot attack the charmer');
+  }
 
   // Target size check: at most one size larger
   const attackerRank = CREATURE_SIZE_RANK[attacker.size];
