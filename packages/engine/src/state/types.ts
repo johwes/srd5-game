@@ -22,6 +22,8 @@ import {
 } from '../grid/model.js';
 import { type LightSource } from '../grid/vision.js';
 import { type CharacterClassEntry, type EquippedSlots } from '../character/schemas.js';
+import { type MarchingFormation, type MarchingOrderConfig } from '../dungeon/schemas.js';
+import { type DungeonFloorState } from '../dungeon/state.js';
 
 /**
  * Game operating modes.
@@ -89,7 +91,18 @@ export interface PlayerSlotAssignment {
  */
 export type GameCommand =
   // Exploration Commands
-  | { type: 'EXPLORE_MOVE'; actorId: string; path: GridPoint[] }
+  | {
+      type: 'EXPLORE_MOVE';
+      actorId: string;
+      path: GridPoint[];
+      followMarchingOrder?: boolean;
+    }
+  | {
+      type: 'SET_MARCHING_ORDER';
+      marchingOrder?: string[];
+      formation?: MarchingFormation;
+      leadExplorerId?: string;
+    }
   | {
       type: 'INTERACT_PROP';
       actorId: string;
@@ -228,6 +241,29 @@ export type GameEvent =
       damageType?: DamageType;
     }
   | {
+      type: 'ROOM_DISCOVERED';
+      roomId: string;
+      roomName?: string;
+    }
+  | {
+      type: 'ROOM_ENTERED';
+      actorId: string;
+      roomId: string;
+      prevRoomId?: string;
+    }
+  | {
+      type: 'MARCHING_ORDER_CHANGED';
+      order: string[];
+      formation: MarchingFormation;
+      leadExplorerId: string;
+    }
+  | {
+      type: 'MOVEMENT_HALTED';
+      actorId: string;
+      reason: 'trap_detected' | 'trap_triggered' | 'obstacle';
+      at: GridPoint;
+    }
+  | {
       type: 'REST_COMPLETED';
       restType: 'short' | 'long';
       hpRecovered: Record<string, number>;
@@ -253,4 +289,6 @@ export interface GameState {
   exploredCells: Record<string, boolean>;
   slots: PlayerSlotAssignment[];
   rngState: number;
+  dungeon?: DungeonFloorState;
+  marchingOrder?: MarchingOrderConfig;
 }

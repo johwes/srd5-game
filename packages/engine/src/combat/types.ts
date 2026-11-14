@@ -162,6 +162,7 @@ export const CombatantStateSchema = z.object({
   teamId: z.string().min(1).optional(),
   factionId: z.string().min(1).optional(),
   playerId: z.string().min(1).optional(),
+  roomId: z.string().optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 

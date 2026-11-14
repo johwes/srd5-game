@@ -22,12 +22,15 @@ import { breakConcentration } from '../combat/concentration.js';
 import { applyDamage } from '../combat/damage.js';
 import { rollDamage } from '../dice/evaluator.js';
 import {
+  type GridPoint,
   type TacticalGrid,
   getGridCell,
   setGridCell,
   isCellPassable,
 } from '../grid/model.js';
 import { hasLineOfSight } from '../grid/vision.js';
+import { calculateMarchingMovements } from '../dungeon/marching-order.js';
+import { updateDungeonRoomDiscovery } from '../dungeon/state.js';
 import {
   type GameCommand,
   type GameEvent,
@@ -446,6 +449,32 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
       break;
     }
 
+    case 'SET_MARCHING_ORDER': {
+      const partyIds = Object.keys(nextState.party);
+      const current = nextState.marchingOrder ?? {
+        order: partyIds,
+        formation: 'single_file',
+        leadExplorerId: partyIds[0] ?? 'hero-1',
+      };
+      const order = command.marchingOrder ?? current.order;
+      const formation = command.formation ?? current.formation;
+      const leadExplorerId = command.leadExplorerId ?? current.leadExplorerId;
+
+      nextState.marchingOrder = {
+        order,
+        formation,
+        leadExplorerId,
+      };
+
+      events.push({
+        type: 'MARCHING_ORDER_CHANGED',
+        order,
+        formation,
+        leadExplorerId,
+      });
+      break;
+    }
+
     case 'EXPLORE_MOVE': {
       const actor = nextState.party[command.actorId];
       if (!actor) {
@@ -455,36 +484,87 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
         break;
       }
 
-      // Check path validity against grid and props
+      const startPos = { ...actor.position };
+      const isLead = nextState.marchingOrder?.leadExplorerId === command.actorId;
+      const followMarchingOrder = command.followMarchingOrder ?? isLead;
+
+      const executedPath: GridPoint[] = [];
+      let movementHalted = false;
+      let haltReason: 'trap_detected' | 'trap_triggered' | 'obstacle' | null = null;
+      let haltPoint: GridPoint = startPos;
+
       for (const pt of command.path) {
         const cell = getGridCell(nextState.grid, pt.x, pt.y);
         if (!cell || !isCellPassable(cell)) {
-          throw new Error(`Exploration move blocked by terrain or obstacle at (${pt.x}, ${pt.y})`);
+          movementHalted = true;
+          haltReason = 'obstacle';
+          break;
         }
-      }
 
-      const destination = command.path[command.path.length - 1]!;
-      actor.position = { x: destination.x, y: destination.y };
+        // Advance actor position for this step
+        executedPath.push(pt);
+        actor.position = { x: pt.x, y: pt.y };
+        haltPoint = pt;
 
-      events.push({
-        type: 'ENTITY_MOVED',
-        entityId: command.actorId,
-        path: command.path,
-        mode: 'walk',
-      });
+        // Check passive perception detection against hidden props (Spec 04 Section 3.1)
+        // Check all conscious, non-blinded heroes in the party
+        const observers = Object.values(nextState.party).filter(
+          (c) => !c.isDead && c.currentHp > 0 && !c.conditions.includes('blinded'),
+        );
 
-      // Check if actor stepped on an active trap
-      for (const pt of command.path) {
-        const trap = nextState.props.find(
+        for (const prop of nextState.props) {
+          if (
+            !prop.discovered &&
+            prop.detectionDc !== undefined &&
+            (prop.kind === 'trap' || prop.kind === 'secret_door')
+          ) {
+            for (const obs of observers) {
+              const dist = Math.max(
+                Math.abs(obs.position.x - prop.x),
+                Math.abs(obs.position.y - prop.y),
+              );
+              // 15 feet = 3 cells on a 5-ft grid
+              if (dist <= 3) {
+                const canSee = hasLineOfSight(
+                  nextState.grid,
+                  { id: obs.id, x: obs.position.x, y: obs.position.y, size: obs.size },
+                  { id: prop.id, x: prop.x, y: prop.y, size: 'medium' },
+                );
+                if (canSee && obs.passivePerception >= prop.detectionDc) {
+                  prop.discovered = true;
+                  events.push({
+                    type: 'SECRET_DISCOVERED',
+                    propId: prop.id,
+                    finderId: obs.id,
+                    kind: prop.kind,
+                  });
+
+                  if (prop.kind === 'trap') {
+                    // Party movement halts immediately before walking into the trap
+                    movementHalted = true;
+                    haltReason = 'trap_detected';
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          if (movementHalted) break;
+        }
+
+        if (movementHalted) break;
+
+        // Check if actor stepped on an active (closed) trap
+        const activeTrap = nextState.props.find(
           (p) => p.kind === 'trap' && p.x === pt.x && p.y === pt.y && p.state === 'closed',
         );
-        if (trap) {
-          trap.state = 'triggered';
-          trap.discovered = true;
+        if (activeTrap) {
+          activeTrap.state = 'triggered';
+          activeTrap.discovered = true;
 
           let damage = 0;
-          if (trap.trapDamageFormula) {
-            const rollRes = rollDamage(nextState.rngState, trap.trapDamageFormula);
+          if (activeTrap.trapDamageFormula) {
+            const rollRes = rollDamage(nextState.rngState, activeTrap.trapDamageFormula);
             damage = rollRes.total;
             nextState.rngState = rollRes.nextState;
           }
@@ -495,14 +575,102 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
 
           events.push({
             type: 'TRAP_TRIGGERED',
-            propId: trap.id,
+            propId: activeTrap.id,
             targetId: command.actorId,
             damage,
-            damageType: trap.trapDamageType ?? 'piercing',
+            damageType: activeTrap.trapDamageType ?? 'piercing',
           });
+
+          movementHalted = true;
+          haltReason = 'trap_triggered';
           break;
         }
       }
+
+      if (executedPath.length > 0) {
+        events.push({
+          type: 'ENTITY_MOVED',
+          entityId: command.actorId,
+          path: executedPath,
+          mode: 'walk',
+        });
+      }
+
+      if (movementHalted && haltReason) {
+        events.push({
+          type: 'MOVEMENT_HALTED',
+          actorId: command.actorId,
+          reason: haltReason,
+          at: haltPoint,
+        });
+      }
+
+      // If marching order is active, move followers
+      if (followMarchingOrder && executedPath.length > 0 && nextState.marchingOrder) {
+        const marchingPlan = calculateMarchingMovements({
+          grid: nextState.grid,
+          party: nextState.party,
+          marchingOrder: nextState.marchingOrder,
+          leadStartPos: startPos,
+          leadActualPath: executedPath,
+        });
+
+        for (const fMove of marchingPlan.followerMovements) {
+          const follower = nextState.party[fMove.actorId];
+          if (!follower) continue;
+
+          follower.position = { x: fMove.to.x, y: fMove.to.y };
+          events.push({
+            type: 'ENTITY_MOVED',
+            entityId: fMove.actorId,
+            path: fMove.path,
+            mode: 'walk',
+          });
+
+          // Check if follower stepped on an active trap
+          for (const cellPt of fMove.path) {
+            const trap = nextState.props.find(
+              (p) => p.kind === 'trap' && p.x === cellPt.x && p.y === cellPt.y && p.state === 'closed',
+            );
+            if (trap) {
+              trap.state = 'triggered';
+              trap.discovered = true;
+              let dmg = 0;
+              if (trap.trapDamageFormula) {
+                const rollRes = rollDamage(nextState.rngState, trap.trapDamageFormula);
+                dmg = rollRes.total;
+                nextState.rngState = rollRes.nextState;
+              }
+              if (dmg > 0) {
+                follower.currentHp = Math.max(0, follower.currentHp - dmg);
+              }
+              events.push({
+                type: 'TRAP_TRIGGERED',
+                propId: trap.id,
+                targetId: fMove.actorId,
+                damage: dmg,
+                damageType: trap.trapDamageType ?? 'piercing',
+              });
+              break;
+            }
+          }
+        }
+      }
+
+      // Check room entry events for any party member whose room changed
+      for (const member of Object.values(nextState.party)) {
+        const memberCell = getGridCell(nextState.grid, member.position.x, member.position.y);
+        if (memberCell?.roomId && memberCell.roomId !== member.roomId) {
+          events.push({
+            type: 'ROOM_ENTERED',
+            actorId: member.id,
+            roomId: memberCell.roomId,
+            prevRoomId: member.roomId,
+          });
+          member.roomId = memberCell.roomId;
+        }
+      }
+
       break;
     }
 
@@ -659,6 +827,13 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
 
   // Update Fog of War explored cells after action execution
   nextState = updateExploredCells(nextState);
+
+  // Update multi-room discovery if dungeon floor is active
+  if (nextState.dungeon) {
+    const discovery = updateDungeonRoomDiscovery(nextState);
+    nextState = discovery.nextState;
+    events.push(...discovery.events);
+  }
 
   return { nextState, events };
 }
