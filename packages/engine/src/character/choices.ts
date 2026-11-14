@@ -1010,9 +1010,35 @@ export function validateClassChoices(
 
     // Level 1 class skillChoices and toolChoices
     const level1Selections = entry.choiceSelectionsByLevel[1] ?? {};
-    if (classIndex === 0 || classData.skillChoices.id in level1Selections) {
+    if (classIndex === 0) {
       evaluateClassChoice(
         classData.skillChoices,
+        1,
+        'class',
+        classData.id,
+        `${classData.name} Skills`,
+      );
+    } else if (classData.skillChoices.id in level1Selections) {
+      // Secondary (multiclass) class entry: Bard, Ranger, and Rogue grant 1 skill on multiclassing
+      const isMulticlassSingleSkill =
+        (classData.id === 'bard' ||
+          classData.id === 'ranger' ||
+          classData.id === 'rogue') &&
+        level1Selections[classData.skillChoices.id]?.length === 1;
+      const effectiveSkillChoice: ChoiceSpec =
+        isMulticlassSingleSkill && classData.skillChoices.type === 'skill'
+          ? {
+              ...classData.skillChoices,
+              count: 1,
+              label: `Choose 1 ${classData.name} multiclass skill proficiency`,
+              from:
+                classData.id === 'bard'
+                  ? { mode: 'category', category: 'all_skills' }
+                  : classData.skillChoices.from,
+            }
+          : classData.skillChoices;
+      evaluateClassChoice(
+        effectiveSkillChoice,
         1,
         'class',
         classData.id,
@@ -1021,9 +1047,26 @@ export function validateClassChoices(
     }
 
     for (const toolChoice of classData.toolChoices ?? []) {
-      if (classIndex === 0 || toolChoice.id in level1Selections) {
+      if (classIndex === 0) {
         evaluateClassChoice(
           toolChoice,
+          1,
+          'class',
+          classData.id,
+          `${classData.name} Tool Proficiency`,
+        );
+      } else if (toolChoice.id in level1Selections) {
+        const isMulticlassSingleInstrument =
+          classData.id === 'bard' && level1Selections[toolChoice.id]?.length === 1;
+        const effectiveToolChoice: ChoiceSpec = isMulticlassSingleInstrument
+          ? {
+              ...toolChoice,
+              count: 1,
+              label: 'Choose 1 musical instrument proficiency (Multiclass Bard)',
+            }
+          : toolChoice;
+        evaluateClassChoice(
+          effectiveToolChoice,
           1,
           'class',
           classData.id,
@@ -1068,6 +1111,24 @@ export function validateClassChoices(
         if (!feature) continue;
 
         for (const choice of feature.choices ?? []) {
+          // Sorcerer Metamagic grants 2 options at L3, and +1 option at L10 and L17
+          if (feature.id === 'metamagic' && lvl > 3) {
+            const lvlSelections = entry.choiceSelectionsByLevel[lvl] ?? {};
+            if (choice.id in lvlSelections) {
+              evaluateClassChoice(
+                {
+                  ...choice,
+                  count: 1,
+                  label: 'Choose one additional Metamagic option',
+                },
+                lvl,
+                'feature',
+                feature.id,
+                feature.name,
+              );
+            }
+            continue;
+          }
           evaluateClassChoice(choice, lvl, 'feature', feature.id, feature.name);
         }
 
@@ -1075,6 +1136,73 @@ export function validateClassChoices(
         const implicitChoice = IMPLICIT_FEATURE_CHOICES[feature.id];
         if (implicitChoice && implicitChoice.id in (entry.choiceSelectionsByLevel[lvl] ?? {})) {
           evaluateClassChoice(implicitChoice, lvl, 'feature', feature.id, feature.name);
+        }
+      }
+
+      // Check scaling class-specific feature choices at higher levels (Warlock Invocations at L5/7/9/12/15/18, Ranger Favored Enemy at L6/14, Natural Explorer at L6/10)
+      const lvlSelections = entry.choiceSelectionsByLevel[lvl] ?? {};
+      if (
+        classData.id === 'warlock' &&
+        lvl > 2 &&
+        'warlock-invocations' in lvlSelections
+      ) {
+        const prevInvCount = Number(
+          classData.levels[lvl - 2]?.classSpecific['invocations_known'] ?? 0,
+        );
+        const currInvCount = Number(lvlProg.classSpecific['invocations_known'] ?? 0);
+        const deltaInv = currInvCount - prevInvCount;
+        const invFeature = compendium.getFeature('eldritch-invocations');
+        const baseInvChoice = invFeature?.choices?.[0];
+        if (deltaInv > 0 && invFeature && baseInvChoice) {
+          evaluateClassChoice(
+            {
+              ...baseInvChoice,
+              count: deltaInv,
+              label: `Choose ${deltaInv} additional Eldritch Invocation(s)`,
+            },
+            lvl,
+            'feature',
+            invFeature.id,
+            invFeature.name,
+          );
+        }
+      }
+
+      if (classData.id === 'ranger' && lvl > 1) {
+        const prevEnemyCount = Number(
+          classData.levels[lvl - 2]?.classSpecific['favored_enemies'] ?? 1,
+        );
+        const currEnemyCount = Number(lvlProg.classSpecific['favored_enemies'] ?? 1);
+        if (
+          currEnemyCount > prevEnemyCount &&
+          'favored-enemy' in lvlSelections &&
+          IMPLICIT_FEATURE_CHOICES['favored-enemy']
+        ) {
+          evaluateClassChoice(
+            IMPLICIT_FEATURE_CHOICES['favored-enemy'],
+            lvl,
+            'feature',
+            'favored-enemy',
+            'Favored Enemy',
+          );
+        }
+
+        const prevTerrainCount = Number(
+          classData.levels[lvl - 2]?.classSpecific['favored_terrains'] ?? 1,
+        );
+        const currTerrainCount = Number(lvlProg.classSpecific['favored_terrains'] ?? 1);
+        if (
+          currTerrainCount > prevTerrainCount &&
+          'natural-explorer' in lvlSelections &&
+          IMPLICIT_FEATURE_CHOICES['natural-explorer']
+        ) {
+          evaluateClassChoice(
+            IMPLICIT_FEATURE_CHOICES['natural-explorer'],
+            lvl,
+            'feature',
+            'natural-explorer',
+            'Natural Explorer',
+          );
         }
       }
 
@@ -1829,7 +1957,9 @@ export function resolveProficienciesAndDuplicates(
     for (let lvl = 1; lvl <= entry.level; lvl++) {
       const lvlProg = classData.levels[lvl - 1];
       const hasRogueExpertise = lvlProg?.featureIds.includes('expertise-rogue') ?? false;
-      const hasBardExpertise = lvlProg?.featureIds.includes('expertise-bard') ?? false;
+      const hasBardExpertise =
+        (lvlProg?.featureIds.includes('expertise-bard') ?? false) ||
+        (entry.classId === 'bard' && lvl === 10);
       if (!hasRogueExpertise && !hasBardExpertise) continue;
 
       const lvlSelections = entry.choiceSelectionsByLevel[lvl] ?? {};

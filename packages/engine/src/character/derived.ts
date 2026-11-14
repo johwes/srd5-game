@@ -510,24 +510,38 @@ function findFeatureChoiceSelections(
   choiceId: string,
   featureGroup?: string,
 ): readonly string[] {
+  const results: string[] = [];
+  const addOptions = (opts: readonly string[] | undefined): void => {
+    if (!opts) return;
+    for (const opt of opts) {
+      if (!results.includes(opt)) {
+        results.push(opt);
+      }
+    }
+  };
+
   const atLevel = entry.choiceSelectionsByLevel[level];
   if (atLevel?.[choiceId]) {
-    return atLevel[choiceId]!;
-  }
-  if (featureGroup === 'fighting-style' && atLevel?.['fighting-style']) {
-    return atLevel['fighting-style']!;
+    addOptions(atLevel[choiceId]);
+  } else if (featureGroup === 'fighting-style' && atLevel?.['fighting-style']) {
+    addOptions(atLevel['fighting-style']);
   }
 
   for (let lvl = 1; lvl <= entry.level; lvl++) {
     const map = entry.choiceSelectionsByLevel[lvl];
     if (!map) continue;
-    if (map[choiceId]) return map[choiceId]!;
-    if (featureGroup === 'fighting-style' && map['fighting-style']) {
-      return map['fighting-style']!;
+    if (map[choiceId]) {
+      addOptions(map[choiceId]);
+    } else if (
+      results.length === 0 &&
+      featureGroup === 'fighting-style' &&
+      map['fighting-style']
+    ) {
+      addOptions(map['fighting-style']);
     }
   }
 
-  return [];
+  return results;
 }
 
 /**
@@ -799,6 +813,7 @@ export function computeDerivedCharacter(
   }
 
   // 2. Class & Subclass Features + Chosen Feature Options + Feats
+  const collectedFeatureModifierIds = new Set<string>();
   const collectFeatureAndOptions = (
     feature: FeatureData,
     entry: CharacterClassEntry,
@@ -806,18 +821,21 @@ export function computeDerivedCharacter(
     category: 'class_feature' | 'subclass_feature',
   ): void => {
     addFeatureId(feature.id);
-    for (const mod of feature.modifiers) {
-      sourcedModifiers.push({
-        sourceId: feature.id,
-        sourceName: feature.name,
-        sourceCategory: category,
-        classId: entry.classId,
-        classLevel: entry.level,
-        modifier: mod,
-      });
-    }
-    for (const act of feature.activatedAbilities ?? []) {
-      addActivatedAbility(act);
+    if (!collectedFeatureModifierIds.has(feature.id)) {
+      collectedFeatureModifierIds.add(feature.id);
+      for (const mod of feature.modifiers) {
+        sourcedModifiers.push({
+          sourceId: feature.id,
+          sourceName: feature.name,
+          sourceCategory: category,
+          classId: entry.classId,
+          classLevel: entry.level,
+          modifier: mod,
+        });
+      }
+      for (const act of feature.activatedAbilities ?? []) {
+        addActivatedAbility(act);
+      }
     }
 
     for (const choice of feature.choices ?? []) {
@@ -835,19 +853,24 @@ export function computeDerivedCharacter(
           compendium.getFeature(`${choice.featureGroup}-${rawOpt.trim()}`);
         if (optionFeature) {
           addFeatureId(optionFeature.id);
-          for (const mod of optionFeature.modifiers) {
-            sourcedModifiers.push({
-              sourceId: optionFeature.id,
-              sourceName: optionFeature.name,
-              sourceCategory: category,
-              classId: entry.classId,
-              classLevel: entry.level,
-              modifier: mod,
-            });
+          if (!collectedFeatureModifierIds.has(optionFeature.id)) {
+            collectedFeatureModifierIds.add(optionFeature.id);
+            for (const mod of optionFeature.modifiers) {
+              sourcedModifiers.push({
+                sourceId: optionFeature.id,
+                sourceName: optionFeature.name,
+                sourceCategory: category,
+                classId: entry.classId,
+                classLevel: entry.level,
+                modifier: mod,
+              });
+            }
+            for (const act of optionFeature.activatedAbilities ?? []) {
+              addActivatedAbility(act);
+            }
           }
-          for (const act of optionFeature.activatedAbilities ?? []) {
-            addActivatedAbility(act);
-          }
+        } else if (choice.options.includes(normOpt)) {
+          addFeatureId(normOpt);
         }
       }
     }
