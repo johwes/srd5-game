@@ -21,7 +21,8 @@ This repository's specification is organized into modular engineering documents 
 | **[03-combat-and-rules-engine.md](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md)** | Seeded deterministic PRNG & dice engine, 5e turn lifecycle, action economy, reaction interrupts (`Opportunity Attack`, `Shield`, `Counterspell`), 5-ft grid geometry, A* pathfinding, Bresenham/shadowcasting Line of Sight, cover, lighting, conditions, concentration, and death saves. |
 | **[04-dungeon-and-ai.md](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md)** | Multi-room dungeon format, exploration-to-combat transition, interactive props (locked/trapped doors, chests), Short & Long Rest mechanics, loot/XP progression, and utility-based Tactical Monster AI archetypes. |
 | **[05-multiplayer-and-ui.md](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md)** | Multiplayer-ready Command/Event transport layer, per-player Fog-of-War state projection (`PlayerViewState`), PixiJS 2D canvas rendering pipeline, and React HUD/Compendium/Builder UI architecture. |
-| **[BACKLOG.md](file:///home/jwesterl/ai/srd5-game/BACKLOG.md)** | Granular, dependency-ordered engineering backlog (`SRD-101` through `SRD-604`) across Epics 1–6 with package targets and acceptance criteria. |
+| **[06-game-modes-and-progression.md](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md)** | Unified multi-mode architecture: **The Arena** (PvE waves & PvP duels), **The Deep Descent** (NetHack-style procedural roguelite dungeon, depth scaling, supply tension, shrines, run scoring), and **The Realm** (Civ/Master of Magic-style overworld, factions, settlements, and seamless tactical grid battle transitions). |
+| **[BACKLOG.md](file:///home/jwesterl/ai/srd5-game/BACKLOG.md)** | Granular, dependency-ordered engineering backlog (`SRD-101` through `SRD-705`) across Epics 1–7 with package targets and acceptance criteria. |
 
 ---
 
@@ -183,23 +184,38 @@ Because SRD 5.1 contains 12 classes across 20 levels, ~319 spells, and ~320 mons
   - Reaction interrupt system (`Opportunity Attack`, `Shield`, `Counterspell`, `Readied Action`).
   - Unconscious & Death Saving Throw rules.
 
-### Phase 4: PixiJS Tactical Board UI & Monster AI
+### Phase 4: PixiJS Tactical Board UI, Combat HUD & The Arena (PvE & PvP)
 - Build the PixiJS v8 2D viewport (`packages/client/src/canvas/`):
   - Tilemap rendering (floors, walls, doors, difficult terrain, hazards).
   - Creature tokens with HP bars, condition badges, facing/selection rings, and movement path previews (highlighting opportunity attack threat zones).
   - Dynamic lighting & Fog-of-War overlay (Bright light, Dim light, Darkness, Darkvision monochrome rendering).
   - Interactive AOE targeting templates for spells and abilities.
 - Build the React **Tactical Combat HUD**: Initiative ribbon, active character sheet drawer, Action/Bonus Action/Spell/Item hotbar, Reaction prompt modal, 3D/animated Dice Roll log, and detailed Combat Log.
-- Implement the **Tactical Monster AI** in `@srd5/engine` and ship an **Arena Skirmish Mode** allowing players to test any custom party against any SRD encounter preset.
+- Implement the **Tactical Monster AI** in `@srd5/engine`.
+- Ship **The Arena Mode**:
+  - **PvE**: Custom encounter skirmishes and endless survival waves.
+  - **PvP**: Hot-seat/local 1v1 party duels using slot assignments.
 
-### Phase 5: Dungeon Exploration Loop, Rests & Adventure Module
+### Phase 5: Dungeon Crawler, The Deep Descent (NetHack Roguelite) & Starter Campaign
 - Implement multi-room dungeon state and Exploration Mode:
   - Party movement & marching order, room reveal on door opening, Perception/Investigation checks for hidden traps and secret doors, Thief's Tools lockpicking/disarming.
   - Seamless transition from Exploration Mode into Initiative/Combat Mode when hostile monsters establish Line of Sight.
 - Implement **Short Rest** (Hit Dice spending, short-rest feature recharge) and **Long Rest** (full HP, spell slots, half Hit Dice recovery, camp ambush risk).
 - Implement loot chests, inventory equipping/attunement (max 3 attuned magic items), XP awards, and Level-Up between encounters.
-- Author a complete multi-floor starter dungeon module (*"The Sunken Crypt of Kaelen"*, Levels 1–4) using 100% SRD 5.1 monsters, traps, and magic items.
+- Author the curated starter dungeon module (*"The Sunken Crypt of Kaelen"*, Levels 1–4) using 100% SRD 5.1 content.
+- Implement **The Deep Descent Roguelite Engine**:
+  - Procedural floor generator with guaranteed path connectivity (`DungeonGenerator`).
+  - Thematic biome tiers by depth (Catacombs, Sunken Tombs, Magma Caverns, Deep Vaults, Abyssal Rift).
+  - Depth-scaled monster CR encounter budgets and loot tables.
+  - Roguelite resource tension (rations, exhaustion, shrines of fate, curses) and run scoring.
 
-### Phase 6: Cooperative Multiplayer Extension
+### Phase 6: Cooperative & Competitive Multiplayer Extension
 - Implement `@srd5/server` (Node.js/WebSocket room server hosting authoritative `@srd5/engine` instances).
-- Implement `WebSocketTransport` in `@srd5/transport` with `PlayerViewState` per-player fog-of-war filtering and character ownership assignment (e.g., 2 players controlling 2 heroes each, or 4 players controlling 1 hero each).
+- Implement `WebSocketTransport` in `@srd5/transport` with `PlayerViewState` per-player fog-of-war filtering and character ownership assignment (e.g., 2 players controlling 2 heroes each in co-op, or 1v1 remote PvP Arena).
+- Synchronized reaction prompts and turn timers.
+
+### Phase 7: The Realm (Strategic Overworld / Master of Magic Style)
+- Procedural overworld world map generation (macro hex/tile grid, biomes, rivers, elevation).
+- Strategic party travel system (movement points per day, foraging, camping, weather).
+- Faction reputation engine, procedural settlements (towns, citadels), shops, and quest boards.
+- Seamless Overworld-to-Tactical Grid battle generator for wilderness encounters and dungeon POI entries.

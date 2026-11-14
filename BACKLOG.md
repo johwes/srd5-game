@@ -16,9 +16,10 @@ flowchart LR
     E1["Epic 1: Workspace &\nSRD 5.1 Data Foundation"] --> E2["Epic 2: Character Builder &\nDerived Stat Engine"]
     E1 --> E3["Epic 3: Deterministic Rules &\nTactical Combat Engine"]
     E2 --> E3
-    E3 --> E4["Epic 4: PixiJS Tactical Board,\nCombat HUD & Monster AI"]
-    E4 --> E5["Epic 5: Dungeon Exploration,\nRests & Starter Campaign"]
-    E4 --> E6["Epic 6: Cooperative\nMultiplayer Server"]
+    E3 --> E4["Epic 4: PixiJS Tactical Board,\nCombat HUD & Arena (PvE/PvP)"]
+    E4 --> E5["Epic 5: Dungeon Exploration,\nDeep Descent & Campaign"]
+    E4 --> E6["Epic 6: Multiplayer\nTransport (Co-op & PvP)"]
+    E5 --> E7["Epic 7: The Realm\n(Strategic Overworld)"]
 ```
 
 ---
@@ -93,8 +94,8 @@ flowchart LR
 
 ---
 
-## Epic 4: PixiJS Tactical Board UI, Combat HUD & Monster AI
-**Spec Reference**: [04-dungeon-and-ai.md](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05-multiplayer-and-ui.md](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md)
+## Epic 4: PixiJS Tactical Board UI, Combat HUD & The Arena (PvE & PvP)
+**Spec Reference**: [04-dungeon-and-ai.md](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05-multiplayer-and-ui.md](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06-game-modes-and-progression.md](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md)
 
 | ID | Status | Title | Package | Depends On |
 | :--- | :---: | :--- | :--- | :--- |
@@ -105,16 +106,16 @@ flowchart LR
 | **SRD-405** | `[ ]` | Build PixiJS dynamic Lighting & Fog-of-War mask layer (`unexplored`, `remembered`, `dim`, `bright`, `darkvision`) | `@srd5/client` | SRD-311, SRD-402 |
 | **SRD-406** | `[ ]` | Build React Tactical Combat HUD (Initiative ribbon, Party portraits, Action/Spell/Item hotbar, Turn budget indicator) | `@srd5/client` | SRD-403 |
 | **SRD-407** | `[ ]` | Build Reaction Interrupt Modal, Animated Dice Tray, and Combat Log with hover formula breakdown tooltips | `@srd5/client` | SRD-309, SRD-406 |
-| **SRD-408** | `[ ]` | Build Arena Skirmish Mode (Select party + map + SRD monster encounter preset and play full tactical combat) | `@srd5/client` | SRD-401, SRD-404, SRD-407 |
+| **SRD-408** | `[ ]` | Build The Arena Mode (PvE Custom Skirmish/Endless Waves + Hot-Seat PvP 1v1 Party Duels on PixiJS canvas) | `@srd5/client` | SRD-401, SRD-404, SRD-407 |
 
 ### Epic 4 Acceptance Criteria Details
 - [ ] **SRD-401**: AI unit tests verify Goblins use *Nimble Escape*, Wolves position for *Pack Tactics*, Artillery monsters seek cover and avoid melee, and AoE casters place *Fireball*/*Breath Weapon* templates to maximize hero hits while avoiding allies.
-- [ ] **SRD-408**: Players can launch Arena Skirmish Mode in the browser, control a 4-hero party on the PixiJS tactical grid against AI monsters, use weapons, spells, and reactions, and complete encounters from start to finish.
+- [ ] **SRD-408**: Players can launch Arena Mode in the browser: run PvE skirmishes against AI monsters, survive consecutive waves with breathers, or play hot-seat 1v1 PvP where each player commands their chosen party on the tactical grid.
 
 ---
 
-## Epic 5: Dungeon Exploration Loop, Rests & Starter Campaign
-**Spec Reference**: [04-dungeon-and-ai.md](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md)
+## Epic 5: Dungeon Exploration, The Deep Descent (NetHack Roguelite) & Campaign
+**Spec Reference**: [04-dungeon-and-ai.md](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [06-game-modes-and-progression.md](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md)
 
 | ID | Status | Title | Package | Depends On |
 | :--- | :---: | :--- | :--- | :--- |
@@ -125,18 +126,37 @@ flowchart LR
 | **SRD-505** | `[ ]` | Implement Loot tables, Magic Item Attunement (max 3), XP awards, and between-combat Level-Up flow | `@srd5/engine`, `@srd5/client` | SRD-208, SRD-504 |
 | **SRD-506** | `[ ]` | Author 3-floor starter campaign module: *"The Sunken Crypt of Kaelen"* (Levels 1–4) | `@srd5/data` | SRD-502, SRD-503, SRD-505 |
 | **SRD-507** | `[ ]` | Build Dungeon Exploration HUD (Stealth toggle, Marching Order, Rest Camp modal, Loot & Inventory modal, Save/Load slots) | `@srd5/client` | SRD-408, SRD-506 |
+| **SRD-508** | `[ ]` | Implement `DungeonGenerator` procedural floor algorithm (BSP rooms, corridors, stairs down/up, guaranteed BFS connectivity) | `@srd5/engine` | SRD-501, SRD-502 |
+| **SRD-509** | `[ ]` | Implement The Deep Descent Roguelite Engine (Biome tiers 1–13+, Depth scaling, Supply/Exhaustion tension, Shrines, Run Scoring) | `@srd5/engine`, `@srd5/client` | SRD-507, SRD-508 |
 
 ### Epic 5 Acceptance Criteria Details
 - [ ] **SRD-501..507**: A player party can enter Floor 1 of *"The Sunken Crypt of Kaelen"*, explore rooms under fog of war, detect and disarm traps, pick locks, fight multiple monster encounters, take Short and Long Rests, equip and attune discovered SRD magic items, level up from Level 1 to Level 4, and defeat the Floor 3 boss.
+- [ ] **SRD-508..509**: Players can embark on an endless **Deep Descent Roguelite Run**: descend through procedurally generated floors, encounter depth-scaled monsters and themed biomes (Catacombs, Sunken Tombs, Magma Caverns, Deep Vaults), manage rations and exhaustion during rests, use Shrines of Fate, and view final run score and graveyard stats on run completion or party death.
 
 ---
 
-## Epic 6: Cooperative Multiplayer Extension & High-Level Content
-**Spec Reference**: [05-multiplayer-and-ui.md](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md)
+## Epic 6: Cooperative & Competitive Multiplayer Extension
+**Spec Reference**: [05-multiplayer-and-ui.md](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06-game-modes-and-progression.md](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md)
 
 | ID | Status | Title | Package | Depends On |
 | :--- | :---: | :--- | :--- | :--- |
 | **SRD-601** | `[ ]` | Implement authoritative WebSocket Room Server (`@srd5/server`) wrapping `@srd5/engine` | `@srd5/server` | SRD-311, SRD-504 |
-| **SRD-602** | `[ ]` | Implement `WebSocketTransport` client adapter, Lobby room codes, and Player-to-Character slot assignment | `@srd5/transport`, `@srd5/client` | SRD-601 |
+| **SRD-602** | `[ ]` | Implement `WebSocketTransport` client adapter, Lobby room codes, and Player-to-Character slot assignment (Co-op & PvP) | `@srd5/transport`, `@srd5/client` | SRD-601 |
 | **SRD-603** | `[ ]` | Implement multiplayer Reaction prompt timers and per-player Fog-of-War state synchronization | `@srd5/server`, `@srd5/client` | SRD-602 |
 | **SRD-604** | `[ ]` | Expand Combat Tier B & C Effect DSL coverage (Levels 6–20 spells, features, and CR 6–20 monsters) | `@srd5/data`, `@srd5/engine` | SRD-310 |
+
+---
+
+## Epic 7: The Realm (Strategic Overworld / Master of Magic Style)
+**Spec Reference**: [06-game-modes-and-progression.md](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md)
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-701** | `[ ]` | Implement `OverworldMap` procedural generator (macro hex/tile grid, biomes, rivers, roads, elevation) | `@srd5/engine` | SRD-508 |
+| **SRD-702** | `[ ]` | Implement Overworld Party Travel loop (daily movement pace, foraging, weather, camping, day/night cycles) | `@srd5/engine` | SRD-504, SRD-701 |
+| **SRD-703** | `[ ]` | Implement Faction reputation engine (-100 to +100), procedural settlements, shops, and quest boards | `@srd5/engine` | SRD-701 |
+| **SRD-704** | `[ ]` | Implement Seamless Overworld-to-Tactical Grid battle generator (Wilderness encounters and Dungeon POI entries) | `@srd5/engine` | SRD-301, SRD-702 |
+| **SRD-705** | `[ ]` | Build PixiJS Overworld Viewport & Strategic Settlement HUD (World navigation, town services, quest journal) | `@srd5/client` | SRD-402, SRD-703, SRD-704 |
+
+### Epic 7 Acceptance Criteria Details
+- [ ] **SRD-701..705**: Players can generate an expansive procedural world map, travel between towns and factions across biomes, accept bounty and dungeon quests, recruit or buy gear in settlements, and engage wandering enemies or enter dungeon POIs with seamless transition into tactical turn-based combat on the 5-ft grid.
