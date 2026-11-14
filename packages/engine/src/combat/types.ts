@@ -25,6 +25,7 @@ import {
   DeathSavesStateSchema,
   type DeathSavesState,
   type DerivedCharacterSheet,
+  type CharacterBuildState,
 } from '../character/schemas.js';
 import {
   GridPointSchema,
@@ -163,12 +164,14 @@ export const CombatantStateSchema = z.object({
   factionId: z.string().min(1).optional(),
   playerId: z.string().min(1).optional(),
   roomId: z.string().optional(),
+  levelUpAvailable: z.boolean().optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
 export interface Combatant extends CombatantState {
   characterSheet?: DerivedCharacterSheet | undefined;
   monsterData?: MonsterData | undefined;
+  buildState?: CharacterBuildState | undefined;
 }
 
 /**

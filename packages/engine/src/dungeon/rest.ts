@@ -1,5 +1,6 @@
 import {
   type SrdCompendium,
+  defaultCompendium,
 } from '@srd5/data';
 import { type Combatant } from '../combat/types.js';
 import { rollDie } from '../dice/prng.js';
@@ -11,6 +12,8 @@ import {
 } from '../state/types.js';
 import { triggerDungeonEncounter } from './encounters.js';
 import { type EncounterSpawnGroup } from './schemas.js';
+import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
+import { computeDerivedCharacter } from '../character/derived.js';
 
 export interface ResolveRestOptions {
   compendium?: SrdCompendium;
@@ -392,6 +395,26 @@ export function resolveShortRest(
         slotsRecovered[heroId] = rec;
       }
     }
+
+    // 5. Attunement updates during Short Rest (SRD 5.1 & SRD-505)
+    if (command.attunements?.[heroId] && hero.buildState) {
+      let b = hero.buildState;
+      const comp = _options?.compendium ?? defaultCompendium;
+      for (const un of command.attunements[heroId]!.unattune ?? []) {
+        b = unattuneMagicItem(b, un);
+      }
+      for (const at of command.attunements[heroId]!.attune ?? []) {
+        b = attuneMagicItem(b, at, comp);
+      }
+      hero.buildState = b;
+      hero.characterSheet = computeDerivedCharacter(b, comp);
+      hero.armorClass = hero.characterSheet.armorClass.totalAc;
+      events.push({
+        type: 'ATTUNEMENT_CHANGED',
+        characterId: heroId,
+        attunedItemInstanceIds: b.attunedItemInstanceIds,
+      });
+    }
   }
 
   nextState.rngState = currentRng;
@@ -610,6 +633,26 @@ export function resolveLongRest(
       hero.characterSheet.spellcasting.preparedOrKnownSpellIds = [
         ...command.preparedSpellUpdates[heroId],
       ];
+    }
+
+    // 2.7 Attunement updates during Long Rest (SRD 5.1 & SRD-505)
+    if (command.attunements?.[heroId] && hero.buildState) {
+      let b = hero.buildState;
+      const comp = options?.compendium ?? defaultCompendium;
+      for (const un of command.attunements[heroId]!.unattune ?? []) {
+        b = unattuneMagicItem(b, un);
+      }
+      for (const at of command.attunements[heroId]!.attune ?? []) {
+        b = attuneMagicItem(b, at, comp);
+      }
+      hero.buildState = b;
+      hero.characterSheet = computeDerivedCharacter(b, comp);
+      hero.armorClass = hero.characterSheet.armorClass.totalAc;
+      events.push({
+        type: 'ATTUNEMENT_CHANGED',
+        characterId: heroId,
+        attunedItemInstanceIds: b.attunedItemInstanceIds,
+      });
     }
   }
 

@@ -10,6 +10,8 @@ import {
   type GameEvent,
   type GameState,
   type GridPoint,
+  type LevelUpSummary,
+  computeDerivedCharacter,
   findPath,
   planAiTurn,
   reduceGame,
@@ -17,6 +19,7 @@ import {
 import { LocalTransport, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { TacticalCombatHud } from '../combat/index.js';
+import { LevelUpModal } from '../roster/index.js';
 import {
   applyArenaBreather,
   buildArenaPveEncounter,
@@ -67,6 +70,7 @@ export function ArenaCombatView({
   // Match progression modals
   const [showBreatherModal, setShowBreatherModal] = useState(false);
   const [showMatchEndModal, setShowMatchEndModal] = useState(false);
+  const [levelUpCharacter, setLevelUpCharacter] = useState<CharacterBuildState | null>(null);
   const [matchOutcome, setMatchOutcome] = useState<{
     status: 'in_progress' | 'victory' | 'defeat' | 'wave_cleared' | 'draw';
     winnerTeamId?: string;
@@ -343,6 +347,67 @@ export function ArenaCombatView({
     setTransport(freshTransport);
   };
 
+  // Level-up handlers
+  const handleOpenLevelUp = (characterId: string) => {
+    const found =
+      partyCharacters?.find((c) => c.id === characterId) ??
+      viewState.party[characterId]?.buildState ??
+      null;
+    if (found) {
+      setLevelUpCharacter(found);
+    }
+  };
+
+  const handleApplyLevelUp = (
+    updatedCharacter: CharacterBuildState,
+    summary: LevelUpSummary,
+  ) => {
+    const authState = transport.getAuthoritativeState();
+    const hero = authState.party[updatedCharacter.id];
+    if (hero) {
+      const nextSheet = computeDerivedCharacter(updatedCharacter, compendium);
+      const nextParty = {
+        ...authState.party,
+        [updatedCharacter.id]: {
+          ...hero,
+          buildState: updatedCharacter,
+          characterSheet: nextSheet,
+          maxHp: nextSheet.maxHp,
+          currentHp: Math.min(nextSheet.maxHp, hero.currentHp + summary.hpGained),
+          armorClass: nextSheet.armorClass.totalAc,
+          levelUpAvailable: false,
+        },
+      };
+
+      let nextCombat = authState.combat;
+      if (nextCombat && nextCombat.combatants[updatedCharacter.id]) {
+        nextCombat = {
+          ...nextCombat,
+          combatants: {
+            ...nextCombat.combatants,
+            [updatedCharacter.id]: {
+              ...nextCombat.combatants[updatedCharacter.id]!,
+              characterSheet: nextSheet,
+              maxHp: nextSheet.maxHp,
+              currentHp: Math.min(nextSheet.maxHp, hero.currentHp + summary.hpGained),
+              armorClass: nextSheet.armorClass.totalAc,
+              levelUpAvailable: false,
+            },
+          },
+        };
+      }
+
+      const updatedState: GameState = {
+        ...authState,
+        party: nextParty,
+        combat: nextCombat,
+      };
+      (transport as any).authoritativeState = updatedState;
+      setViewState(transport.getPlayerViewState());
+    }
+    setLevelUpCharacter(null);
+  };
+
   return (
     <div
       data-testid="arena-combat-view"
@@ -472,6 +537,7 @@ export function ArenaCombatView({
           }
           onSelectCombatant={(id) => setSelectedCombatantId(id)}
           onOpenCharacterSheet={onOpenCharacterSheet}
+          onLevelUpCharacter={handleOpenLevelUp}
           onDeclareAttack={(weapon, opts) => {
             if (!activeCombatantId) return;
             // Target first conscious enemy
@@ -607,6 +673,32 @@ export function ArenaCombatView({
               </div>
             </div>
 
+            {/* Level-Up Opportunities during Breather */}
+            {Object.values(viewState.party).some((h) => h.levelUpAvailable) && (
+              <div className="p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl text-left space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-300">Level-Up Unlocked!</span>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
+                    XP Threshold Reached
+                  </span>
+                </div>
+                {Object.values(viewState.party)
+                  .filter((h) => h.levelUpAvailable)
+                  .map((hero) => (
+                    <button
+                      key={hero.id}
+                      type="button"
+                      data-testid={`breather-level-up-${hero.id}`}
+                      onClick={() => handleOpenLevelUp(hero.id)}
+                      className="w-full py-1.5 px-3 rounded bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-200 text-xs font-semibold flex items-center justify-between transition-colors"
+                    >
+                      <span>{hero.name}</span>
+                      <span>Advance Level &rarr;</span>
+                    </button>
+                  ))}
+              </div>
+            )}
+
             <div className="flex flex-col gap-2 pt-2">
               <button
                 type="button"
@@ -708,6 +800,16 @@ export function ArenaCombatView({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Between-Combat Level-Up Modal */}
+      {levelUpCharacter && (
+        <LevelUpModal
+          character={levelUpCharacter}
+          compendium={compendium}
+          onClose={() => setLevelUpCharacter(null)}
+          onApplyLevelUp={handleApplyLevelUp}
+        />
       )}
     </div>
   );

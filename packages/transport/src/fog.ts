@@ -72,6 +72,8 @@ export function toPlayerViewCombatant(c: Combatant): PlayerViewCombatant {
     isStable: c.isStable,
     reactionAvailable: c.reactionAvailable,
     characterSheet: c.characterSheet,
+    levelUpAvailable: c.levelUpAvailable,
+    buildState: c.buildState,
   };
 }
 

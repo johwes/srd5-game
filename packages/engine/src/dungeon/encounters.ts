@@ -2,6 +2,7 @@ import {
   type SrdCompendium,
   type MonsterData,
   defaultCompendium,
+  SRD_CR_TO_XP,
 } from '@srd5/data';
 import { type Combatant } from '../combat/types.js';
 import { createMonsterCombatant } from '../combat/combatant.js';
@@ -9,6 +10,7 @@ import { startCombatEncounter } from '../combat/state-machine.js';
 import { hasLineOfSight } from '../grid/vision.js';
 import { type GameEvent, type GameState } from '../state/types.js';
 import { type DungeonFloorState } from './state.js';
+import { awardCharacterXp, getCharacterLevelForXp } from '../character/level-up.js';
 
 function createFallbackMonster(monsterId: string): MonsterData {
   return {
@@ -273,6 +275,93 @@ export function transitionCombatToExploration(state: GameState): {
       isDodging: false,
       reactionAvailable: true,
     };
+  }
+
+  // Calculate XP from defeated monsters (Spec 04 Section 4.3 & SRD-505)
+  const defeatedMonsters = Object.values(state.monsters).filter((m) => m.isDead || m.currentHp <= 0);
+  const totalMonsterXp = defeatedMonsters.reduce((sum, m) => {
+    if (m.monsterData?.xp !== undefined) {
+      return sum + m.monsterData.xp;
+    }
+    if (m.monsterData?.challengeRating !== undefined) {
+      const crVal = m.monsterData.challengeRating;
+      const crXp = (SRD_CR_TO_XP as Record<number, number>)[crVal] ?? 0;
+      return sum + crXp;
+    }
+    return sum;
+  }, 0);
+
+  const survivingHeroes = Object.values(nextParty).filter((h) => !h.isDead);
+  const xpPerHero = survivingHeroes.length > 0 ? Math.floor(totalMonsterXp / survivingHeroes.length) : 0;
+
+  if (xpPerHero > 0) {
+    for (const hero of survivingHeroes) {
+      if (hero.buildState) {
+        const xpRes = awardCharacterXp(hero.buildState, xpPerHero);
+        const currentLevel =
+          hero.characterSheet?.totalLevel ??
+          hero.buildState.classes.reduce((sum, c) => sum + c.level, 0);
+        const eligibleLevel = xpRes.eligibleLevelForXp;
+        const canLevelUp = xpRes.canLevelUp;
+
+        nextParty[hero.id] = {
+          ...hero,
+          buildState: xpRes.state,
+          levelUpAvailable: canLevelUp,
+          characterSheet: hero.characterSheet
+            ? {
+                ...hero.characterSheet,
+                xp: xpRes.newXp,
+              }
+            : undefined,
+        };
+
+        if (canLevelUp) {
+          events.push({
+            type: 'LEVEL_UP_UNLOCKED',
+            characterId: hero.id,
+            currentLevel,
+            eligibleLevel,
+          });
+        }
+      } else if (hero.characterSheet) {
+        const currentXp = hero.characterSheet.xp ?? 0;
+        const newXp = currentXp + xpPerHero;
+        const currentLevel = hero.characterSheet.totalLevel;
+        const eligibleLevel = getCharacterLevelForXp(newXp);
+        const canLevelUp = eligibleLevel > currentLevel;
+
+        nextParty[hero.id] = {
+          ...hero,
+          levelUpAvailable: canLevelUp,
+          characterSheet: {
+            ...hero.characterSheet,
+            xp: newXp,
+          },
+        };
+
+        if (canLevelUp) {
+          events.push({
+            type: 'LEVEL_UP_UNLOCKED',
+            characterId: hero.id,
+            currentLevel,
+            eligibleLevel,
+          });
+        }
+      }
+    }
+  }
+
+  if (totalMonsterXp > 0 || defeatedMonsters.length > 0) {
+    events.push({
+      type: 'ENCOUNTER_VICTORY',
+      encounterId: state.combat?.encounterId,
+      outcome: 'party_victory',
+      round: state.combat?.round ?? 1,
+      xpAwarded: xpPerHero,
+      totalXp: totalMonsterXp,
+      survivingHeroIds: survivingHeroes.map((h) => h.id),
+    });
   }
 
   let nextDungeon = state.dungeon;

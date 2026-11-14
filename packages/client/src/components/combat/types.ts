@@ -57,6 +57,7 @@ export interface PartyPortraitsProps {
   selectedCombatantId?: string | null;
   onSelectPartyMember?: (combatantId: string) => void;
   onOpenCharacterSheet?: (combatantId: string) => void;
+  onLevelUpCharacter?: (combatantId: string) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   className?: string;
@@ -150,6 +151,7 @@ export interface TacticalCombatHudProps {
   onToggleDiceTray?: () => void;
   onSelectCombatant?: (combatantId: string) => void;
   onOpenCharacterSheet?: (combatantId: string) => void;
+  onLevelUpCharacter?: (combatantId: string) => void;
   onDeclareAttack?: (
     weaponProfile: DerivedWeaponAttackProfile,
     options?: { isOffHand?: boolean; twoHanded?: boolean },

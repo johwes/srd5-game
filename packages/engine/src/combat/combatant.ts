@@ -1,5 +1,5 @@
 import type { MonsterData } from '@srd5/data';
-import type { DerivedCharacterSheet } from '../character/schemas.js';
+import type { CharacterBuildState, DerivedCharacterSheet } from '../character/schemas.js';
 import type { GridPoint } from '../grid/model.js';
 import type { Combatant, CombatantSide } from './types.js';
 
@@ -9,6 +9,8 @@ export interface CreateCharacterCombatantOptions {
   teamId?: string;
   factionId?: string;
   playerId?: string;
+  buildState?: CharacterBuildState;
+  levelUpAvailable?: boolean;
 }
 
 export interface CreateMonsterCombatantOptions {
@@ -90,6 +92,8 @@ export function createCharacterCombatant(
         }
       : undefined,
     characterSheet: sheet,
+    buildState: options?.buildState,
+    levelUpAvailable: options?.levelUpAvailable,
   };
 }
 

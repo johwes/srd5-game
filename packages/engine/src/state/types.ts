@@ -4,12 +4,15 @@ import {
   type ConditionId,
   type CreatureSize,
   type DamageType,
+  type CharacterCurrency,
+  type InventoryItemInstance,
 } from '@srd5/data';
 import {
   type Combatant,
   type CombatantState,
   type CombatEvent,
   type CombatState,
+  type CombatVictoryOutcome,
   type PendingReactionPrompt,
   type ResolveReactionDecision,
 } from '../combat/types.js';
@@ -22,6 +25,7 @@ import {
 } from '../grid/model.js';
 import { type LightSource } from '../grid/vision.js';
 import { type CharacterClassEntry, type EquippedSlots } from '../character/schemas.js';
+import { type LevelUpRequest, type LevelUpSummary } from '../character/level-up.js';
 import {
   type LootBundleSpec,
   type MarchingFormation,
@@ -147,6 +151,7 @@ export type GameCommand =
       hitDiceToSpend?: Record<string, number | Record<number, number>>;
       arcaneRecovery?: Record<string, number[]>;
       preparedSpellUpdates?: Record<string, string[]>;
+      attunements?: Record<string, { attune?: string[]; unattune?: string[] }>;
       forceSafe?: boolean;
     }
 
@@ -245,9 +250,26 @@ export type GameCommand =
       preparedSpellIds: string[];
     }
   | {
+      type: 'CLAIM_LOOT';
+      characterId: string;
+      propId?: string;
+      loot?: LootBundleSpec;
+    }
+  | {
+      type: 'ATTUNE_ITEM';
+      characterId: string;
+      itemInstanceId: string;
+    }
+  | {
+      type: 'UNATTUNE_ITEM';
+      characterId: string;
+      itemInstanceId: string;
+    }
+  | {
       type: 'LEVEL_UP_CHARACTER';
       characterId: string;
-      classEntryUpdate: CharacterClassEntry;
+      levelUpRequest: LevelUpRequest;
+      classEntryUpdate?: CharacterClassEntry;
     };
 
 /**
@@ -366,6 +388,41 @@ export type GameEvent =
       type: 'MODE_CHANGED';
       fromMode: GameMode;
       toMode: GameMode;
+    }
+  | {
+      type: 'ENCOUNTER_VICTORY';
+      encounterId?: string;
+      outcome?: CombatVictoryOutcome | string;
+      round?: number;
+      xpAwarded: number;
+      totalXp: number;
+      survivingHeroIds?: string[];
+      lootUnlocked?: InventoryItemInstance[];
+      lootBundle?: LootBundleSpec;
+    }
+  | {
+      type: 'LEVEL_UP_UNLOCKED';
+      characterId: string;
+      currentLevel: number;
+      eligibleLevel: number;
+    }
+  | {
+      type: 'LEVEL_UP_APPLIED';
+      characterId: string;
+      newLevel: number;
+      hpIncrease: number;
+      summary?: LevelUpSummary;
+    }
+  | {
+      type: 'ATTUNEMENT_CHANGED';
+      characterId: string;
+      attunedItemInstanceIds: string[];
+    }
+  | {
+      type: 'INVENTORY_UPDATED';
+      characterId: string;
+      inventory: InventoryItemInstance[];
+      currency?: CharacterCurrency;
     };
 
 /**

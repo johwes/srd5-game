@@ -8,6 +8,7 @@ export function PartyPortraits({
   selectedCombatantId,
   onSelectPartyMember,
   onOpenCharacterSheet,
+  onLevelUpCharacter,
   collapsed = false,
   onToggleCollapse,
   className = '',
@@ -148,6 +149,21 @@ export function PartyPortraits({
                     {classSummary}
                   </span>
                 </div>
+
+                {hero.levelUpAvailable && onLevelUpCharacter && (
+                  <button
+                    type="button"
+                    data-testid={`party-card-level-up-btn-${hero.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLevelUpCharacter(hero.id);
+                    }}
+                    title="Level Up Available!"
+                    className="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30 font-bold text-[10px] animate-pulse shrink-0"
+                  >
+                    ⇧ Lvl Up
+                  </button>
+                )}
 
                 {onOpenCharacterSheet && (
                   <button

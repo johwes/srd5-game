@@ -25,6 +25,7 @@ export function TacticalCombatHud({
   onToggleDiceTray,
   onSelectCombatant,
   onOpenCharacterSheet,
+  onLevelUpCharacter,
   onDeclareAttack,
   onCastSpell,
   onUseClassFeature,
@@ -207,6 +208,7 @@ export function TacticalCombatHud({
             selectedCombatantId={selectedCombatantId}
             onSelectPartyMember={handleSelectCombatant}
             onOpenCharacterSheet={onOpenCharacterSheet}
+            onLevelUpCharacter={onLevelUpCharacter}
             collapsed={isPartyCollapsed}
             onToggleCollapse={() => setIsPartyCollapsed(!isPartyCollapsed)}
           />

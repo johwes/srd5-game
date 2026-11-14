@@ -46,6 +46,10 @@ import {
   transitionCombatToExploration,
 } from '../dungeon/encounters.js';
 import { resolveRest } from '../dungeon/rest.js';
+import { claimPropLoot, awardLootToCharacter } from '../dungeon/loot.js';
+import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
+import { applyBetweenCombatLevelUp } from '../dungeon/level-up-flow.js';
+import { computeDerivedCharacter } from '../character/derived.js';
 import {
   type GameCommand,
   type GameEvent,
@@ -746,9 +750,138 @@ export function reduceGame(
       break;
     }
 
-    case 'EQUIP_LOADOUT':
+    case 'CLAIM_LOOT': {
+      if (command.propId) {
+        const claimRes = claimPropLoot(
+          nextState,
+          command.propId,
+          command.characterId,
+          options?.compendium,
+        );
+        nextState = claimRes.nextState;
+        events.push(...claimRes.events);
+      } else if (command.loot) {
+        const hero = nextState.party[command.characterId];
+        if (hero?.buildState) {
+          const nextBuild = awardLootToCharacter(hero.buildState, command.loot, options?.compendium);
+          const nextSheet = computeDerivedCharacter(nextBuild, options?.compendium);
+          nextState = {
+            ...nextState,
+            party: {
+              ...nextState.party,
+              [hero.id]: {
+                ...hero,
+                buildState: nextBuild,
+                characterSheet: nextSheet,
+              },
+            },
+          };
+          events.push({
+            type: 'LOOT_ACQUIRED',
+            actorId: hero.id,
+            propId: 'direct',
+            loot: command.loot,
+          });
+          events.push({
+            type: 'INVENTORY_UPDATED',
+            characterId: hero.id,
+            inventory: nextBuild.inventory,
+            currency: nextBuild.currency,
+          });
+        }
+      }
+      break;
+    }
+
+    case 'ATTUNE_ITEM': {
+      const hero = nextState.party[command.characterId];
+      if (hero?.buildState) {
+        const nextBuild = attuneMagicItem(
+          hero.buildState,
+          command.itemInstanceId,
+          options?.compendium,
+        );
+        const nextSheet = computeDerivedCharacter(nextBuild, options?.compendium);
+        nextState = {
+          ...nextState,
+          party: {
+            ...nextState.party,
+            [hero.id]: {
+              ...hero,
+              buildState: nextBuild,
+              characterSheet: nextSheet,
+              armorClass: nextSheet.armorClass.totalAc,
+            },
+          },
+        };
+        events.push({
+          type: 'ATTUNEMENT_CHANGED',
+          characterId: hero.id,
+          attunedItemInstanceIds: nextBuild.attunedItemInstanceIds,
+        });
+      }
+      break;
+    }
+
+    case 'UNATTUNE_ITEM': {
+      const hero = nextState.party[command.characterId];
+      if (hero?.buildState) {
+        const nextBuild = unattuneMagicItem(hero.buildState, command.itemInstanceId);
+        const nextSheet = computeDerivedCharacter(nextBuild, options?.compendium);
+        nextState = {
+          ...nextState,
+          party: {
+            ...nextState.party,
+            [hero.id]: {
+              ...hero,
+              buildState: nextBuild,
+              characterSheet: nextSheet,
+              armorClass: nextSheet.armorClass.totalAc,
+            },
+          },
+        };
+        events.push({
+          type: 'ATTUNEMENT_CHANGED',
+          characterId: hero.id,
+          attunedItemInstanceIds: nextBuild.attunedItemInstanceIds,
+        });
+      }
+      break;
+    }
+
+    case 'EQUIP_LOADOUT': {
+      const hero = nextState.party[command.characterId];
+      if (hero?.buildState) {
+        const nextBuild = {
+          ...hero.buildState,
+          equippedSlots: { ...command.equippedSlots },
+        };
+        const nextSheet = computeDerivedCharacter(nextBuild, options?.compendium);
+        nextState = {
+          ...nextState,
+          party: {
+            ...nextState.party,
+            [hero.id]: {
+              ...hero,
+              buildState: nextBuild,
+              characterSheet: nextSheet,
+              armorClass: nextSheet.armorClass.totalAc,
+            },
+          },
+        };
+      }
+      break;
+    }
+
     case 'LEVEL_UP_CHARACTER': {
-      // Progression commands - will update character sheets in party
+      const lvlRes = applyBetweenCombatLevelUp(
+        nextState,
+        command.characterId,
+        command.levelUpRequest,
+        options?.compendium,
+      );
+      nextState = lvlRes.nextState;
+      events.push(...lvlRes.events);
       break;
     }
   }

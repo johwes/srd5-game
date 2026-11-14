@@ -7,6 +7,7 @@ import {
   type CombatVictoryOutcome,
   type CombatantSide,
   type DerivedCharacterSheet,
+  type CharacterBuildState,
   type GameCommand,
   type GameEvent,
   type GameMode,
@@ -101,6 +102,8 @@ export interface PlayerViewCombatant {
   isStable: boolean;
   reactionAvailable?: boolean | undefined;
   characterSheet?: DerivedCharacterSheet | undefined;
+  levelUpAvailable?: boolean | undefined;
+  buildState?: CharacterBuildState | undefined;
 }
 
 /**

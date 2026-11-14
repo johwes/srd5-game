@@ -367,14 +367,17 @@ export function CombatLog({
         }
 
         case 'ENCOUNTER_VICTORY': {
-          const isPartyVictory = event.outcome === 'party_victory';
+          const isPartyVictory = event.outcome !== 'party_defeat';
+          const outcomeLabel = event.outcome
+            ? event.outcome.replace('_', ' ').toUpperCase()
+            : 'PARTY VICTORY';
           return {
             id: entryId,
             timestamp: timeStr,
             type: event.type,
             category: 'system',
             title: `Combat Ended`,
-            summary: `Victory Outcome: ${event.outcome.replace('_', ' ').toUpperCase()} (Round ${event.round})`,
+            summary: `Victory Outcome: ${outcomeLabel}${event.round ? ` (Round ${event.round})` : ''}`,
             badge: {
               label: isPartyVictory ? 'VICTORY' : 'DEFEAT',
               color: isPartyVictory

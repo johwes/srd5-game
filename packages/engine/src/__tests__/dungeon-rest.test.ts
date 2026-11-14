@@ -127,7 +127,7 @@ function createMockSheet(options?: {
     activatedAbilities: [],
     activeConditions: [],
     activeEffects: [],
-  };
+  } as unknown as DerivedCharacterSheet;
 }
 
 function makeHero(
