@@ -1,4 +1,7 @@
 import {
+  type SrdCompendium,
+} from '@srd5/data';
+import {
   type Combatant,
   type CombatEvent,
   type CombatState,
@@ -42,6 +45,7 @@ import {
   triggerDungeonEncounter,
   transitionCombatToExploration,
 } from '../dungeon/encounters.js';
+import { resolveRest } from '../dungeon/rest.js';
 import {
   type GameCommand,
   type GameEvent,
@@ -146,7 +150,11 @@ export function updateExploredCells(state: GameState): GameState {
  * Authoritative GameState Reducer.
  * Dispatches serializable GameCommands and yields deterministic state transitions & events.
  */
-export function reduceGame(state: GameState, command: GameCommand): ReduceGameResult {
+export function reduceGame(
+  state: GameState,
+  command: GameCommand,
+  options?: { compendium?: SrdCompendium },
+): ReduceGameResult {
   const events: GameEvent[] = [];
   let nextState: GameState = structuredClone(state);
 
@@ -719,33 +727,26 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
     }
 
     case 'START_REST': {
-      const hpRecovered: Record<string, number> = {};
-      for (const [id, char] of Object.entries(nextState.party)) {
-        if (command.restType === 'long') {
-          const diff = char.maxHp - char.currentHp;
-          char.currentHp = char.maxHp;
-          char.deathSaves = { successes: 0, failures: 0 };
-          char.isDead = false;
-          char.isStable = false;
-          hpRecovered[id] = diff;
-        } else {
-          // Short rest recovery
-          const spendCount = command.hitDiceToSpend?.[id] ?? 0;
-          const recovered = Math.min(spendCount * 7, char.maxHp - char.currentHp);
-          char.currentHp += recovered;
-          hpRecovered[id] = recovered;
-        }
+      const restRes = resolveRest(nextState, command, { compendium: options?.compendium });
+      nextState = restRes.nextState;
+      events.push(...restRes.events);
+      break;
+    }
+
+    case 'UPDATE_PREPARED_SPELLS': {
+      const hero = nextState.party[command.characterId];
+      if (hero?.characterSheet?.spellcasting) {
+        hero.characterSheet.spellcasting.preparedOrKnownSpellIds = [...command.preparedSpellIds];
+        events.push({
+          type: 'PREPARED_SPELLS_UPDATED',
+          characterId: command.characterId,
+          preparedSpellIds: [...command.preparedSpellIds],
+        });
       }
-      events.push({
-        type: 'REST_COMPLETED',
-        restType: command.restType,
-        hpRecovered,
-      });
       break;
     }
 
     case 'EQUIP_LOADOUT':
-    case 'UPDATE_PREPARED_SPELLS':
     case 'LEVEL_UP_CHARACTER': {
       // Progression commands - will update character sheets in party
       break;

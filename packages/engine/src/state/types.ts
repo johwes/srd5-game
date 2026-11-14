@@ -144,7 +144,10 @@ export type GameCommand =
   | {
       type: 'START_REST';
       restType: 'short' | 'long';
-      hitDiceToSpend?: Record<string, number>;
+      hitDiceToSpend?: Record<string, number | Record<number, number>>;
+      arcaneRecovery?: Record<string, number[]>;
+      preparedSpellUpdates?: Record<string, string[]>;
+      forceSafe?: boolean;
     }
 
   // Tactical Combat Commands
@@ -342,6 +345,22 @@ export type GameEvent =
       type: 'REST_COMPLETED';
       restType: 'short' | 'long';
       hpRecovered: Record<string, number>;
+      hitDiceRecovered?: Record<string, number>;
+      hitDiceSpent?: Record<string, number>;
+      songOfRestHp?: Record<string, number>;
+      slotsRecovered?: Record<string, number[]>;
+    }
+  | {
+      type: 'REST_INTERRUPTED';
+      restType: 'short' | 'long';
+      reason: 'ambush' | 'combat';
+      ambushRoll?: number;
+      encounterId?: string;
+    }
+  | {
+      type: 'PREPARED_SPELLS_UPDATED';
+      characterId: string;
+      preparedSpellIds: string[];
     }
   | {
       type: 'MODE_CHANGED';

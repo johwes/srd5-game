@@ -41,6 +41,7 @@ export interface TriggerDungeonEncounterOptions {
   compendium?: SrdCompendium;
   explicitSurprisedEntityIds?: string[];
   partyStealthRolls?: Record<string, number>;
+  monsterAmbushStealthDc?: number;
   rngState?: number;
 }
 
@@ -173,12 +174,18 @@ export function triggerDungeonEncounter(
       }
     : undefined;
 
-  const monsterAmbush = enc.surpriseCondition?.monstersStealthedDc
-    ? {
-        monstersAmbushing: true,
-        monsterStealthDc: enc.surpriseCondition.monstersStealthedDc,
-      }
-    : undefined;
+  const monsterAmbush =
+    options?.monsterAmbushStealthDc !== undefined
+      ? {
+          monstersAmbushing: true,
+          monsterStealthDc: options.monsterAmbushStealthDc,
+        }
+      : enc.surpriseCondition?.monstersStealthedDc
+        ? {
+            monstersAmbushing: true,
+            monsterStealthDc: enc.surpriseCondition.monstersStealthedDc,
+          }
+        : undefined;
 
   const transition = startCombatEncounter({
     encounterId: enc.id,
