@@ -9,3 +9,4 @@ export * from './feats.js';
 export * from './equipment.js';
 export * from './spells.js';
 export * from './monsters.js';
+export * from './character.js';

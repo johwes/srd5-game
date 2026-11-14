@@ -14,3 +14,4 @@ export * from './overlays/index.js';
 export * from './validation/index.js';
 export * from './srd/index.js';
 export * from './compendium/index.js';
+export * from './pregens/index.js';

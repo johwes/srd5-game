@@ -1,0 +1,606 @@
+[
+  {
+    "id": "pregen-fighter",
+    "version": 1,
+    "name": "Garrick Vance",
+    "portraitId": "portrait-human-fighter",
+    "tokenSpriteId": "token-human-fighter",
+    "alignment": "lawful_good",
+    "raceId": "human",
+    "racialChoices": {
+      "human-extra-language": ["dwarvish"]
+    },
+    "backgroundId": "acolyte",
+    "backgroundChoices": {
+      "acolyte-languages": ["elvish", "orc"]
+    },
+    "abilityMethod": "standard_array",
+    "baseAbilities": {
+      "str": 15,
+      "dex": 13,
+      "con": 14,
+      "int": 10,
+      "wis": 12,
+      "cha": 8
+    },
+    "classes": [
+      {
+        "classId": "fighter",
+        "level": 1,
+        "hpRollsByLevel": [10],
+        "choiceSelectionsByLevel": {
+          "1": {
+            "fighter-skills": ["athletics", "perception"],
+            "fighter-fighting-style": ["fighting-style-defense"],
+            "fighter-armor": ["chain-mail"],
+            "fighter-weapons": ["sword-and-shield"],
+            "fighter-pack": ["dungeoneers-pack"]
+          }
+        },
+        "asiOrFeatByLevel": {}
+      }
+    ],
+    "currency": {
+      "cp": 0,
+      "sp": 0,
+      "ep": 0,
+      "gp": 15,
+      "pp": 0
+    },
+    "inventory": [
+      {
+        "instanceId": "fighter-chain-mail",
+        "itemId": "chain-mail",
+        "quantity": 1
+      },
+      {
+        "instanceId": "fighter-shield",
+        "itemId": "shield",
+        "quantity": 1
+      },
+      {
+        "instanceId": "fighter-longsword",
+        "itemId": "longsword",
+        "quantity": 1
+      },
+      {
+        "instanceId": "fighter-handaxe",
+        "itemId": "handaxe",
+        "quantity": 2
+      },
+      {
+        "instanceId": "fighter-pack",
+        "itemId": "dungeoneers-pack",
+        "quantity": 1
+      },
+      {
+        "instanceId": "fighter-amulet",
+        "itemId": "amulet",
+        "quantity": 1
+      },
+      {
+        "instanceId": "fighter-book",
+        "itemId": "book",
+        "quantity": 1
+      },
+      {
+        "instanceId": "fighter-incense",
+        "itemId": "incense-block",
+        "quantity": 5
+      },
+      {
+        "instanceId": "fighter-vestments",
+        "itemId": "vestments",
+        "quantity": 1
+      },
+      {
+        "instanceId": "fighter-clothes",
+        "itemId": "common-clothes",
+        "quantity": 1
+      },
+      {
+        "instanceId": "fighter-pouch",
+        "itemId": "pouch",
+        "quantity": 1
+      }
+    ],
+    "equippedSlots": {
+      "armorInstanceId": "fighter-chain-mail",
+      "shieldInstanceId": "fighter-shield",
+      "mainHandInstanceId": "fighter-longsword",
+      "rangedInstanceId": "fighter-handaxe"
+    },
+    "attunedItemInstanceIds": [],
+    "spellcasting": {
+      "knownCantripIds": [],
+      "knownSpellIds": [],
+      "spellbookSpellIds": [],
+      "preparedSpellIds": []
+    },
+    "runtime": {
+      "xp": 0,
+      "currentHp": 12,
+      "tempHp": 0,
+      "hitDiceSpent": {},
+      "deathSaves": {
+        "successes": 0,
+        "failures": 0
+      },
+      "exhaustionLevel": 0,
+      "expendedSpellSlots": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "expendedPactSlots": 0,
+      "resourceChargesSpent": {},
+      "activeConditions": [],
+      "activeEffects": []
+    }
+  },
+  {
+    "id": "pregen-wizard",
+    "version": 1,
+    "name": "Lyra Silversun",
+    "portraitId": "portrait-elf-wizard",
+    "tokenSpriteId": "token-elf-wizard",
+    "alignment": "neutral_good",
+    "raceId": "elf",
+    "subraceId": "high-elf",
+    "racialChoices": {
+      "high-elf-cantrip": ["ray-of-frost"],
+      "high-elf-extra-language": ["draconic"]
+    },
+    "backgroundId": "acolyte",
+    "backgroundChoices": {
+      "acolyte-languages": ["celestial", "sylvan"]
+    },
+    "abilityMethod": "standard_array",
+    "baseAbilities": {
+      "str": 8,
+      "dex": 14,
+      "con": 13,
+      "int": 15,
+      "wis": 12,
+      "cha": 10
+    },
+    "classes": [
+      {
+        "classId": "wizard",
+        "level": 1,
+        "hpRollsByLevel": [6],
+        "choiceSelectionsByLevel": {
+          "1": {
+            "wizard-skills": ["arcana", "investigation"],
+            "wizard-weapon": ["quarterstaff"],
+            "wizard-focus": ["staff"],
+            "wizard-pack": ["scholars-pack"]
+          }
+        },
+        "asiOrFeatByLevel": {}
+      }
+    ],
+    "currency": {
+      "cp": 0,
+      "sp": 0,
+      "ep": 0,
+      "gp": 15,
+      "pp": 0
+    },
+    "inventory": [
+      {
+        "instanceId": "wizard-quarterstaff",
+        "itemId": "quarterstaff",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-dagger",
+        "itemId": "dagger",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-focus",
+        "itemId": "staff",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-spellbook",
+        "itemId": "spellbook",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-pack",
+        "itemId": "scholars-pack",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-amulet",
+        "itemId": "amulet",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-book",
+        "itemId": "book",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-incense",
+        "itemId": "incense-block",
+        "quantity": 5
+      },
+      {
+        "instanceId": "wizard-vestments",
+        "itemId": "vestments",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-clothes",
+        "itemId": "common-clothes",
+        "quantity": 1
+      },
+      {
+        "instanceId": "wizard-pouch",
+        "itemId": "pouch",
+        "quantity": 1
+      }
+    ],
+    "equippedSlots": {
+      "mainHandInstanceId": "wizard-quarterstaff",
+      "rangedInstanceId": "wizard-dagger"
+    },
+    "attunedItemInstanceIds": [],
+    "spellcasting": {
+      "knownCantripIds": ["fire-bolt", "mage-hand", "light"],
+      "knownSpellIds": [],
+      "spellbookSpellIds": [
+        "magic-missile",
+        "mage-armor",
+        "shield",
+        "burning-hands",
+        "sleep",
+        "detect-magic"
+      ],
+      "preparedSpellIds": [
+        "magic-missile",
+        "mage-armor",
+        "shield",
+        "burning-hands"
+      ]
+    },
+    "runtime": {
+      "xp": 0,
+      "currentHp": 7,
+      "tempHp": 0,
+      "hitDiceSpent": {},
+      "deathSaves": {
+        "successes": 0,
+        "failures": 0
+      },
+      "exhaustionLevel": 0,
+      "expendedSpellSlots": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "expendedPactSlots": 0,
+      "resourceChargesSpent": {},
+      "activeConditions": [],
+      "activeEffects": []
+    }
+  },
+  {
+    "id": "pregen-cleric",
+    "version": 1,
+    "name": "Bram Ironheart",
+    "portraitId": "portrait-dwarf-cleric",
+    "tokenSpriteId": "token-dwarf-cleric",
+    "alignment": "lawful_good",
+    "raceId": "dwarf",
+    "subraceId": "hill-dwarf",
+    "racialChoices": {
+      "dwarf-tool-proficiency": ["smiths-tools"]
+    },
+    "backgroundId": "acolyte",
+    "backgroundChoices": {
+      "acolyte-languages": ["celestial", "giant"]
+    },
+    "abilityMethod": "standard_array",
+    "baseAbilities": {
+      "str": 14,
+      "dex": 10,
+      "con": 13,
+      "int": 8,
+      "wis": 15,
+      "cha": 12
+    },
+    "classes": [
+      {
+        "classId": "cleric",
+        "subclassId": "life",
+        "level": 1,
+        "hpRollsByLevel": [8],
+        "choiceSelectionsByLevel": {
+          "1": {
+            "cleric-skills": ["history", "medicine"],
+            "cleric-weapon": ["warhammer"],
+            "cleric-armor": ["chain-mail"],
+            "cleric-pack": ["priests-pack"]
+          }
+        },
+        "asiOrFeatByLevel": {}
+      }
+    ],
+    "currency": {
+      "cp": 0,
+      "sp": 0,
+      "ep": 0,
+      "gp": 15,
+      "pp": 0
+    },
+    "inventory": [
+      {
+        "instanceId": "cleric-chain-mail",
+        "itemId": "chain-mail",
+        "quantity": 1
+      },
+      {
+        "instanceId": "cleric-shield",
+        "itemId": "shield",
+        "quantity": 1
+      },
+      {
+        "instanceId": "cleric-warhammer",
+        "itemId": "warhammer",
+        "quantity": 1
+      },
+      {
+        "instanceId": "cleric-amulet",
+        "itemId": "amulet",
+        "quantity": 1
+      },
+      {
+        "instanceId": "cleric-pack",
+        "itemId": "priests-pack",
+        "quantity": 1
+      },
+      {
+        "instanceId": "cleric-book",
+        "itemId": "book",
+        "quantity": 1
+      },
+      {
+        "instanceId": "cleric-incense",
+        "itemId": "incense-block",
+        "quantity": 5
+      },
+      {
+        "instanceId": "cleric-vestments",
+        "itemId": "vestments",
+        "quantity": 1
+      },
+      {
+        "instanceId": "cleric-clothes",
+        "itemId": "common-clothes",
+        "quantity": 1
+      },
+      {
+        "instanceId": "cleric-pouch",
+        "itemId": "pouch",
+        "quantity": 1
+      }
+    ],
+    "equippedSlots": {
+      "armorInstanceId": "cleric-chain-mail",
+      "shieldInstanceId": "cleric-shield",
+      "mainHandInstanceId": "cleric-warhammer"
+    },
+    "attunedItemInstanceIds": [],
+    "spellcasting": {
+      "knownCantripIds": ["sacred-flame", "guidance", "light"],
+      "knownSpellIds": [],
+      "spellbookSpellIds": [],
+      "preparedSpellIds": [
+        "healing-word",
+        "guiding-bolt",
+        "shield-of-faith",
+        "sanctuary"
+      ]
+    },
+    "runtime": {
+      "xp": 0,
+      "currentHp": 11,
+      "tempHp": 0,
+      "hitDiceSpent": {},
+      "deathSaves": {
+        "successes": 0,
+        "failures": 0
+      },
+      "exhaustionLevel": 0,
+      "expendedSpellSlots": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "expendedPactSlots": 0,
+      "resourceChargesSpent": {},
+      "activeConditions": [],
+      "activeEffects": []
+    }
+  },
+  {
+    "id": "pregen-rogue",
+    "version": 1,
+    "name": "Vex Tealeaf",
+    "portraitId": "portrait-halfling-rogue",
+    "tokenSpriteId": "token-halfling-rogue",
+    "alignment": "chaotic_good",
+    "raceId": "halfling",
+    "subraceId": "lightfoot-halfling",
+    "racialChoices": {},
+    "backgroundId": "acolyte",
+    "backgroundChoices": {
+      "acolyte-languages": ["elvish", "goblin"]
+    },
+    "abilityMethod": "standard_array",
+    "baseAbilities": {
+      "str": 8,
+      "dex": 15,
+      "con": 14,
+      "int": 12,
+      "wis": 10,
+      "cha": 13
+    },
+    "classes": [
+      {
+        "classId": "rogue",
+        "level": 1,
+        "hpRollsByLevel": [8],
+        "choiceSelectionsByLevel": {
+          "1": {
+            "rogue-skills": [
+              "acrobatics",
+              "perception",
+              "sleight-of-hand",
+              "stealth"
+            ],
+            "expertise-rogue": ["stealth", "thieves-tools"],
+            "rogue-weapon": ["rapier"],
+            "rogue-secondary": ["shortbow"],
+            "rogue-pack": ["burglars-pack"]
+          }
+        },
+        "asiOrFeatByLevel": {}
+      }
+    ],
+    "currency": {
+      "cp": 0,
+      "sp": 0,
+      "ep": 0,
+      "gp": 15,
+      "pp": 0
+    },
+    "inventory": [
+      {
+        "instanceId": "rogue-leather-armor",
+        "itemId": "leather-armor",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-rapier",
+        "itemId": "rapier",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-shortbow",
+        "itemId": "shortbow",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-arrows",
+        "itemId": "arrow",
+        "quantity": 20
+      },
+      {
+        "instanceId": "rogue-dagger",
+        "itemId": "dagger",
+        "quantity": 2
+      },
+      {
+        "instanceId": "rogue-thieves-tools",
+        "itemId": "thieves-tools",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-pack",
+        "itemId": "burglars-pack",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-amulet",
+        "itemId": "amulet",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-book",
+        "itemId": "book",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-incense",
+        "itemId": "incense-block",
+        "quantity": 5
+      },
+      {
+        "instanceId": "rogue-vestments",
+        "itemId": "vestments",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-clothes",
+        "itemId": "common-clothes",
+        "quantity": 1
+      },
+      {
+        "instanceId": "rogue-pouch",
+        "itemId": "pouch",
+        "quantity": 1
+      }
+    ],
+    "equippedSlots": {
+      "armorInstanceId": "rogue-leather-armor",
+      "mainHandInstanceId": "rogue-rapier",
+      "rangedInstanceId": "rogue-shortbow"
+    },
+    "attunedItemInstanceIds": [],
+    "spellcasting": {
+      "knownCantripIds": [],
+      "knownSpellIds": [],
+      "spellbookSpellIds": [],
+      "preparedSpellIds": []
+    },
+    "runtime": {
+      "xp": 0,
+      "currentHp": 10,
+      "tempHp": 0,
+      "hitDiceSpent": {},
+      "deathSaves": {
+        "successes": 0,
+        "failures": 0
+      },
+      "exhaustionLevel": 0,
+      "expendedSpellSlots": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "expendedPactSlots": 0,
+      "resourceChargesSpent": {},
+      "activeConditions": [],
+      "activeEffects": []
+    }
+  }
+]
