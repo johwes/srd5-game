@@ -2,6 +2,9 @@ import type { SrdCompendium } from '@srd5/data';
 import type {
   DerivedCharacterSheet,
   DerivedWeaponAttackProfile,
+  DiceRollRecord,
+  GameEvent,
+  PendingReactionPrompt,
   TurnBudget,
 } from '@srd5/engine';
 import type {
@@ -85,12 +88,65 @@ export interface ActionHotbarProps {
   className?: string;
 }
 
+export interface ReactionInterruptModalProps {
+  prompt: PendingReactionPrompt;
+  reactorCombatant?: PlayerViewCombatant | null;
+  onResolve: (
+    decision:
+      | { execute: false }
+      | { execute: true; reactionId: string; slotLevel?: number },
+  ) => void;
+  isOpen?: boolean;
+  className?: string;
+}
+
+export interface DiceTrayProps {
+  activeRoll?: DiceRollRecord | null;
+  rollHistory?: DiceRollRecord[];
+  rollPurpose?: string;
+  actorName?: string;
+  onReroll?: () => void;
+  onClearHistory?: () => void;
+  onSelectHistoryRoll?: (roll: DiceRollRecord) => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+  className?: string;
+}
+
+export type CombatLogFilter =
+  | 'all'
+  | 'attacks'
+  | 'damage'
+  | 'saves'
+  | 'spells'
+  | 'conditions'
+  | 'reactions'
+  | 'system';
+
+export interface CombatLogProps {
+  events?: GameEvent[];
+  combatants?: Record<string, PlayerViewCombatant>;
+  maxEntries?: number;
+  activeFilter?: CombatLogFilter;
+  onFilterChange?: (filter: CombatLogFilter) => void;
+  onInspectRoll?: (roll: DiceRollRecord, label?: string) => void;
+  onClearLog?: () => void;
+  className?: string;
+}
+
 export interface TacticalCombatHudProps {
   viewState: PlayerViewState;
   compendium?: SrdCompendium;
   selectedCombatantId?: string | null;
   title?: string;
   subtitle?: string;
+  events?: GameEvent[];
+  activeRoll?: DiceRollRecord | null;
+  rollHistory?: DiceRollRecord[];
+  showCombatLog?: boolean;
+  showDiceTray?: boolean;
+  onToggleCombatLog?: () => void;
+  onToggleDiceTray?: () => void;
   onSelectCombatant?: (combatantId: string) => void;
   onOpenCharacterSheet?: (combatantId: string) => void;
   onDeclareAttack?: (
@@ -103,6 +159,13 @@ export interface TacticalCombatHudProps {
   onUseItem?: (itemId: string) => void;
   onEndTurn?: () => void;
   onToggleMenu?: () => void;
+  onResolveReaction?: (
+    decision:
+      | { execute: false }
+      | { execute: true; reactionId: string; slotLevel?: number },
+  ) => void;
+  onClearLog?: () => void;
+  onInspectRoll?: (roll: DiceRollRecord, label?: string) => void;
   children?: React.ReactNode;
   rightPanel?: React.ReactNode;
   className?: string;
