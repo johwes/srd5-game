@@ -34,6 +34,7 @@ export interface PartyRosterViewProps {
   onEditInBuilder?: (character: CharacterBuildState) => void;
   onCreateNewHero?: () => void;
   onEnterArena?: () => void;
+  onEnterDungeon?: () => void;
 }
 
 export function PartyRosterView({
@@ -46,6 +47,7 @@ export function PartyRosterView({
   onEditInBuilder,
   onCreateNewHero,
   onEnterArena,
+  onEnterDungeon,
 }: PartyRosterViewProps) {
   const [jsonModalMode, setJsonModalMode] = useState<'export' | 'import' | null>(
     null,
@@ -185,6 +187,17 @@ export function PartyRosterView({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {onEnterDungeon && (
+            <button
+              type="button"
+              data-testid="roster-enter-dungeon-btn"
+              onClick={onEnterDungeon}
+              disabled={!isPartyValid}
+              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              <span>🏰</span> Delve Dungeon
+            </button>
+          )}
           {onEnterArena && (
             <button
               type="button"

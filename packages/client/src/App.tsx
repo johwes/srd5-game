@@ -15,6 +15,7 @@ import {
   PartyRosterView,
 } from './components/roster/index.js';
 import { ArenaView } from './components/arena/index.js';
+import { DungeonView } from './components/dungeon/index.js';
 import {
   MAX_PARTY_SIZE,
   type PersistedRosterData,
@@ -30,7 +31,7 @@ import {
   upsertRosterCharacter,
 } from './persistence/index.js';
 
-export type AppViewMode = 'builder' | 'roster' | 'compendium' | 'arena';
+export type AppViewMode = 'builder' | 'roster' | 'compendium' | 'arena' | 'dungeon';
 
 export interface AppProps {
   initialView?: AppViewMode;
@@ -221,6 +222,19 @@ export function App({
               >
                 ⚔️ The Arena
               </button>
+              <button
+                type="button"
+                data-testid="app-nav-dungeon"
+                aria-pressed={activeView === 'dungeon'}
+                onClick={() => setActiveView('dungeon')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  activeView === 'dungeon'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                🏰 Dungeon Delve
+              </button>
             </div>
 
             <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-amber-300 text-xs font-medium">
@@ -254,6 +268,7 @@ export function App({
             onInspectCharacter={handleInspectCharacter}
             onLevelUpCharacter={(hero) => setLevelUpCharacterId(hero.id)}
             onEnterArena={() => setActiveView('arena')}
+            onEnterDungeon={() => setActiveView('dungeon')}
             onEditInBuilder={(hero) => {
               setBuilderTargetCharacter(hero);
               setActiveView('builder');
@@ -284,6 +299,24 @@ export function App({
               }
             }}
             onBackToRoster={() => setActiveView('roster')}
+          />
+        )}
+
+        {activeView === 'dungeon' && (
+          <DungeonView
+            partyCharacters={roster.characters.filter((c) =>
+              roster.activePartyIds.includes(c.id),
+            )}
+            compendium={defaultCompendium}
+            onOpenCharacterSheet={(charId) => {
+              const char =
+                roster.characters.find((c) => c.id === charId) ??
+                getPregenCharacter(charId);
+              if (char) {
+                handleInspectCharacter(char);
+              }
+            }}
+            onExitToRoster={() => setActiveView('roster')}
           />
         )}
       </div>
