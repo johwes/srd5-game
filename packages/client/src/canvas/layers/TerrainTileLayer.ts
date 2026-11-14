@@ -110,6 +110,13 @@ export class TerrainTileRenderer {
         const cell = cellMap.get(`${x},${y}`);
         const px = x * cellSize;
         const py = y * cellSize;
+
+        // If cell is unexplored in PlayerViewGrid, render opaque void and skip tile details
+        if (cell && 'visibility' in cell && (cell as any).visibility === 'unexplored') {
+          this.tilesGraphics.rect(px, py, cellSize, cellSize).fill(0x000000);
+          continue;
+        }
+
         const terrain: TileTerrainType = cell?.terrain ?? 'floor_stone';
         const palette = TERRAIN_PALETTE[terrain] ?? TERRAIN_PALETTE.floor_stone;
 

@@ -9,13 +9,15 @@ import type {
   GridCell,
   GridCreature,
   GridPoint,
+  LightLevel,
+  LightSource,
   PathfindingResult,
   PathStep,
   TacticalGrid,
   TileTerrainType,
   VisionCreature,
 } from '@srd5/engine';
-import type { GameEvent, PlayerViewCell, PlayerViewCombatant, PlayerViewGrid } from '@srd5/transport';
+import type { CellVisibility, GameEvent, PlayerViewCell, PlayerViewCombatant, PlayerViewGrid } from '@srd5/transport';
 
 /**
  * Standard pixel dimensions for a 5-ft tactical square on the canvas.
@@ -138,6 +140,9 @@ export interface CreatureTokenData {
   color?: number;
   teamId?: string;
   avatarUrl?: string;
+  darkvisionFeet?: number;
+  characterSheet?: unknown;
+  monsterData?: unknown;
 }
 
 /**
@@ -250,6 +255,51 @@ export interface TargetingRayOptions {
 }
 
 /**
+ * Dynamic lighting and visibility information for a single grid cell.
+ */
+export interface CellLightingInfo {
+  x: number;
+  y: number;
+  visibility: CellVisibility;
+  baseLight: LightLevel;
+  effectiveLight: LightLevel;
+  seenViaDarkvision: boolean;
+}
+
+/**
+ * Options for configuring the dynamic Lighting & Fog-of-War layer.
+ */
+export interface FogOfWarOptions {
+  enabled?: boolean;
+  showAll?: boolean;
+  exploredCells?: Record<string, boolean>;
+  observers?: ReadonlyArray<VisionCreature & { darkvisionFeet?: number }>;
+  combatants?: ReadonlyArray<CreatureTokenData | PlayerViewCombatant>;
+  lightSources?: ReadonlyArray<LightSource & { color?: number }>;
+  showLightSources?: boolean;
+  showDarkvisionTint?: boolean;
+  showFogBorders?: boolean;
+  unexploredColor?: number;
+  unexploredAlpha?: number;
+  rememberedColor?: number;
+  rememberedAlpha?: number;
+  dimColor?: number;
+  dimAlpha?: number;
+  darknessColor?: number;
+  darknessAlpha?: number;
+  darkvisionColor?: number;
+  darkvisionAlpha?: number;
+}
+
+/**
+ * Combined render options for LightingAndFogRenderer.
+ */
+export interface FogOfWarRenderOptions extends FogOfWarOptions {
+  grid: CanvasGridInput;
+  cellSize: number;
+}
+
+/**
  * Combined options for PathAndAoeLayer rendering.
  */
 export interface InteractiveOverlayOptions {
@@ -286,6 +336,8 @@ export interface TacticalCanvasViewportProps {
   targetingRay?: TargetingRayOptions | null;
   attackBonus?: number;
   targetingMode?: 'move' | 'aoe' | 'attack' | 'none';
+  fogOfWar?: FogOfWarOptions | null;
+  enableFogOfWar?: boolean;
   onCellHover?: (cell: Point | null) => void;
   onCellClick?: (cell: Point, button: number) => void;
   onCombatantHover?: (combatantId: string | null) => void;

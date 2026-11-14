@@ -6,6 +6,7 @@ import { TerrainTileRenderer } from './layers/TerrainTileLayer.js';
 import { CreatureTokenRenderer } from './layers/CreatureTokenLayer.js';
 import { FloatingTextRenderer } from './layers/FloatingTextLayer.js';
 import { PathAndAoeRenderer } from './layers/PathAndAoeLayer.js';
+import { LightingAndFogRenderer } from './layers/LightingAndFogLayer.js';
 import {
   DEFAULT_CELL_SIZE,
   DEFAULT_ZOOM,
@@ -44,6 +45,8 @@ export function TacticalCanvasViewport({
   targetingRay = null,
   attackBonus,
   targetingMode = 'none',
+  fogOfWar = null,
+  enableFogOfWar = true,
   onCellHover,
   onCellClick,
   onCombatantHover,
@@ -95,6 +98,7 @@ export function TacticalCanvasViewport({
   const tokenRendererRef = useRef<CreatureTokenRenderer | null>(null);
   const floatingTextRendererRef = useRef<FloatingTextRenderer | null>(null);
   const pathAndAoeRendererRef = useRef<PathAndAoeRenderer | null>(null);
+  const fogRendererRef = useRef<LightingAndFogRenderer | null>(null);
 
   // Drag pan tracking
   const dragRef = useRef<{
@@ -170,6 +174,9 @@ export function TacticalCanvasViewport({
         const pathAndAoeRenderer = new PathAndAoeRenderer(sceneGraph.pathAoeLayer);
         pathAndAoeRendererRef.current = pathAndAoeRenderer;
 
+        const fogRenderer = new LightingAndFogRenderer(sceneGraph.fogLayer);
+        fogRendererRef.current = fogRenderer;
+
         tokenRenderer.onTokenClick = (tokenId) => {
           onCombatantClick?.(tokenId);
         };
@@ -197,6 +204,10 @@ export function TacticalCanvasViewport({
 
     return () => {
       isMounted = false;
+      if (fogRendererRef.current) {
+        fogRendererRef.current.destroy();
+        fogRendererRef.current = null;
+      }
       if (pathAndAoeRendererRef.current) {
         pathAndAoeRendererRef.current.destroy();
         pathAndAoeRendererRef.current = null;
@@ -377,6 +388,31 @@ export function TacticalCanvasViewport({
     cellSize,
     pixiReady,
   ]);
+
+  // Update Dynamic Lighting & Fog-of-War Layer
+  useEffect(() => {
+    if (!fogRendererRef.current) return;
+    const renderer = fogRendererRef.current;
+
+    if (enableFogOfWar === false) {
+      renderer.clear();
+      return;
+    }
+
+    const combatantList = combatants
+      ? Array.isArray(combatants)
+        ? combatants
+        : Object.values(combatants)
+      : undefined;
+
+    renderer.render({
+      grid,
+      cellSize,
+      combatants: combatantList,
+      ...fogOfWar,
+      enabled: fogOfWar?.enabled ?? enableFogOfWar ?? true,
+    });
+  }, [grid, cellSize, fogOfWar, enableFogOfWar, combatants, pixiReady]);
 
   // Container resize observer
   useEffect(() => {

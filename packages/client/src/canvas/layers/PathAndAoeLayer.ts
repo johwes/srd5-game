@@ -78,9 +78,9 @@ export function ensureTacticalGrid(input: CanvasGridInput): TacticalGrid {
       y: c.y,
       terrain: c.terrain ?? 'floor_stone',
       elevationFeet: c.elevationFeet ?? 0,
-      lightLevel:
-        'lightLevel' in c && c.lightLevel
-          ? c.lightLevel
+      baseLight:
+        'baseLight' in c && c.baseLight
+          ? c.baseLight
           : 'effectiveLight' in c && c.effectiveLight
             ? c.effectiveLight
             : 'bright',
