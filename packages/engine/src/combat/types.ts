@@ -7,6 +7,7 @@ import {
   type ConditionId,
   type CreatureSize,
   type DamageType,
+  DamageTypeSchema,
   type MonsterData,
 } from '@srd5/data';
 import {
@@ -112,6 +113,10 @@ export const CombatantStateSchema = z.object({
   concentratingOn: ActiveConcentrationSchema.optional(),
   spellSlots: z.record(z.string(), CombatantSpellSlotPoolSchema).optional(),
   pactMagic: CombatantPactMagicSchema.optional(),
+  damageResistances: z.array(DamageTypeSchema).default([]),
+  damageImmunities: z.array(DamageTypeSchema).default([]),
+  damageVulnerabilities: z.array(DamageTypeSchema).default([]),
+  conditionImmunities: z.array(ConditionIdSchema).default([]),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
@@ -278,6 +283,24 @@ export type CombatEvent =
       damageType: DamageType;
       tempHpAbsorbed: number;
       hpRemaining: number;
+      instantDeath?: boolean;
+      deathSaveFailuresAdded?: number;
+      resistanceApplied?: boolean;
+      vulnerabilityApplied?: boolean;
+      immunityApplied?: boolean;
+    }
+  | {
+      type: 'TEMP_HP_APPLIED';
+      targetId: string;
+      amount: number;
+      tempHpBefore: number;
+      tempHpAfter: number;
+      sourceName?: string | undefined;
+    }
+  | {
+      type: 'CREATURE_DIED';
+      entityId: string;
+      reason: 'instant_death' | 'zero_hp' | 'death_save_failures';
     }
   | {
       type: 'SPELL_CAST';
@@ -307,6 +330,7 @@ export type CombatEvent =
       hpBefore: number;
       hpAfter: number;
       sourceName?: string | undefined;
+      revivedFromZero?: boolean;
     }
   | {
       type: 'CONCENTRATION_STARTED';

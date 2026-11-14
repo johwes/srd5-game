@@ -40,6 +40,7 @@ import {
   spendTwoWeaponFightingBonusAttack,
 } from './turn-budget.js';
 import { evaluateCombatVictory } from './state-machine.js';
+import { applyDamage } from './damage.js';
 
 /**
  * Custom raw attack specification for testing or dynamic attacks.
@@ -677,54 +678,27 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
       mode: 'normal',
     });
 
-    // Apply Damage & Absorptions
-    const tempHpAbsorbed = Math.min(nextTarget.tempHp, damageDealt);
-    const remainingDmg = damageDealt - tempHpAbsorbed;
-    const hpRemaining = Math.max(0, nextTarget.currentHp - remainingDmg);
-    const tempHpRemaining = nextTarget.tempHp - tempHpAbsorbed;
-
-    nextTarget = {
-      ...nextTarget,
-      tempHp: tempHpRemaining,
-      currentHp: hpRemaining,
-    };
-
-    events.push({
-      type: 'DAMAGE_APPLIED',
+    // Apply Damage via Authoritative Damage Pipeline (SRD-307)
+    const dmgAppliedRes = applyDamage({
+      state: {
+        ...state,
+        rngState: currentState,
+        combatants: {
+          ...state.combatants,
+          [target.id]: nextTarget,
+        },
+      },
       targetId: nextTarget.id,
       rawAmount: damageDealt,
-      finalAmount: damageDealt,
       damageType: attack.damageType,
-      tempHpAbsorbed,
-      hpRemaining,
+      isCritical,
+      attackerId: attacker.id,
+      sourceName: attack.name,
+      isSilvered: (attack.properties as readonly string[] | undefined)?.includes('silvered'),
     });
-
-    // Handle 0 HP transition
-    if (hpRemaining === 0) {
-      if (nextTarget.side === 'monster') {
-        nextTarget.isDead = true;
-      } else {
-        const nextConditions = new Set(nextTarget.conditions);
-        if (!nextConditions.has('unconscious')) {
-          nextConditions.add('unconscious');
-          events.push({
-            type: 'CONDITION_ADDED',
-            targetId: nextTarget.id,
-            conditionId: 'unconscious',
-          });
-        }
-        if (!nextConditions.has('prone')) {
-          nextConditions.add('prone');
-          events.push({
-            type: 'CONDITION_ADDED',
-            targetId: nextTarget.id,
-            conditionId: 'prone',
-          });
-        }
-        nextTarget.conditions = Array.from(nextConditions);
-        nextTarget.concentratingOn = undefined;
-      }
-    }
+    currentState = dmgAppliedRes.state.rngState;
+    nextTarget = dmgAppliedRes.state.combatants[target.id]!;
+    events.push(...dmgAppliedRes.events);
   }
 
   events.push({

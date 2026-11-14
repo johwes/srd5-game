@@ -53,6 +53,10 @@ export function createCharacterCombatant(
     isDead,
     isStable,
     attacksPerAction: sheet.attacksPerAction,
+    damageResistances: sheet.damageResistances ? [...sheet.damageResistances] : [],
+    damageImmunities: sheet.damageImmunities ? [...sheet.damageImmunities] : [],
+    damageVulnerabilities: sheet.damageVulnerabilities ? [...sheet.damageVulnerabilities] : [],
+    conditionImmunities: sheet.conditionImmunities ? [...sheet.conditionImmunities] : [],
     concentratingOn: sheet.concentratingOn
       ? {
           sourceId: sheet.concentratingOn.sourceId,
@@ -131,6 +135,10 @@ export function createMonsterCombatant(
     isDead: hp <= 0,
     isStable: false,
     attacksPerAction: 1,
+    damageResistances: monster.damageResistances ? [...monster.damageResistances] : [],
+    damageImmunities: monster.damageImmunities ? [...monster.damageImmunities] : [],
+    damageVulnerabilities: monster.damageVulnerabilities ? [...monster.damageVulnerabilities] : [],
+    conditionImmunities: monster.conditionImmunities ? [...monster.conditionImmunities] : [],
     spellSlots: Object.keys(monsterSpellSlots).length > 0 ? monsterSpellSlots : undefined,
     monsterData: monster,
   };

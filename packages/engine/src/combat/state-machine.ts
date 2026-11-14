@@ -25,6 +25,7 @@ import {
   createTurnBudget,
   spendMovement,
 } from './turn-budget.js';
+import { executeDeathSave } from './damage.js';
 
 export interface StartCombatEncounterOptions {
   encounterId: string;
@@ -185,72 +186,30 @@ export function startTurn(
     !updatedCombatant.isStable &&
     updatedCombatant.side === 'party'
   ) {
-    const d20Res = rollD20(currentState);
-    currentState = d20Res.nextState;
-
-    const roll = d20Res.naturalRoll;
-    let deathSaves = { ...updatedCombatant.deathSaves };
-    let currentHp = 0;
-    let isDead = false;
-    let isStable = false;
-    let outcome: 'success' | 'failure' | 'revived' | 'dead';
-    let conditions = [...updatedCombatant.conditions];
-
-    if (roll === 1) {
-      // Nat 1: 2 failures
-      deathSaves.failures += 2;
-      if (deathSaves.failures >= 3) {
-        isDead = true;
-        outcome = 'dead';
-      } else {
-        outcome = 'failure';
-      }
-    } else if (roll < 10) {
-      // 2..9: 1 failure
-      deathSaves.failures += 1;
-      if (deathSaves.failures >= 3) {
-        isDead = true;
-        outcome = 'dead';
-      } else {
-        outcome = 'failure';
-      }
-    } else if (roll < 20) {
-      // 10..19: 1 success
-      deathSaves.successes += 1;
-      if (deathSaves.successes >= 3) {
-        isStable = true;
-      }
-      outcome = 'success';
-    } else {
-      // Nat 20: Regain 1 HP immediately, wake up!
-      currentHp = 1;
-      deathSaves = { successes: 0, failures: 0 };
-      conditions = conditions.filter((c) => c !== 'unconscious');
-      outcome = 'revived';
-      events.push({
-        type: 'CONDITION_REMOVED',
-        targetId: updatedCombatant.id,
-        conditionId: 'unconscious' as ConditionId,
-      });
-    }
-
-    updatedCombatant = {
-      ...updatedCombatant,
-      currentHp,
-      deathSaves,
-      isDead,
-      isStable,
-      conditions,
-    };
-
-    events.push({
-      type: 'DEATH_SAVE_ROLLED',
-      entityId: updatedCombatant.id,
-      roll,
-      outcome,
-      deathSaves,
-      currentHp,
+    const deathSaveRes = executeDeathSave({
+      state: {
+        ...state,
+        rngState: currentState,
+        combatants: {
+          ...state.combatants,
+          [combatantId]: updatedCombatant,
+        },
+      },
+      combatantId,
     });
+    currentState = deathSaveRes.state.rngState;
+    events.push(...deathSaveRes.events);
+    updatedCombatant = deathSaveRes.state.combatants[combatantId]!;
+
+    if (updatedCombatant.isDead) {
+      return endTurn(
+        {
+          ...deathSaveRes.state,
+          activeCombatantId: combatantId,
+        },
+        events,
+      );
+    }
   }
 
   // Create Turn Budget

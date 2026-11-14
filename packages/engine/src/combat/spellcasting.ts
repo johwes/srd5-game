@@ -48,6 +48,7 @@ import {
   recordSpellCast,
 } from './turn-budget.js';
 import { evaluateCombatVictory } from './state-machine.js';
+import { applyDamage, applyHealing } from './damage.js';
 
 let defaultCompendium: SrdCompendium | null = null;
 function getDefaultCompendium(): SrdCompendium {
@@ -987,55 +988,27 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
           mode: 'normal',
         });
 
-        // Apply to target
-        const tempHpAbsorbed = Math.min(target.tempHp, finalDamage);
-        const remDmg = finalDamage - tempHpAbsorbed;
-        const hpRemaining = Math.max(0, target.currentHp - remDmg);
-        const tempHpRemaining = target.tempHp - tempHpAbsorbed;
-
-        target.tempHp = tempHpRemaining;
-        target.currentHp = hpRemaining;
-        totalDamageByTarget[target.id] = (totalDamageByTarget[target.id] ?? 0) + finalDamage;
-
-        events.push({
-          type: 'DAMAGE_APPLIED',
+        // Apply to target via Authoritative Damage Pipeline (SRD-307)
+        const dmgAppliedRes = applyDamage({
+          state: {
+            ...state,
+            rngState: currentState,
+            combatants: combatantsMap,
+          },
           targetId: target.id,
           rawAmount: finalDamage,
-          finalAmount: finalDamage,
           damageType: step.damageType,
-          tempHpAbsorbed,
-          hpRemaining,
+          isCritical: options?.isCritical,
+          attackerId: nextCaster.id,
+          sourceName: spell.name,
+          isMagical: true,
         });
-
-        // 0 HP transitions
-        if (hpRemaining === 0) {
-          if (target.side === 'monster') {
-            target.isDead = true;
-          } else {
-            const set = new Set(target.conditions);
-            if (!set.has('unconscious')) {
-              set.add('unconscious');
-              events.push({
-                type: 'CONDITION_ADDED',
-                targetId: target.id,
-                conditionId: 'unconscious',
-                sourceName: spell.name,
-              });
-            }
-            if (!set.has('prone')) {
-              set.add('prone');
-              events.push({
-                type: 'CONDITION_ADDED',
-                targetId: target.id,
-                conditionId: 'prone',
-                sourceName: spell.name,
-              });
-            }
-            target.conditions = Array.from(set);
-            target.deathSaves = { successes: 0, failures: 0 };
-            target.concentratingOn = undefined;
-          }
-        }
+        currentState = dmgAppliedRes.state.rngState;
+        const updatedTarget = dmgAppliedRes.state.combatants[target.id]!;
+        combatantsMap[target.id] = updatedTarget;
+        Object.assign(target, updatedTarget);
+        events.push(...dmgAppliedRes.events);
+        totalDamageByTarget[target.id] = (totalDamageByTarget[target.id] ?? 0) + dmgAppliedRes.finalAmount;
       } else if (step.step === 'heal') {
         const healRes = rollDamage(currentState, step.diceFormula, {
           context: formulaVars,
@@ -1043,32 +1016,20 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         currentState = healRes.nextState;
 
         const healAmount = Math.max(0, healRes.total);
-        const hpBefore = target.currentHp;
-        const hpAfter = Math.min(target.maxHp, target.currentHp + healAmount);
-        target.currentHp = hpAfter;
-        totalHealingByTarget[target.id] = (totalHealingByTarget[target.id] ?? 0) + healAmount;
-
-        // Revive from 0 HP
-        if (hpBefore === 0 && hpAfter > 0) {
-          target.conditions = target.conditions.filter((c) => c !== 'unconscious');
-          target.deathSaves = { successes: 0, failures: 0 };
-          target.isDead = false;
-          events.push({
-            type: 'CONDITION_REMOVED',
-            targetId: target.id,
-            conditionId: 'unconscious',
-            sourceName: spell.name,
-          });
-        }
-
-        events.push({
-          type: 'HEAL_APPLIED',
+        const healAppliedRes = applyHealing({
+          state: {
+            ...state,
+            combatants: combatantsMap,
+          },
           targetId: target.id,
           amount: healAmount,
-          hpBefore,
-          hpAfter,
           sourceName: spell.name,
         });
+        const updatedTarget = healAppliedRes.state.combatants[target.id]!;
+        combatantsMap[target.id] = updatedTarget;
+        Object.assign(target, updatedTarget);
+        events.push(...healAppliedRes.events);
+        totalHealingByTarget[target.id] = (totalHealingByTarget[target.id] ?? 0) + healAppliedRes.amount;
       } else if (step.step === 'grant_temp_hp') {
         const hpRes = rollDamage(currentState, step.amountFormula, {
           context: formulaVars,
