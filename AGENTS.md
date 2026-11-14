@@ -11,7 +11,7 @@ If you are starting a fresh session or resuming work, follow this exact workflow
 At the start of every session, inspect the project state in this order:
 
 1. **Check Git Status & History**:
-   - Run `git status` and `git log -n 5 --oneline` to see recent progress and verify whether there is any uncommitted work in progress.
+   - Run `git status`, `git pull --rebase origin main` (to sync latest changes), and `git log -n 5 --oneline` to see recent progress and verify whether there is any uncommitted work in progress.
 2. **Check the Backlog ([BACKLOG.md](file:///home/jwesterl/ai/srd5-game/BACKLOG.md))**:
    - Inspect `BACKLOG.md` to see which tickets are marked `[x]` (Done), `[~]` (In Progress), and `[ ]` (Todo).
    - Identify the next unblocked ticket(s) based on the `Depends On` column and Epic dependency graph.
@@ -61,7 +61,7 @@ When asked to implement a specific ticket or the "next $N$ backlog item(s)" (e.g
    - *(Environment Note: If `pnpm install` needs network access to fetch npm packages during `SRD-101`, run only the package installation step with `BypassSandbox: true`, then run all subsequent builds and tests inside the standard sandbox).*
 4. **Mark Done in `BACKLOG.md`**:
    - Once all tests, typechecks, and acceptance criteria pass, update the ticket status in `BACKLOG.md` from `[~]` to `[x]` (and check off any matching items in the Epic Acceptance Criteria checklist).
-5. **Commit to Git & Stop (When Requested)**:
+5. **Commit to Git, Push to Remote & Stop (When Requested)**:
    - Commit each completed ticket to Git immediately so progress is preserved across sessions.
    - Use Conventional Commits referencing the ticket ID:
      ```text
@@ -70,4 +70,5 @@ When asked to implement a specific ticket or the "next $N$ backlog item(s)" (e.g
      feat(engine): implement SRD-108 seeded PRNG and 5e dice evaluator
      ```
    - Always include the updated `BACKLOG.md` in the commit so the git history and backlog status stay strictly in sync.
-   - Verify with `git status` that the working tree is clean, then exit/respond with a concise summary of the completed ticket.
+   - Push the commit(s) to the remote repository (`git push origin main` or current branch).
+   - Verify with `git status` that the working tree is clean and up to date with origin, then exit/respond with a concise summary of the completed ticket.
