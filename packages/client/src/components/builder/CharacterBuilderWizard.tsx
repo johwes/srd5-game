@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   type CharacterBuildState,
   ICONIC_PARTY_IDS,
@@ -12,6 +12,7 @@ import {
   formatSignedNumber,
   formatTitleCase,
 } from '../compendium/formatters.js';
+import { CharacterSheetDrawer } from '../roster/CharacterSheetDrawer.js';
 import { AbilitiesStep } from './AbilitiesStep.js';
 import { BackgroundStep } from './BackgroundStep.js';
 import { ClassStep } from './ClassStep.js';
@@ -39,12 +40,14 @@ export interface CharacterBuilderWizardProps {
     character: CharacterBuildState,
     derived: ReturnType<typeof computeDerivedCharacter>,
   ) => void;
+  onInspectCharacter?: (character: CharacterBuildState) => void;
 }
 
 export function CharacterBuilderWizard({
   compendium = defaultCompendium,
   initialCharacter,
   onSaveCharacter,
+  onInspectCharacter,
 }: CharacterBuilderWizardProps) {
   const [wizard, setWizard] = useState<CharacterBuilderWizardState>(() =>
     initialCharacter
@@ -53,6 +56,14 @@ export function CharacterBuilderWizard({
   );
   const [savedRoster, setSavedRoster] = useState<CharacterBuildState[]>([]);
   const [lastSavedName, setLastSavedName] = useState<string | null>(null);
+  const [localSheetOpen, setLocalSheetOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialCharacter) {
+      setWizard(createWizardStateFromCharacter(initialCharacter, compendium));
+      setLastSavedName(null);
+    }
+  }, [initialCharacter, compendium]);
 
   const validationMap = validateAllBuilderSteps(wizard, compendium);
   const currentStepValidation = validationMap[wizard.currentStep];
@@ -200,6 +211,20 @@ export function CharacterBuilderWizard({
               </button>
             );
           })}
+          <button
+            type="button"
+            data-testid="builder-open-sheet-btn"
+            onClick={() => {
+              if (onInspectCharacter) {
+                onInspectCharacter(wizard.buildState);
+              } else {
+                setLocalSheetOpen(true);
+              }
+            }}
+            className="px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/50 text-xs font-semibold text-amber-300 hover:bg-amber-500/25"
+          >
+            Character Sheet
+          </button>
           <button
             type="button"
             data-testid="builder-reset-blank-btn"
@@ -415,6 +440,17 @@ export function CharacterBuilderWizard({
           </button>
         )}
       </div>
+
+      {localSheetOpen && (
+        <CharacterSheetDrawer
+          character={wizard.buildState}
+          compendium={compendium}
+          onClose={() => setLocalSheetOpen(false)}
+          onUpdateCharacter={(updated) =>
+            setWizard((prev) => ({ ...prev, buildState: updated }))
+          }
+        />
+      )}
     </div>
   );
 }

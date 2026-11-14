@@ -1,18 +1,154 @@
-import { useState } from 'react';
-import { SRD_LEGAL_ATTRIBUTION, SRD_VERSION, defaultCompendium } from '@srd5/data';
+import { useEffect, useState } from 'react';
+import {
+  type CharacterBuildState,
+  SRD_LEGAL_ATTRIBUTION,
+  SRD_VERSION,
+  defaultCompendium,
+} from '@srd5/data';
 import { getTransportInfo } from '@srd5/transport';
 import { CharacterBuilderWizard } from './components/builder/index.js';
 import { CompendiumBrowser } from './components/compendium/index.js';
+import {
+  CharacterSheetDrawer,
+  LevelUpModal,
+  PartyRosterView,
+} from './components/roster/index.js';
+import {
+  MAX_PARTY_SIZE,
+  type PersistedRosterData,
+  type RosterStorageAdapter,
+  createDefaultRosterData,
+  defaultRosterStorageAdapter,
+  formatSrd5Filename,
+  loadStoredRosterIfPresent,
+  resetPersistedRosterToIconics,
+  savePersistedRoster,
+  serializeCharacterToSrd5Json,
+  triggerSrd5FileDownload,
+  upsertRosterCharacter,
+} from './persistence/index.js';
 
-export type AppViewMode = 'builder' | 'compendium';
+export type AppViewMode = 'builder' | 'roster' | 'compendium';
 
 export interface AppProps {
   initialView?: AppViewMode;
+  storageAdapter?: RosterStorageAdapter;
 }
 
-export function App({ initialView = 'builder' }: AppProps) {
+export function App({
+  initialView = 'builder',
+  storageAdapter = defaultRosterStorageAdapter,
+}: AppProps) {
   const [activeView, setActiveView] = useState<AppViewMode>(initialView);
+  const [roster, setRoster] = useState<PersistedRosterData>(() =>
+    createDefaultRosterData(),
+  );
+  const [builderTargetCharacter, setBuilderTargetCharacter] = useState<
+    CharacterBuildState | undefined
+  >(undefined);
+  const [sheetCharacterId, setSheetCharacterId] = useState<string | null>(null);
+  const [sheetFallbackCharacter, setSheetFallbackCharacter] =
+    useState<CharacterBuildState | null>(null);
+  const [levelUpCharacterId, setLevelUpCharacterId] = useState<string | null>(
+    null,
+  );
+
   const transportInfo = getTransportInfo();
+
+  // Load persisted roster on mount if stored
+  useEffect(() => {
+    let active = true;
+    void loadStoredRosterIfPresent(storageAdapter).then((loaded) => {
+      if (active && loaded) {
+        setRoster(loaded);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [storageAdapter]);
+
+  // Global keyboard shortcut ('C' or 'I') to toggle Character Sheet Drawer (`docs/spec/05-multiplayer-and-ui.md` Section 4.2)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+      if (key === 'c' || key === 'i') {
+        if (sheetCharacterId || sheetFallbackCharacter) {
+          setSheetCharacterId(null);
+          setSheetFallbackCharacter(null);
+        } else {
+          const firstPartyChar =
+            roster.characters.find((c) => c.id === roster.activePartyIds[0]) ??
+            roster.characters[0];
+          if (firstPartyChar) {
+            setSheetCharacterId(firstPartyChar.id);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [roster, sheetCharacterId, sheetFallbackCharacter]);
+
+  const persistAndSetRoster = (nextRoster: PersistedRosterData) => {
+    setRoster(nextRoster);
+    void savePersistedRoster(nextRoster, storageAdapter);
+  };
+
+  const handleSaveCharacterFromBuilder = (character: CharacterBuildState) => {
+    const nextRoster = upsertRosterCharacter(roster, character, {
+      addToPartyIfRoom: true,
+    });
+    persistAndSetRoster(nextRoster);
+  };
+
+  const handleInspectCharacter = (character: CharacterBuildState) => {
+    const inRoster = roster.characters.some((c) => c.id === character.id);
+    if (inRoster) {
+      setSheetCharacterId(character.id);
+      setSheetFallbackCharacter(null);
+    } else {
+      setSheetCharacterId(null);
+      setSheetFallbackCharacter(character);
+    }
+  };
+
+  const handleUpdateCharacterFromSheetOrLevelUp = (
+    updated: CharacterBuildState,
+  ) => {
+    if (roster.characters.some((c) => c.id === updated.id)) {
+      const nextRoster = upsertRosterCharacter(roster, updated, {
+        addToPartyIfRoom: false,
+      });
+      persistAndSetRoster(nextRoster);
+    } else if (sheetFallbackCharacter?.id === updated.id) {
+      setSheetFallbackCharacter(updated);
+    }
+  };
+
+  const activeSheetCharacter = sheetCharacterId
+    ? (roster.characters.find((c) => c.id === sheetCharacterId) ?? null)
+    : sheetFallbackCharacter;
+
+  const activeLevelUpCharacter = levelUpCharacterId
+    ? (roster.characters.find((c) => c.id === levelUpCharacterId) ??
+      (sheetFallbackCharacter?.id === levelUpCharacterId
+        ? sheetFallbackCharacter
+        : null))
+    : null;
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-8 gap-6">
@@ -23,8 +159,8 @@ export function App({ initialView = 'builder' }: AppProps) {
               SRD {SRD_VERSION} Tactical Dungeon Crawler
             </h1>
             <p className="mt-1 text-xs sm:text-sm text-slate-400">
-              Official SRD 5.1 Character Builder &amp; Compendium &middot; Engine v
-              {transportInfo.engine.engineVersion} &middot; Transport v
+              Official SRD 5.1 Character Builder, Party Roster &amp; Compendium &middot;
+              Engine v{transportInfo.engine.engineVersion} &middot; Transport v
               {transportInfo.transportVersion}
             </p>
           </div>
@@ -43,6 +179,19 @@ export function App({ initialView = 'builder' }: AppProps) {
                 }`}
               >
                 Character Builder
+              </button>
+              <button
+                type="button"
+                data-testid="app-nav-roster"
+                aria-pressed={activeView === 'roster'}
+                onClick={() => setActiveView('roster')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  activeView === 'roster'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Party Roster ({roster.activePartyIds.length}/{MAX_PARTY_SIZE})
               </button>
               <button
                 type="button"
@@ -68,12 +217,74 @@ export function App({ initialView = 'builder' }: AppProps) {
           </div>
         </header>
 
-        {activeView === 'builder' ? (
-          <CharacterBuilderWizard compendium={defaultCompendium} />
-        ) : (
+        {activeView === 'builder' && (
+          <CharacterBuilderWizard
+            compendium={defaultCompendium}
+            initialCharacter={builderTargetCharacter}
+            onSaveCharacter={handleSaveCharacterFromBuilder}
+            onInspectCharacter={handleInspectCharacter}
+          />
+        )}
+
+        {activeView === 'roster' && (
+          <PartyRosterView
+            roster={roster}
+            compendium={defaultCompendium}
+            onUpdateRoster={persistAndSetRoster}
+            onResetToIconics={() => {
+              void resetPersistedRosterToIconics(storageAdapter).then((fresh) => {
+                setRoster(fresh);
+              });
+            }}
+            onInspectCharacter={handleInspectCharacter}
+            onLevelUpCharacter={(hero) => setLevelUpCharacterId(hero.id)}
+            onEditInBuilder={(hero) => {
+              setBuilderTargetCharacter(hero);
+              setActiveView('builder');
+            }}
+            onCreateNewHero={() => {
+              setBuilderTargetCharacter(undefined);
+              setActiveView('builder');
+            }}
+          />
+        )}
+
+        {activeView === 'compendium' && (
           <CompendiumBrowser compendium={defaultCompendium} />
         )}
       </div>
+
+      {/* Global Slide-Over Character Sheet Drawer */}
+      {activeSheetCharacter && (
+        <CharacterSheetDrawer
+          character={activeSheetCharacter}
+          compendium={defaultCompendium}
+          onClose={() => {
+            setSheetCharacterId(null);
+            setSheetFallbackCharacter(null);
+          }}
+          onUpdateCharacter={handleUpdateCharacterFromSheetOrLevelUp}
+          onOpenLevelUp={(hero) => setLevelUpCharacterId(hero.id)}
+          onExportCharacter={(hero) => {
+            const content = serializeCharacterToSrd5Json(hero);
+            const filename = formatSrd5Filename(hero.name, 'character');
+            triggerSrd5FileDownload(filename, content);
+          }}
+        />
+      )}
+
+      {/* Global Level-Up Progression Modal */}
+      {activeLevelUpCharacter && (
+        <LevelUpModal
+          character={activeLevelUpCharacter}
+          compendium={defaultCompendium}
+          onClose={() => setLevelUpCharacterId(null)}
+          onApplyLevelUp={(updatedChar) => {
+            handleUpdateCharacterFromSheetOrLevelUp(updatedChar);
+            setLevelUpCharacterId(null);
+          }}
+        />
+      )}
 
       <footer className="max-w-7xl mx-auto w-full border-t border-slate-800 pt-4 text-xs text-slate-500">
         <p>{SRD_LEGAL_ATTRIBUTION}</p>
