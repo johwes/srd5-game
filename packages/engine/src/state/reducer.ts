@@ -14,6 +14,7 @@ import {
   executeMoveCombatant,
 } from '../combat/state-machine.js';
 import { executeWeaponAttack, executeGrapple, executeShove } from '../combat/attack.js';
+import { executeMonsterAction } from '../combat/monster-actions.js';
 import { executeSpellCast } from '../combat/spellcasting.js';
 import { executeActivatedAbility } from '../combat/features.js';
 import { resolveReactionPrompt } from '../combat/reactions.js';
@@ -145,6 +146,7 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
         encounterId: command.encounterId ?? `encounter-${Date.now()}`,
         combatants: combatantsList,
         rngState: command.rngState ?? nextState.rngState,
+        dispositionMatrix: command.dispositionMatrix,
       });
 
       nextState.mode = 'combat';
@@ -197,14 +199,55 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
         throw new Error('Cannot execute DECLARE_ATTACK outside active combat');
       }
 
-      const res = executeWeaponAttack({
+      const attacker = nextState.combat.combatants[command.actorId];
+      const monsterAction = attacker?.monsterData?.actions?.find((a) => a.id === command.monsterActionId);
+      let res: { state: CombatState; events: CombatEvent[] };
+
+      if (monsterAction?.multiattack && monsterAction.multiattack.sequence.length > 0) {
+        res = executeMonsterAction({
+          state: nextState.combat,
+          attackerId: command.actorId,
+          actionId: command.monsterActionId!,
+          targetId: command.targetId,
+          grid: nextState.grid,
+        });
+      } else {
+        res = executeWeaponAttack({
+          state: nextState.combat,
+          attackerId: command.actorId,
+          targetId: command.targetId,
+          attackProfileId: command.attackProfileId,
+          monsterActionId: command.monsterActionId,
+          versatileTwoHanded: command.twoHanded,
+          isOffHand: command.isOffHand,
+          grid: nextState.grid,
+        });
+      }
+
+      nextState.combat = res.state;
+      nextState.rngState = res.state.rngState;
+
+      for (const [id, c] of Object.entries(res.state.combatants)) {
+        if (c.side === 'party') nextState.party[id] = c;
+        else nextState.monsters[id] = c;
+      }
+
+      events.push(...res.events);
+      break;
+    }
+
+    case 'EXECUTE_MONSTER_ACTION': {
+      if (nextState.mode !== 'combat' || !nextState.combat) {
+        throw new Error('Cannot execute EXECUTE_MONSTER_ACTION outside active combat');
+      }
+
+      const res = executeMonsterAction({
         state: nextState.combat,
         attackerId: command.actorId,
+        actionId: command.actionId,
         targetId: command.targetId,
-        attackProfileId: command.attackProfileId,
-        monsterActionId: command.monsterActionId,
-        versatileTwoHanded: command.twoHanded,
-        isOffHand: command.isOffHand,
+        targetIds: command.targetIds,
+        originCell: command.targetCell,
         grid: nextState.grid,
       });
 
@@ -258,7 +301,7 @@ export function reduceGame(state: GameState, command: GameCommand): ReduceGameRe
           res = executeDash(nextState.combat, command.actorId);
           break;
         case 'disengage':
-          res = executeDisengage(nextState.combat, command.actorId);
+          res = executeDisengage(nextState.combat, command.actorId, command.asBonusAction);
           break;
         case 'dodge':
           res = executeDodge(nextState.combat, command.actorId);

@@ -6,12 +6,17 @@ import type { Combatant, CombatantSide } from './types.js';
 export interface CreateCharacterCombatantOptions {
   side?: CombatantSide;
   isSurprised?: boolean;
+  teamId?: string;
+  factionId?: string;
+  playerId?: string;
 }
 
 export interface CreateMonsterCombatantOptions {
   side?: CombatantSide;
   isSurprised?: boolean;
   name?: string;
+  teamId?: string;
+  factionId?: string;
 }
 
 /**
@@ -31,6 +36,9 @@ export function createCharacterCombatant(
     id: sheet.id,
     name: sheet.name,
     side: options?.side ?? 'party',
+    teamId: options?.teamId ?? options?.side ?? 'party',
+    factionId: options?.factionId,
+    playerId: options?.playerId,
     size: sheet.size,
     position,
     speedFeet: sheet.speedFeet,
@@ -113,6 +121,8 @@ export function createMonsterCombatant(
     id: instanceId,
     name: options?.name ?? monster.name,
     side: options?.side ?? 'monster',
+    teamId: options?.teamId ?? options?.side ?? 'monster',
+    factionId: options?.factionId,
     size: monster.size,
     position,
     speedFeet: monster.speed.walk,

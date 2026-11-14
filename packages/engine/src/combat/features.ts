@@ -129,6 +129,9 @@ export function executeActivatedAbility(options: ExecuteActivatedAbilityOptions)
   function executeSteps(steps: EffectStepSpec[], target: Combatant): void {
     for (const step of steps) {
       if (step.step === 'apply_active_effect') {
+        if (step.effectId === 'disengaged' && target.id === actorId && nextBudget) {
+          nextBudget.disengaged = true;
+        }
         const currentEffects = target.activeEffects ? [...target.activeEffects] : [];
         const newEff = {
           effectId: step.effectId,

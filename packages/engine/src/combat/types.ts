@@ -31,6 +31,7 @@ import {
   type GridPoint,
 } from '../grid/model.js';
 import { type CoverLevel } from '../grid/vision.js';
+import { type DispositionMatrix } from './allegiance.js';
 
 /**
  * Combatant allegiance sides.
@@ -158,6 +159,9 @@ export const CombatantStateSchema = z.object({
   frightenedByEntityId: z.string().optional(),
   grappledByEntityId: z.string().optional(),
   reactionAvailable: z.boolean().optional(),
+  teamId: z.string().min(1).optional(),
+  factionId: z.string().min(1).optional(),
+  playerId: z.string().min(1).optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
@@ -570,6 +574,7 @@ export interface CombatState {
   outcome: CombatVictoryOutcome;
   rngState: number;
   hazardZones?: Record<string, HazardZone>;
+  dispositionMatrix?: DispositionMatrix;
   roundHistory?: Array<{ round: number; turns: Array<{ entityId: string; timestamp: number }> }>;
   pendingReactionPrompt?: PendingReactionPrompt | null;
   reactionInterruptContext?: ReactionInterruptContext | null;

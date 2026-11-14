@@ -42,6 +42,7 @@ import {
   type CombatState,
   type Combatant,
 } from './types.js';
+import { areAllied, areHostile } from './allegiance.js';
 import {
   canCastSpell,
   isIncapacitated,
@@ -708,10 +709,9 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         );
         if (overlaps) {
           if (spell.targeting.targetFilter === 'enemy') {
-            if (caster.side === 'party' && combatant.side === 'monster') aoeTargetIds.push(combatant.id);
-            else if (caster.side === 'monster' && combatant.side === 'party') aoeTargetIds.push(combatant.id);
+            if (areHostile(caster, combatant, state.dispositionMatrix)) aoeTargetIds.push(combatant.id);
           } else if (spell.targeting.targetFilter === 'ally') {
-            if (caster.side === combatant.side) aoeTargetIds.push(combatant.id);
+            if (areAllied(caster, combatant, state.dispositionMatrix)) aoeTargetIds.push(combatant.id);
           } else {
             aoeTargetIds.push(combatant.id);
           }

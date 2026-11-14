@@ -34,6 +34,7 @@ import {
   type Combatant,
   type TurnBudget,
 } from './types.js';
+import { areAllied, areHostile, type DispositionMatrix } from './allegiance.js';
 import {
   isIncapacitated,
   spendAttack,
@@ -376,6 +377,7 @@ export function determineAttackRollMode(
   attack: ResolvedAttackDetails,
   distanceFeet: number,
   allCombatants: Record<string, Combatant>,
+  dispositionMatrix?: DispositionMatrix,
 ): {
   mode: RollMode;
   advantageSources: string[];
@@ -465,13 +467,35 @@ export function determineAttackRollMode(
 
     // Hostile creature within 5 ft (Close Combat Disadvantage)
     const hasAdjacentHostile = Object.values(allCombatants).some((c) => {
-      if (c.id === attacker.id || c.side === attacker.side || c.side === 'neutral') return false;
+      if (c.id === attacker.id) return false;
+      if (!areHostile(attacker, c, dispositionMatrix)) return false;
       if (c.isDead || c.currentHp <= 0 || isIncapacitated(c)) return false;
       return getFootprintDistanceFeet(attacker.position, attacker.size, c.position, c.size) <= 5;
     });
 
     if (hasAdjacentHostile) {
       disadvantageSources.push('Hostile creature within 5 ft of ranged attacker');
+    }
+  }
+
+  // Pack Tactics rule (SRD 5.1):
+  // The creature has advantage on an attack roll against a target if at least one of the creature's allies is within 5 ft of the target and the ally isn't incapacitated.
+  const hasPackTactics =
+    attacker.monsterData?.traits?.some(
+      (t) => t.id === 'pack-tactics' || t.name.toLowerCase().includes('pack tactics'),
+    ) ||
+    attacker.characterSheet?.traitIds?.includes('pack-tactics') ||
+    attacker.characterSheet?.featureIds?.includes('pack-tactics');
+
+  if (hasPackTactics) {
+    const hasAdjacentAlly = Object.values(allCombatants).some((c) => {
+      if (c.id === attacker.id || c.id === target.id) return false;
+      if (!areAllied(attacker, c, dispositionMatrix)) return false;
+      if (c.isDead || c.currentHp <= 0 || isIncapacitated(c)) return false;
+      return getFootprintDistanceFeet(c.position, c.size, target.position, target.size) <= 5;
+    });
+    if (hasAdjacentAlly) {
+      advantageSources.push('Pack Tactics (ally adjacent to target)');
     }
   }
 
@@ -699,6 +723,7 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     attack,
     distanceFeet,
     currentCombatants,
+    currentCombatState.dispositionMatrix,
   );
   if (forcedDisadvantage) {
     disadvantageSources.push('Fighting Style: Protection');

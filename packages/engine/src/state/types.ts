@@ -13,6 +13,7 @@ import {
   type PendingReactionPrompt,
   type ResolveReactionDecision,
 } from '../combat/types.js';
+import { type DispositionMatrix } from '../combat/allegiance.js';
 import {
   type GridPoint,
   type LightLevel,
@@ -107,6 +108,7 @@ export type GameCommand =
       encounterId?: string;
       combatants?: Combatant[];
       rngState?: number;
+      dispositionMatrix?: DispositionMatrix;
     }
   | { type: 'COMBAT_MOVE'; actorId: string; path: GridPoint[] }
   | {
@@ -151,6 +153,15 @@ export type GameCommand =
         | 'drop_concentration'
         | 'action_surge';
       targetId?: string;
+      asBonusAction?: boolean;
+    }
+  | {
+      type: 'EXECUTE_MONSTER_ACTION';
+      actorId: string;
+      actionId: string;
+      targetId?: string;
+      targetIds?: string[];
+      targetCell?: GridPoint;
     }
   | {
       type: 'USE_GRAPPLE_OR_SHOVE';

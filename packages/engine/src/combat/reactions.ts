@@ -34,6 +34,7 @@ import type {
   ResolveReactionDecision,
   TurnBudget,
 } from './types.js';
+import { areAllied, areHostile } from './allegiance.js';
 import { isIncapacitated } from './conditions.js';
 import { applyDamage } from './damage.js';
 import { executeWeaponAttack, type ExecuteAttackOptions } from './attack.js';
@@ -378,10 +379,6 @@ export function detectOpportunityAttackTrigger(
   to: GridPoint,
   grid?: TacticalGrid,
 ): { prompt: PendingReactionPrompt; reactor: Combatant } | null {
-  // Disengaged movers do not provoke Opportunity Attacks
-  if (state.turnBudget?.disengaged) {
-    return null;
-  }
   if (from.x === to.x && from.y === to.y) {
     return null;
   }
@@ -389,9 +386,14 @@ export function detectOpportunityAttackTrigger(
   const mover = state.combatants[moverId];
   if (!mover) return null;
 
+  // Disengaged movers do not provoke Opportunity Attacks
+  if (state.turnBudget?.disengaged || mover.activeEffects?.some((e) => e.effectId === 'disengaged')) {
+    return null;
+  }
+
   for (const other of Object.values(state.combatants)) {
     if (other.id === mover.id) continue;
-    if (other.side === mover.side) continue; // Allied
+    if (!areHostile(mover, other, state.dispositionMatrix)) continue; // Must be hostile
     if (!canCombatantTakeReaction(other)) continue;
     if (!combatantCanSee(other, mover, from, grid)) continue;
 
@@ -436,7 +438,7 @@ export function detectProtectionTrigger(
 
   for (const other of Object.values(state.combatants)) {
     if (other.id === attacker.id || other.id === target.id) continue;
-    if (other.side !== target.side) continue; // Must be ally of target
+    if (!areAllied(other, target, state.dispositionMatrix)) continue; // Must be ally of target
     if (!canCombatantTakeReaction(other)) continue;
     if (!hasProtectionFightingStyle(other)) continue;
     if (!combatantCanSee(other, attacker, undefined, grid)) continue;
@@ -537,7 +539,7 @@ export function detectCounterspellTrigger(
 
   for (const other of Object.values(state.combatants)) {
     if (other.id === caster.id) continue;
-    if (other.side === caster.side) continue; // Must be hostile
+    if (!areHostile(other, caster, state.dispositionMatrix)) continue; // Must be hostile
     if (!canCombatantTakeReaction(other)) continue;
     if (!combatantCanSee(other, caster, undefined, grid)) continue;
 

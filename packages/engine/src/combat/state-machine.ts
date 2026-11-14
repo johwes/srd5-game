@@ -6,6 +6,7 @@ import type {
   CombatVictoryOutcome,
   Combatant,
 } from './types.js';
+import { areHostile, type DispositionMatrix } from './allegiance.js';
 import {
   findNextActiveCombatantIndex,
   isCombatantEligibleForTurn,
@@ -56,6 +57,7 @@ export interface StartCombatEncounterOptions {
   partyStealth?: PartyStealthInput;
   monsterAmbush?: MonsterAmbushInput;
   explicitSurprisedEntityIds?: string[];
+  dispositionMatrix?: DispositionMatrix;
 }
 
 export interface CombatTransitionResult {
@@ -68,16 +70,15 @@ export interface CombatTransitionResult {
  */
 export function evaluateCombatVictory(
   combatants: Record<string, Combatant>,
+  matrix?: DispositionMatrix,
 ): CombatVictoryOutcome {
-  const partyList = Object.values(combatants).filter((c) => c.side === 'party');
-  const monsterList = Object.values(combatants).filter((c) => c.side === 'monster');
+  const partyList = Object.values(combatants).filter((c) => (c.teamId ?? c.side) === 'party');
+  const monsterList = Object.values(combatants).filter((c) => (c.teamId ?? c.side) !== 'party');
 
-  // Party defeated if all party members are dead or defeated
   const allPartyDefeated =
     partyList.length > 0 &&
     partyList.every((p) => p.isDead || p.deathSaves.failures >= 3);
 
-  // Monsters defeated if all monsters are at 0 HP or dead
   const allMonstersDefeated =
     monsterList.length > 0 &&
     monsterList.every((m) => m.isDead || m.currentHp <= 0);
@@ -90,6 +91,20 @@ export function evaluateCombatVictory(
   }
   if (allPartyDefeated) {
     return 'monsters_victory';
+  }
+
+  // Generalized multi-team hostility check
+  const activeLiving = Object.values(combatants).filter(
+    (c) => !c.isDead && c.currentHp > 0 && c.deathSaves.failures < 3,
+  );
+  if (activeLiving.length > 0) {
+    const hasHostilesRemaining = activeLiving.some((c1) =>
+      activeLiving.some((c2) => c1.id !== c2.id && areHostile(c1, c2, matrix)),
+    );
+    if (!hasHostilesRemaining) {
+      const anyParty = activeLiving.some((c) => (c.teamId ?? c.side) === 'party');
+      return anyParty ? 'party_victory' : 'monsters_victory';
+    }
   }
 
   return 'in_progress';
@@ -164,6 +179,7 @@ export function startCombatEncounter(
     surprisedCombatantIds: surpriseRes.surprisedEntityIds,
     outcome: 'in_progress',
     rngState: currentState,
+    dispositionMatrix: options.dispositionMatrix,
   };
 
   // 3. Start turn for the first combatant

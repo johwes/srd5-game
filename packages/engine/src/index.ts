@@ -15,3 +15,4 @@ export * from './character/index.js';
 export * from './grid/index.js';
 export * from './combat/index.js';
 export * from './state/index.js';
+export * from './ai/index.js';
