@@ -157,12 +157,129 @@ export const CombatantStateSchema = z.object({
   charmedByEntityId: z.string().optional(),
   frightenedByEntityId: z.string().optional(),
   grappledByEntityId: z.string().optional(),
+  reactionAvailable: z.boolean().optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
 export interface Combatant extends CombatantState {
   characterSheet?: DerivedCharacterSheet | undefined;
   monsterData?: MonsterData | undefined;
+}
+
+/**
+ * Supported reaction action categories.
+ */
+export const AVAILABLE_REACTION_TYPES = [
+  'opportunity_attack',
+  'shield',
+  'counterspell',
+  'protection',
+  'uncanny_dodge',
+  'custom',
+] as const;
+export const AvailableReactionTypeSchema = z.enum(AVAILABLE_REACTION_TYPES);
+export type AvailableReactionType = z.infer<typeof AvailableReactionTypeSchema>;
+
+/**
+ * Candidate reaction choice presented in an interrupt prompt.
+ */
+export const AvailableReactionSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  reactionType: AvailableReactionTypeSchema,
+  slotLevel: z.number().int().min(1).max(9).optional(),
+  description: z.string().optional(),
+});
+export type AvailableReaction = z.infer<typeof AvailableReactionSchema>;
+
+/**
+ * Interactive Reaction Interrupt Prompt (Spec 03 Section 5.2 / Spec 05 Section 2.2).
+ */
+export const PendingReactionPromptSchema = z.object({
+  promptId: z.string().min(1),
+  reactorEntityId: z.string().min(1),
+  triggerType: z.enum([
+    'movement_reach_exit',
+    'attack_roll_hit',
+    'attack_declared',
+    'spell_cast',
+    'damage_taken',
+  ]),
+  triggerDescription: z.string().min(1),
+  availableReactions: z.array(AvailableReactionSchema).min(1),
+  timeoutMs: z.number().positive().optional(),
+});
+export type PendingReactionPrompt = z.infer<typeof PendingReactionPromptSchema>;
+
+/**
+ * Interrupted action context preserved while paused at an interrupt checkpoint.
+ */
+export type ReactionInterruptContext =
+  | {
+      type: 'movement';
+      actorId: string;
+      fullPath: GridPoint[];
+      completedPath: GridPoint[];
+      currentStepIndex: number;
+      spentMovementFeet: number;
+      remainingPath: GridPoint[];
+      stepFrom: GridPoint;
+      stepTo: GridPoint;
+    }
+  | {
+      type: 'attack_declared';
+      attackerId: string;
+      targetId: string;
+      protectorId: string;
+      options: any;
+    }
+  | {
+      type: 'attack_hit';
+      attackerId: string;
+      targetId: string;
+      options: any;
+      attackDetails: any;
+      attackRollRecord: DiceRollRecord;
+      targetEffectiveAc: number;
+      cover: CoverLevel;
+      outcome: 'hit' | 'critical_hit';
+      rollMode: RollMode;
+      advantageSources: string[];
+      disadvantageSources: string[];
+    }
+  | {
+      type: 'damage_taken';
+      attackerId?: string | undefined;
+      targetId: string;
+      damageAmount: number;
+      damageType: DamageType;
+      options?: any;
+    }
+  | {
+      type: 'spell_cast';
+      casterId: string;
+      spell: any;
+      spellId?: string | undefined;
+      slotLevel: number;
+      options: any;
+      reactorId: string;
+    };
+
+/**
+ * Decision submitted by a player or adapter to resolve a pending reaction prompt.
+ */
+export interface ResolveReactionDecision {
+  promptId: string;
+  reactorEntityId?: string;
+  decision:
+    | {
+        execute: false;
+      }
+    | {
+        execute: true;
+        reactionId: string;
+        slotLevel?: number;
+      };
 }
 
 /**
@@ -420,6 +537,18 @@ export type CombatEvent =
       newLevel: number;
     }
   | {
+      type: 'REACTION_PROMPTED';
+      prompt: PendingReactionPrompt;
+    }
+  | {
+      type: 'REACTION_RESOLVED';
+      promptId: string;
+      reactorEntityId: string;
+      actionTaken: 'executed' | 'passed';
+      reactionId?: string | undefined;
+      reactionType?: AvailableReactionType | undefined;
+    }
+  | {
       type: 'ENCOUNTER_VICTORY';
       outcome: 'party_victory' | 'monsters_victory' | 'draw';
       round: number;
@@ -442,4 +571,6 @@ export interface CombatState {
   rngState: number;
   hazardZones?: Record<string, HazardZone>;
   roundHistory?: Array<{ round: number; turns: Array<{ entityId: string; timestamp: number }> }>;
+  pendingReactionPrompt?: PendingReactionPrompt | null;
+  reactionInterruptContext?: ReactionInterruptContext | null;
 }

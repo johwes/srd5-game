@@ -52,6 +52,11 @@ import { applyDamage, applyHealing } from './damage.js';
 import { applyConditionToCombatant } from './conditions.js';
 import { breakConcentration } from './concentration.js';
 import { createHazardZone } from './hazard-zone.js';
+import {
+  detectCounterspellTrigger,
+  spendCombatantReaction,
+  expendSpellSlot,
+} from './reactions.js';
 
 let defaultCompendium: SrdCompendium | null = null;
 function getDefaultCompendium(): SrdCompendium {
@@ -397,6 +402,7 @@ export interface ExecuteSpellCastOptions {
   grid?: TacticalGrid;
   isReaction?: boolean;
   compendium?: SrdCompendium;
+  skipReactionPrompts?: boolean;
 }
 
 /**
@@ -469,6 +475,120 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
   const effectiveSlotLevel = spell.level === 0 ? 0 : (slotLevel ?? spell.level);
   let currentState = state.rngState;
   const events: CombatEvent[] = [];
+
+  // 1.5 Counterspell Reaction Trigger Check
+  if (!options.skipReactionPrompts && spell.level > 0) {
+    const csRes = detectCounterspellTrigger(state, casterId, spell, effectiveSlotLevel, grid);
+    if (csRes) {
+      if (csRes.reactor.side === 'monster') {
+        const spentRes = spendCombatantReaction(state, csRes.reactor.id);
+        currentState = spentRes.state.rngState;
+        const reactorSlots = (spentRes.combatant.spellSlots ? Object.keys(spentRes.combatant.spellSlots).map(Number) : [3]).filter((s) => s >= 3);
+        const slotToUse = reactorSlots[0] ?? 3;
+        const slotSpentReactor = expendSpellSlot(spentRes.combatant, slotToUse);
+        let interState = {
+          ...spentRes.state,
+          combatants: {
+            ...spentRes.state.combatants,
+            [csRes.reactor.id]: slotSpentReactor,
+          },
+        };
+        events.push({
+          type: 'SPELL_CAST',
+          actorId: csRes.reactor.id,
+          spellId: 'counterspell',
+          spellName: 'Counterspell',
+          spellLevel: 3,
+          castAtLevel: slotToUse,
+          actionCost: 'reaction',
+          slotExpended: slotToUse,
+          targetEntityIds: [casterId],
+        });
+
+        let counterSuccess = false;
+        if (slotToUse >= effectiveSlotLevel) {
+          counterSuccess = true;
+        } else {
+          const dc = 10 + effectiveSlotLevel;
+          const abilityMod = csRes.reactor.monsterData?.abilities?.int ? Math.floor((csRes.reactor.monsterData.abilities.int - 10) / 2) : 3;
+          const rollRes = rollD20(currentState, { mode: 'normal', modifier: abilityMod });
+          currentState = rollRes.nextState;
+          counterSuccess = rollRes.total >= dc;
+        }
+
+        if (counterSuccess) {
+          let nextTurnBudget = interState.turnBudget;
+          if (nextTurnBudget && interState.activeCombatantId === casterId) {
+            nextTurnBudget = recordSpellCast(nextTurnBudget, spell.castingTime as any, effectiveSlotLevel === 0);
+          }
+          const slotSpentCaster = expendSpellSlot(interState.combatants[casterId]!, effectiveSlotLevel);
+          interState = {
+            ...interState,
+            turnBudget: nextTurnBudget,
+            rngState: currentState,
+            combatants: {
+              ...interState.combatants,
+              [casterId]: slotSpentCaster,
+            },
+          };
+          events.push({
+            type: 'SPELL_CAST',
+            actorId: casterId,
+            spellId: spell.id,
+            spellName: spell.name,
+            spellLevel: spell.level,
+            castAtLevel: effectiveSlotLevel,
+            actionCost: spell.castingTime,
+            slotExpended: effectiveSlotLevel,
+            targetEntityIds: [],
+          });
+          return {
+            state: interState,
+            events,
+            spell,
+            effectiveSlotLevel,
+            targetsHit: [],
+            targetsMissed: [],
+            targetsSaved: [],
+            targetsFailedSave: [],
+            totalDamageByTarget: {},
+            totalHealingByTarget: {},
+          };
+        }
+      } else {
+        const promptState: CombatState = {
+          ...state,
+          phase: 'reaction_prompt',
+          pendingReactionPrompt: csRes.prompt,
+          reactionInterruptContext: {
+            type: 'spell_cast',
+            casterId,
+            spell,
+            spellId: options.spellId,
+            slotLevel: effectiveSlotLevel,
+            options,
+            reactorId: csRes.reactor.id,
+          },
+        };
+        events.push({
+          type: 'REACTION_PROMPTED',
+          prompt: csRes.prompt,
+        });
+        return {
+          state: promptState,
+          events,
+          spell,
+          effectiveSlotLevel,
+          targetsHit: [],
+          targetsMissed: [],
+          targetsSaved: [],
+          targetsFailedSave: [],
+          totalDamageByTarget: {},
+          totalHealingByTarget: {},
+        };
+      }
+    }
+  }
 
   // 2. Identify Targets
   const allCombatants = Object.values(state.combatants);

@@ -30,8 +30,7 @@ import {
   executeWeaponAttack,
   executeGrapple,
   executeShove,
-  castSpell,
-  createDefaultTacticalGrid,
+  createTacticalGrid,
 } from '../index.js';
 
 function makeTestCombatant(overrides: Partial<Combatant> = {}): Combatant {
@@ -136,6 +135,7 @@ describe('SRD-308: Concentration Tracking', () => {
           requiresConcentration: true,
           difficultTerrain: true,
           onEnterOrStartTurn: [],
+          triggeredCreaturesThisTurn: [],
         },
       },
       surprisedCombatantIds: [],

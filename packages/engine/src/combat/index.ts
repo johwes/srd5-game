@@ -10,3 +10,4 @@ export * from './state-machine.js';
 export * from './attack.js';
 export * from './spellcasting.js';
 export * from './damage.js';
+export * from './reactions.js';

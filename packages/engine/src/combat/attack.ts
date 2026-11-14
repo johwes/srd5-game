@@ -41,6 +41,13 @@ import {
 } from './turn-budget.js';
 import { evaluateCombatVictory } from './state-machine.js';
 import { applyDamage } from './damage.js';
+import {
+  detectProtectionTrigger,
+  detectAttackHitReactions,
+  applyShieldBuff,
+  expendSpellSlot,
+  spendCombatantReaction,
+} from './reactions.js';
 
 /**
  * Custom raw attack specification for testing or dynamic attacks.
@@ -93,6 +100,8 @@ export interface ExecuteAttackOptions {
   versatileTwoHanded?: boolean;
   greatWeaponFighting?: boolean;
   extraCritDice?: number;
+  skipReactionPrompts?: boolean;
+  forcedProtectionDisadvantage?: boolean;
 }
 
 export interface AttackResolutionResult {
@@ -534,6 +543,7 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   }
 
   let currentState = state.rngState;
+  let currentCombatState = state;
   const events: CombatEvent[] = [];
 
   // 1. Resolve Attack Profile
@@ -547,6 +557,11 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
 
   // 2. Validate Action Economy & Turn Budget
   let nextTurnBudget: TurnBudget | null = state.turnBudget ? { ...state.turnBudget } : null;
+  let updatedAttacker: Combatant = { ...attacker };
+
+  if (isReaction) {
+    updatedAttacker = { ...updatedAttacker, reactionAvailable: false };
+  }
 
   if (nextTurnBudget && state.activeCombatantId === attackerId) {
     if (attack.isOffHand) {
@@ -557,6 +572,11 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
       nextTurnBudget = spendAttack(nextTurnBudget, attacker.attacksPerAction);
     }
   }
+
+  let currentCombatants = {
+    ...state.combatants,
+    [attackerId]: updatedAttacker,
+  };
 
   // 3. Distance & Reach/Range Validation
   const distanceFeet = getFootprintDistanceFeet(
@@ -603,16 +623,77 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   const coverAcBonus = COVER_AC_BONUS[cover];
   const targetEffectiveAc = target.armorClass + coverAcBonus;
 
-  // 5. Advantage / Disadvantage Mode
-  const { mode, advantageSources, disadvantageSources } = determineAttackRollMode(
-    attacker,
+  // 5. Protection Fighting Style check
+  let forcedDisadvantage = Boolean(options.forcedProtectionDisadvantage);
+  if (!options.skipReactionPrompts && !forcedDisadvantage) {
+    const protRes = detectProtectionTrigger(currentCombatState, attackerId, targetId, grid);
+    if (protRes) {
+      if (protRes.protector.side === 'monster') {
+        const spent = spendCombatantReaction(currentCombatState, protRes.protector.id);
+        currentCombatState = spent.state;
+        currentCombatants = currentCombatState.combatants;
+        forcedDisadvantage = true;
+      } else {
+        const promptState: CombatState = {
+          ...currentCombatState,
+          phase: 'reaction_prompt',
+          pendingReactionPrompt: protRes.prompt,
+          reactionInterruptContext: {
+            type: 'attack_declared',
+            attackerId,
+            targetId,
+            protectorId: protRes.protector.id,
+            options,
+          },
+        };
+        events.push({
+          type: 'REACTION_PROMPTED',
+          prompt: protRes.prompt,
+        });
+        return {
+          state: promptState,
+          events,
+          outcome: 'miss',
+          rollMode: 'normal',
+          advantageSources: [],
+          disadvantageSources: [],
+          attackRollRecord: {
+            formula: '1d20',
+            resolvedNotation: '1d20',
+            rolls: [0],
+            kept: [0],
+            modifier: 0,
+            total: 0,
+            mode: 'normal',
+            diceGroups: [],
+            rerolledInitialRolls: [],
+            naturalCrit: false,
+            naturalFumble: false,
+          },
+          targetEffectiveAc,
+          cover,
+        };
+      }
+    }
+  }
+
+  // 6. Advantage / Disadvantage Mode
+  const { mode: baseMode, advantageSources, disadvantageSources } = determineAttackRollMode(
+    updatedAttacker,
     target,
     attack,
     distanceFeet,
-    state.combatants,
+    currentCombatants,
   );
+  if (forcedDisadvantage) {
+    disadvantageSources.push('Fighting Style: Protection');
+  }
+  const mode = resolveRollMode({
+    advantageSources,
+    disadvantageSources,
+  });
 
-  // 6. Roll Attack d20
+  // 7. Roll Attack d20
   const isHalfling = attacker.characterSheet?.raceId === 'halfling';
   const attackRollRes = rollD20(currentState, {
     mode,
@@ -636,7 +717,7 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     naturalFumble: attackRollRes.isFumble,
   });
 
-  // 7. Hit / Miss / Crit Determination
+  // 8. Hit / Miss / Crit Determination
   // Paralyzed/unconscious auto-crit within 5 ft rule (Spec 03 Section 2.2 and Section 7)
   const isMeleeIncapAutoCrit =
     (target.conditions.includes('paralyzed') || target.conditions.includes('unconscious')) &&
@@ -653,10 +734,124 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     outcome = 'miss';
   }
 
-  // 8. Damage Calculation on Hit
+  // 9. Reaction Interrupt Check on Hit (Shield, Uncanny Dodge)
+  let halveDamage = false;
+
+  if ((outcome === 'hit' || outcome === 'critical_hit') && !options.skipReactionPrompts) {
+    const hitPrompt = detectAttackHitReactions(
+      currentCombatState,
+      attackerId,
+      targetId,
+      attackRollRes.total,
+      targetEffectiveAc,
+      outcome === 'critical_hit',
+      grid,
+    );
+
+    if (hitPrompt) {
+      if (target.side === 'monster') {
+        const isCrit = outcome === 'critical_hit';
+        const hasShield = hitPrompt.availableReactions.some((r) => r.reactionType === 'shield');
+        const wouldTurnToMiss = !isCrit && attackRollRes.total < targetEffectiveAc + 5;
+        if (hasShield && wouldTurnToMiss) {
+          const spentRes = spendCombatantReaction(currentCombatState, targetId);
+          currentState = spentRes.state.rngState;
+          const slotSpentTarget = expendSpellSlot(spentRes.combatant, 1);
+          const buffedTarget = applyShieldBuff(slotSpentTarget);
+          currentCombatState = {
+            ...spentRes.state,
+            combatants: {
+              ...spentRes.state.combatants,
+              [targetId]: buffedTarget,
+            },
+          };
+          events.push({
+            type: 'SPELL_CAST',
+            actorId: targetId,
+            spellId: 'shield',
+            spellName: 'Shield',
+            spellLevel: 1,
+            castAtLevel: 1,
+            actionCost: 'reaction',
+            slotExpended: 1,
+            targetEntityIds: [targetId],
+          });
+          events.push({
+            type: 'ATTACK_RESOLVED',
+            attackerId: attacker.id,
+            targetId: target.id,
+            weaponOrSpellName: attack.name,
+            attackType: attack.attackType,
+            roll: attackRollRes.record.rolls[0] ?? attackRollRes.total,
+            totalToHit: attackRollRes.total,
+            targetAc: buffedTarget.armorClass,
+            outcome: 'miss',
+            cover,
+          });
+          return {
+            state: {
+              ...currentCombatState,
+              rngState: currentState,
+            },
+            events,
+            outcome: 'miss',
+            rollMode: mode,
+            advantageSources,
+            disadvantageSources,
+            attackRollRecord: attackRollRes.record,
+            targetEffectiveAc: buffedTarget.armorClass,
+            cover,
+          };
+        } else if (hitPrompt.availableReactions.some((r) => r.reactionType === 'uncanny_dodge')) {
+          const spentRes = spendCombatantReaction(currentCombatState, targetId);
+          currentState = spentRes.state.rngState;
+          currentCombatState = spentRes.state;
+          currentCombatants = currentCombatState.combatants;
+          halveDamage = true;
+        }
+      } else {
+        const promptState: CombatState = {
+          ...currentCombatState,
+          phase: 'reaction_prompt',
+          pendingReactionPrompt: hitPrompt,
+          reactionInterruptContext: {
+            type: 'attack_hit',
+            attackerId,
+            targetId,
+            options,
+            attackDetails: attack,
+            attackRollRecord: attackRollRes.record,
+            targetEffectiveAc,
+            cover,
+            outcome,
+            rollMode: mode,
+            advantageSources,
+            disadvantageSources,
+          },
+        };
+        events.push({
+          type: 'REACTION_PROMPTED',
+          prompt: hitPrompt,
+        });
+        return {
+          state: promptState,
+          events,
+          outcome,
+          rollMode: mode,
+          advantageSources,
+          disadvantageSources,
+          attackRollRecord: attackRollRes.record,
+          targetEffectiveAc,
+          cover,
+        };
+      }
+    }
+  }
+
+  // 10. Damage Calculation on Hit
   let damageRollRecord: DiceRollRecord | undefined;
   let damageDealt = 0;
-  let nextTarget: Combatant = { ...target };
+  let nextTarget: Combatant = { ...(currentCombatants[target.id] ?? target) };
 
   if (outcome === 'hit' || outcome === 'critical_hit') {
     const isCritical = outcome === 'critical_hit';
@@ -671,6 +866,9 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     currentState = dmgRes.nextState;
     damageRollRecord = dmgRes.record;
     damageDealt = Math.max(0, dmgRes.total);
+    if (halveDamage) {
+      damageDealt = Math.floor(damageDealt / 2);
+    }
 
     events.push({
       type: 'DICE_ROLLED',
@@ -687,10 +885,10 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     // Apply Damage via Authoritative Damage Pipeline (SRD-307)
     const dmgAppliedRes = applyDamage({
       state: {
-        ...state,
+        ...currentCombatState,
         rngState: currentState,
         combatants: {
-          ...state.combatants,
+          ...currentCombatState.combatants,
           [target.id]: nextTarget,
         },
       },
@@ -726,24 +924,26 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   });
 
   const nextCombatants = {
-    ...state.combatants,
+    ...currentCombatants,
+    ...currentCombatState.combatants,
     [targetId]: nextTarget,
+    [attackerId]: updatedAttacker,
   };
 
   // Evaluate victory outcome
   const victoryOutcome = evaluateCombatVictory(nextCombatants);
-  let nextPhase = state.phase;
+  let nextPhase = currentCombatState.phase;
   if (victoryOutcome !== 'in_progress') {
     nextPhase = 'combat_ended';
     events.push({
       type: 'ENCOUNTER_VICTORY',
       outcome: victoryOutcome,
-      round: state.round,
+      round: currentCombatState.round,
     });
   }
 
   const nextState: CombatState = {
-    ...state,
+    ...currentCombatState,
     phase: nextPhase,
     outcome: victoryOutcome,
     turnBudget: nextTurnBudget,
@@ -842,6 +1042,7 @@ export function executeGrapple(options: ExecuteGrappleOptions): GrappleResolutio
   }
 
   let currentState = state.rngState;
+  let currentCombatState = state;
   const events: CombatEvent[] = [];
 
   // Action economy: spends 1 attack from budget if during active turn
@@ -1002,6 +1203,7 @@ export function executeShove(options: ExecuteShoveOptions): ShoveResolutionResul
   }
 
   let currentState = state.rngState;
+  let currentCombatState = state;
   const events: CombatEvent[] = [];
 
   // Action economy: spends 1 attack from budget if during active turn

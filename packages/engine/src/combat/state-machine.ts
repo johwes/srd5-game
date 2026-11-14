@@ -42,6 +42,12 @@ import {
   isFootprintStepDifficultTerrain,
 } from '../grid/pathfinding.js';
 import type { GridPoint, TacticalGrid } from '../grid/model.js';
+import {
+  detectOpportunityAttackTrigger,
+  spendCombatantReaction,
+} from './reactions.js';
+import { executeWeaponAttack } from './attack.js';
+import { isIncapacitated } from './turn-budget.js';
 
 export interface StartCombatEncounterOptions {
   encounterId: string;
@@ -189,11 +195,36 @@ export function startTurn(
     return endTurn(state, events);
   }
 
-  // Clear Dodge condition / state from previous turn (SRD 5.1 Dodge ends at start of next turn)
+  // Reset reaction for turn start & clear Dodge (ends at start of next turn)
+  const canReact = !currentCombatant.isSurprised && !isIncapacitated(currentCombatant);
   let updatedCombatant: Combatant = {
     ...currentCombatant,
     isDodging: false,
+    reactionAvailable: canReact,
   };
+
+  // Expire Shield spell buff at the start of reactor's next turn (SRD 5.1)
+  if (updatedCombatant.activeEffects?.some((e) => e.effectId === 'shield_ac_buff' || e.effectId === 'shield')) {
+    const nextEffects = updatedCombatant.activeEffects.filter(
+      (e) => e.effectId !== 'shield_ac_buff' && e.effectId !== 'shield',
+    );
+    let nextSheet = updatedCombatant.characterSheet;
+    if (nextSheet) {
+      nextSheet = {
+        ...nextSheet,
+        armorClass: {
+          ...nextSheet.armorClass,
+          totalAc: Math.max(10, nextSheet.armorClass.totalAc - 5),
+        },
+      };
+    }
+    updatedCombatant = {
+      ...updatedCombatant,
+      armorClass: Math.max(10, updatedCombatant.armorClass - 5),
+      activeEffects: nextEffects,
+      characterSheet: nextSheet,
+    };
+  }
 
   // If at 0 HP and not stable, roll start-of-turn Death Saving Throw
   if (
@@ -316,6 +347,7 @@ export function endTurn(
       nextCombatants[activeId] = {
         ...activeCombatant,
         isSurprised: false,
+        reactionAvailable: true,
       };
       events.push({
         type: 'SURPRISE_ENDED',
@@ -638,11 +670,13 @@ export interface ExecuteMoveCombatantOptions {
   actorId: string;
   path: GridPoint[];
   grid?: TacticalGrid | undefined;
+  skipReactionPrompts?: boolean;
 }
 
 /**
  * Moves a combatant along a path on the grid during their active turn:
  * - Checks frightened movement restrictions (cannot move closer to source of fear).
+ * - Checks Opportunity Attacks on each step exiting hostile reach.
  * - Computes movement cost accounting for difficult terrain from grid and active hazard zones.
  * - Deducts feet from turn budget.
  * - Updates combatant position.
@@ -682,40 +716,145 @@ export function executeMoveCombatant(
     }
   }
 
-  // Compute movement cost step-by-step
-  let totalCostFeet = 0;
-  let prevPos = mover.position;
   const isProne = mover.conditions.includes('prone');
+  let costSoFar = 0;
+  let currentPos = mover.position;
+  let currentState = state;
+  const events: CombatEvent[] = [];
 
-  for (const step of path) {
+  for (let i = 0; i < path.length; i++) {
+    const step = path[i]!;
     const isDifficult =
       (grid && isFootprintStepDifficultTerrain(grid, { id: mover.id, x: step.x, y: step.y, size: mover.size }, step)) ||
-      isCellInHazardDifficultTerrain(state.hazardZones, step);
+      isCellInHazardDifficultTerrain(currentState.hazardZones, step);
 
     const stepResult = computeStepCostFeet({
-      from: prevPos,
+      from: currentPos,
       to: step,
       difficultTerrain: Boolean(isDifficult),
       isProne,
     });
-    totalCostFeet += stepResult.stepCostFeet;
-    prevPos = step;
+
+    if (costSoFar + stepResult.stepCostFeet > state.turnBudget.movementRemainingFeet) {
+      throw new Error(
+        `Not enough movement remaining (requires ${costSoFar + stepResult.stepCostFeet} ft, has ${state.turnBudget.movementRemainingFeet} ft)`,
+      );
+    }
+
+    // Opportunity Attack check on this step exiting hostile reach
+    if (!options.skipReactionPrompts) {
+      const oaRes = detectOpportunityAttackTrigger(currentState, actorId, currentPos, step, grid);
+      if (oaRes) {
+        if (oaRes.reactor.side === 'monster') {
+          // AI monster takes Opportunity Attack
+          const spentRes = spendCombatantReaction(currentState, oaRes.reactor.id);
+          currentState = spentRes.state;
+
+          const oaAttackRes = executeWeaponAttack({
+            state: currentState,
+            attackerId: oaRes.reactor.id,
+            targetId: actorId,
+            isReaction: true,
+            skipReactionPrompts: true,
+            grid,
+          });
+          currentState = oaAttackRes.state;
+          events.push(...oaAttackRes.events);
+
+          const liveMover = currentState.combatants[actorId];
+          if (!liveMover || liveMover.isDead || liveMover.currentHp <= 0 || isIncapacitated(liveMover)) {
+            // Mover halted at currentPos before leaving reach!
+            const nextBudget = spendMovement(currentState.turnBudget!, costSoFar);
+            const haltedMover: Combatant = {
+              ...(liveMover ?? mover),
+              position: currentPos,
+            };
+            return {
+              state: {
+                ...currentState,
+                turnBudget: nextBudget,
+                combatants: {
+                  ...currentState.combatants,
+                  [actorId]: haltedMover,
+                },
+              },
+              events,
+            };
+          }
+        } else {
+          // Player hero reaction prompt: pause execution!
+          const nextBudget = spendMovement(currentState.turnBudget!, costSoFar);
+          const pausedMover: Combatant = {
+            ...mover,
+            position: currentPos,
+          };
+          const promptState: CombatState = {
+            ...currentState,
+            phase: 'reaction_prompt',
+            turnBudget: nextBudget,
+            combatants: {
+              ...currentState.combatants,
+              [actorId]: pausedMover,
+            },
+            pendingReactionPrompt: oaRes.prompt,
+            reactionInterruptContext: {
+              type: 'movement',
+              actorId,
+              fullPath: path,
+              completedPath: path.slice(0, i),
+              currentStepIndex: i,
+              spentMovementFeet: costSoFar,
+              remainingPath: path.slice(i),
+              stepFrom: currentPos,
+              stepTo: step,
+            },
+          };
+          events.push({
+            type: 'REACTION_PROMPTED',
+            prompt: oaRes.prompt,
+          });
+          return {
+            state: promptState,
+            events,
+          };
+        }
+      }
+    }
+
+    costSoFar += stepResult.stepCostFeet;
+
+    // Trigger hazard zones on this step
+    const hzMoveRes = triggerHazardZonesOnMove(currentState, actorId, currentPos, step);
+    currentState = hzMoveRes.state;
+    events.push(...hzMoveRes.events);
+
+    const liveMover = currentState.combatants[actorId];
+    if (!liveMover || liveMover.isDead || liveMover.currentHp <= 0) {
+      // Stopped in hazard zone
+      const nextBudget = spendMovement(currentState.turnBudget!, costSoFar);
+      return {
+        state: {
+          ...currentState,
+          turnBudget: nextBudget,
+          combatants: {
+            ...currentState.combatants,
+            [actorId]: {
+              ...(liveMover ?? mover),
+              position: step,
+            },
+          },
+        },
+        events,
+      };
+    }
+
+    currentPos = step;
   }
 
-  if (totalCostFeet > state.turnBudget.movementRemainingFeet) {
-    throw new Error(
-      `Not enough movement remaining (requires ${totalCostFeet} ft, has ${state.turnBudget.movementRemainingFeet} ft)`,
-    );
-  }
-
-  let currentState = state;
-  const events: CombatEvent[] = [];
-
-  const finalPos = path[path.length - 1]!;
-  const nextBudget = spendMovement(state.turnBudget, totalCostFeet);
-
+  const finalPos = currentPos;
+  const nextBudget = spendMovement(state.turnBudget, costSoFar);
   const updatedMover: Combatant = {
-    ...mover,
+    ...currentState.combatants[actorId]!,
     position: finalPos,
   };
 
@@ -734,15 +873,6 @@ export function executeMoveCombatant(
     path,
     mode: 'walk',
   });
-
-  // Check and trigger hazard zones entered along path
-  let currentPos = mover.position;
-  for (const step of path) {
-    const hzMoveRes = triggerHazardZonesOnMove(currentState, actorId, currentPos, step);
-    currentState = hzMoveRes.state;
-    events.push(...hzMoveRes.events);
-    currentPos = step;
-  }
 
   return { state: currentState, events };
 }
