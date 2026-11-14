@@ -558,8 +558,12 @@ export type CombatEvent =
     }
   | {
       type: 'ENCOUNTER_VICTORY';
-      outcome: 'party_victory' | 'monsters_victory' | 'draw';
-      round: number;
+      outcome: 'party_victory' | 'monsters_victory' | 'draw' | string;
+      round?: number;
+      totalXp?: number;
+      xpAwarded?: number;
+      survivingHeroIds?: string[];
+      encounterId?: string;
     };
 
 /**

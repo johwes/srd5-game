@@ -15,3 +15,4 @@ export * from './validation/index.js';
 export * from './srd/index.js';
 export * from './compendium/index.js';
 export * from './pregens/index.js';
+export * from './campaigns/index.js';

@@ -10,3 +10,4 @@ export * from './equipment.js';
 export * from './spells.js';
 export * from './monsters.js';
 export * from './character.js';
+export * from './dungeon.js';

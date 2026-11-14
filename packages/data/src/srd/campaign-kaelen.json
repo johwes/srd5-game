@@ -1,0 +1,7340 @@
+{
+  "id": "sunken-crypt-of-kaelen",
+  "name": "The Sunken Crypt of Kaelen",
+  "description": "A curated 3-floor SRD 5.1 dungeon campaign module taking an adventurer party from Level 1 to Level 4. Explore the ruined watchtower, navigate the bone-lined ossuary, and descend into the flooded abyssal sanctum.",
+  "author": "SRD 5.1 Tactical Game Team",
+  "version": "1.0.0",
+  "levelRange": {
+    "min": 1,
+    "max": 4
+  },
+  "startingFloorId": "kaelen-floor-1",
+  "floors": [
+    {
+      "id": "kaelen-floor-1",
+      "name": "Floor 1: The Ruined Watchtower",
+      "width": 18,
+      "height": 16,
+      "partySpawnCells": [
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 3
+        }
+      ],
+      "cells": [
+        {
+          "x": 0,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "roomId": "f1_courtyard",
+          "terrain": "rubble",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 1,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 1,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 1,
+          "roomId": "f1_courtyard",
+          "terrain": "rubble",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 1,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 1,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 1,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 1,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 1,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 2,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 2,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 2,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 2,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 2,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 2,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 2,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 2,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 2,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 2,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 2,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 2,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 2,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 3,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 3,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 3,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 3,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 3,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 3,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 3,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 3,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 3,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 3,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 3,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 3,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 3,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 3,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 3,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 3,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 3,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 3,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 4,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 4,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 4,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 4,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 4,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 4,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 4,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 4,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 4,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 4,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 4,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 4,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 4,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 4,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 4,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 5,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 5,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 5,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 5,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 5,
+          "roomId": "f1_courtyard",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 5,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 5,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 5,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 5,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 5,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 5,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 5,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 5,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 5,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 6,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 6,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 6,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 6,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 6,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 6,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 6,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 6,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 6,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 7,
+          "roomId": "f1_barracks",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 7,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 7,
+          "roomId": "f1_trapped_hall",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 8,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 8,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 8,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 8,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 8,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 8,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 8,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 8,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 8,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 8,
+          "roomId": "f1_warren",
+          "terrain": "rubble",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 9,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 9,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 9,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 9,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 9,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 9,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 9,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 9,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 9,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 9,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 10,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 10,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 10,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 10,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 10,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 10,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 10,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 10,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 10,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 10,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 10,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 10,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 10,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 10,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 11,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 11,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 11,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 11,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 11,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 11,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 11,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 11,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 11,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 11,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 11,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 11,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 11,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 11,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 12,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 12,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 12,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 12,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 12,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 12,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 12,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 12,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 12,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 12,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 12,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 12,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 12,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 12,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 12,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 12,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 13,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 13,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 13,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 13,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 13,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 13,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 13,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 13,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 13,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 13,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 13,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 13,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 13,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 13,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 14,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 14,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 14,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 14,
+          "roomId": "f1_descent",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 14,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 14,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 14,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 14,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 14,
+          "roomId": "f1_armory",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 14,
+          "roomId": "f1_warren",
+          "terrain": "rubble",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 14,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 14,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 14,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 14,
+          "roomId": "f1_warren",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        }
+      ],
+      "props": [
+        {
+          "id": "door_f1_courtyard_barracks",
+          "x": 6,
+          "y": 3,
+          "kind": "door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true
+        },
+        {
+          "id": "door_f1_barracks_armory",
+          "x": 9,
+          "y": 7,
+          "kind": "door",
+          "state": "locked",
+          "blocksMovement": true,
+          "blocksSight": true,
+          "lockDc": 12
+        },
+        {
+          "id": "door_f1_barracks_hall",
+          "x": 12,
+          "y": 4,
+          "kind": "door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true
+        },
+        {
+          "id": "chest_f1_armory",
+          "x": 8,
+          "y": 13,
+          "kind": "chest",
+          "state": "locked",
+          "blocksMovement": true,
+          "blocksSight": false,
+          "lockDc": 12,
+          "lootTable": {
+            "sp": 80,
+            "gp": 35,
+            "items": [
+              "potion-of-greater-healing"
+            ]
+          }
+        },
+        {
+          "id": "trap_f1_dart",
+          "x": 14,
+          "y": 4,
+          "kind": "trap",
+          "state": "closed",
+          "blocksMovement": false,
+          "blocksSight": false,
+          "detectionDc": 13,
+          "disarmDc": 13,
+          "trapDamageFormula": "1d10",
+          "trapDamageType": "poison",
+          "trapSaveDc": 13,
+          "trapSaveAbility": "con",
+          "trapHalfDamageOnSave": false
+        },
+        {
+          "id": "door_f1_warren_descent",
+          "x": 11,
+          "y": 12,
+          "kind": "door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true
+        },
+        {
+          "id": "stairs_f1_down",
+          "x": 1,
+          "y": 12,
+          "kind": "stairs_down",
+          "state": "open",
+          "blocksMovement": false,
+          "blocksSight": false,
+          "targetFloorId": "kaelen-floor-2",
+          "targetSpawnPoint": {
+            "x": 2,
+            "y": 2
+          }
+        }
+      ],
+      "encounters": [
+        {
+          "id": "enc_f1_bandits",
+          "roomId": "f1_barracks",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "bandit",
+              "spawnX": 8,
+              "spawnY": 3
+            },
+            {
+              "monsterId": "bandit",
+              "spawnX": 9,
+              "spawnY": 5
+            }
+          ]
+        },
+        {
+          "id": "enc_f1_rats",
+          "roomId": "f1_armory",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "giant-rat",
+              "spawnX": 6,
+              "spawnY": 10
+            },
+            {
+              "monsterId": "giant-rat",
+              "spawnX": 7,
+              "spawnY": 12
+            },
+            {
+              "monsterId": "giant-rat",
+              "spawnX": 9,
+              "spawnY": 10
+            }
+          ]
+        },
+        {
+          "id": "enc_f1_kobolds",
+          "roomId": "f1_warren",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "kobold",
+              "spawnX": 13,
+              "spawnY": 10
+            },
+            {
+              "monsterId": "kobold",
+              "spawnX": 15,
+              "spawnY": 11
+            },
+            {
+              "monsterId": "kobold",
+              "spawnX": 14,
+              "spawnY": 13
+            }
+          ]
+        },
+        {
+          "id": "enc_f1_goblin_boss",
+          "roomId": "f1_descent",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "goblin-boss",
+              "spawnX": 3,
+              "spawnY": 12
+            },
+            {
+              "monsterId": "goblin",
+              "spawnX": 2,
+              "spawnY": 11
+            },
+            {
+              "monsterId": "goblin",
+              "spawnX": 2,
+              "spawnY": 13
+            }
+          ]
+        }
+      ],
+      "rooms": [
+        {
+          "id": "f1_courtyard",
+          "name": "Ruined Watchtower Courtyard",
+          "description": "Sunlight filters through collapsed rafters onto cracked flagstones overgrown with weeds.",
+          "isSafeRoom": false,
+          "lighting": "bright",
+          "bounds": {
+            "x": 1,
+            "y": 1,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "id": "f1_barracks",
+          "name": "Garrison Barracks",
+          "description": "Rotting wooden cots and overturned weapon racks provide shelter to ruthless bandits.",
+          "isSafeRoom": false,
+          "lighting": "dim",
+          "bounds": {
+            "x": 7,
+            "y": 1,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "id": "f1_armory",
+          "name": "Collapsed Armory Cellar",
+          "description": "A damp cellar reeking of vermin. Heavy iron chests sit beneath fallen stone arches.",
+          "isSafeRoom": false,
+          "lighting": "darkness",
+          "bounds": {
+            "x": 6,
+            "y": 8,
+            "width": 5,
+            "height": 7
+          }
+        },
+        {
+          "id": "f1_trapped_hall",
+          "name": "The Perilous Corridor",
+          "description": "Narrow stone passage with suspicious perforations in the masonry at ankle height.",
+          "isSafeRoom": false,
+          "lighting": "dim",
+          "bounds": {
+            "x": 13,
+            "y": 2,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "id": "f1_warren",
+          "name": "The Kobold Warren",
+          "description": "Crude scavenging nests, scorched earth, and makeshift barricades set by vigilant kobolds.",
+          "isSafeRoom": false,
+          "lighting": "dim",
+          "bounds": {
+            "x": 11,
+            "y": 8,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "id": "f1_descent",
+          "name": "The Crypt Descent Chamber",
+          "description": "An ancient vaulted stone chamber leading downward into the subterranean ossuary of Kaelen.",
+          "isSafeRoom": false,
+          "lighting": "darkness",
+          "bounds": {
+            "x": 1,
+            "y": 10,
+            "width": 5,
+            "height": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "kaelen-floor-2",
+      "name": "Floor 2: The Ossuary Halls",
+      "width": 18,
+      "height": 16,
+      "partySpawnCells": [
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 3
+        }
+      ],
+      "cells": [
+        {
+          "x": 0,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 1,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 1,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 1,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 1,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 1,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 1,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 1,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 1,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 1,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 1,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 1,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 1,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 2,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 2,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 2,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 2,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 2,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 2,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 2,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 2,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 2,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 2,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 2,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 2,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 2,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 3,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 3,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 3,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 3,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 3,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 3,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 3,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 3,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 3,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 3,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 3,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 3,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 3,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 3,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 3,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 3,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 3,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 3,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 4,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 4,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 4,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 4,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 4,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 4,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 4,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 4,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 4,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 4,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 4,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 4,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 4,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 4,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 5,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 5,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 5,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 5,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 5,
+          "roomId": "f2_landing",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 5,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 5,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 5,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 5,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 5,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 5,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 5,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 5,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 5,
+          "roomId": "f2_secret_reliquary",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 6,
+          "roomId": "f2_sentinels",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 6,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 7,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 7,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 7,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 7,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 7,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 7,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 7,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 7,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 7,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 7,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 7,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 7,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 7,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 7,
+          "roomId": "f2_feeding_pit",
+          "terrain": "rubble",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 8,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 8,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 8,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 8,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 8,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 8,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 8,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 8,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 8,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 8,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 8,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 8,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 8,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 8,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 8,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 8,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 9,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 9,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 9,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 9,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 9,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 9,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 9,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 9,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 9,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 9,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 9,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 9,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 9,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 9,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 10,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 10,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 10,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 10,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 10,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 10,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 10,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 10,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 10,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 10,
+          "roomId": "f2_vault",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 10,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 10,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 10,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 10,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 11,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 11,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 11,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 11,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 11,
+          "roomId": "f2_shrine",
+          "terrain": "floor_stone",
+          "baseLight": "bright",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 11,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 11,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 11,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 11,
+          "roomId": "f2_feeding_pit",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 12,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 13,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 14,
+          "roomId": "f2_high_ossuary",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        }
+      ],
+      "props": [
+        {
+          "id": "stairs_f2_up",
+          "x": 1,
+          "y": 2,
+          "kind": "stairs_up",
+          "state": "open",
+          "blocksMovement": false,
+          "blocksSight": false,
+          "targetFloorId": "kaelen-floor-1",
+          "targetSpawnPoint": {
+            "x": 1,
+            "y": 12
+          }
+        },
+        {
+          "id": "door_f2_landing_sentinels",
+          "x": 6,
+          "y": 3,
+          "kind": "door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true
+        },
+        {
+          "id": "door_f2_vault_shrine",
+          "x": 6,
+          "y": 8,
+          "kind": "door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true
+        },
+        {
+          "id": "shrine_f2_bless",
+          "x": 3,
+          "y": 9,
+          "kind": "shrine",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": false
+        },
+        {
+          "id": "door_f2_vault_feeding",
+          "x": 12,
+          "y": 8,
+          "kind": "door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true
+        },
+        {
+          "id": "door_f2_secret",
+          "x": 14,
+          "y": 6,
+          "kind": "secret_door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true,
+          "detectionDc": 14
+        },
+        {
+          "id": "chest_f2_reliquary",
+          "x": 14,
+          "y": 2,
+          "kind": "chest",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": false,
+          "lootTable": {
+            "sp": 200,
+            "gp": 100,
+            "items": [
+              "longsword-plus-1",
+              "scroll-of-fireball"
+            ]
+          }
+        },
+        {
+          "id": "door_f2_feeding_ossuary",
+          "x": 14,
+          "y": 12,
+          "kind": "door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true
+        },
+        {
+          "id": "stairs_f2_down",
+          "x": 4,
+          "y": 13,
+          "kind": "stairs_down",
+          "state": "open",
+          "blocksMovement": false,
+          "blocksSight": false,
+          "targetFloorId": "kaelen-floor-3",
+          "targetSpawnPoint": {
+            "x": 2,
+            "y": 2
+          }
+        }
+      ],
+      "encounters": [
+        {
+          "id": "enc_f2_skeletons",
+          "roomId": "f2_sentinels",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "skeleton",
+              "spawnX": 8,
+              "spawnY": 2
+            },
+            {
+              "monsterId": "skeleton",
+              "spawnX": 9,
+              "spawnY": 4
+            },
+            {
+              "monsterId": "skeleton",
+              "spawnX": 10,
+              "spawnY": 3
+            }
+          ]
+        },
+        {
+          "id": "enc_f2_zombies",
+          "roomId": "f2_vault",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "zombie",
+              "spawnX": 8,
+              "spawnY": 8
+            },
+            {
+              "monsterId": "zombie",
+              "spawnX": 9,
+              "spawnY": 9
+            },
+            {
+              "monsterId": "zombie",
+              "spawnX": 10,
+              "spawnY": 8
+            }
+          ]
+        },
+        {
+          "id": "enc_f2_ghouls",
+          "roomId": "f2_feeding_pit",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "ghoul",
+              "spawnX": 14,
+              "spawnY": 9
+            },
+            {
+              "monsterId": "ghoul",
+              "spawnX": 15,
+              "spawnY": 8
+            }
+          ]
+        },
+        {
+          "id": "enc_f2_wight",
+          "roomId": "f2_high_ossuary",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "wight",
+              "spawnX": 9,
+              "spawnY": 13
+            },
+            {
+              "monsterId": "skeleton",
+              "spawnX": 7,
+              "spawnY": 13
+            },
+            {
+              "monsterId": "skeleton",
+              "spawnX": 12,
+              "spawnY": 13
+            }
+          ]
+        }
+      ],
+      "rooms": [
+        {
+          "id": "f2_landing",
+          "name": "Upper Landing & Crypt Antechamber",
+          "description": "Chilly drafts rise from subterranean depths. Dusty stone steps lead up to the watchtower ruins.",
+          "isSafeRoom": false,
+          "lighting": "dim",
+          "bounds": {
+            "x": 1,
+            "y": 1,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "id": "f2_sentinels",
+          "name": "Tomb of the Sentinels",
+          "description": "Rows of stone sarcophagi line the walls. Skeletal guardians clutch rusted shortswords.",
+          "isSafeRoom": false,
+          "lighting": "darkness",
+          "bounds": {
+            "x": 7,
+            "y": 1,
+            "width": 5,
+            "height": 6
+          }
+        },
+        {
+          "id": "f2_vault",
+          "name": "The Plague Vault",
+          "description": "The stench of ancient rot hangs thick in the air. Shambling dead lurk in the shadows.",
+          "isSafeRoom": false,
+          "lighting": "darkness",
+          "bounds": {
+            "x": 6,
+            "y": 7,
+            "width": 7,
+            "height": 4
+          }
+        },
+        {
+          "id": "f2_shrine",
+          "name": "The Sanctified Shrine",
+          "description": "A consecrated sanctuary bathed in divine radiance. Undead cannot cross the consecrated threshold.",
+          "isSafeRoom": true,
+          "lighting": "bright",
+          "bounds": {
+            "x": 1,
+            "y": 7,
+            "width": 5,
+            "height": 5
+          }
+        },
+        {
+          "id": "f2_feeding_pit",
+          "name": "The Ghoul Feeding Pit",
+          "description": "Gnawed bones litter the floor around a dark depression. Feral eyes watch from the gloom.",
+          "isSafeRoom": false,
+          "lighting": "darkness",
+          "bounds": {
+            "x": 13,
+            "y": 7,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "id": "f2_secret_reliquary",
+          "name": "Secret Reliquary of Kaelen",
+          "description": "A dustless hidden chamber containing the revered weapons and scrolls of the founding knights.",
+          "isSafeRoom": false,
+          "lighting": "dim",
+          "bounds": {
+            "x": 13,
+            "y": 1,
+            "width": 4,
+            "height": 5
+          }
+        },
+        {
+          "id": "f2_high_ossuary",
+          "name": "High Ossuary of the Wight",
+          "description": "Pillars carved from ossified bone support a soaring vaulted ceiling where an ancient dread lord holds court.",
+          "isSafeRoom": false,
+          "lighting": "darkness",
+          "bounds": {
+            "x": 4,
+            "y": 12,
+            "width": 12,
+            "height": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "kaelen-floor-3",
+      "name": "Floor 3: The Submerged Sanctum",
+      "width": 18,
+      "height": 16,
+      "partySpawnCells": [
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 3
+        }
+      ],
+      "cells": [
+        {
+          "x": 0,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 0,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 1,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 1,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 1,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 1,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 1,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 1,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 1,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 1,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 2,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 2,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 2,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 2,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 2,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 2,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 2,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 2,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 2,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 2,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 2,
+          "roomId": "f3_ritual",
+          "terrain": "water_shallow",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 2,
+          "roomId": "f3_ritual",
+          "terrain": "water_shallow",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 2,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 2,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 3,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 3,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 3,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 3,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 3,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 3,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 3,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 3,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 3,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 3,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 3,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 3,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 3,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 3,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 3,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 3,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 3,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 3,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 4,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 4,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 4,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 4,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 4,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 4,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 4,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 4,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 4,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 4,
+          "roomId": "f3_gallery",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 4,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 4,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 4,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 4,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 4,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 5,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 5,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 5,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 5,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 5,
+          "roomId": "f3_entry",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 5,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 5,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 5,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 5,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 5,
+          "roomId": "f3_gallery",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 5,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 5,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 5,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 5,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 5,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 6,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 6,
+          "roomId": "f3_ritual",
+          "terrain": "water_shallow",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 6,
+          "roomId": "f3_ritual",
+          "terrain": "water_shallow",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 6,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 6,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 7,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 7,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 7,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 7,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 7,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 8,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 8,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 8,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 8,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 8,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 9,
+          "roomId": "f3_ritual",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 9,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 10,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 10,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 11,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 11,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 12,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 12,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "water_shallow",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 13,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 13,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 14,
+          "roomId": "f3_sanctum",
+          "terrain": "floor_stone",
+          "baseLight": "darkness",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 14,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 0,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 1,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 2,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 3,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 4,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 5,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 6,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 7,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 8,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 9,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 10,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 11,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 12,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 13,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 14,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 15,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 16,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        },
+        {
+          "x": 17,
+          "y": 15,
+          "terrain": "wall_solid",
+          "baseLight": "dim",
+          "elevationFeet": 0
+        }
+      ],
+      "props": [
+        {
+          "id": "stairs_f3_up",
+          "x": 1,
+          "y": 2,
+          "kind": "stairs_up",
+          "state": "open",
+          "blocksMovement": false,
+          "blocksSight": false,
+          "targetFloorId": "kaelen-floor-2",
+          "targetSpawnPoint": {
+            "x": 4,
+            "y": 13
+          }
+        },
+        {
+          "id": "door_f3_gallery_ritual",
+          "x": 12,
+          "y": 3,
+          "kind": "door",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": true
+        },
+        {
+          "id": "door_f3_boss_chamber",
+          "x": 14,
+          "y": 9,
+          "kind": "door",
+          "state": "locked",
+          "blocksMovement": true,
+          "blocksSight": true,
+          "lockDc": 14
+        },
+        {
+          "id": "chest_f3_dragon_hoard",
+          "x": 3,
+          "y": 12,
+          "kind": "chest",
+          "state": "closed",
+          "blocksMovement": true,
+          "blocksSight": false,
+          "lootTable": {
+            "sp": 500,
+            "gp": 600,
+            "pp": 25,
+            "items": [
+              "ring-of-protection",
+              "cloak-of-protection",
+              "potion-of-greater-healing"
+            ]
+          }
+        }
+      ],
+      "encounters": [
+        {
+          "id": "enc_f3_cube",
+          "roomId": "f3_gallery",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "gelatinous-cube",
+              "spawnX": 8,
+              "spawnY": 3
+            }
+          ]
+        },
+        {
+          "id": "enc_f3_cultists",
+          "roomId": "f3_ritual",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "cult-fanatic",
+              "spawnX": 15,
+              "spawnY": 4
+            },
+            {
+              "monsterId": "cultist",
+              "spawnX": 14,
+              "spawnY": 3
+            },
+            {
+              "monsterId": "cultist",
+              "spawnX": 14,
+              "spawnY": 5
+            },
+            {
+              "monsterId": "cultist",
+              "spawnX": 15,
+              "spawnY": 6
+            }
+          ]
+        },
+        {
+          "id": "enc_f3_boss",
+          "roomId": "f3_sanctum",
+          "triggered": false,
+          "monsters": [
+            {
+              "monsterId": "young-black-dragon",
+              "spawnX": 9,
+              "spawnY": 12
+            }
+          ]
+        }
+      ],
+      "rooms": [
+        {
+          "id": "f3_entry",
+          "name": "Submerged Landing",
+          "description": "Black water laps gently against ancient mossy stairs leading up into the ossuary.",
+          "isSafeRoom": false,
+          "lighting": "dim",
+          "bounds": {
+            "x": 1,
+            "y": 1,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "id": "f3_gallery",
+          "name": "The Flooded Gallery",
+          "description": "A waist-deep flooded corridor where a translucent predator dissolves debris in the sluggish current.",
+          "isSafeRoom": false,
+          "lighting": "darkness",
+          "bounds": {
+            "x": 7,
+            "y": 2,
+            "width": 6,
+            "height": 4
+          }
+        },
+        {
+          "id": "f3_ritual",
+          "name": "The Abyssal Ritual Chamber",
+          "description": "Green braziers flicker over stone altars as fanatic cultists chant unholy invocations.",
+          "isSafeRoom": false,
+          "lighting": "dim",
+          "bounds": {
+            "x": 13,
+            "y": 1,
+            "width": 4,
+            "height": 9
+          }
+        },
+        {
+          "id": "f3_sanctum",
+          "name": "The Dragon's Sunken Lair",
+          "description": "A cavernous flooded temple sunken beneath the earth, lair of the dreaded Young Black Dragon.",
+          "isSafeRoom": false,
+          "lighting": "darkness",
+          "bounds": {
+            "x": 1,
+            "y": 10,
+            "width": 16,
+            "height": 5
+          }
+        }
+      ]
+    }
+  ]
+}
