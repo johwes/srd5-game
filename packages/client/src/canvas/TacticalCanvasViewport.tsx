@@ -5,6 +5,7 @@ import { createSceneGraph } from './layers/SceneGraph.js';
 import { TerrainTileRenderer } from './layers/TerrainTileLayer.js';
 import { CreatureTokenRenderer } from './layers/CreatureTokenLayer.js';
 import { FloatingTextRenderer } from './layers/FloatingTextLayer.js';
+import { PathAndAoeRenderer } from './layers/PathAndAoeLayer.js';
 import {
   DEFAULT_CELL_SIZE,
   DEFAULT_ZOOM,
@@ -37,6 +38,12 @@ export function TacticalCanvasViewport({
   showConditionBadges = true,
   showTokenFacing = true,
   showTokenNames = true,
+  pathPreview = null,
+  enableHoverPathPreview = true,
+  activeAoeTemplate = null,
+  targetingRay = null,
+  attackBonus,
+  targetingMode = 'none',
   onCellHover,
   onCellClick,
   onCombatantHover,
@@ -87,6 +94,7 @@ export function TacticalCanvasViewport({
   const terrainRendererRef = useRef<TerrainTileRenderer | null>(null);
   const tokenRendererRef = useRef<CreatureTokenRenderer | null>(null);
   const floatingTextRendererRef = useRef<FloatingTextRenderer | null>(null);
+  const pathAndAoeRendererRef = useRef<PathAndAoeRenderer | null>(null);
 
   // Drag pan tracking
   const dragRef = useRef<{
@@ -159,6 +167,9 @@ export function TacticalCanvasViewport({
         const floatingTextRenderer = new FloatingTextRenderer(sceneGraph.floatingTextLayer);
         floatingTextRendererRef.current = floatingTextRenderer;
 
+        const pathAndAoeRenderer = new PathAndAoeRenderer(sceneGraph.pathAoeLayer);
+        pathAndAoeRendererRef.current = pathAndAoeRenderer;
+
         tokenRenderer.onTokenClick = (tokenId) => {
           onCombatantClick?.(tokenId);
         };
@@ -186,6 +197,10 @@ export function TacticalCanvasViewport({
 
     return () => {
       isMounted = false;
+      if (pathAndAoeRendererRef.current) {
+        pathAndAoeRendererRef.current.destroy();
+        pathAndAoeRendererRef.current = null;
+      }
       if (tokenRendererRef.current) {
         tokenRendererRef.current.destroy();
         tokenRendererRef.current = null;
@@ -261,6 +276,105 @@ export function TacticalCanvasViewport({
     showConditionBadges,
     showTokenFacing,
     showTokenNames,
+    pixiReady,
+  ]);
+
+  // Update Interactive Overlays (Path preview, AOE templates, Targeting rays)
+  useEffect(() => {
+    if (!pathAndAoeRendererRef.current) return;
+    const renderer = pathAndAoeRendererRef.current;
+
+    // 1. Path Preview: Explicit prop or dynamic hover path preview
+    let effectivePathPreview = pathPreview;
+    if (
+      !effectivePathPreview &&
+      enableHoverPathPreview &&
+      activeCombatantId &&
+      activeHoveredCell &&
+      combatants
+    ) {
+      const combatantList = Array.isArray(combatants)
+        ? combatants
+        : Object.values(combatants);
+      const activeCombatant = combatantList.find((c) => c.id === activeCombatantId);
+      if (
+        activeCombatant &&
+        (activeCombatant.position.x !== activeHoveredCell.x ||
+          activeCombatant.position.y !== activeHoveredCell.y)
+      ) {
+        effectivePathPreview = {
+          mover: activeCombatant,
+          destination: activeHoveredCell,
+          grid,
+          creatures: combatantList,
+        };
+      }
+    }
+
+    if (effectivePathPreview) {
+      renderer.renderPath(effectivePathPreview, cellSize);
+    } else {
+      renderer.clearPath();
+    }
+
+    // 2. AOE Template
+    let effectiveAoe = activeAoeTemplate;
+    if (effectiveAoe && !effectiveAoe.cursor && activeHoveredCell) {
+      effectiveAoe = {
+        ...effectiveAoe,
+        cursor: activeHoveredCell,
+      };
+    }
+    if (effectiveAoe) {
+      renderer.renderAoe(effectiveAoe, cellSize);
+    } else {
+      renderer.clearAoe();
+    }
+
+    // 3. Targeting Ray & Cover
+    let effectiveTargetingRay = targetingRay;
+    if (
+      !effectiveTargetingRay &&
+      targetingMode === 'attack' &&
+      selectedCombatantId &&
+      hoveredCombatantId &&
+      combatants
+    ) {
+      const combatantList = Array.isArray(combatants)
+        ? combatants
+        : Object.values(combatants);
+      const attacker = combatantList.find((c) => c.id === selectedCombatantId);
+      const target = combatantList.find((c) => c.id === hoveredCombatantId);
+      if (attacker && target && attacker.id !== target.id) {
+        effectiveTargetingRay = {
+          attacker,
+          target,
+          grid,
+          obstacles: combatantList,
+          attackBonus,
+        };
+      }
+    }
+
+    if (effectiveTargetingRay) {
+      renderer.renderTargetingRay(effectiveTargetingRay, cellSize);
+    } else {
+      renderer.clearTargetingRay();
+    }
+  }, [
+    pathPreview,
+    enableHoverPathPreview,
+    activeAoeTemplate,
+    targetingRay,
+    attackBonus,
+    targetingMode,
+    activeCombatantId,
+    selectedCombatantId,
+    hoveredCombatantId,
+    activeHoveredCell,
+    combatants,
+    grid,
+    cellSize,
     pixiReady,
   ]);
 

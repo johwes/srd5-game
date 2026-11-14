@@ -1,6 +1,20 @@
 import type { Container } from 'pixi.js';
 import type { ConditionId, CreatureSize } from '@srd5/data';
-import type { CombatantSide, GridCell, TacticalGrid, TileTerrainType } from '@srd5/engine';
+import type {
+  AoeShape,
+  CardinalFacing,
+  CombatantSide,
+  CoverLevel,
+  CoverResult,
+  GridCell,
+  GridCreature,
+  GridPoint,
+  PathfindingResult,
+  PathStep,
+  TacticalGrid,
+  TileTerrainType,
+  VisionCreature,
+} from '@srd5/engine';
 import type { GameEvent, PlayerViewCell, PlayerViewCombatant, PlayerViewGrid } from '@srd5/transport';
 
 /**
@@ -186,6 +200,66 @@ export interface TerrainRenderOptions {
 }
 
 /**
+ * Options for configuring movement path previews and Opportunity Attack warnings.
+ */
+export interface PathPreviewOptions {
+  mover: GridCreature | CreatureTokenData | PlayerViewCombatant;
+  destination: Point;
+  grid: CanvasGridInput;
+  creatures?: ReadonlyArray<GridCreature | CreatureTokenData | PlayerViewCombatant>;
+  movementRemainingFeet?: number;
+  dashBonusFeet?: number;
+  isDisengaged?: boolean;
+  precomputedResult?: PathfindingResult;
+  showOpportunityAttacks?: boolean;
+  showDestinationBadge?: boolean;
+}
+
+/**
+ * Options for configuring AOE spell and ability targeting templates.
+ */
+export interface AoeOverlayOptions {
+  shape: AoeShape;
+  cursor: Point;
+  cursorIsWorldCoords?: boolean;
+  casterPosition?: Point;
+  casterSize?: CreatureSize;
+  radiusFeet?: number;
+  lengthFeet?: number;
+  widthFeet?: number;
+  sideFeet?: number;
+  facing?: CardinalFacing;
+  grid?: CanvasGridInput;
+  creatures?: ReadonlyArray<GridCreature | CreatureTokenData | PlayerViewCombatant>;
+  color?: number;
+  alpha?: number;
+}
+
+/**
+ * Options for configuring Line of Sight and Cover targeting rays.
+ */
+export interface TargetingRayOptions {
+  attacker: VisionCreature | CreatureTokenData | PlayerViewCombatant;
+  target: VisionCreature | CreatureTokenData | PlayerViewCombatant;
+  grid: CanvasGridInput;
+  obstacles?: ReadonlyArray<VisionCreature | CreatureTokenData | PlayerViewCombatant>;
+  attackBonus?: number;
+  targetAc?: number;
+  showAllRays?: boolean;
+  precomputedCover?: CoverResult;
+}
+
+/**
+ * Combined options for PathAndAoeLayer rendering.
+ */
+export interface InteractiveOverlayOptions {
+  cellSize: number;
+  pathPreview?: PathPreviewOptions | null;
+  aoeTemplate?: AoeOverlayOptions | null;
+  targetingRay?: TargetingRayOptions | null;
+}
+
+/**
  * Props for the TacticalCanvasViewport React component.
  */
 export interface TacticalCanvasViewportProps {
@@ -206,6 +280,12 @@ export interface TacticalCanvasViewportProps {
   showConditionBadges?: boolean;
   showTokenFacing?: boolean;
   showTokenNames?: boolean;
+  pathPreview?: PathPreviewOptions | null;
+  enableHoverPathPreview?: boolean;
+  activeAoeTemplate?: AoeOverlayOptions | null;
+  targetingRay?: TargetingRayOptions | null;
+  attackBonus?: number;
+  targetingMode?: 'move' | 'aoe' | 'attack' | 'none';
   onCellHover?: (cell: Point | null) => void;
   onCellClick?: (cell: Point, button: number) => void;
   onCombatantHover?: (combatantId: string | null) => void;

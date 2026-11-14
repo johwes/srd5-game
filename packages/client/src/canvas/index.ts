@@ -4,4 +4,5 @@ export * from './layers/SceneGraph.js';
 export * from './layers/TerrainTileLayer.js';
 export * from './layers/CreatureTokenLayer.js';
 export * from './layers/FloatingTextLayer.js';
+export * from './layers/PathAndAoeLayer.js';
 export * from './TacticalCanvasViewport.js';
