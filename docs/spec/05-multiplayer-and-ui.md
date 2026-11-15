@@ -169,25 +169,30 @@ flowchart LR
     DungeonLaunch --> TacticalView
 ```
 
-### 4.1 Tactical Gameplay HUD Layout
+### 4.1 Tactical Gameplay HUD Layout (Full-Bleed Viewport & Floating BG3-Style Dock)
+
+To maximize visible map real estate on handhelds (Steam Deck 1280×800) and desktop displays, the tactical board uses a **full-bleed canvas architecture**:
+- The PixiJS 2D canvas renders edge-to-edge across 100% of the screen (`inset-0`).
+- All HUD widgets float over the canvas with frosted-glass backdrops (`backdrop-blur-md bg-slate-950/80`).
+- The bottom hotbar is docked as a compact, slot-based icon strip ($\le 90\text{px}$ height) modeled after *Baldur's Gate 3*:
 
 ```text
 +-----------------------------------------------------------------------------------+
-| [Menu] Floor 1: Ruined Watchtower     [Initiative Ribbon: Hero1 > Gob1 > Hero2]   |
+| [⚙️ Menu]         [ 🛡️ Turn 1 · Valeros (18) -> Goblin 1 (14) -> Kyra (11) ]       |  <-- Floating Initiative Strip (Top-Center)
 |                                                                                   |
 | +----------+                                                       +------------+ |
 | | Party    |                                                       | Combat Log | |
-| | Portraits|                                                       | & Dice     | |
+| | Portraits|                    100% FULL-BLEED                    | & Dice     | |
 | | - Hero 1 |            PixiJS 2D Tactical Dungeon Canvas          | Inspector  | |
-| | - Hero 2 |             (5-ft Grid, Tokens, LoS, AOE)             | (Hover any | |
-| | - Hero 3 |                                                       |  roll for  | |
-| | - Hero 4 |                                                       |  breakdown)| |
-| +----------+                                                       +------------+ |
+| | - Hero 2 |             (5-ft Grid, Tokens, LoS, AOE)             | (Collapsible| |
+| | - Hero 3 |                                                       |  Floating) | |
+| | - Hero 4 |                                                       +------------+ |
+| +----------+                                                                      |
 |                                                                                   |
-| +-------------------------------------------------------------------------------+ |
-| | Active Hero Portrait | HP 24/24 | AC 18 | [Action ●] [Bonus ●] [React ●] 30ft | |
-| | [Attack] [Spells] [Class Features] [Standard Actions] [Items]   [ End Turn >> ]| |
-| +-------------------------------------------------------------------------------+ |
+|          +-------------------------------------------------------------+          |
+|          | 🛡️ [HP 24/24] [AC 18] [30ft]   ●Action  ●Bonus  ●React      |          |  <-- Docked BG3-Style Hotbar
+|          | [⚔️ Sword] [🏹 Bow] [✨ Spell I] [✨ Spell II] [ End Turn >> ] |          |      (Compact ~85px Height)
+|          +-------------------------------------------------------------+          |
 +-----------------------------------------------------------------------------------+
 ```
 

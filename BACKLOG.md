@@ -149,6 +149,7 @@ flowchart LR
 | **SRD-604** | `[x]` | Build Universal In-Game Pause / System Menu (`PauseMenuModal.tsx`) with `Esc` toggle, Quicksave/Load, Settings, and Exit to Title | `@srd5/client` | SRD-507, SRD-601 |
 | **SRD-605** | `[x]` | Build automated Playwright E2E suite verifying the complete New Game creation & launch flow across all 3 game modes at 1280×800 resolution | `@srd5/client` | SRD-602, SRD-603, SRD-604 |
 | **SRD-606** | `[ ]` | Implement Configurable Friendly Fire Ruleset & AOE Targeting Filter (`friendlyFireEnabled`) | `@srd5/engine`, `@srd5/client` | SRD-306, SRD-602 |
+| **SRD-607** | `[ ]` | Refactor Tactical Viewport to Full-Bleed Canvas with BG3-Style Docked Action Hotbar | `@srd5/client` | SRD-406, SRD-605 |
 
 ### Epic 6 Acceptance Criteria Details
 - [x] **SRD-601**: App launch defaults to `TitleMenuView` with CRPG dark-fantasy aesthetic, animated torchlight/vignette styling, active save detection ("Continue" enabled with floor/party info), Character Vault, Compendium, Settings, and statutory CC-BY-4.0 attribution modal.
@@ -157,6 +158,7 @@ flowchart LR
 - [x] **SRD-604**: Pressing `Esc` or clicking the system gear icon in any gameplay mode opens `PauseMenuModal` to resume, quicksave to IndexedDB, load a saved slot, inspect party sheets, or return to the main menu with unsaved progress confirmation.
 - [x] **SRD-605**: Playwright automated suite runs headlessly, navigates from Title Screen through New Game wizard, populates party, launches each game mode (Campaign, Deep Descent, Arena), and verifies zero UI clipping or console errors at 1280×800 (Steam Deck) resolution.
 - [ ] **SRD-606**: Unit tests in `@srd5/engine` verify that casting offensive AOE spells (*Fireball*, *Burning Hands*) with `friendlyFireEnabled: false` only damages hostile enemies and excludes party allies from saving throws and damage. Campaign setup wizard and difficulty presets correctly configure `friendlyFireEnabled` (false for Explorer, true for Standard/Tactician) with toggle in custom rules drawer.
+- [ ] **SRD-607**: Refactor `TacticalCombatHud` and `ActionHotbar` to a full-bleed canvas architecture where the PixiJS canvas renders 100% edge-to-edge (`inset-0`). The top bar is replaced with a floating top-center Initiative Ribbon pill; the bottom hotbar is replaced with a compact BG3-style docked icon grid ($\le 90\text{px}$ height) with 40×40px action slots, action/bonus economy pips, upward floating hover tooltips, and dedicated End Turn CTA. Verified at 1280×800 (Steam Deck) leaving $\ge 85\%$ vertical screen space for the tactical map.
 
 ---
 
