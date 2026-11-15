@@ -118,20 +118,30 @@ export function TacticalCombatHud({
   return (
     <div
       data-testid="tactical-combat-hud"
-      className={`relative flex flex-col w-full flex-1 min-h-[460px] bg-slate-950 text-slate-100 overflow-hidden select-none font-sans ${className}`}
+      className={`relative w-full h-full min-h-[460px] bg-slate-950 text-slate-100 overflow-hidden select-none font-sans ${className}`}
     >
-      {/* Top Header Bar */}
+      {/* 1. Full-Bleed 100% Interactive Grid / Canvas Area */}
+      <div
+        data-testid="combat-hud-viewport-container"
+        className={`absolute inset-0 z-0 w-full h-full overflow-hidden ${
+          children ? 'bg-slate-950 pointer-events-auto' : 'bg-transparent pointer-events-none'
+        }`}
+      >
+        {children}
+      </div>
+
+      {/* 2. Floating Top Header Pill Overlay */}
       <header
         data-testid="combat-hud-header"
-        className="flex items-center justify-between gap-3 px-3 py-2 bg-slate-950/90 border-b border-slate-800 backdrop-blur-md z-30 shrink-0"
+        className="absolute top-2 inset-x-2 sm:inset-x-3 z-30 flex items-center justify-between gap-2 pointer-events-none"
       >
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 pointer-events-auto bg-slate-950/85 backdrop-blur-md border border-slate-800/80 rounded-xl px-2.5 py-1.5 shadow-lg">
           {onToggleMenu && (
             <button
               type="button"
               data-testid={menuButtonTestId ?? "combat-hud-menu-btn"}
               onClick={onToggleMenu}
-              className="px-2.5 py-1.5 rounded-md bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+              className="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
             >
               {menuButtonText ?? '☰ Menu'}
             </button>
@@ -141,7 +151,7 @@ export function TacticalCombatHud({
             <div className="flex items-center gap-2">
               <h2
                 data-testid="combat-hud-title"
-                className="text-sm sm:text-base font-extrabold tracking-tight text-amber-400"
+                className="text-xs sm:text-sm font-extrabold tracking-tight text-amber-400"
               >
                 {title}
               </h2>
@@ -150,7 +160,7 @@ export function TacticalCombatHud({
             {subtitle && (
               <span
                 data-testid="combat-hud-subtitle"
-                className="text-[11px] text-slate-400"
+                className="text-[10px] text-slate-400 hidden sm:inline"
               >
                 {subtitle}
               </span>
@@ -158,9 +168,9 @@ export function TacticalCombatHud({
           </div>
         </div>
 
-        {/* Initiative Ribbon in Header */}
+        {/* Initiative Ribbon in Floating Pill */}
         {combat ? (
-          <div className="flex-1 max-w-4xl flex items-center justify-end gap-3">
+          <div className="pointer-events-auto flex items-center gap-2 bg-slate-950/85 backdrop-blur-md border border-slate-800/80 rounded-xl px-2.5 py-1 shadow-lg max-w-4xl">
             <InitiativeRibbon
               round={combat.round}
               phase={combat.phase}
@@ -205,97 +215,90 @@ export function TacticalCombatHud({
             </div>
           </div>
         ) : (
-          <div className="text-xs text-slate-500 italic">No combat in progress</div>
+          <div className="pointer-events-auto text-xs text-slate-500 italic bg-slate-950/85 px-2.5 py-1 rounded-xl border border-slate-800/80">
+            No combat in progress
+          </div>
         )}
       </header>
 
-      {/* Middle Interactive Grid / Canvas Area with Floating HUD Sidebars */}
-      <div className="relative flex-1 flex overflow-hidden">
-        {/* Left Floating Party Portraits Panel */}
-        <div className="absolute top-3 left-3 z-20 pointer-events-auto">
-          <PartyPortraits
-            party={viewState.party}
-            activeCombatantId={activeCombatantId}
-            selectedCombatantId={selectedCombatantId}
-            onSelectPartyMember={handleSelectCombatant}
-            onOpenCharacterSheet={onOpenCharacterSheet}
-            onLevelUpCharacter={onLevelUpCharacter}
-            collapsed={isPartyCollapsed}
-            onToggleCollapse={() => setIsPartyCollapsed(!isPartyCollapsed)}
-          />
-        </div>
-
-        {/* Center Viewport / Canvas Container */}
-        <div
-          data-testid="combat-hud-viewport-container"
-          className="relative flex-1 w-full h-full bg-slate-950"
-        >
-          {children}
-        </div>
-
-        {/* Right Panel Slot (Custom or default Combat Log & Dice Tray) */}
-        {rightPanel ? (
-          <div
-            data-testid="combat-hud-right-panel"
-            className="absolute top-3 right-3 z-20 pointer-events-auto max-h-[calc(100%-24px)] flex flex-col"
-          >
-            {rightPanel}
-          </div>
-        ) : (internalShowLog || internalShowDiceTray) && (
-          <div
-            data-testid="combat-hud-right-panel"
-            className="absolute top-3 right-3 z-20 pointer-events-auto w-72 sm:w-80 max-h-[calc(100%-24px)] flex flex-col gap-2.5 overflow-hidden shadow-2xl"
-          >
-            {internalShowDiceTray && (
-              <AnimatedDiceTray
-                activeRoll={currentActiveRoll}
-                rollHistory={rollHistory}
-                onSelectHistoryRoll={(roll) => setInspectedRoll(roll)}
-                onToggleCollapse={() => setInternalShowDiceTray(false)}
-              />
-            )}
-
-            {internalShowLog && (
-              <CombatLog
-                events={events}
-                combatants={viewState.combatants}
-                onClearLog={onClearLog}
-                onInspectRoll={handleInspectRoll}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Reaction Interrupt Modal (Spec 03 Section 5.2 / Spec 05 Section 4.2) */}
-        {pendingReactionPrompt && (
-          <ReactionInterruptModal
-            prompt={pendingReactionPrompt}
-            reactorCombatant={reactorEntity}
-            onResolve={(decision) => {
-              if (onResolveReaction) {
-                onResolveReaction(decision);
-              }
-            }}
-          />
-        )}
+      {/* 3. Left Floating Party Portraits Panel */}
+      <div className="absolute top-14 left-2 sm:left-3 z-20 pointer-events-auto">
+        <PartyPortraits
+          party={viewState.party}
+          activeCombatantId={activeCombatantId}
+          selectedCombatantId={selectedCombatantId}
+          onSelectPartyMember={handleSelectCombatant}
+          onOpenCharacterSheet={onOpenCharacterSheet}
+          onLevelUpCharacter={onLevelUpCharacter}
+          collapsed={isPartyCollapsed}
+          onToggleCollapse={() => setIsPartyCollapsed(!isPartyCollapsed)}
+        />
       </div>
 
-      {/* Bottom Action Hotbar */}
-      <div className="z-30 shrink-0">
-        <ActionHotbar
-          activeCombatant={activeCombatant}
-          turnBudget={combat?.turnBudget ?? null}
-          compendium={compendium}
-          combatants={viewState.combatants}
-          selectedCombatantId={selectedCombatantId}
-          isPlayerControlled={isPlayerControlled}
-          onDeclareAttack={onDeclareAttack}
-          onCastSpell={onCastSpell}
-          onUseClassFeature={onUseClassFeature}
-          onStandardAction={onStandardAction}
-          onUseItem={onUseItem}
-          onEndTurn={onEndTurn}
+      {/* 4. Right Panel Slot (Custom or default Combat Log & Dice Tray) */}
+      {rightPanel ? (
+        <div
+          data-testid="combat-hud-right-panel"
+          className="absolute top-14 right-2 sm:right-3 z-20 pointer-events-auto max-h-[calc(100%-190px)] flex flex-col"
+        >
+          {rightPanel}
+        </div>
+      ) : (internalShowLog || internalShowDiceTray) && (
+        <div
+          data-testid="combat-hud-right-panel"
+          className="absolute top-14 right-2 sm:right-3 z-20 pointer-events-auto w-72 sm:w-80 max-h-[calc(100%-190px)] flex flex-col gap-2.5 overflow-hidden shadow-2xl"
+        >
+          {internalShowDiceTray && (
+            <AnimatedDiceTray
+              activeRoll={currentActiveRoll}
+              rollHistory={rollHistory}
+              onSelectHistoryRoll={(roll) => setInspectedRoll(roll)}
+              onToggleCollapse={() => setInternalShowDiceTray(false)}
+            />
+          )}
+
+          {internalShowLog && (
+            <CombatLog
+              events={events}
+              combatants={viewState.combatants}
+              onClearLog={onClearLog}
+              onInspectRoll={handleInspectRoll}
+            />
+          )}
+        </div>
+      )}
+
+      {/* 5. Reaction Interrupt Modal */}
+      {pendingReactionPrompt && (
+        <ReactionInterruptModal
+          prompt={pendingReactionPrompt}
+          reactorCombatant={reactorEntity}
+          onResolve={(decision) => {
+            if (onResolveReaction) {
+              onResolveReaction(decision);
+            }
+          }}
         />
+      )}
+
+      {/* 6. Floating Docked Bottom Action Hotbar */}
+      <div className="absolute bottom-2 inset-x-2 sm:inset-x-4 z-30 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto max-w-5xl w-full">
+          <ActionHotbar
+            activeCombatant={activeCombatant}
+            turnBudget={combat?.turnBudget ?? null}
+            compendium={compendium}
+            combatants={viewState.combatants}
+            selectedCombatantId={selectedCombatantId}
+            isPlayerControlled={isPlayerControlled}
+            onDeclareAttack={onDeclareAttack}
+            onCastSpell={onCastSpell}
+            onUseClassFeature={onUseClassFeature}
+            onStandardAction={onStandardAction}
+            onUseItem={onUseItem}
+            onEndTurn={onEndTurn}
+          />
+        </div>
       </div>
     </div>
   );

@@ -749,6 +749,7 @@ export function DungeonView({
       {/* Tactical Combat HUD (Active during Tactical Combat Mode) */}
       {viewState.mode === 'combat' && (
         <TacticalCombatHud
+          className="absolute inset-0 pointer-events-none bg-transparent z-40"
           viewState={viewState}
           compendium={compendium}
           selectedCombatantId={selectedCombatantId}

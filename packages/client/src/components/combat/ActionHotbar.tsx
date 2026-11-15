@@ -158,19 +158,19 @@ export function ActionHotbar({
   return (
     <footer
       data-testid="action-hotbar"
-      className={`flex flex-col bg-slate-950/95 border-t border-slate-800 backdrop-blur-md shadow-2xl select-none text-slate-100 ${className}`}
+      className={`flex flex-col bg-slate-950/95 border border-slate-800/90 rounded-2xl backdrop-blur-md shadow-2xl select-none text-slate-100 overflow-hidden ${className}`}
     >
       {/* Top Bar: Active Combatant Status, Turn Budget & End Turn Button */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 border-b border-slate-800/80 bg-slate-900/60">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 border-b border-slate-800/80 bg-slate-900/70">
         {/* Active Hero Summary */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {activeCombatant ? (
             <>
-              <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center font-bold text-amber-300 text-xs shrink-0 shadow">
+              <div className="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center font-bold text-amber-300 text-xs shrink-0 shadow">
                 {activeCombatant.name.charAt(0)}
               </div>
               <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span
                     data-testid="hotbar-active-hero-name"
                     className="text-xs font-bold text-amber-300 truncate"
@@ -215,7 +215,7 @@ export function ActionHotbar({
             data-testid="hotbar-end-turn-btn"
             disabled={!isPlayerControlled || !activeCombatant}
             onClick={onEndTurn}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all shadow-md ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-all shadow-md ${
               isPlayerControlled && activeCombatant
                 ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 active:scale-95 shadow-amber-500/20'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
@@ -228,7 +228,7 @@ export function ActionHotbar({
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-1 px-4 pt-2 border-b border-slate-800 bg-slate-900/40 overflow-x-auto">
+      <div className="flex items-center gap-1 px-3 pt-1 border-b border-slate-800 bg-slate-900/40 overflow-x-auto">
         <button
           type="button"
           data-testid="hotbar-tab-attack"
@@ -315,7 +315,7 @@ export function ActionHotbar({
       </div>
 
       {/* Tab Panels */}
-      <div className="p-2.5 bg-slate-900/90 overflow-hidden">
+      <div className="p-2 bg-slate-900/90 overflow-hidden">
         {/* ATTACK TAB */}
         {activeTab === 'attack' && (
           <div
