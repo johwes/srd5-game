@@ -198,10 +198,15 @@ describe('SRD-601: Title Screen & Main Menu (TitleMenuView)', () => {
       expect(screen.getByTestId('title-menu-view')).toBeDefined();
     });
 
-    it('navigates to New Game / Campaign Dungeon from Title Menu', () => {
+    it('navigates to New Game / Campaign Setup Wizard from Title Menu and embarks into Dungeon', () => {
       render(<App />);
 
       fireEvent.click(screen.getByTestId('title-menu-new-game-btn'));
+      expect(screen.getByTestId('campaign-setup-wizard')).toBeDefined();
+
+      // Step through wizard to stage 4 and embark
+      fireEvent.click(screen.getByTestId('wizard-step-4'));
+      fireEvent.click(screen.getByTestId('wizard-launch-cta'));
       expect(screen.getByTestId('dungeon-view-container')).toBeDefined();
     });
   });

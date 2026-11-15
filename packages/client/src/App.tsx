@@ -18,6 +18,7 @@ import {
 import { ArenaView } from './components/arena/index.js';
 import { DungeonView } from './components/dungeon/index.js';
 import { TitleMenuView } from './components/title/index.js';
+import { CampaignSetupWizard, type CampaignLaunchConfig } from './components/campaign/index.js';
 import {
   MAX_PARTY_SIZE,
   type PersistedRosterData,
@@ -185,7 +186,7 @@ export function App({
           }}
           onNewGame={() => {
             setLoadedGameState(undefined);
-            setActiveView('dungeon');
+            setActiveView('campaign_setup');
           }}
           onLoadSlot={(slot) => {
             setLoadedGameState(slot.gameState);
@@ -198,6 +199,69 @@ export function App({
           }}
           onOpenCompendium={() => setActiveView('compendium')}
           onOpenArena={() => setActiveView('arena')}
+        />
+
+        {activeSheetCharacter && (
+          <CharacterSheetDrawer
+            character={activeSheetCharacter}
+            compendium={defaultCompendium}
+            onClose={() => {
+              setSheetCharacterId(null);
+              setSheetFallbackCharacter(null);
+            }}
+            onUpdateCharacter={handleUpdateCharacterFromSheetOrLevelUp}
+            onOpenLevelUp={(hero) => setLevelUpCharacterId(hero.id)}
+            onExportCharacter={(hero) => {
+              const content = serializeCharacterToSrd5Json(hero);
+              const filename = formatSrd5Filename(hero.name, 'character');
+              triggerSrd5FileDownload(filename, content);
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (activeView === 'campaign_setup') {
+    return (
+      <>
+        <CampaignSetupWizard
+          initialMode="campaign_kaelen"
+          initialParty={
+            roster.characters.filter((c) => roster.activePartyIds.includes(c.id)).length > 0
+              ? roster.characters.filter((c) => roster.activePartyIds.includes(c.id))
+              : [
+                  getPregenCharacter('pregen-fighter')!,
+                  getPregenCharacter('pregen-rogue')!,
+                  getPregenCharacter('pregen-wizard')!,
+                  getPregenCharacter('pregen-cleric')!,
+                ].filter(Boolean)
+          }
+          availableRosterCharacters={roster.characters}
+          onBackToMenu={() => setActiveView('title_menu')}
+          onLaunch={(config: CampaignLaunchConfig) => {
+            setLoadedGameState(undefined);
+            if (config.party.length > 0) {
+              const nextRoster = {
+                ...roster,
+                activePartyIds: config.party.map((c) => c.id),
+                characters: [
+                  ...roster.characters.filter(
+                    (rc) => !config.party.some((c) => c.id === rc.id),
+                  ),
+                  ...config.party,
+                ],
+              };
+              persistAndSetRoster(nextRoster);
+            }
+            if (config.mode === 'campaign_kaelen') {
+              setActiveView('dungeon');
+            } else if (config.mode === 'deep_descent') {
+              setActiveView('roguelite');
+            } else if (config.mode === 'arena') {
+              setActiveView('arena');
+            }
+          }}
         />
 
         {activeSheetCharacter && (
@@ -302,10 +366,10 @@ export function App({
               <button
                 type="button"
                 data-testid="app-nav-dungeon"
-                aria-pressed={activeView === 'dungeon' || activeView === 'gameplay' || activeView === 'campaign_setup'}
+                aria-pressed={activeView === 'dungeon' || activeView === 'gameplay'}
                 onClick={() => setActiveView('dungeon')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  activeView === 'dungeon' || activeView === 'gameplay' || activeView === 'campaign_setup'
+                  activeView === 'dungeon' || activeView === 'gameplay'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-300 hover:text-white'
                 }`}
@@ -392,7 +456,7 @@ export function App({
           />
         )}
 
-        {(activeView === 'dungeon' || activeView === 'gameplay' || activeView === 'campaign_setup') && (
+        {(activeView === 'dungeon' || activeView === 'gameplay') && (
           <DungeonView
             partyCharacters={roster.characters.filter((c) =>
               roster.activePartyIds.includes(c.id),
