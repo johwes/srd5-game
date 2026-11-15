@@ -97,6 +97,8 @@ export function TacticalCanvasViewport({
   const appRef = useRef<Application | null>(null);
   const initPromiseRef = useRef<Promise<void> | null>(null);
   const destroyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isDisposedRef = useRef(false);
+  const hasUserAdjustedCameraRef = useRef(false);
   const sceneGraphRef = useRef<TacticalSceneGraph | null>(null);
   const terrainRendererRef = useRef<TerrainTileRenderer | null>(null);
   const tokenRendererRef = useRef<CreatureTokenRenderer | null>(null);
@@ -148,6 +150,8 @@ export function TacticalCanvasViewport({
 
   // Initialize PixiJS Application
   useEffect(() => {
+    isDisposedRef.current = false;
+
     // If a destruction was queued by transient React StrictMode unmount, cancel it immediately!
     if (destroyTimeoutRef.current) {
       clearTimeout(destroyTimeoutRef.current);
@@ -160,7 +164,18 @@ export function TacticalCanvasViewport({
       return;
     }
 
-    let isMounted = true;
+    // If initialization is in progress, wait for it to finish and activate
+    if (initPromiseRef.current) {
+      initPromiseRef.current
+        .then(() => {
+          if (!isDisposedRef.current && sceneGraphRef.current) {
+            setPixiReady(true);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -184,7 +199,7 @@ export function TacticalCanvasViewport({
           preference: 'webgl',
         });
 
-        if (!isMounted) {
+        if (isDisposedRef.current) {
           return;
         }
 
@@ -193,7 +208,7 @@ export function TacticalCanvasViewport({
           void assetRegistry
             .loadAtlas()
             .then((loaded) => {
-              if (loaded && isMounted) {
+              if (loaded && !isDisposedRef.current) {
                 setAtlasLoaded(true);
               }
             })
@@ -247,14 +262,12 @@ export function TacticalCanvasViewport({
       }
     }
 
-    if (!initPromiseRef.current) {
-      initPromiseRef.current = initPixi();
-    }
+    initPromiseRef.current = initPixi();
 
     return () => {
-      isMounted = false;
       // Delay destruction to survive React StrictMode transient mount-unmount-remount cycles
       destroyTimeoutRef.current = setTimeout(() => {
+        isDisposedRef.current = true;
         if (fogRendererRef.current) {
           fogRendererRef.current.destroy();
           fogRendererRef.current = null;
@@ -481,6 +494,11 @@ export function TacticalCanvasViewport({
         if (appRef.current?.renderer && w > 0 && h > 0) {
           try {
             appRef.current.renderer.resize(w, h);
+            if (sceneGraphRef.current && !hasUserAdjustedCameraRef.current) {
+              camera.fitGrid(gridRef.current.width, gridRef.current.height, w, h, 32);
+              camera.applyToContainer(sceneGraphRef.current.viewport);
+              setCurrentZoom(camera.getCamera().zoom);
+            }
           } catch {
             // Safe resize fallback
           }
@@ -490,7 +508,7 @@ export function TacticalCanvasViewport({
 
     observer.observe(container);
     return () => observer.disconnect();
-  }, []);
+  }, [camera]);
 
   // Last event type to prevent duplicate pointer + mouse events in browsers
   const lastEventType = useRef<string>('');
@@ -543,6 +561,9 @@ export function TacticalCanvasViewport({
       const dx = e.clientX - dragRef.current.startX;
       const dy = e.clientY - dragRef.current.startY;
       dragRef.current.totalMoved += Math.hypot(dx, dy);
+      if (dragRef.current.totalMoved > 4) {
+        hasUserAdjustedCameraRef.current = true;
+      }
 
       camera.setCamera({
         x: dragRef.current.startCamX + dx,
@@ -621,6 +642,7 @@ export function TacticalCanvasViewport({
     const screenX = e.clientX - rect.left;
     const screenY = e.clientY - rect.top;
 
+    hasUserAdjustedCameraRef.current = true;
     const delta = e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
     camera.zoomAt(screenX, screenY, delta);
     updateSceneTransform();
@@ -628,6 +650,7 @@ export function TacticalCanvasViewport({
 
   // Camera toolbar helpers
   const handleZoomIn = () => {
+    hasUserAdjustedCameraRef.current = true;
     const rect = containerRef.current?.getBoundingClientRect();
     const cx = (rect?.width || 800) / 2;
     const cy = (rect?.height || 600) / 2;
@@ -636,6 +659,7 @@ export function TacticalCanvasViewport({
   };
 
   const handleZoomOut = () => {
+    hasUserAdjustedCameraRef.current = true;
     const rect = containerRef.current?.getBoundingClientRect();
     const cx = (rect?.width || 800) / 2;
     const cy = (rect?.height || 600) / 2;
@@ -644,6 +668,7 @@ export function TacticalCanvasViewport({
   };
 
   const handleResetCamera = () => {
+    hasUserAdjustedCameraRef.current = false;
     const rect = containerRef.current?.getBoundingClientRect();
     const w = rect?.width || 800;
     const h = rect?.height || 600;
@@ -653,6 +678,7 @@ export function TacticalCanvasViewport({
   };
 
   const handleFitGrid = () => {
+    hasUserAdjustedCameraRef.current = false;
     const rect = containerRef.current?.getBoundingClientRect();
     const w = rect?.width || 800;
     const h = rect?.height || 600;
@@ -686,7 +712,7 @@ export function TacticalCanvasViewport({
       {/* Floating Tactical Camera & Overlay Toolbar */}
       <div
         data-testid={`${testId}-toolbar`}
-        className="absolute top-3 left-3 z-10 flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg shadow-lg text-xs text-slate-200"
+        className="absolute top-3 left-72 z-10 flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg shadow-lg text-xs text-slate-200"
       >
         <button
           type="button"

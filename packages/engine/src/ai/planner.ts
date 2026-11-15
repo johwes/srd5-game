@@ -3,7 +3,7 @@ import type { GridPoint, TacticalGrid } from '../grid/model.js';
 import { getFootprintDistanceFeet, isWithinMeleeReach } from '../grid/footprints.js';
 import { computeCover, hasLineOfSight } from '../grid/vision.js';
 import { rasterizeSphere, rasterizeCone, rasterizeLine } from '../grid/aoe.js';
-import { findPath, type GridCreature } from '../grid/pathfinding.js';
+import { findPath, canEndMoveAt, type GridCreature, type PathfindingResult } from '../grid/pathfinding.js';
 import type { Combatant, CombatState } from '../combat/types.js';
 import { areAllied, areHostile, type DispositionMatrix } from '../combat/allegiance.js';
 import { isIncapacitated } from '../combat/conditions.js';
@@ -29,6 +29,98 @@ export function getAdjacentCells(pt: GridPoint): GridPoint[] {
     { x: pt.x + 1, y: pt.y - 1 },
     { x: pt.x - 1, y: pt.y + 1 },
   ];
+}
+
+/**
+ * Truncates an A* path so its cumulative movement cost does not exceed budgetFeet.
+ * Also steps backward along the path if the end position cannot be legally occupied.
+ */
+export function truncatePathToBudget(
+  grid: TacticalGrid,
+  mover: GridCreature,
+  pathResult: PathfindingResult,
+  budgetFeet: number,
+  creatures: ReadonlyArray<GridCreature> = [],
+): { path: GridPoint[]; costFeet: number } | null {
+  if (!pathResult.found || pathResult.path.length <= 1 || budgetFeet <= 0) {
+    return null;
+  }
+
+  // If already within budget and end cell can be occupied
+  if (pathResult.totalCostFeet <= budgetFeet) {
+    const endPt = pathResult.path[pathResult.path.length - 1]!;
+    if (
+      canEndMoveAt(grid, mover, endPt, creatures, {
+        movementMode: 'walk',
+        allowTinyCellSharing: true,
+      })
+    ) {
+      return { path: pathResult.path, costFeet: pathResult.totalCostFeet };
+    }
+  }
+
+  let cost = 0;
+  let validIndex = 0;
+
+  for (let i = 0; i < pathResult.steps.length; i++) {
+    const step = pathResult.steps[i]!;
+    if (cost + step.stepCostFeet > budgetFeet) {
+      break;
+    }
+    cost += step.stepCostFeet;
+    validIndex = i + 1;
+  }
+
+  // Step backwards if the end cell cannot be legally occupied
+  while (validIndex > 0) {
+    const endPt = pathResult.path[validIndex]!;
+    if (
+      canEndMoveAt(grid, mover, endPt, creatures, {
+        movementMode: 'walk',
+        allowTinyCellSharing: true,
+      })
+    ) {
+      break;
+    }
+    validIndex--;
+  }
+
+  if (validIndex === 0) {
+    return null;
+  }
+
+  const finalPath = pathResult.path.slice(0, validIndex + 1);
+  const actualCost = pathResult.steps
+    .slice(0, validIndex)
+    .reduce((sum, s) => sum + s.stepCostFeet, 0);
+  return { path: finalPath, costFeet: actualCost };
+}
+
+function getMonsterActionReachFeet(action: { description?: string }): number {
+  if (action.description) {
+    const reachMatch = action.description.match(/reach\s+(\d+)\s*ft/i);
+    if (reachMatch && reachMatch[1]) {
+      return parseInt(reachMatch[1], 10);
+    }
+  }
+  return 5;
+}
+
+function getMonsterActionMaxRangeFeet(action: {
+  description?: string;
+  targeting?: unknown;
+}): number {
+  const targeting = action.targeting as { range?: { distanceFeet?: number } } | undefined;
+  if (targeting?.range?.distanceFeet) {
+    return targeting.range.distanceFeet;
+  }
+  if (action.description) {
+    const rangeMatch = action.description.match(/range\s+(\d+)\/(\d+)\s*ft/i);
+    if (rangeMatch && rangeMatch[2]) {
+      return parseInt(rangeMatch[2], 10);
+    }
+  }
+  return 120;
 }
 
 /**
@@ -81,7 +173,12 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       canMakeOpportunityAttack: !isIncapacitated(c),
     }));
 
-  const movementSpeed = actor.speedFeet ?? 30;
+  const availableMovement = state.turnBudget
+    ? state.turnBudget.movementRemainingFeet
+    : (actor.speedFeet ?? 30);
+  let remainingMovement = availableMovement;
+  let currentActorPos: GridPoint = { x: actor.position.x, y: actor.position.y };
+
   const hasNimbleEscape = Boolean(
     actor.monsterData?.traits?.some(
       (t) => t.id === 'nimble-escape' || t.name.toLowerCase().includes('nimble escape'),
@@ -116,7 +213,7 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
 
     // Check if starting turn engaged in melee (threatened by hostile)
     const adjacentHostile = allHostiles.find(
-      (h) => getFootprintDistanceFeet(actor.position, actor.size, h.position, h.size) <= 5,
+      (h) => getFootprintDistanceFeet(currentActorPos, actor.size, h.position, h.size) <= 5,
     );
 
     // If threatened in melee and has Nimble Escape / Disengage, disengage and retreat to standoff cover
@@ -127,7 +224,7 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
         target: adjacentHostile,
         grid,
         gridCreatures,
-        maxFeet: movementSpeed,
+        maxFeet: remainingMovement,
         archetype: 'artillery',
         allCombatants: state.combatants,
         dispositionMatrix,
@@ -138,25 +235,38 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
         { type: 'USE_STANDARD_ACTION', actorId: actor.id, action: 'disengage', asBonusAction: true },
       ];
 
-      if (retreatGoal && (retreatGoal.x !== actor.position.x || retreatGoal.y !== actor.position.y)) {
+      if (retreatGoal && (retreatGoal.x !== currentActorPos.x || retreatGoal.y !== currentActorPos.y)) {
         const pathRes = findPath({
           grid,
-          mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
           goal: retreatGoal,
           creatures: gridCreatures,
         });
-        if (pathRes.found && pathRes.path.length > 1) {
-          commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: pathRes.path });
+        const truncated = truncatePathToBudget(
+          grid,
+          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          pathRes,
+          remainingMovement,
+          gridCreatures,
+        );
+        if (truncated && truncated.path.length > 1) {
+          commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
+          currentActorPos = truncated.path[truncated.path.length - 1]!;
+          remainingMovement = Math.max(0, remainingMovement - truncated.costFeet);
         }
       }
 
       if (rangedAction) {
-        commands.push({
-          type: 'DECLARE_ATTACK',
-          actorId: actor.id,
-          targetId: adjacentHostile.id,
-          monsterActionId: rangedAction.id,
-        });
+        const dist = getFootprintDistanceFeet(currentActorPos, actor.size, adjacentHostile.position, adjacentHostile.size);
+        const maxRange = getMonsterActionMaxRangeFeet(rangedAction);
+        if (dist <= maxRange) {
+          commands.push({
+            type: 'DECLARE_ATTACK',
+            actorId: actor.id,
+            targetId: adjacentHostile.id,
+            monsterActionId: rangedAction.id,
+          });
+        }
       }
 
       commands.push({ type: 'END_TURN', actorId: actor.id });
@@ -175,33 +285,49 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       target: bestTarget,
       grid,
       gridCreatures,
-      maxFeet: movementSpeed,
+      maxFeet: remainingMovement,
       archetype: 'artillery',
       allCombatants: state.combatants,
       dispositionMatrix,
     });
 
     const commands: GameCommand[] = [];
-    if (coverPos && (coverPos.x !== actor.position.x || coverPos.y !== actor.position.y)) {
+    if (coverPos && (coverPos.x !== currentActorPos.x || coverPos.y !== currentActorPos.y)) {
       const pathRes = findPath({
         grid,
-        mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+        mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
         goal: coverPos,
         creatures: gridCreatures,
       });
-      if (pathRes.found && pathRes.path.length > 1) {
-        commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: pathRes.path });
+      const truncated = truncatePathToBudget(
+        grid,
+        { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+        pathRes,
+        remainingMovement,
+        gridCreatures,
+      );
+      if (truncated && truncated.path.length > 1) {
+        commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
+        currentActorPos = truncated.path[truncated.path.length - 1]!;
+        remainingMovement = Math.max(0, remainingMovement - truncated.costFeet);
       }
     }
 
-    const rangedAction = findBestRangedAction(actor) ?? findBestMeleeAction(actor);
-    if (rangedAction) {
-      commands.push({
-        type: 'DECLARE_ATTACK',
-        actorId: actor.id,
-        targetId: bestTarget.id,
-        monsterActionId: rangedAction.id,
-      });
+    const chosenAction = findBestRangedAction(actor) ?? findBestMeleeAction(actor);
+    if (chosenAction) {
+      const dist = getFootprintDistanceFeet(currentActorPos, actor.size, bestTarget.position, bestTarget.size);
+      const isMelee = chosenAction.effects.some((e) => e.step === 'attack_roll' && e.attackType === 'melee_weapon');
+      const reachOrRange = isMelee
+        ? getMonsterActionReachFeet(chosenAction)
+        : getMonsterActionMaxRangeFeet(chosenAction);
+      if (dist <= reachOrRange) {
+        commands.push({
+          type: 'DECLARE_ATTACK',
+          actorId: actor.id,
+          targetId: bestTarget.id,
+          monsterActionId: chosenAction.id,
+        });
+      }
     }
 
     commands.push({ type: 'END_TURN', actorId: actor.id });
@@ -238,39 +364,54 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       );
 
       // Find shortest path to an adjacent cell
-      let bestPath: GridPoint[] | null = null;
+      let bestPathRes: PathfindingResult | null = null;
       let minCost = Infinity;
 
       for (const adj of adjCells) {
-        if (adj.x === actor.position.x && adj.y === actor.position.y) {
-          bestPath = [actor.position];
+        if (adj.x === currentActorPos.x && adj.y === currentActorPos.y) {
+          bestPathRes = null;
           minCost = 0;
           break;
         }
         const pRes = findPath({
           grid,
-          mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
           goal: adj,
           creatures: gridCreatures,
         });
         if (pRes.found && pRes.path.length > 1 && pRes.totalCostFeet < minCost) {
           minCost = pRes.totalCostFeet;
-          bestPath = pRes.path;
+          bestPathRes = pRes;
         }
       }
 
       const commands: GameCommand[] = [];
-      if (bestPath && bestPath.length > 1) {
-        commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: bestPath });
+      if (bestPathRes) {
+        const truncated = truncatePathToBudget(
+          grid,
+          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          bestPathRes,
+          remainingMovement,
+          gridCreatures,
+        );
+        if (truncated && truncated.path.length > 1) {
+          commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
+          currentActorPos = truncated.path[truncated.path.length - 1]!;
+          remainingMovement = Math.max(0, remainingMovement - truncated.costFeet);
+        }
       }
 
       if (attackAction) {
-        commands.push({
-          type: 'DECLARE_ATTACK',
-          actorId: actor.id,
-          targetId: target.id,
-          monsterActionId: attackAction.id,
-        });
+        const dist = getFootprintDistanceFeet(currentActorPos, actor.size, target.position, target.size);
+        const reach = getMonsterActionReachFeet(attackAction);
+        if (dist <= reach) {
+          commands.push({
+            type: 'DECLARE_ATTACK',
+            actorId: actor.id,
+            targetId: target.id,
+            monsterActionId: attackAction.id,
+          });
+        }
       }
 
       commands.push({ type: 'END_TURN', actorId: actor.id });
@@ -288,7 +429,7 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
     if (hasNimbleEscape) {
       const target = selectBestTarget(actor, allHostiles);
       const isAlreadyInMelee =
-        getFootprintDistanceFeet(actor.position, actor.size, target.position, target.size) <= 5;
+        getFootprintDistanceFeet(currentActorPos, actor.size, target.position, target.size) <= 5;
       const meleeAction = findBestMeleeAction(actor);
       const rangedAction = findBestRangedAction(actor);
 
@@ -299,30 +440,43 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
           target,
           grid,
           gridCreatures,
-          maxFeet: movementSpeed,
+          maxFeet: remainingMovement,
           archetype: 'skirmisher',
           allCombatants: state.combatants,
           dispositionMatrix,
         });
 
         const commands: GameCommand[] = [];
-        if (coverPos && (coverPos.x !== actor.position.x || coverPos.y !== actor.position.y)) {
+        if (coverPos && (coverPos.x !== currentActorPos.x || coverPos.y !== currentActorPos.y)) {
           const pathRes = findPath({
             grid,
-            mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
             goal: coverPos,
             creatures: gridCreatures,
           });
-          if (pathRes.found && pathRes.path.length > 1) {
-            commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: pathRes.path });
+          const truncated = truncatePathToBudget(
+            grid,
+            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            pathRes,
+            remainingMovement,
+            gridCreatures,
+          );
+          if (truncated && truncated.path.length > 1) {
+            commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
+            currentActorPos = truncated.path[truncated.path.length - 1]!;
+            remainingMovement = Math.max(0, remainingMovement - truncated.costFeet);
           }
         }
-        commands.push({
-          type: 'DECLARE_ATTACK',
-          actorId: actor.id,
-          targetId: target.id,
-          monsterActionId: rangedAction.id,
-        });
+        const dist = getFootprintDistanceFeet(currentActorPos, actor.size, target.position, target.size);
+        const maxRange = getMonsterActionMaxRangeFeet(rangedAction);
+        if (dist <= maxRange) {
+          commands.push({
+            type: 'DECLARE_ATTACK',
+            actorId: actor.id,
+            targetId: target.id,
+            monsterActionId: rangedAction.id,
+          });
+        }
         commands.push({ type: 'END_TURN', actorId: actor.id });
         return {
           actorId: actor.id,
@@ -337,32 +491,47 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       const commands: GameCommand[] = [];
       if (!isAlreadyInMelee) {
         const adjCells = getAdjacentCells(target.position);
-        let bestPath: GridPoint[] | null = null;
+        let bestPathRes: PathfindingResult | null = null;
         for (const adj of adjCells) {
           const pRes = findPath({
             grid,
-            mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
             goal: adj,
             creatures: gridCreatures,
           });
-          if (pRes.found && pRes.path.length > 1 && (!bestPath || pRes.path.length < bestPath.length)) {
-            bestPath = pRes.path;
+          if (pRes.found && pRes.path.length > 1 && (!bestPathRes || pRes.totalCostFeet < bestPathRes.totalCostFeet)) {
+            bestPathRes = pRes;
           }
         }
-        if (bestPath && bestPath.length > 1) {
-          commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: bestPath });
+        if (bestPathRes) {
+          const truncated = truncatePathToBudget(
+            grid,
+            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            bestPathRes,
+            remainingMovement,
+            gridCreatures,
+          );
+          if (truncated && truncated.path.length > 1) {
+            commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
+            currentActorPos = truncated.path[truncated.path.length - 1]!;
+            remainingMovement = Math.max(0, remainingMovement - truncated.costFeet);
+          }
         }
       }
 
-      // Step 2: Melee Attack
+      // Step 2: Melee Attack (only if in reach!)
       const actionToUse = meleeAction ?? actor.monsterData?.actions[0];
       if (actionToUse) {
-        commands.push({
-          type: 'DECLARE_ATTACK',
-          actorId: actor.id,
-          targetId: target.id,
-          monsterActionId: actionToUse.id,
-        });
+        const dist = getFootprintDistanceFeet(currentActorPos, actor.size, target.position, target.size);
+        const reach = getMonsterActionReachFeet(actionToUse);
+        if (dist <= reach) {
+          commands.push({
+            type: 'DECLARE_ATTACK',
+            actorId: actor.id,
+            targetId: target.id,
+            monsterActionId: actionToUse.id,
+          });
+        }
       }
 
       // Step 3: Nimble Escape Disengage as Bonus Action!
@@ -374,23 +543,34 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       });
 
       // Step 4: Move away from enemy melee reach to a safe retreat cell
-      const retreatGoal = findRetreatPosition({
-        actor,
-        threat: target,
-        grid,
-        gridCreatures,
-        maxFeet: 20,
-      });
-
-      if (retreatGoal && (retreatGoal.x !== actor.position.x || retreatGoal.y !== actor.position.y)) {
-        const pathRes = findPath({
+      if (remainingMovement > 0) {
+        const retreatGoal = findRetreatPosition({
+          actor: { ...actor, position: currentActorPos },
+          threat: target,
           grid,
-          mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
-          goal: retreatGoal,
-          creatures: gridCreatures,
+          gridCreatures,
+          maxFeet: remainingMovement,
         });
-        if (pathRes.found && pathRes.path.length > 1) {
-          commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: pathRes.path });
+
+        if (retreatGoal && (retreatGoal.x !== currentActorPos.x || retreatGoal.y !== currentActorPos.y)) {
+          const pathRes = findPath({
+            grid,
+            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            goal: retreatGoal,
+            creatures: gridCreatures,
+          });
+          const truncated = truncatePathToBudget(
+            grid,
+            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            pathRes,
+            remainingMovement,
+            gridCreatures,
+          );
+          if (truncated && truncated.path.length > 1) {
+            commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
+            currentActorPos = truncated.path[truncated.path.length - 1]!;
+            remainingMovement = Math.max(0, remainingMovement - truncated.costFeet);
+          }
         }
       }
 
@@ -415,40 +595,55 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
     const attackAction = multiattack ?? findBestMeleeAction(actor) ?? actor.monsterData?.actions[0];
 
     const isAlreadyInMelee =
-      getFootprintDistanceFeet(actor.position, actor.size, target.position, target.size) <= 5;
+      getFootprintDistanceFeet(currentActorPos, actor.size, target.position, target.size) <= 5;
 
     const commands: GameCommand[] = [];
 
     if (!isAlreadyInMelee) {
       const adjCells = getAdjacentCells(target.position);
-      let bestPath: GridPoint[] | null = null;
+      let bestPathRes: PathfindingResult | null = null;
       let minCost = Infinity;
 
       for (const adj of adjCells) {
         const pRes = findPath({
           grid,
-          mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
           goal: adj,
           creatures: gridCreatures,
         });
         if (pRes.found && pRes.path.length > 1 && pRes.totalCostFeet < minCost) {
           minCost = pRes.totalCostFeet;
-          bestPath = pRes.path;
+          bestPathRes = pRes;
         }
       }
 
-      if (bestPath && bestPath.length > 1) {
-        commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: bestPath });
+      if (bestPathRes) {
+        const truncated = truncatePathToBudget(
+          grid,
+          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          bestPathRes,
+          remainingMovement,
+          gridCreatures,
+        );
+        if (truncated && truncated.path.length > 1) {
+          commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
+          currentActorPos = truncated.path[truncated.path.length - 1]!;
+          remainingMovement = Math.max(0, remainingMovement - truncated.costFeet);
+        }
       }
     }
 
     if (attackAction) {
-      commands.push({
-        type: 'DECLARE_ATTACK',
-        actorId: actor.id,
-        targetId: target.id,
-        monsterActionId: attackAction.id,
-      });
+      const dist = getFootprintDistanceFeet(currentActorPos, actor.size, target.position, target.size);
+      const reach = getMonsterActionReachFeet(attackAction);
+      if (dist <= reach) {
+        commands.push({
+          type: 'DECLARE_ATTACK',
+          actorId: actor.id,
+          targetId: target.id,
+          monsterActionId: attackAction.id,
+        });
+      }
     }
 
     commands.push({ type: 'END_TURN', actorId: actor.id });
@@ -471,34 +666,52 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
     actor.monsterData?.actions[0];
 
   const commands: GameCommand[] = [];
-  const dist = getFootprintDistanceFeet(actor.position, actor.size, target.position, target.size);
+  const dist = getFootprintDistanceFeet(currentActorPos, actor.size, target.position, target.size);
 
   if (dist > 5) {
     const adjCells = getAdjacentCells(target.position);
-    let bestPath: GridPoint[] | null = null;
+    let bestPathRes: PathfindingResult | null = null;
     for (const adj of adjCells) {
       const pRes = findPath({
         grid,
-        mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+        mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
         goal: adj,
         creatures: gridCreatures,
       });
-      if (pRes.found && pRes.path.length > 1 && (!bestPath || pRes.path.length < bestPath.length)) {
-        bestPath = pRes.path;
+      if (pRes.found && pRes.path.length > 1 && (!bestPathRes || pRes.totalCostFeet < bestPathRes.totalCostFeet)) {
+        bestPathRes = pRes;
       }
     }
-    if (bestPath && bestPath.length > 1) {
-      commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: bestPath });
+    if (bestPathRes) {
+      const truncated = truncatePathToBudget(
+        grid,
+        { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+        bestPathRes,
+        remainingMovement,
+        gridCreatures,
+      );
+      if (truncated && truncated.path.length > 1) {
+        commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
+        currentActorPos = truncated.path[truncated.path.length - 1]!;
+        remainingMovement = Math.max(0, remainingMovement - truncated.costFeet);
+      }
     }
   }
 
   if (actionToUse) {
-    commands.push({
-      type: 'DECLARE_ATTACK',
-      actorId: actor.id,
-      targetId: target.id,
-      monsterActionId: actionToUse.id,
-    });
+    const distToTarget = getFootprintDistanceFeet(currentActorPos, actor.size, target.position, target.size);
+    const isMelee = actionToUse.effects.some((e) => e.step === 'attack_roll' && e.attackType === 'melee_weapon');
+    const reachOrRange = isMelee
+      ? getMonsterActionReachFeet(actionToUse)
+      : getMonsterActionMaxRangeFeet(actionToUse);
+    if (distToTarget <= reachOrRange) {
+      commands.push({
+        type: 'DECLARE_ATTACK',
+        actorId: actor.id,
+        targetId: target.id,
+        monsterActionId: actionToUse.id,
+      });
+    }
   }
 
   commands.push({ type: 'END_TURN', actorId: actor.id });
