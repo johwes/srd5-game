@@ -34,6 +34,7 @@ import { LocalTransport, type PlayerViewProp, type PlayerViewState } from '@srd5
 import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { TacticalCombatHud } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
+import { resolveSpellTargets } from '../../utils/combatTargeting.js';
 import { DungeonExplorationHud } from './DungeonExplorationHud.js';
 import { LootInventoryModal } from './LootInventoryModal.js';
 import { MarchingOrderModal } from './MarchingOrderModal.js';
@@ -664,12 +665,14 @@ export function DungeonView({
         combatants={
           viewState.mode === 'combat' ? viewState.combatants : viewState.party
         }
+        selectedCombatantId={selectedCombatantId}
         activeCombatantId={
           viewState.mode === 'combat' ? activeCombatantId : leadExplorerId
         }
         hoveredCell={hoveredCell}
         onCellHover={setHoveredCell}
         onCellClick={handleCellClick}
+        onCombatantClick={(combatantId) => setSelectedCombatantId(combatantId)}
         enableHoverPathPreview={true}
         enableFogOfWar={true}
         showTokenHpArcs={true}
@@ -748,6 +751,7 @@ export function DungeonView({
         <TacticalCombatHud
           viewState={viewState}
           compendium={compendium}
+          selectedCombatantId={selectedCombatantId}
           title={`${campaignModule.name} — ${floorSpec.name}`}
           subtitle="Combat Encounter in Progress"
           onToggleMenu={() => setModalState('pause_menu')}
@@ -857,39 +861,21 @@ export function DungeonView({
           onCastSpell={(spellId, slotLevel) => {
             if (!activeCombatantId || !activeCombatant) return;
 
-            const selectedCandidate = selectedCombatantId
-              ? viewState.combatants[selectedCombatantId]
-              : null;
-            const isSelectedHostile = Boolean(
-              selectedCandidate &&
-                selectedCandidate.side !== activeCombatant.side &&
-                !selectedCandidate.isDead &&
-                selectedCandidate.currentHp > 0,
-            );
+            const spell = compendium.getSpell(spellId);
+            if (!spell) return;
 
-            const livingHostiles = Object.values(viewState.combatants).filter(
-              (c) =>
-                c.side !== activeCombatant.side &&
-                !c.isDead &&
-                c.currentHp > 0,
-            );
+            const targetResult = resolveSpellTargets({
+              spell,
+              slotLevel,
+              caster: activeCombatant,
+              combatants: viewState.combatants,
+              selectedCombatantId,
+              dispositionMatrix: (authState as any)?.combat?.dispositionMatrix,
+            });
 
-            let targetIds: string[] = [];
-            if (isSelectedHostile && selectedCandidate) {
-              targetIds = [selectedCandidate.id];
-            } else if (livingHostiles.length > 0) {
-              const sorted = livingHostiles
-                .map((h) => ({
-                  enemy: h,
-                  dist: getFootprintDistanceFeet(
-                    activeCombatant.position,
-                    activeCombatant.size,
-                    h.position,
-                    h.size,
-                  ),
-                }))
-                .sort((a, b) => a.dist - b.dist);
-              targetIds = [sorted[0]!.enemy.id];
+            if (targetResult.errorFeedback) {
+              showFeedback(targetResult.errorFeedback);
+              return;
             }
 
             void handleDispatch({
@@ -897,7 +883,10 @@ export function DungeonView({
               actorId: activeCombatantId,
               spellId,
               slotLevel,
-              targetIds,
+              targetIds: targetResult.targetIds,
+              targetCell: targetResult.primaryTarget
+                ? targetResult.primaryTarget.position
+                : activeCombatant.position,
             });
           }}
           onUseClassFeature={(featureId, optionId) => {

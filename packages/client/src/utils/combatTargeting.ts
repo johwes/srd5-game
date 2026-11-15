@@ -1,0 +1,470 @@
+import {
+  type SrdCompendium,
+  type SpellData,
+  defaultCompendium,
+} from '@srd5/data';
+import { type PlayerViewCombatant } from '@srd5/transport';
+import { areAllied, areHostile, getFootprintDistanceFeet } from '@srd5/engine';
+
+export type SpellTargetDisposition = 'self' | 'friendly' | 'hostile' | 'any';
+
+/**
+ * Classifies whether a spell targets the caster ('self'), allies/friendly creatures ('friendly'),
+ * hostile enemies ('hostile'), or any creature/point ('any').
+ */
+export function getSpellTargetDisposition(spell: SpellData): SpellTargetDisposition {
+  if (spell.targeting.type === 'self') {
+    return 'self';
+  }
+
+  const filter = spell.targeting.targetFilter;
+  if (filter === 'ally' || filter === 'willing') {
+    return 'friendly';
+  }
+  if (filter === 'enemy') {
+    return 'hostile';
+  }
+
+  // Check effects for healing
+  const hasHealing = spell.effects?.some(
+    (e: any) => (e.step === 'deal_damage' && e.damageType === 'healing') || e.step === 'heal',
+  );
+  if (hasHealing) {
+    return 'friendly';
+  }
+
+  // Check for hostile steps (attack roll, saving throw, non-healing damage)
+  const hasHostileStep = spell.effects?.some(
+    (e: any) =>
+      e.step === 'attack_roll' ||
+      e.step === 'saving_throw' ||
+      (e.step === 'deal_damage' && e.damageType !== 'healing'),
+  );
+
+  const hasBuffEffect = spell.effects?.some((e: any) => e.step === 'apply_active_effect');
+
+  if (hasBuffEffect && !hasHostileStep) {
+    return 'friendly';
+  }
+
+  if (hasHostileStep) {
+    return 'hostile';
+  }
+
+  return 'any';
+}
+
+/**
+ * Calculates the maximum number of targets a spell can affect at a given slot level.
+ */
+export function getSpellMaxTargets(spell: SpellData, slotLevel?: number): number {
+  if (spell.targeting.type === 'self') return 1;
+  if (spell.targeting.type === 'single' || spell.targeting.type === 'touch') return 1;
+
+  if (spell.targeting.type === 'multiple') {
+    let max = typeof spell.targeting.maxTargets === 'number' ? spell.targeting.maxTargets : 3;
+    if (
+      slotLevel &&
+      slotLevel > spell.level &&
+      spell.higherLevelScaling?.bonusTargetsPerSlotAboveBase
+    ) {
+      max += (slotLevel - spell.level) * spell.higherLevelScaling.bonusTargetsPerSlotAboveBase;
+    }
+    return max;
+  }
+
+  return 1;
+}
+
+export interface ResolveSpellTargetsOptions {
+  spell: SpellData;
+  slotLevel?: number;
+  caster: PlayerViewCombatant;
+  combatants: Record<string, PlayerViewCombatant>;
+  selectedCombatantId?: string | null;
+  dispositionMatrix?: Record<string, Record<string, 'allied' | 'hostile' | 'neutral'>>;
+}
+
+export interface ResolvedSpellTargets {
+  targetIds: string[];
+  primaryTarget: PlayerViewCombatant | null;
+  disposition: SpellTargetDisposition;
+  maxTargets: number;
+  rangeFeet: number;
+  errorFeedback?: string;
+}
+
+/**
+ * Resolves the appropriate target IDs for a spell based on:
+ * 1. Spell targeting disposition (friendly vs hostile vs self).
+ * 2. Range limitations (touch = 5ft, or rangeFeet).
+ * 3. Whether the player currently has an eligible ally or enemy selected.
+ * 4. Automatic smart targeting (e.g., most wounded ally for heals, closest enemy for attacks,
+ *    or multiple in-range allies for multi-target buffs like Bless).
+ */
+export function resolveSpellTargets(options: ResolveSpellTargetsOptions): ResolvedSpellTargets {
+  const {
+    spell,
+    slotLevel = spell.level,
+    caster,
+    combatants,
+    selectedCombatantId,
+    dispositionMatrix,
+  } = options;
+
+  const disposition = getSpellTargetDisposition(spell);
+  const maxTargets = getSpellMaxTargets(spell, slotLevel);
+  const rangeFeet = spell.targeting.type === 'touch' ? 5 : spell.targeting.rangeFeet;
+
+  // 1. Self Spell
+  if (disposition === 'self') {
+    return {
+      targetIds: [caster.id],
+      primaryTarget: caster,
+      disposition,
+      maxTargets: 1,
+      rangeFeet: 0,
+    };
+  }
+
+  const allLivingCombatants = Object.values(combatants).filter(
+    (c) => !c.isDead && c.currentHp > 0,
+  );
+
+  const isAlly = (c: PlayerViewCombatant) =>
+    c.id === caster.id ||
+    areAllied(caster, c, dispositionMatrix) ||
+    (c.teamId ?? c.side) === (caster.teamId ?? caster.side);
+
+  const isEnemy = (c: PlayerViewCombatant) =>
+    c.id !== caster.id &&
+    (areHostile(caster, c, dispositionMatrix) ||
+      (c.teamId ?? c.side) !== (caster.teamId ?? caster.side));
+
+  const selectedCandidate = selectedCombatantId ? combatants[selectedCombatantId] ?? null : null;
+  const isSelectedLiving = Boolean(
+    selectedCandidate && !selectedCandidate.isDead && selectedCandidate.currentHp > 0,
+  );
+
+  // 2. Friendly Spell (e.g. Bless, Cure Wounds, Healing Word, Shield of Faith, Aid)
+  if (disposition === 'friendly') {
+    const livingAllies = allLivingCombatants.filter(isAlly);
+
+    if (livingAllies.length === 0) {
+      return {
+        targetIds: [],
+        primaryTarget: null,
+        disposition,
+        maxTargets,
+        rangeFeet,
+        errorFeedback: `No conscious allies found to target with ${spell.name}.`,
+      };
+    }
+
+    // Check distance for all living allies
+    const alliesWithDistance = livingAllies.map((a) => {
+      const dist =
+        a.id === caster.id
+          ? 0
+          : getFootprintDistanceFeet(caster.position, caster.size, a.position, a.size);
+      return { ally: a, dist };
+    });
+
+    const inRangeAllies = alliesWithDistance.filter((a) => a.dist <= rangeFeet);
+
+    // If player explicitly selected an ally
+    if (selectedCandidate && isSelectedLiving && isAlly(selectedCandidate)) {
+      const selectedDist =
+        selectedCandidate.id === caster.id
+          ? 0
+          : getFootprintDistanceFeet(
+              caster.position,
+              caster.size,
+              selectedCandidate.position,
+              selectedCandidate.size,
+            );
+
+      if (selectedDist > rangeFeet) {
+        return {
+          targetIds: [],
+          primaryTarget: null,
+          disposition,
+          maxTargets,
+          rangeFeet,
+          errorFeedback: `Target "${selectedCandidate.name}" is out of spell range (${selectedDist}ft > ${rangeFeet}ft). Move closer to cast!`,
+        };
+      }
+
+      // Selected ally is valid and in range!
+      const chosenAllies: PlayerViewCombatant[] = [selectedCandidate];
+
+      // If multi-target spell (e.g. Bless), fill up remaining slots with other in-range allies
+      if (maxTargets > 1) {
+        const otherAllies = inRangeAllies
+          .filter((a) => a.ally.id !== selectedCandidate.id)
+          .sort((a, b) => {
+            // Sort wounded first, then distance
+            const hpRatioA = a.ally.currentHp / (a.ally.maxHp || 1);
+            const hpRatioB = b.ally.currentHp / (b.ally.maxHp || 1);
+            if (hpRatioA !== hpRatioB) return hpRatioA - hpRatioB;
+            return a.dist - b.dist;
+          });
+
+        for (const other of otherAllies) {
+          if (chosenAllies.length >= maxTargets) break;
+          chosenAllies.push(other.ally);
+        }
+      }
+
+      return {
+        targetIds: chosenAllies.map((a) => a.id),
+        primaryTarget: selectedCandidate,
+        disposition,
+        maxTargets,
+        rangeFeet,
+      };
+    }
+
+    // No friendly ally currently selected - auto-target smart allies
+    if (inRangeAllies.length === 0) {
+      const nearestAlly = [...alliesWithDistance].sort((a, b) => a.dist - b.dist)[0];
+      return {
+        targetIds: [],
+        primaryTarget: null,
+        disposition,
+        maxTargets,
+        rangeFeet,
+        errorFeedback: nearestAlly
+          ? `Nearest ally (${nearestAlly.ally.name}) is out of spell range (${nearestAlly.dist}ft > ${rangeFeet}ft). Move closer to cast!`
+          : `No allies in range (${rangeFeet}ft) to cast ${spell.name}.`,
+      };
+    }
+
+    const isHealingSpell = spell.effects?.some(
+      (e: any) => (e.step === 'deal_damage' && e.damageType === 'healing') || e.step === 'heal',
+    );
+
+    // Sort allies:
+    // For healing: lowest HP ratio first
+    // For buffs (e.g. Bless): caster and frontline/wounded allies first
+    const sortedInRangeAllies = [...inRangeAllies].sort((a, b) => {
+      const hpRatioA = a.ally.currentHp / (a.ally.maxHp || 1);
+      const hpRatioB = b.ally.currentHp / (b.ally.maxHp || 1);
+      if (isHealingSpell) {
+        if (hpRatioA !== hpRatioB) return hpRatioA - hpRatioB;
+        return a.dist - b.dist;
+      }
+      // For general buffs (like Bless), prioritize caster or wounded/frontline
+      if (a.ally.id === caster.id) return -1;
+      if (b.ally.id === caster.id) return 1;
+      return a.dist - b.dist;
+    });
+
+    const chosen = sortedInRangeAllies.slice(0, maxTargets).map((a) => a.ally);
+
+    return {
+      targetIds: chosen.map((c) => c.id),
+      primaryTarget: chosen[0] ?? null,
+      disposition,
+      maxTargets,
+      rangeFeet,
+    };
+  }
+
+  // 3. Hostile Spell (e.g. Sacred Flame, Guiding Bolt, Fire Bolt, Hold Person)
+  if (disposition === 'hostile') {
+    const livingEnemies = allLivingCombatants.filter(isEnemy);
+
+    if (livingEnemies.length === 0) {
+      return {
+        targetIds: [],
+        primaryTarget: null,
+        disposition,
+        maxTargets,
+        rangeFeet,
+        errorFeedback: 'No conscious enemies remaining.',
+      };
+    }
+
+    const enemiesWithDistance = livingEnemies.map((e) => ({
+      enemy: e,
+      dist: getFootprintDistanceFeet(caster.position, caster.size, e.position, e.size),
+    }));
+
+    // If player explicitly selected a living enemy
+    if (selectedCandidate && isSelectedLiving && isEnemy(selectedCandidate)) {
+      const selectedDist = getFootprintDistanceFeet(
+        caster.position,
+        caster.size,
+        selectedCandidate.position,
+        selectedCandidate.size,
+      );
+
+      if (selectedDist > rangeFeet) {
+        return {
+          targetIds: [],
+          primaryTarget: null,
+          disposition,
+          maxTargets,
+          rangeFeet,
+          errorFeedback: `Target "${selectedCandidate.name}" is out of spell range (${selectedDist}ft > ${rangeFeet}ft). Move closer to cast!`,
+        };
+      }
+
+      const chosenEnemies = [selectedCandidate];
+      if (maxTargets > 1) {
+        const otherEnemies = enemiesWithDistance
+          .filter((e) => e.enemy.id !== selectedCandidate.id && e.dist <= rangeFeet)
+          .sort((a, b) => a.dist - b.dist);
+
+        for (const other of otherEnemies) {
+          if (chosenEnemies.length >= maxTargets) break;
+          chosenEnemies.push(other.enemy);
+        }
+      }
+
+      return {
+        targetIds: chosenEnemies.map((e) => e.id),
+        primaryTarget: selectedCandidate,
+        disposition,
+        maxTargets,
+        rangeFeet,
+      };
+    }
+
+    // No enemy selected (or an ally is selected) -> auto-target closest enemy in range
+    const sortedEnemies = [...enemiesWithDistance].sort((a, b) => a.dist - b.dist);
+    const closest = sortedEnemies[0]!;
+
+    if (closest.dist > rangeFeet) {
+      return {
+        targetIds: [],
+        primaryTarget: null,
+        disposition,
+        maxTargets,
+        rangeFeet,
+        errorFeedback: `Nearest enemy (${closest.enemy.name}) is out of spell range (${closest.dist}ft > ${rangeFeet}ft). Move closer to cast!`,
+      };
+    }
+
+    const inRangeEnemies = sortedEnemies.filter((e) => e.dist <= rangeFeet);
+    const chosen = inRangeEnemies.slice(0, maxTargets).map((e) => e.enemy);
+
+    return {
+      targetIds: chosen.map((e) => e.id),
+      primaryTarget: chosen[0] ?? null,
+      disposition,
+      maxTargets,
+      rangeFeet,
+    };
+  }
+
+  // 4. Any Creature Disposition (e.g. Dispel Magic, Polymorph, or unclassified)
+  if (selectedCandidate && isSelectedLiving) {
+    const dist = getFootprintDistanceFeet(
+      caster.position,
+      caster.size,
+      selectedCandidate.position,
+      selectedCandidate.size,
+    );
+    if (dist <= rangeFeet) {
+      return {
+        targetIds: [selectedCandidate.id],
+        primaryTarget: selectedCandidate,
+        disposition,
+        maxTargets,
+        rangeFeet,
+      };
+    }
+  }
+
+  const sortedLiving = allLivingCombatants
+    .map((c) => ({
+      combatant: c,
+      dist: getFootprintDistanceFeet(caster.position, caster.size, c.position, c.size),
+    }))
+    .filter((c) => c.dist <= rangeFeet)
+    .sort((a, b) => a.dist - b.dist);
+
+  const chosen = sortedLiving.slice(0, maxTargets).map((c) => c.combatant);
+  return {
+    targetIds: chosen.map((c) => c.id),
+    primaryTarget: chosen[0] ?? null,
+    disposition,
+    maxTargets,
+    rangeFeet,
+  };
+}
+
+/**
+ * Helper to get a human-readable summary of spell targeting for UI tooltips/cards.
+ */
+export function formatSpellTargetingSummary(
+  spell: SpellData,
+  resolved?: ResolvedSpellTargets | null,
+): {
+  badgeLabel: string;
+  badgeStyle: string;
+  previewLabel: string;
+} {
+  const disposition = resolved?.disposition ?? getSpellTargetDisposition(spell);
+  const maxTargets = resolved?.maxTargets ?? getSpellMaxTargets(spell);
+  const rangeFeet =
+    resolved?.rangeFeet ?? (spell.targeting.type === 'touch' ? 5 : spell.targeting.rangeFeet);
+
+  const rangeStr = rangeFeet === 0 ? 'Self' : rangeFeet === 5 && spell.targeting.type === 'touch' ? 'Touch' : `${rangeFeet}ft`;
+
+  if (disposition === 'self') {
+    return {
+      badgeLabel: '👤 Self',
+      badgeStyle: 'bg-sky-950/80 border-sky-600/60 text-sky-300',
+      previewLabel: 'Self',
+    };
+  }
+
+  if (disposition === 'friendly') {
+    const badgeLabel =
+      spell.targeting.type === 'multiple'
+        ? `🛡️ Allies (≤${maxTargets}) · ${rangeStr}`
+        : `🛡️ Ally · ${rangeStr}`;
+
+    let previewLabel = 'Allies in range';
+    if (resolved?.targetIds && resolved.targetIds.length > 0) {
+      if (resolved.targetIds.length === 1 && resolved.primaryTarget) {
+        previewLabel = resolved.primaryTarget.name;
+      } else {
+        previewLabel = `${resolved.targetIds.length} allies targeted`;
+      }
+    }
+
+    return {
+      badgeLabel,
+      badgeStyle: 'bg-emerald-950/80 border-emerald-600/60 text-emerald-300',
+      previewLabel,
+    };
+  }
+
+  if (disposition === 'hostile') {
+    const badgeLabel =
+      spell.targeting.type === 'multiple'
+        ? `⚔️ Enemies (≤${maxTargets}) · ${rangeStr}`
+        : `⚔️ Enemy · ${rangeStr}`;
+
+    let previewLabel = 'Nearest enemy';
+    if (resolved?.primaryTarget) {
+      previewLabel = resolved.primaryTarget.name;
+    }
+
+    return {
+      badgeLabel,
+      badgeStyle: 'bg-rose-950/80 border-rose-600/60 text-rose-300',
+      previewLabel,
+    };
+  }
+
+  return {
+    badgeLabel: `🎯 Target · ${rangeStr}`,
+    badgeStyle: 'bg-slate-800 border-slate-600 text-slate-300',
+    previewLabel: resolved?.primaryTarget?.name ?? 'Any in range',
+  };
+}

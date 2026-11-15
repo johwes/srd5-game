@@ -22,6 +22,7 @@ import { LocalTransport, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { TacticalCombatHud } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
+import { resolveSpellTargets } from '../../utils/combatTargeting.js';
 import {
   applyArenaBreather,
   buildArenaPveEncounter,
@@ -661,29 +662,32 @@ export function ArenaCombatView({
           onCastSpell={(spellId, slotLevel) => {
             if (!activeCombatantId || !activeCombatant) return;
 
-            const selectedCandidate = selectedCombatantId ? viewState.combatants[selectedCombatantId] : null;
-            const isSelectedHostile = Boolean(
-              selectedCandidate &&
-              (selectedCandidate.teamId ?? selectedCandidate.side) !== activeTeamId &&
-              !selectedCandidate.isDead &&
-              selectedCandidate.currentHp > 0
-            );
+            const spell = compendium.getSpell(spellId);
+            if (!spell) return;
 
-            const livingHostiles = Object.values(viewState.combatants).filter(
-              (c) =>
-                (c.teamId ?? c.side) !== activeTeamId &&
-                !c.isDead &&
-                c.currentHp > 0
-            );
+            const targetResult = resolveSpellTargets({
+              spell,
+              slotLevel,
+              caster: activeCombatant,
+              combatants: viewState.combatants,
+              selectedCombatantId,
+              dispositionMatrix: (transport.getAuthoritativeState() as any)?.combat?.dispositionMatrix,
+            });
 
-            const target = isSelectedHostile && selectedCandidate ? selectedCandidate : (livingHostiles[0] ?? null);
+            if (targetResult.errorFeedback) {
+              showFeedback(targetResult.errorFeedback);
+              return;
+            }
 
             void handleDispatch({
               type: 'DECLARE_CAST_SPELL',
               actorId: activeCombatantId,
               spellId,
               slotLevel,
-              targetIds: target ? [target.id] : [],
+              targetIds: targetResult.targetIds,
+              targetCell: targetResult.primaryTarget
+                ? targetResult.primaryTarget.position
+                : activeCombatant.position,
             });
           }}
           onUseClassFeature={(featureId, optionId) => {

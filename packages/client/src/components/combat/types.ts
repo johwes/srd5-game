@@ -74,6 +74,8 @@ export interface ActionHotbarProps {
   activeCombatant: PlayerViewCombatant | null;
   turnBudget: TurnBudget | null;
   compendium?: SrdCompendium;
+  combatants?: Record<string, PlayerViewCombatant>;
+  selectedCombatantId?: string | null;
   isPlayerControlled?: boolean;
   activeTab?: CombatActionTab;
   onTabChange?: (tab: CombatActionTab) => void;

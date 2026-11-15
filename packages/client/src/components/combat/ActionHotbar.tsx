@@ -3,6 +3,10 @@ import type { SpellData } from '@srd5/data';
 import type { DerivedWeaponAttackProfile } from '@srd5/engine';
 import { GameIcon } from '../../canvas/assets/index.js';
 import { formatSpellRange } from '../compendium/formatters.js';
+import {
+  formatSpellTargetingSummary,
+  resolveSpellTargets,
+} from '../../utils/combatTargeting.js';
 import { TurnBudgetIndicator } from './TurnBudgetIndicator.js';
 import type {
   ActionHotbarProps,
@@ -81,6 +85,8 @@ export function ActionHotbar({
   activeCombatant,
   turnBudget,
   compendium,
+  combatants,
+  selectedCombatantId,
   isPlayerControlled = true,
   activeTab: controlledTab,
   onTabChange,
@@ -533,6 +539,19 @@ export function ActionHotbar({
 
                   const canCast = isPlayerControlled && hasEconomy && hasSlots && !blockedByBaRule;
 
+                  const targetResolution =
+                    activeCombatant && combatants
+                      ? resolveSpellTargets({
+                          spell,
+                          slotLevel: defaultSlot,
+                          caster: activeCombatant,
+                          combatants,
+                          selectedCombatantId,
+                        })
+                      : null;
+
+                  const targetingSummary = formatSpellTargetingSummary(spell, targetResolution);
+
                   return (
                     <div
                       key={spell.id}
@@ -558,13 +577,28 @@ export function ActionHotbar({
                         <span className="text-amber-400">{spell.castingTime}</span>
                       </div>
 
-                      <div className="flex items-center justify-between text-[10px] text-slate-500 mb-2">
-                        <span>{formatSpellRange(spell.targeting)}</span>
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1.5 gap-1">
+                        <span
+                          className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold truncate ${targetingSummary.badgeStyle}`}
+                          title={targetingSummary.badgeLabel}
+                        >
+                          {targetingSummary.badgeLabel}
+                        </span>
                         {spell.concentration && (
                           <span className="px-1 py-0.2 rounded bg-amber-950 border border-amber-600 text-amber-300 font-bold shrink-0">
                             Conc.
                           </span>
                         )}
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 mb-2 px-1.5 py-0.5 rounded bg-slate-900/60 border border-slate-800/80">
+                        <span className="text-slate-500 font-medium shrink-0">Target:</span>
+                        <span
+                          className="font-semibold text-slate-200 truncate ml-1 text-right"
+                          title={targetingSummary.previewLabel}
+                        >
+                          {targetingSummary.previewLabel}
+                        </span>
                       </div>
 
                       <div className="flex items-center justify-between gap-1.5 mt-auto pt-1.5 border-t border-slate-800">

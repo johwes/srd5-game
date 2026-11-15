@@ -286,6 +286,8 @@ export function TacticalCombatHud({
           activeCombatant={activeCombatant}
           turnBudget={combat?.turnBudget ?? null}
           compendium={compendium}
+          combatants={viewState.combatants}
+          selectedCombatantId={selectedCombatantId}
           isPlayerControlled={isPlayerControlled}
           onDeclareAttack={onDeclareAttack}
           onCastSpell={onCastSpell}
