@@ -42,6 +42,7 @@ import { SaveLoadModal } from './SaveLoadModal.js';
 import { ShrineModal } from './ShrineModal.js';
 import { GraveyardModal } from './GraveyardModal.js';
 import { RogueliteHud } from './RogueliteHud.js';
+import { PauseMenuModal } from '../system/index.js';
 import {
   buildDungeonSession,
   buildRogueliteSession,
@@ -49,7 +50,13 @@ import {
   isFinalCampaignBossDefeated,
   transitionToNextFloor,
 } from './dungeonEngine.js';
-import { saveGraveyardEntry } from '../../persistence/index.js';
+import {
+  saveGraveyardEntry,
+  defaultDungeonStorageAdapter,
+  type DungeonStorageAdapter,
+  quickSaveDungeonGame,
+  saveDungeonGameToSlot,
+} from '../../persistence/index.js';
 import type { DungeonModalMode } from './types.js';
 
 export interface DungeonViewProps {
@@ -58,6 +65,7 @@ export interface DungeonViewProps {
   initialFloorId?: string;
   initialGameState?: GameState;
   gameMode?: 'campaign' | 'roguelite';
+  storageAdapter?: DungeonStorageAdapter;
   onExitToRoster: () => void;
   onOpenCharacterSheet?: (characterId: string) => void;
 }
@@ -68,6 +76,7 @@ export function DungeonView({
   initialFloorId = 'kaelen-floor-1',
   initialGameState,
   gameMode = 'campaign',
+  storageAdapter = defaultDungeonStorageAdapter,
   onExitToRoster,
   onOpenCharacterSheet,
 }: DungeonViewProps) {
@@ -144,6 +153,38 @@ export function DungeonView({
     feedbackTimeoutRef.current = setTimeout(() => {
       setActionFeedback(null);
     }, 3500);
+  }, []);
+
+  // Global Escape key handler to toggle Pause Menu or close active modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const target = e.target as HTMLElement | null;
+        if (
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' ||
+            target.isContentEditable)
+        ) {
+          return;
+        }
+
+        e.preventDefault();
+        setModalState((current) => {
+          if (current === 'pause_menu') {
+            return null; // Resume Game
+          }
+          if (current !== null) {
+            return null; // Close any active submodal
+          }
+          return 'pause_menu'; // Open Pause Menu
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // AI automation for combat
@@ -660,6 +701,7 @@ export function DungeonView({
           onOpenRestCamp={() => setModalState('rest_camp')}
           onOpenLootInventory={() => setModalState('loot_inventory')}
           onOpenSaveLoad={() => setModalState('save_load')}
+          onOpenPauseMenu={() => setModalState('pause_menu')}
           onPerformSearch={() =>
             handleDispatch({
               type: 'EXPLORE_SEARCH',
@@ -708,6 +750,9 @@ export function DungeonView({
           compendium={compendium}
           title={`${campaignModule.name} — ${floorSpec.name}`}
           subtitle="Combat Encounter in Progress"
+          onToggleMenu={() => setModalState('pause_menu')}
+          menuButtonText="⚙️ Menu"
+          menuButtonTestId="combat-hud-system-menu-btn"
           events={events}
           activeRoll={activeRoll}
           rollHistory={rollHistory}
@@ -1081,6 +1126,73 @@ export function DungeonView({
             setCurrentFloorId(importedState.dungeon.floorId);
           }
         }}
+      />
+
+      {/* Universal Pause / System Menu */}
+      <PauseMenuModal
+        isOpen={modalState === 'pause_menu'}
+        onClose={() => setModalState(null)}
+        gameState={authState}
+        campaignId={campaignModule.id}
+        campaignName={campaignModule.name}
+        floorName={floorSpec.name}
+        party={authState.party}
+        storageAdapter={storageAdapter}
+        onQuickSave={async () => {
+          await quickSaveDungeonGame(
+            authState,
+            {
+              campaignId: campaignModule.id,
+              campaignName: campaignModule.name,
+              floorName: floorSpec.name,
+            },
+            storageAdapter,
+          );
+          showFeedback('Game quicksaved successfully!');
+        }}
+        onSaveToSlot={async (slotId, label) => {
+          await saveDungeonGameToSlot(
+            slotId,
+            label,
+            authState,
+            {
+              campaignId: campaignModule.id,
+              campaignName: campaignModule.name,
+              floorName: floorSpec.name,
+            },
+            storageAdapter,
+          );
+          showFeedback(`Game saved to ${label}!`);
+        }}
+        onLoadFromSlot={async (slotId) => {
+          const { loadDungeonGameFromSlot } = await import(
+            '../../persistence/index.js'
+          );
+          const loaded = await loadDungeonGameFromSlot(slotId, storageAdapter);
+          if (loaded) {
+            const nextTransport = new LocalTransport({
+              initialState: loaded.gameState,
+              defaultPlayerId: 'player-1',
+            });
+            setTransport(nextTransport);
+            setViewState(nextTransport.getPlayerViewState());
+            if (loaded.floorId) {
+              setCurrentFloorId(loaded.floorId);
+            }
+            setModalState(null);
+            showFeedback(`Loaded game from ${loaded.slotName || loaded.slotId}!`);
+          }
+        }}
+        onOpenCharacterSheet={(charId) => {
+          setModalState(null);
+          if (onOpenCharacterSheet) {
+            onOpenCharacterSheet(charId);
+          }
+        }}
+        onOpenInventory={() => {
+          setModalState('loot_inventory');
+        }}
+        onExitToTitle={onExitToRoster}
       />
 
       {/* Level-Up Modal */}

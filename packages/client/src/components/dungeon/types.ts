@@ -20,6 +20,7 @@ export type DungeonModalMode =
   | 'rest_camp'
   | 'loot_inventory'
   | 'save_load'
+  | 'pause_menu'
   | 'level_up'
   | 'victory'
   | 'defeat'
@@ -98,6 +99,7 @@ export interface DungeonExplorationHudProps {
   onOpenRestCamp: () => void;
   onOpenLootInventory: () => void;
   onOpenSaveLoad: () => void;
+  onOpenPauseMenu?: () => void;
   onPerformSearch: () => void;
   onSelectLeadExplorer: (characterId: string) => void;
   onInspectCharacter?: (characterId: string) => void;

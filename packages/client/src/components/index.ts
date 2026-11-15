@@ -6,3 +6,4 @@ export * from './arena/index.js';
 export * from './dungeon/index.js';
 export * from './title/index.js';
 export * from './campaign/index.js';
+export * from './system/index.js';

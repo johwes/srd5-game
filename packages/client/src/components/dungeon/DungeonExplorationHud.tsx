@@ -18,6 +18,7 @@ export function DungeonExplorationHud({
   onOpenRestCamp,
   onOpenLootInventory,
   onOpenSaveLoad,
+  onOpenPauseMenu,
   onPerformSearch,
   onSelectLeadExplorer,
   onInspectCharacter,
@@ -146,6 +147,20 @@ export function DungeonExplorationHud({
             <span>💾</span>
             <span>Save / Load</span>
           </button>
+
+          {/* Pause / System Menu Trigger */}
+          {onOpenPauseMenu && (
+            <button
+              type="button"
+              data-testid="hud-pause-menu-btn"
+              onClick={onOpenPauseMenu}
+              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-amber-500/60 text-slate-300 hover:text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              title="Open Pause / System Menu (Esc)"
+            >
+              <span>⚙️</span>
+              <span>Menu</span>
+            </button>
+          )}
 
           {/* Exit / Abandon Delve */}
           <button

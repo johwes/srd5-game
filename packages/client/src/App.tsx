@@ -531,6 +531,7 @@ export function App({
             initialGameState={loadedGameState}
             compendium={defaultCompendium}
             gameMode="campaign"
+            storageAdapter={dungeonStorageAdapter}
             onOpenCharacterSheet={(charId) => {
               const char =
                 roster.characters.find((c) => c.id === charId) ??
@@ -548,8 +549,10 @@ export function App({
             partyCharacters={roster.characters.filter((c) =>
               roster.activePartyIds.includes(c.id),
             )}
+            initialGameState={loadedGameState}
             compendium={defaultCompendium}
             gameMode="roguelite"
+            storageAdapter={dungeonStorageAdapter}
             onOpenCharacterSheet={(charId) => {
               const char =
                 roster.characters.find((c) => c.id === charId) ??
@@ -558,7 +561,7 @@ export function App({
                 handleInspectCharacter(char);
               }
             }}
-            onExitToRoster={() => setActiveView('roster')}
+            onExitToRoster={() => setActiveView('title_menu')}
           />
         )}
       </div>

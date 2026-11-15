@@ -151,6 +151,7 @@ export const defaultDungeonStorageAdapter: DungeonStorageAdapter = {
 };
 
 export const DEFAULT_DUNGEON_SLOT_IDS = [
+  'slot_quick',
   'slot_1',
   'slot_2',
   'slot_3',
@@ -161,6 +162,8 @@ export type DefaultDungeonSlotId = (typeof DEFAULT_DUNGEON_SLOT_IDS)[number];
 
 export function getDefaultDungeonSlotLabel(slotId: string): string {
   switch (slotId) {
+    case 'slot_quick':
+      return 'Quick-Save';
     case 'slot_1':
       return 'Save Slot 1';
     case 'slot_2':
@@ -289,6 +292,31 @@ export async function saveDungeonGameToSlot(
   slots[slotId] = slotData;
   await storageAdapter.setItem(DUNGEON_SAVES_STORAGE_KEY, slots);
   return slotData;
+}
+
+/**
+ * Performs a quick-save into 'slot_quick'.
+ */
+export async function quickSaveDungeonGame(
+  gameState: GameState,
+  options: {
+    campaignId?: string;
+    campaignName?: string;
+    floorName?: string;
+  } = {},
+  storageAdapter: DungeonStorageAdapter = defaultDungeonStorageAdapter,
+): Promise<DungeonSaveSlotData> {
+  return saveDungeonGameToSlot(
+    'slot_quick',
+    'Quick-Save',
+    gameState,
+    {
+      campaignId: options.campaignId ?? 'campaign_kaelen',
+      campaignName: options.campaignName ?? 'The Sunken Crypt of Kaelen',
+      floorName: options.floorName ?? 'Current Floor',
+    },
+    storageAdapter,
+  );
 }
 
 /**
