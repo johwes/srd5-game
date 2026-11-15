@@ -308,5 +308,6 @@ When the party encounters wandering hostiles or steps onto an unresolved wildern
 | :---: | :--- | :--- | :--- |
 | **Stage 1 (Now - Epic 4)** | **The Arena (PvE & Local PvP)** | `SRD-401`..`SRD-408` | Instant combat playability, build testing, AI battles, and 1v1 local party duels on the PixiJS canvas. |
 | **Stage 2 (Epic 5 Extended)** | **The Deep Descent (NetHack Roguelite)** | `SRD-501`..`SRD-509` | Procedural floor generator, stairs down/up, depth scaling, supply tension, shrines, and high score runs. |
-| **Stage 3 (Epic 6)** | **Multiplayer Transport** | `SRD-601`..`SRD-604` | Online remote PvP Arena and co-op dungeon crawling via WebSockets. |
-| **Stage 4 (Epic 7)** | **The Realm (Strategic Overworld)** | `SRD-701`..`SRD-705` | Macro hex world generation, factions, settlements, quest boards, and seamless tactical battle transitions. |
+| **Stage 3 (Epic 6)** | **Title Screen & Campaign Launcher** | `SRD-601`..`SRD-605` | Steam-ready CRPG shell, 4-stage New Game wizard, 4-slot campfire party recruitment, pause menu, and handheld ergonomics (Spec 07). |
+| **Stage 4 (Epic 7)** | **Multiplayer Transport** | `SRD-701`..`SRD-704` | Online remote PvP Arena and co-op dungeon crawling via WebSockets. |
+| **Stage 5 (Epic 8)** | **The Realm (Strategic Overworld)** | `SRD-801`..`SRD-805` | Macro hex world generation, factions, settlements, quest boards, and seamless tactical battle transitions. |

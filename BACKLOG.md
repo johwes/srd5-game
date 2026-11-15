@@ -1,6 +1,6 @@
 # SRD 5.1 Tactical Dungeon Crawler — Implementation Backlog
 
-This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md)) into granular, dependency-ordered engineering tickets.
+This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md)) into granular, dependency-ordered engineering tickets.
 
 ## Status Legend
 - `[ ]` Todo
@@ -18,8 +18,9 @@ flowchart LR
     E2 --> E3
     E3 --> E4["Epic 4: PixiJS Tactical Board,\nCombat HUD & Arena (PvE/PvP)"]
     E4 --> E5["Epic 5: Dungeon Exploration,\nDeep Descent & Campaign"]
-    E4 --> E6["Epic 6: Multiplayer\nTransport (Co-op & PvP)"]
-    E5 --> E7["Epic 7: The Realm\n(Strategic Overworld)"]
+    E5 --> E6["Epic 6: Steam-Ready Title Screen &\nCampaign Setup Wizard"]
+    E4 --> E7["Epic 7: Multiplayer\nTransport (Co-op & PvP)"]
+    E5 --> E8["Epic 8: The Realm\n(Strategic Overworld)"]
 ```
 
 ---
@@ -137,28 +138,48 @@ flowchart LR
 
 ---
 
-## Epic 6: Cooperative & Competitive Multiplayer Extension
+## Epic 6: Steam-Ready Title Screen & "New Game" Campaign Setup Wizard
+**Spec Reference**: [07-main-menu-and-campaign-launcher.md](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md)
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-601** | `[ ]` | Build Steam-ready Title Screen & Main Menu (`TitleMenuView.tsx`) with dark fantasy styling, continue/load detection, and responsive handheld/desktop layout | `@srd5/client` | SRD-507, SRD-509 |
+| **SRD-602** | `[ ]` | Build 4-Stage "New Game" Campaign Launcher Wizard (`CampaignSetupWizard.tsx`) with Mode Selection, Difficulty presets, and Narrative Prologue | `@srd5/client` | SRD-601 |
+| **SRD-603** | `[ ]` | Build 4-Slot Campfire Party Assembly & Recruitment UI (Pregen quick-picks, Character Vault import, `.srd5.json` file drop, "Roll New Hero" builder return callback, and multiplayer seat assignment hook) | `@srd5/client` | SRD-208, SRD-602 |
+| **SRD-604** | `[ ]` | Build Universal In-Game Pause / System Menu (`PauseMenuModal.tsx`) with `Esc` toggle, Quicksave/Load, Settings, and Exit to Title | `@srd5/client` | SRD-507, SRD-601 |
+| **SRD-605** | `[ ]` | Build automated Playwright E2E suite verifying the complete New Game creation & launch flow across all 3 game modes at 1280×800 resolution | `@srd5/client` | SRD-602, SRD-603, SRD-604 |
+
+### Epic 6 Acceptance Criteria Details
+- [ ] **SRD-601**: App launch defaults to `TitleMenuView` with CRPG dark-fantasy aesthetic, animated torchlight/vignette styling, active save detection ("Continue" enabled with floor/party info), Character Vault, Compendium, Settings, and statutory CC-BY-4.0 attribution modal.
+- [ ] **SRD-602**: Players can walk through Stage 1 (Mode Selection: Crypt of Kaelen / Deep Descent / The Arena) &rarr; Stage 2 (Difficulty: Explorer / Standard / Tactician with custom toggles) &rarr; Stage 4 (Narrative Prologue with thematic story briefing and launch CTA).
+- [ ] **SRD-603**: Players can configure a 1–4 member party in Stage 3: one-click populate with 4 SRD pregens (Valeros, Merisiel, Kyra, Ezren), select heroes from the Character Vault, drag-and-drop `.srd5.json` files, or launch the 7-step builder and automatically return the created hero to the chosen slot. Displays party balance synergy badges.
+- [ ] **SRD-604**: Pressing `Esc` or clicking the system gear icon in any gameplay mode opens `PauseMenuModal` to resume, quicksave to IndexedDB, load a saved slot, inspect party sheets, or return to the main menu with unsaved progress confirmation.
+- [ ] **SRD-605**: Playwright automated suite runs headlessly, navigates from Title Screen through New Game wizard, populates party, launches each game mode (Campaign, Deep Descent, Arena), and verifies zero UI clipping or console errors at 1280×800 (Steam Deck) resolution.
+
+---
+
+## Epic 7: Cooperative & Competitive Multiplayer Extension
 **Spec Reference**: [05-multiplayer-and-ui.md](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06-game-modes-and-progression.md](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md)
 
 | ID | Status | Title | Package | Depends On |
 | :--- | :---: | :--- | :--- | :--- |
-| **SRD-601** | `[ ]` | Implement authoritative WebSocket Room Server (`@srd5/server`) wrapping `@srd5/engine` | `@srd5/server` | SRD-311, SRD-504 |
-| **SRD-602** | `[ ]` | Implement `WebSocketTransport` client adapter, Lobby room codes, and Player-to-Character slot assignment (Co-op & PvP) | `@srd5/transport`, `@srd5/client` | SRD-601 |
-| **SRD-603** | `[ ]` | Implement multiplayer Reaction prompt timers and per-player Fog-of-War state synchronization | `@srd5/server`, `@srd5/client` | SRD-602 |
-| **SRD-604** | `[ ]` | Expand Combat Tier B & C Effect DSL coverage (Levels 6–20 spells, features, and CR 6–20 monsters) | `@srd5/data`, `@srd5/engine` | SRD-310 |
+| **SRD-701** | `[ ]` | Implement authoritative WebSocket Room Server (`@srd5/server`) wrapping `@srd5/engine` | `@srd5/server` | SRD-311, SRD-504 |
+| **SRD-702** | `[ ]` | Implement `WebSocketTransport` client adapter, Lobby room codes, and Player-to-Character slot assignment (Co-op & PvP) | `@srd5/transport`, `@srd5/client` | SRD-701 |
+| **SRD-703** | `[ ]` | Implement multiplayer Reaction prompt timers and per-player Fog-of-War state synchronization | `@srd5/server`, `@srd5/client` | SRD-702 |
+| **SRD-704** | `[ ]` | Expand Combat Tier B & C Effect DSL coverage (Levels 6–20 spells, features, and CR 6–20 monsters) | `@srd5/data`, `@srd5/engine` | SRD-310 |
 
 ---
 
-## Epic 7: The Realm (Strategic Overworld / Master of Magic Style)
+## Epic 8: The Realm (Strategic Overworld / Master of Magic Style)
 **Spec Reference**: [06-game-modes-and-progression.md](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md)
 
 | ID | Status | Title | Package | Depends On |
 | :--- | :---: | :--- | :--- | :--- |
-| **SRD-701** | `[ ]` | Implement `OverworldMap` procedural generator (macro hex/tile grid, biomes, rivers, roads, elevation) | `@srd5/engine` | SRD-508 |
-| **SRD-702** | `[ ]` | Implement Overworld Party Travel loop (daily movement pace, foraging, weather, camping, day/night cycles) | `@srd5/engine` | SRD-504, SRD-701 |
-| **SRD-703** | `[ ]` | Implement Faction reputation engine (-100 to +100), procedural settlements, shops, and quest boards | `@srd5/engine` | SRD-701 |
-| **SRD-704** | `[ ]` | Implement Seamless Overworld-to-Tactical Grid battle generator (Wilderness encounters and Dungeon POI entries) | `@srd5/engine` | SRD-301, SRD-702 |
-| **SRD-705** | `[ ]` | Build PixiJS Overworld Viewport & Strategic Settlement HUD (World navigation, town services, quest journal) | `@srd5/client` | SRD-402, SRD-703, SRD-704 |
+| **SRD-801** | `[ ]` | Implement `OverworldMap` procedural generator (macro hex/tile grid, biomes, rivers, roads, elevation) | `@srd5/engine` | SRD-508 |
+| **SRD-802** | `[ ]` | Implement Overworld Party Travel loop (daily movement pace, foraging, weather, camping, day/night cycles) | `@srd5/engine` | SRD-504, SRD-801 |
+| **SRD-803** | `[ ]` | Implement Faction reputation engine (-100 to +100), procedural settlements, shops, and quest boards | `@srd5/engine` | SRD-801 |
+| **SRD-804** | `[ ]` | Implement Seamless Overworld-to-Tactical Grid battle generator (Wilderness encounters and Dungeon POI entries) | `@srd5/engine` | SRD-301, SRD-802 |
+| **SRD-805** | `[ ]` | Build PixiJS Overworld Viewport & Strategic Settlement HUD (World navigation, town services, quest journal) | `@srd5/client` | SRD-402, SRD-803, SRD-804 |
 
-### Epic 7 Acceptance Criteria Details
-- [ ] **SRD-701..705**: Players can generate an expansive procedural world map, travel between towns and factions across biomes, accept bounty and dungeon quests, recruit or buy gear in settlements, and engage wandering enemies or enter dungeon POIs with seamless transition into tactical turn-based combat on the 5-ft grid.
+### Epic 8 Acceptance Criteria Details
+- [ ] **SRD-801..805**: Players can generate an expansive procedural world map, travel between towns and factions across biomes, accept bounty and dungeon quests, recruit or buy gear in settlements, and engage wandering enemies or enter dungeon POIs with seamless transition into tactical turn-based combat on the 5-ft grid.
