@@ -100,7 +100,7 @@ export function ArenaSetupView({
     } else if (selectedMonsterPreset === 'orcs') {
       selectedMonsterIds = ['orc', 'orc', 'hobgoblin', 'ogre'];
     } else if (selectedMonsterPreset === 'dragon') {
-      selectedMonsterIds = ['red_dragon_wyrmling', 'kobold', 'kobold'];
+      selectedMonsterIds = ['young-black-dragon', 'kobold', 'kobold'];
     }
 
     const teamARoster = combinedCharacters.filter((c) =>

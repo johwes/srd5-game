@@ -152,7 +152,7 @@ export function getMonstersForWave(
     const pool = ['orc', 'orc', 'hobgoblin', 'ghoul', 'goblin'];
     return pool.slice(0, Math.min(pool.length, countFactor + 1));
   } else if (wave === 3) {
-    const pool = ['ogre', 'hobgoblin', 'hobgoblin', 'specter'];
+    const pool = ['ogre', 'hobgoblin', 'hobgoblin', 'wight'];
     return pool.slice(0, Math.min(pool.length, countFactor));
   } else {
     // High wave boss encounter

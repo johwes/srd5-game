@@ -95,6 +95,8 @@ export function TacticalCanvasViewport({
 
   // Pixi application and scene graph references
   const appRef = useRef<Application | null>(null);
+  const initPromiseRef = useRef<Promise<void> | null>(null);
+  const destroyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sceneGraphRef = useRef<TacticalSceneGraph | null>(null);
   const terrainRendererRef = useRef<TerrainTileRenderer | null>(null);
   const tokenRendererRef = useRef<CreatureTokenRenderer | null>(null);
@@ -146,15 +148,25 @@ export function TacticalCanvasViewport({
 
   // Initialize PixiJS Application
   useEffect(() => {
+    // If a destruction was queued by transient React StrictMode unmount, cancel it immediately!
+    if (destroyTimeoutRef.current) {
+      clearTimeout(destroyTimeoutRef.current);
+      destroyTimeoutRef.current = null;
+    }
+
+    // If app is already initialized, simply mark ready and return
+    if (appRef.current && sceneGraphRef.current) {
+      setPixiReady(true);
+      return;
+    }
+
     let isMounted = true;
-    let localApp: Application | null = null;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     async function initPixi() {
       try {
         const app = new Application();
-        localApp = app;
         appRef.current = app;
 
         const rect = containerRef.current?.getBoundingClientRect();
@@ -173,7 +185,6 @@ export function TacticalCanvasViewport({
         });
 
         if (!isMounted) {
-          app.destroy(false);
           return;
         }
 
@@ -231,43 +242,50 @@ export function TacticalCanvasViewport({
         // Allows tests and non-WebGL environments to operate cleanly
         console.error('TacticalCanvasViewport: PixiJS init failed:', err);
         setPixiReady(true);
+      } finally {
+        initPromiseRef.current = null;
       }
     }
 
-    void initPixi();
+    if (!initPromiseRef.current) {
+      initPromiseRef.current = initPixi();
+    }
 
     return () => {
       isMounted = false;
-      if (fogRendererRef.current) {
-        fogRendererRef.current.destroy();
-        fogRendererRef.current = null;
-      }
-      if (pathAndAoeRendererRef.current) {
-        pathAndAoeRendererRef.current.destroy();
-        pathAndAoeRendererRef.current = null;
-      }
-      if (tokenRendererRef.current) {
-        tokenRendererRef.current.destroy();
-        tokenRendererRef.current = null;
-      }
-      if (floatingTextRendererRef.current) {
-        floatingTextRendererRef.current.destroy();
-        floatingTextRendererRef.current = null;
-      }
-      if (terrainRendererRef.current) {
-        terrainRendererRef.current.destroy();
-        terrainRendererRef.current = null;
-      }
-      if (localApp) {
-        try {
-          localApp.destroy(false);
-        } catch {
-          // Ignore destruction errors on unmounted canvas
+      // Delay destruction to survive React StrictMode transient mount-unmount-remount cycles
+      destroyTimeoutRef.current = setTimeout(() => {
+        if (fogRendererRef.current) {
+          fogRendererRef.current.destroy();
+          fogRendererRef.current = null;
         }
-        localApp = null;
-      }
-      appRef.current = null;
-      sceneGraphRef.current = null;
+        if (pathAndAoeRendererRef.current) {
+          pathAndAoeRendererRef.current.destroy();
+          pathAndAoeRendererRef.current = null;
+        }
+        if (tokenRendererRef.current) {
+          tokenRendererRef.current.destroy();
+          tokenRendererRef.current = null;
+        }
+        if (floatingTextRendererRef.current) {
+          floatingTextRendererRef.current.destroy();
+          floatingTextRendererRef.current = null;
+        }
+        if (terrainRendererRef.current) {
+          terrainRendererRef.current.destroy();
+          terrainRendererRef.current = null;
+        }
+        if (appRef.current) {
+          try {
+            appRef.current.destroy(false);
+          } catch {
+            // Ignore destruction errors
+          }
+          appRef.current = null;
+        }
+        sceneGraphRef.current = null;
+        initPromiseRef.current = null;
+      }, 150);
     };
   }, []);
 
