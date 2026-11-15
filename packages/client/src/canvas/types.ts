@@ -143,6 +143,10 @@ export interface CreatureTokenData {
   darkvisionFeet?: number;
   characterSheet?: unknown;
   monsterData?: unknown;
+  tokenSpriteId?: string;
+  isBoss?: boolean;
+  challengeRating?: number;
+  monsterType?: string;
 }
 
 /**

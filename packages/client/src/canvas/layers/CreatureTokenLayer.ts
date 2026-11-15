@@ -1,7 +1,8 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Sprite, Text } from 'pixi.js';
 import type { ConditionId, CreatureSize } from '@srd5/data';
 import type { CombatantSide } from '@srd5/engine';
 import type { PlayerViewCombatant } from '@srd5/transport';
+import { assetRegistry, type ResolvedTokenAsset } from '../assets/index.js';
 import {
   type CreatureFacing,
   type CreatureTokenData,
@@ -99,6 +100,7 @@ export interface TokenNode {
   container: Container;
   auraGraphics: Graphics;
   baseDiscGraphics: Graphics;
+  spriteNode: Sprite;
   hpArcGraphics: Graphics;
   facingGraphics: Graphics;
   initialText: Text;
@@ -107,6 +109,7 @@ export interface TokenNode {
   data: CreatureTokenData;
   targetPos: Point;
   currentFacing: CreatureFacing;
+  resolvedAsset?: ResolvedTokenAsset;
 }
 
 /**
@@ -233,6 +236,11 @@ export class CreatureTokenRenderer {
       const baseDiscGraphics = new Graphics();
       baseDiscGraphics.label = 'BaseDiscGraphics';
 
+      const spriteNode = new Sprite();
+      spriteNode.label = 'SpriteNode';
+      spriteNode.anchor.set(0.5, 0.5);
+      spriteNode.visible = false;
+
       const hpArcGraphics = new Graphics();
       hpArcGraphics.label = 'HpArcGraphics';
 
@@ -270,6 +278,7 @@ export class CreatureTokenRenderer {
 
       container.addChild(auraGraphics);
       container.addChild(baseDiscGraphics);
+      container.addChild(spriteNode);
       container.addChild(hpArcGraphics);
       container.addChild(facingGraphics);
       container.addChild(initialText);
@@ -282,6 +291,7 @@ export class CreatureTokenRenderer {
         container,
         auraGraphics,
         baseDiscGraphics,
+        spriteNode,
         hpArcGraphics,
         facingGraphics,
         initialText,
@@ -299,6 +309,21 @@ export class CreatureTokenRenderer {
       node.currentFacing = data.facing;
     }
 
+    const resolvedAsset = assetRegistry.resolveCreatureToken({
+      id: data.id,
+      name: data.name,
+      size: data.size,
+      side: data.side,
+      teamId: data.teamId,
+      tokenSpriteId: data.tokenSpriteId,
+      monsterType: data.monsterType,
+      challengeRating: data.challengeRating,
+      isBoss: data.isBoss,
+      color: data.color,
+      label: data.label,
+    });
+    node.resolvedAsset = resolvedAsset;
+
     const sizeCells = CREATURE_SIZE_CELLS[data.size] ?? 1;
     const footprintPx = sizeCells * opts.cellSize;
     const radius = Math.max(12, footprintPx * 0.44);
@@ -314,8 +339,24 @@ export class CreatureTokenRenderer {
     // 1. Aura / Selection / Hover Ring
     this.drawAura(node.auraGraphics, radius, opts);
 
-    // 2. Base Disc & Frame
-    this.drawBaseDisc(node.baseDiscGraphics, radius, data);
+    // 2. Base Disc & Frame (with procedural team/allegiance colors)
+    this.drawBaseDisc(node.baseDiscGraphics, radius, data, resolvedAsset);
+
+    // 2b. Tier 1 Spritesheet Texture (if loaded and available)
+    if (resolvedAsset.texture && !data.isDead && data.currentHp > 0) {
+      node.spriteNode.texture = resolvedAsset.texture;
+      const spriteSize = radius * 1.5;
+      node.spriteNode.width = spriteSize;
+      node.spriteNode.height = spriteSize;
+      node.spriteNode.position.set(0, 0);
+      node.spriteNode.visible = true;
+      node.initialText.visible = false;
+    } else {
+      node.spriteNode.visible = false;
+      // 5. Initial / Label Text (Tier 3 procedural monogram fallback)
+      this.updateInitialText(node.initialText, radius, data, resolvedAsset.monogram);
+      node.initialText.visible = !data.isDead && data.currentHp > 0;
+    }
 
     // 3. HP Perimeter Arc
     if (opts.showHpArc) {
@@ -332,9 +373,6 @@ export class CreatureTokenRenderer {
     } else {
       node.facingGraphics.visible = false;
     }
-
-    // 5. Initial / Label Text
-    this.updateInitialText(node.initialText, radius, data);
 
     // 6. Condition Badges
     if (opts.showConditionBadges && data.conditions && data.conditions.length > 0) {
@@ -385,12 +423,18 @@ export class CreatureTokenRenderer {
   /**
    * Draws the circular body disc, side frame, and dead status indicators.
    */
-  private drawBaseDisc(g: Graphics, radius: number, data: CreatureTokenData): void {
+  private drawBaseDisc(
+    g: Graphics,
+    radius: number,
+    data: CreatureTokenData,
+    asset?: ResolvedTokenAsset,
+  ): void {
     g.clear();
 
     const isDead = data.isDead || data.currentHp <= 0;
     const sideTheme = TOKEN_SIDE_COLORS[data.side] ?? TOKEN_SIDE_COLORS.neutral;
-    const strokeColor = data.color ?? sideTheme.stroke;
+    const strokeColor = asset?.borderColor ?? data.color ?? sideTheme.stroke;
+    const fillColor = asset?.baseColor ?? sideTheme.fill;
 
     if (isDead) {
       // Dead/unconscious token styling: dark grey disc with cross marker
@@ -403,8 +447,14 @@ export class CreatureTokenRenderer {
       g.moveTo(d, -d).lineTo(-d, d).stroke({ color: 0xef4444, width: 3, alpha: 0.8 });
     } else {
       // Normal living creature token
-      g.circle(0, 0, radius).fill(sideTheme.fill);
-      g.circle(0, 0, radius).stroke({ color: strokeColor, width: 2.5, alpha: 0.95 });
+      g.circle(0, 0, radius).fill(fillColor);
+      if (asset?.isBoss) {
+        // Gold boss ring
+        g.circle(0, 0, radius).stroke({ color: 0xeab308, width: 3.5, alpha: 0.98 });
+        g.circle(0, 0, radius - 2).stroke({ color: 0x713f12, width: 1.5, alpha: 0.7 });
+      } else {
+        g.circle(0, 0, radius).stroke({ color: strokeColor, width: 2.5, alpha: 0.95 });
+      }
     }
   }
 
@@ -489,23 +539,18 @@ export class CreatureTokenRenderer {
   /**
    * Updates initial / abbreviation text inside the token disc.
    */
-  private updateInitialText(textNode: Text, radius: number, data: CreatureTokenData): void {
+  private updateInitialText(
+    textNode: Text,
+    radius: number,
+    data: CreatureTokenData,
+    monogram?: string,
+  ): void {
     if (data.isDead || data.currentHp <= 0) {
       textNode.text = '';
       return;
     }
 
-    let initial = data.label;
-    if (!initial) {
-      const parts = data.name.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        initial = (parts[0][0] + parts[1][0]).toUpperCase();
-      } else {
-        initial = data.name.slice(0, 2).toUpperCase();
-      }
-    }
-
-    textNode.text = initial;
+    textNode.text = monogram ?? data.label ?? assetRegistry.computeMonogram(data.name);
     textNode.style.fontSize = Math.max(10, Math.round(radius * 0.55));
     textNode.position.set(0, 0);
   }

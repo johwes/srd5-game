@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { SpellData } from '@srd5/data';
 import type { DerivedWeaponAttackProfile } from '@srd5/engine';
+import { GameIcon } from '../../canvas/assets/index.js';
 import { formatSpellRange } from '../compendium/formatters.js';
 import { TurnBudgetIndicator } from './TurnBudgetIndicator.js';
 import type {
@@ -322,7 +323,10 @@ export function ActionHotbar({
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="font-bold text-slate-200 truncate">{wp.name}</span>
+                      <span className="font-bold text-slate-200 truncate flex items-center gap-1.5">
+                        <GameIcon name="attack" category="action" size={14} />
+                        <span>{wp.name}</span>
+                      </span>
                       <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] font-semibold text-amber-300">
                         {wp.toHitBonus >= 0 ? `+${wp.toHitBonus}` : wp.toHitBonus} to hit
                       </span>
@@ -527,8 +531,9 @@ export function ActionHotbar({
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="font-bold text-slate-200 truncate">
-                          {spell.name}
+                        <span className="font-bold text-slate-200 truncate flex items-center gap-1.5">
+                          <GameIcon name={spell.school} category="spell" size={14} />
+                          <span>{spell.name}</span>
                         </span>
                         <span className="px-1.5 py-0.2 rounded bg-purple-950 border border-purple-700 text-[10px] font-semibold text-purple-300">
                           {isCantrip ? 'Cantrip' : `Level ${spell.level}`}
@@ -683,8 +688,8 @@ export function ActionHotbar({
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="font-bold text-slate-200 flex items-center gap-1">
-                      <span>{action.icon}</span>
+                    <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                      <GameIcon name={action.id} category="action" size={16} />
                       <span>{action.name}</span>
                     </span>
                     <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] text-slate-400 capitalize">
@@ -724,8 +729,8 @@ export function ActionHotbar({
               className="flex flex-col justify-between p-2 rounded-lg border border-slate-700 bg-slate-950/80 min-w-[190px] max-w-[240px] text-xs"
             >
               <div className="flex items-center justify-between gap-1 mb-1">
-                <span className="font-bold text-slate-200 flex items-center gap-1">
-                  <span>🧪</span>
+                <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                  <GameIcon name="potion" category="item" size={16} />
                   <span>Potion of Healing</span>
                 </span>
                 <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] text-slate-400">
