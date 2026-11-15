@@ -470,7 +470,7 @@ export function ArenaCombatView({
   return (
     <div
       data-testid="arena-combat-view"
-      className="relative w-full flex-1 min-h-[460px] flex flex-col bg-slate-950 overflow-hidden rounded-xl border border-slate-800"
+      className="relative w-full h-[calc(100vh-140px)] min-h-[460px] flex flex-col bg-slate-950 overflow-hidden rounded-xl border border-slate-800"
     >
       {actionFeedback && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-950/95 border border-red-500 text-red-200 rounded-lg text-xs font-semibold shadow-2xl flex items-center gap-2 pointer-events-none">

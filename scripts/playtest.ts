@@ -117,6 +117,11 @@ async function runPlaytest() {
     await page.screenshot({ path: path.join(outputDir, '03-arena-setup.png') });
 
     const launchArenaBtn = page.locator('[data-testid="launch-arena-button"]');
+    const launchBox = await launchArenaBtn.boundingBox();
+    console.log('⚔️ Launch Arena Button bounding box in setup:', launchBox);
+    if (!launchBox || launchBox.y + launchBox.height > 800) {
+      throw new Error(`Launch arena button is not visible or clipped outside 800px viewport in setup! ${JSON.stringify(launchBox)}`);
+    }
     if (await launchArenaBtn.isVisible()) {
       console.log('⚔️ Launching Arena Combat...');
       await launchArenaBtn.click();

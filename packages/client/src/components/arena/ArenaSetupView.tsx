@@ -538,7 +538,7 @@ export function ArenaSetupView({
       )}
 
       {/* Launch Action Button */}
-      <div className="pt-2">
+      <div className="sticky bottom-2 z-20 pt-2 pb-1 bg-slate-950/90 backdrop-blur-md rounded-xl shadow-lg">
         <button
           type="button"
           data-testid="launch-arena-button"
