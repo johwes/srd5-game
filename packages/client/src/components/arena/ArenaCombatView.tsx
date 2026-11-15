@@ -88,6 +88,15 @@ export function ArenaCombatView({
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // HUD sidebar panels (Log & Dice Tray)
+  const [showLog, setShowLog] = useState(false);
+  const [showDiceTray, setShowDiceTray] = useState(false);
+
+  const handleInspectRoll = (roll: DiceRollRecord) => {
+    setActiveRoll(roll);
+    setShowDiceTray(true);
+  };
+
   const showFeedback = useCallback((msg: string) => {
     setActionFeedback(msg);
     if (feedbackTimeoutRef.current) {
@@ -461,24 +470,43 @@ export function ArenaCombatView({
   return (
     <div
       data-testid="arena-combat-view"
-      className="relative w-full h-[calc(100vh-140px)] min-h-[460px] flex flex-col bg-slate-950 overflow-hidden rounded-xl border border-slate-800"
+      className="relative w-full flex-1 min-h-[460px] flex flex-col bg-slate-950 overflow-hidden rounded-xl border border-slate-800"
     >
-      {/* Top Arena Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-slate-900/90 border-b border-slate-800 z-10">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            data-testid="arena-exit-button"
-            onClick={onExitToSetup}
-            className="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-700 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
-          >
-            &larr; Exit Arena
-          </button>
+      {actionFeedback && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-950/95 border border-red-500 text-red-200 rounded-lg text-xs font-semibold shadow-2xl flex items-center gap-2 pointer-events-none">
+          <span>⚠️</span>
+          <span>{actionFeedback}</span>
+        </div>
+      )}
 
+      <TacticalCombatHud
+        viewState={viewState}
+        compendium={compendium}
+        selectedCombatantId={selectedCombatantId}
+        isPlayerControlled={isPlayerControlled}
+        events={events}
+        activeRoll={activeRoll}
+        rollHistory={rollHistory}
+        showCombatLog={showLog}
+        showDiceTray={showDiceTray}
+        onToggleCombatLog={() => setShowLog((prev) => !prev)}
+        onToggleDiceTray={() => setShowDiceTray((prev) => !prev)}
+        onInspectRoll={handleInspectRoll}
+        title={config.name}
+        subtitle={
+          isPvp
+            ? activeTeamId === 'team_red'
+              ? `${config.pvpSettings?.teamA.teamName} (Player 1)`
+              : `${config.pvpSettings?.teamB.teamName} (Player 2)`
+            : config.mode === 'endless_waves'
+            ? `Endless Wave ${currentWave} &middot; Score ${score}`
+            : `Skirmish &middot; Tier: ${config.pveSettings?.difficultyTier ?? 'medium'}`
+        }
+        onToggleMenu={onExitToSetup}
+        menuButtonText="&larr; Exit Arena"
+        menuButtonTestId="arena-exit-button"
+        headerExtras={
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-amber-400">
-              {config.name}
-            </span>
             <span className="text-xs px-2 py-0.5 rounded-full font-bold uppercase bg-slate-800 text-slate-300 border border-slate-700">
               {config.mode === 'pvp_duel'
                 ? '1v1 PvP Duel'
@@ -486,111 +514,72 @@ export function ArenaCombatView({
                 ? `Wave ${currentWave}`
                 : 'Custom Skirmish'}
             </span>
+
+            {isPvp && (
+              <div
+                data-testid="pvp-turn-indicator"
+                className={`px-2.5 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1.5 transition-colors ${
+                  activeTeamId === 'team_red'
+                    ? 'bg-red-950/80 border-red-600 text-red-300'
+                    : 'bg-blue-950/80 border-blue-600 text-blue-300'
+                }`}
+              >
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    backgroundColor:
+                      activeTeamId === 'team_red'
+                        ? config.pvpSettings?.teamA.color ?? '#ef4444'
+                        : config.pvpSettings?.teamB.color ?? '#3b82f6',
+                  }}
+                />
+                <span>
+                  {activeTeamId === 'team_red'
+                    ? `${config.pvpSettings?.teamA.teamName ?? 'Team Red'}'s Turn`
+                    : `${config.pvpSettings?.teamB.teamName ?? 'Team Blue'}'s Turn`}
+                </span>
+              </div>
+            )}
+
+            {config.mode === 'endless_waves' && (
+              <div className="text-xs text-slate-400 flex items-center gap-2">
+                <span>
+                  Score: <strong className="text-amber-400 font-mono">{score}</strong>
+                </span>
+                <span>
+                  Slain: <strong className="text-slate-200 font-mono">{monstersDefeated}</strong>
+                </span>
+              </div>
+            )}
+
+            {isMonsterTurn && (
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-700">
+                <span className="text-xs text-rose-400 font-medium animate-pulse hidden md:inline">
+                  AI Turn:
+                </span>
+                <button
+                  type="button"
+                  data-testid="step-ai-turn-button"
+                  disabled={isAiThinking}
+                  onClick={() => void executeAiMonsterTurn()}
+                  className="px-2 py-0.5 text-xs font-semibold rounded bg-rose-600 hover:bg-rose-500 text-white disabled:opacity-50"
+                >
+                  Step AI Turn
+                </button>
+                <label className="text-[11px] text-slate-400 flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    data-testid="auto-ai-toggle"
+                    checked={autoAiTurn}
+                    onChange={(e) => setAutoAiTurn(e.target.checked)}
+                    className="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0"
+                  />
+                  Auto
+                </label>
+              </div>
+            )}
           </div>
-        </div>
-
-        {/* Dynamic Mode Turn & Metric Indicators */}
-        <div className="flex items-center gap-4">
-          {isPvp ? (
-            <div
-              data-testid="pvp-turn-indicator"
-              className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 transition-colors ${
-                activeTeamId === 'team_red'
-                  ? 'bg-red-950/80 border-red-600 text-red-300'
-                  : 'bg-blue-950/80 border-blue-600 text-blue-300'
-              }`}
-            >
-              <span
-                className="w-2.5 h-2.5 rounded-full"
-                style={{
-                  backgroundColor:
-                    activeTeamId === 'team_red'
-                      ? config.pvpSettings?.teamA.color ?? '#ef4444'
-                      : config.pvpSettings?.teamB.color ?? '#3b82f6',
-                }}
-              />
-              <span>
-                {activeTeamId === 'team_red'
-                  ? `${config.pvpSettings?.teamA.teamName ?? 'Team Red'}'s Turn (Player 1)`
-                  : `${config.pvpSettings?.teamB.teamName ?? 'Team Blue'}'s Turn (Player 2)`}
-              </span>
-            </div>
-          ) : (
-            <>
-              {config.mode === 'endless_waves' && (
-                <div className="text-xs text-slate-400 flex items-center gap-3">
-                  <span>
-                    Score:{' '}
-                    <strong className="text-amber-400 font-mono">
-                      {score}
-                    </strong>
-                  </span>
-                  <span>
-                    Slain:{' '}
-                    <strong className="text-slate-200 font-mono">
-                      {monstersDefeated}
-                    </strong>
-                  </span>
-                </div>
-              )}
-
-              {isMonsterTurn && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-rose-400 font-medium animate-pulse">
-                    Monster AI is acting...
-                  </span>
-                  <button
-                    type="button"
-                    data-testid="step-ai-turn-button"
-                    disabled={isAiThinking}
-                    onClick={() => void executeAiMonsterTurn()}
-                    className="px-2 py-0.5 text-xs font-semibold rounded bg-rose-600 hover:bg-rose-500 text-white disabled:opacity-50"
-                  >
-                    Step AI Turn
-                  </button>
-                  <label className="text-[11px] text-slate-400 flex items-center gap-1 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      data-testid="auto-ai-toggle"
-                      checked={autoAiTurn}
-                      onChange={(e) => setAutoAiTurn(e.target.checked)}
-                      className="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0"
-                    />
-                    Auto
-                  </label>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Main HUD & PixiJS Tactical Canvas */}
-      <div className="relative flex-1 w-full h-full">
-        {actionFeedback && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-950/95 border border-red-500 text-red-200 rounded-lg text-xs font-semibold shadow-2xl flex items-center gap-2 pointer-events-none">
-            <span>⚠️</span>
-            <span>{actionFeedback}</span>
-          </div>
-        )}
-        <TacticalCombatHud
-          viewState={viewState}
-          compendium={compendium}
-          selectedCombatantId={selectedCombatantId}
-          isPlayerControlled={isPlayerControlled}
-          events={events}
-          activeRoll={activeRoll}
-          rollHistory={rollHistory}
-          title={config.name}
-          subtitle={
-            isPvp
-              ? activeTeamId === 'team_red'
-                ? `${config.pvpSettings?.teamA.teamName} (Player 1)`
-                : `${config.pvpSettings?.teamB.teamName} (Player 2)`
-              : config.mode === 'endless_waves'
-              ? `Endless Wave ${currentWave} &middot; Score ${score}`
-              : `Skirmish &middot; Tier: ${config.pveSettings?.difficultyTier ?? 'medium'}`
-          }
+        }
           onSelectCombatant={(id) => setSelectedCombatantId(id)}
           onOpenCharacterSheet={onOpenCharacterSheet}
           onLevelUpCharacter={handleOpenLevelUp}
@@ -756,7 +745,6 @@ export function ArenaCombatView({
             showTokenNames={true}
           />
         </TacticalCombatHud>
-      </div>
 
       {/* Breather Rest Modal between Waves */}
       {showBreatherModal && (

@@ -141,6 +141,9 @@ export interface TacticalCombatHudProps {
   selectedCombatantId?: string | null;
   title?: string;
   subtitle?: string;
+  menuButtonText?: string;
+  menuButtonTestId?: string;
+  headerExtras?: React.ReactNode;
   events?: GameEvent[];
   activeRoll?: DiceRollRecord | null;
   rollHistory?: DiceRollRecord[];

@@ -16,6 +16,9 @@ export function TacticalCombatHud({
   isPlayerControlled: controlledIsPlayerControlled,
   title = 'Tactical Combat',
   subtitle,
+  menuButtonText,
+  menuButtonTestId,
+  headerExtras,
   events = [],
   activeRoll: controlledActiveRoll,
   rollHistory = [],
@@ -115,7 +118,7 @@ export function TacticalCombatHud({
   return (
     <div
       data-testid="tactical-combat-hud"
-      className={`relative flex flex-col w-full h-full min-h-[460px] bg-slate-950 text-slate-100 overflow-hidden select-none font-sans ${className}`}
+      className={`relative flex flex-col w-full flex-1 min-h-[460px] bg-slate-950 text-slate-100 overflow-hidden select-none font-sans ${className}`}
     >
       {/* Top Header Bar */}
       <header
@@ -126,23 +129,31 @@ export function TacticalCombatHud({
           {onToggleMenu && (
             <button
               type="button"
-              data-testid="combat-hud-menu-btn"
+              data-testid={menuButtonTestId ?? "combat-hud-menu-btn"}
               onClick={onToggleMenu}
               className="px-2.5 py-1.5 rounded-md bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
             >
-              ☰ Menu
+              {menuButtonText ?? '☰ Menu'}
             </button>
           )}
 
           <div className="flex flex-col">
-            <h2
-              data-testid="combat-hud-title"
-              className="text-sm sm:text-base font-extrabold tracking-tight text-amber-400"
-            >
-              {title}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2
+                data-testid="combat-hud-title"
+                className="text-sm sm:text-base font-extrabold tracking-tight text-amber-400"
+              >
+                {title}
+              </h2>
+              {headerExtras}
+            </div>
             {subtitle && (
-              <span className="text-[11px] text-slate-400">{subtitle}</span>
+              <span
+                data-testid="combat-hud-subtitle"
+                className="text-[11px] text-slate-400"
+              >
+                {subtitle}
+              </span>
             )}
           </div>
         </div>
@@ -233,7 +244,7 @@ export function TacticalCombatHud({
         ) : (internalShowLog || internalShowDiceTray) && (
           <div
             data-testid="combat-hud-right-panel"
-            className="absolute top-3 right-3 z-20 pointer-events-auto w-80 sm:w-96 max-h-[calc(100%-24px)] flex flex-col gap-2.5 overflow-hidden"
+            className="absolute top-3 right-3 z-20 pointer-events-auto w-72 sm:w-80 max-h-[calc(100%-24px)] flex flex-col gap-2.5 overflow-hidden shadow-2xl"
           >
             {internalShowDiceTray && (
               <AnimatedDiceTray

@@ -153,15 +153,42 @@ export function App({
         : null))
     : null;
 
+  const isGameplayView =
+    activeView === 'arena' ||
+    activeView === 'dungeon' ||
+    activeView === 'roguelite';
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-8 gap-6">
-      <div className="max-w-7xl mx-auto w-full space-y-6 flex-1">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-slate-800 pb-4">
+    <main
+      className={`bg-slate-950 text-slate-100 flex flex-col ${
+        isGameplayView
+          ? 'h-screen max-h-screen overflow-hidden p-2 sm:p-3 gap-2'
+          : 'min-h-screen justify-between p-4 sm:p-8 gap-6'
+      }`}
+    >
+      <div
+        className={`max-w-7xl mx-auto w-full ${
+          isGameplayView
+            ? 'flex-1 min-h-0 flex flex-col gap-2'
+            : 'space-y-6 flex-1'
+        }`}
+      >
+        <header
+          className={`flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b border-slate-800 ${
+            isGameplayView ? 'pb-2 shrink-0' : 'pb-4'
+          }`}
+        >
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-amber-400">
+            <h1
+              className={`${
+                isGameplayView
+                  ? 'text-lg sm:text-xl'
+                  : 'text-2xl sm:text-3xl'
+              } font-bold tracking-tight text-amber-400`}
+            >
               SRD {SRD_VERSION} Tactical Dungeon Crawler
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            <p className="mt-0.5 text-[11px] sm:text-xs text-slate-400">
               Official SRD 5.1 Character Builder, Party Roster &amp; Compendium &middot;
               Engine v{transportInfo.engine.engineVersion} &middot; Transport v
               {transportInfo.transportVersion}
@@ -386,7 +413,13 @@ export function App({
         />
       )}
 
-      <footer className="max-w-7xl mx-auto w-full border-t border-slate-800 pt-4 text-xs text-slate-500">
+      <footer
+        className={`max-w-7xl mx-auto w-full border-t border-slate-800 ${
+          isGameplayView
+            ? 'pt-1 text-[10px] text-slate-500 shrink-0 line-clamp-1'
+            : 'pt-4 text-xs text-slate-500'
+        }`}
+      >
         <p>{SRD_LEGAL_ATTRIBUTION}</p>
       </footer>
     </main>

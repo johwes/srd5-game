@@ -150,6 +150,21 @@ async function runPlaytest() {
         throw new Error('Canvas bounding box is 0 or not found!');
       }
 
+      // Check that Attack action card and Attack button are fully within the viewport
+      const attackCard = page.locator('[data-testid^="attack-action-card-"]').first();
+      if (await attackCard.isVisible()) {
+        const cardBox = await attackCard.boundingBox();
+        console.log('⚔️ First Attack Card bounding box:', cardBox);
+        const attackBtn = page.locator('[data-testid^="attack-btn-"]').first();
+        if (await attackBtn.isVisible()) {
+          const btnBox = await attackBtn.boundingBox();
+          console.log('⚔️ First Attack Button bounding box:', btnBox);
+          if (btnBox && btnBox.y + btnBox.height > 800) {
+            throw new Error(`Attack button is clipped outside 800px viewport! ${JSON.stringify(btnBox)}`);
+          }
+        }
+      }
+
       // Check Spells Tab and Action Hotbar responsive layout at 1280x800
       const spellsTab = page.locator('[data-testid="hotbar-tab-spells"]');
       if (await spellsTab.isVisible()) {
