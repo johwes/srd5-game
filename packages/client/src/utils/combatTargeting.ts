@@ -9,16 +9,101 @@ import { areAllied, areHostile, getFootprintDistanceFeet } from '@srd5/engine';
 export type SpellTargetDisposition = 'self' | 'friendly' | 'hostile' | 'any';
 
 /**
+ * Hardcoded sets for SRD 5.1 spells whose mechanical DSL does not yet fully declare
+ * hostile/friendly tags or where effect steps are authoring-deferred.
+ */
+const KNOWN_HOSTILE_SPELLS = new Set([
+  'hunters-mark',
+  'true-strike',
+  'arcane-hand',
+  'arcane-sword',
+  'banishment',
+  'black-tentacles',
+  'blight',
+  'cloudkill',
+  'confusion',
+  'darkness',
+  'dominate-monster',
+  'dominate-person',
+  'entangle',
+  'faithful-hound',
+  'flaming-sphere',
+  'freezing-sphere',
+  'grease',
+  'guardian-of-faith',
+  'hold-monster',
+  'ice-storm',
+  'irresistible-dance',
+  'polymorph',
+  'power-word-kill',
+  'power-word-stun',
+  'resilient-sphere',
+  'silence',
+  'sleep',
+  'spike-growth',
+  'spirit-guardians',
+  'stinking-cloud',
+  'wall-of-fire',
+  'web',
+]);
+
+const KNOWN_FRIENDLY_SPELLS = new Set([
+  'death-ward',
+  'greater-restoration',
+  'raise-dead',
+  'true-resurrection',
+  'telepathic-bond',
+  'hallow',
+  'private-sanctum',
+  'magnificent-mansion',
+  'tiny-hut',
+  'sanctuary',
+  'spare-the-dying',
+]);
+
+const KNOWN_SELF_SPELLS = new Set([
+  'globe-of-invulnerability',
+  'instant-summons',
+  'secret-chest',
+]);
+
+const DEBUFF_CONDITIONS = new Set([
+  'blinded',
+  'charmed',
+  'deafened',
+  'frightened',
+  'incapacitated',
+  'paralyzed',
+  'petrified',
+  'poisoned',
+  'prone',
+  'restrained',
+  'stunned',
+  'unconscious',
+]);
+
+/**
  * Classifies whether a spell targets the caster ('self'), allies/friendly creatures ('friendly'),
  * hostile enemies ('hostile'), or any creature/point ('any').
  */
 export function getSpellTargetDisposition(spell: SpellData): SpellTargetDisposition {
+  // Explicit overrides for edge cases and authoring-deferred high level spells
+  if (KNOWN_HOSTILE_SPELLS.has(spell.id)) {
+    return 'hostile';
+  }
+  if (KNOWN_FRIENDLY_SPELLS.has(spell.id)) {
+    return 'friendly';
+  }
+  if (KNOWN_SELF_SPELLS.has(spell.id)) {
+    return 'self';
+  }
+
   if (spell.targeting.type === 'self') {
     return 'self';
   }
 
   const filter = spell.targeting.targetFilter;
-  if (filter === 'ally' || filter === 'willing') {
+  if (filter === 'ally' || filter === 'willing' || filter === 'corpse') {
     return 'friendly';
   }
   if (filter === 'enemy') {
@@ -40,15 +125,58 @@ export function getSpellTargetDisposition(spell: SpellData): SpellTargetDisposit
       e.step === 'saving_throw' ||
       (e.step === 'deal_damage' && e.damageType !== 'healing'),
   );
+  if (hasHostileStep) {
+    return 'hostile';
+  }
+
+  // Check for debuff conditions applied by the spell
+  const hasDebuffCondition = spell.effects?.some(
+    (e: any) =>
+      e.step === 'apply_condition' && DEBUFF_CONDITIONS.has(e.conditionId?.toLowerCase()),
+  );
+  if (hasDebuffCondition) {
+    return 'hostile';
+  }
+
+  // Check for offensive hazard zones
+  const hasHostileHazardZone = spell.effects?.some(
+    (e: any) =>
+      e.step === 'create_hazard_zone' &&
+      (e.difficultTerrain ||
+        e.onEnterOrStartTurn?.some(
+          (sub: any) =>
+            sub.step === 'deal_damage' ||
+            sub.step === 'saving_throw' ||
+            (sub.step === 'apply_condition' && DEBUFF_CONDITIONS.has(sub.conditionId?.toLowerCase())),
+        )),
+  );
+  if (hasHostileHazardZone) {
+    return 'hostile';
+  }
 
   const hasBuffEffect = spell.effects?.some((e: any) => e.step === 'apply_active_effect');
-
   if (hasBuffEffect && !hasHostileStep) {
     return 'friendly';
   }
 
-  if (hasHostileStep) {
+  // Fallback description keyword inspection if effects array is empty
+  const desc = (spell.description ?? '').toLowerCase();
+  if (
+    desc.includes('saving throw') ||
+    desc.includes('attack roll') ||
+    desc.includes('takes ') ||
+    desc.includes('damage') ||
+    desc.includes('hostile')
+  ) {
     return 'hostile';
+  }
+  if (
+    desc.includes('regains') ||
+    desc.includes('healing') ||
+    desc.includes('resurrect') ||
+    desc.includes('ward')
+  ) {
+    return 'friendly';
   }
 
   return 'any';

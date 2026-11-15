@@ -250,4 +250,80 @@ describe('combatTargeting utility', () => {
     expect(res.targetIds).toEqual([wizard.id]);
     expect(res.primaryTarget?.id).toBe(wizard.id);
   });
+
+  describe('Comprehensive 139 SRD Spells Targeting Audit', () => {
+    it('classifies 100% of the 139 SRD spells into friendly, hostile, or self with 0 unclassified', () => {
+      expect(defaultCompendium.spells.length).toBe(139);
+
+      const unclassified: string[] = [];
+      const friendly: string[] = [];
+      const hostile: string[] = [];
+      const self: string[] = [];
+
+      for (const spell of defaultCompendium.spells) {
+        const disp = getSpellTargetDisposition(spell);
+        if (disp === 'friendly') friendly.push(spell.id);
+        else if (disp === 'hostile') hostile.push(spell.id);
+        else if (disp === 'self') self.push(spell.id);
+        else unclassified.push(spell.id);
+      }
+
+      expect(unclassified).toEqual([]);
+      expect(friendly.length).toBe(50);
+      expect(hostile.length).toBe(74);
+      expect(self.length).toBe(15);
+      expect(friendly.length + hostile.length + self.length).toBe(139);
+    });
+
+    it('classifies edge cases (Hunter\'s Mark, True Strike, Sleep, Death Ward) correctly', () => {
+      const huntersMark = defaultCompendium.requireSpell('hunters-mark');
+      const trueStrike = defaultCompendium.requireSpell('true-strike');
+      const sleep = defaultCompendium.requireSpell('sleep');
+      const deathWard = defaultCompendium.requireSpell('death-ward');
+      const greaterResto = defaultCompendium.requireSpell('greater-restoration');
+      const raiseDead = defaultCompendium.requireSpell('raise-dead');
+      const powerWordKill = defaultCompendium.requireSpell('power-word-kill');
+
+      expect(getSpellTargetDisposition(huntersMark)).toBe('hostile');
+      expect(getSpellTargetDisposition(trueStrike)).toBe('hostile');
+      expect(getSpellTargetDisposition(sleep)).toBe('hostile');
+      expect(getSpellTargetDisposition(powerWordKill)).toBe('hostile');
+
+      expect(getSpellTargetDisposition(deathWard)).toBe('friendly');
+      expect(getSpellTargetDisposition(greaterResto)).toBe('friendly');
+      expect(getSpellTargetDisposition(raiseDead)).toBe('friendly');
+    });
+
+    it('ensures Hunter\'s Mark and True Strike target enemies and NEVER allies', () => {
+      const huntersMark = defaultCompendium.requireSpell('hunters-mark');
+      const res = resolveSpellTargets({
+        spell: huntersMark,
+        caster: rogue,
+        combatants,
+        selectedCombatantId: fighter.id, // Ally selected
+      });
+
+      expect(res.disposition).toBe('hostile');
+      expect(res.targetIds).toEqual([goblin1.id]); // Must ignore selected ally and target closest enemy
+      expect(res.targetIds).not.toContain(fighter.id);
+      expect(res.targetIds).not.toContain(rogue.id);
+    });
+
+    it('ensures Death Ward and Greater Restoration target allies and NEVER enemies', () => {
+      const deathWard = defaultCompendium.requireSpell('death-ward');
+      const res = resolveSpellTargets({
+        spell: deathWard,
+        caster: cleric,
+        combatants,
+        selectedCombatantId: goblin1.id, // Enemy selected
+      });
+
+      expect(res.disposition).toBe('friendly');
+      // Must ignore selected enemy and target ally in touch range
+      expect(res.targetIds).not.toContain(goblin1.id);
+      expect(res.targetIds).not.toContain(goblin2.id);
+      expect(res.targetIds.length).toBeGreaterThan(0);
+      expect(combatants[res.targetIds[0]!]?.side).toBe('party');
+    });
+  });
 });
