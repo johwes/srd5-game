@@ -24,9 +24,11 @@ import {
   checkRogueliteWipe,
   endRogueliteRun,
   findPath,
+  getFootprintDistanceFeet,
   planAiTurn,
   recordRunMonstersSlain,
   resolveRogueliteLongRest,
+  truncatePathToBudget,
 } from '@srd5/engine';
 import { LocalTransport, type PlayerViewProp, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
@@ -118,6 +120,21 @@ export function DungeonView({
     useState<InteractiveProp | PlayerViewProp | null>(null);
   const [graveyardEntry, setGraveyardEntry] = useState<GraveyardEntry | null>(null);
   const [campaignVictory, setCampaignVictory] = useState(false);
+  const [selectedCombatantId, setSelectedCombatantId] = useState<string | null>(null);
+
+  // User action feedback banner
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showFeedback = useCallback((msg: string) => {
+    setActionFeedback(msg);
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+    feedbackTimeoutRef.current = setTimeout(() => {
+      setActionFeedback(null);
+    }, 3500);
+  }, []);
 
   // AI automation for combat
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -244,11 +261,13 @@ export function DungeonView({
     async (command: GameCommand) => {
       try {
         await transport.dispatch(command);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error dispatching dungeon command:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        showFeedback(msg);
       }
     },
-    [transport],
+    [transport, showFeedback],
   );
 
   const authState = getAuthState();
@@ -430,20 +449,34 @@ export function DungeonView({
           isHostile: c.side !== activeCombatant.side,
         }));
 
+      const movementBudget =
+        viewState.combat?.turnBudget?.movementRemainingFeet ?? 30;
+      if (movementBudget <= 0) {
+        showFeedback('No movement remaining this turn.');
+        return;
+      }
+
       const pathResult = findPath({
         grid: authState.grid,
         mover,
         goal: cell,
         creatures,
-        movementRemainingFeet:
-          viewState.combat?.turnBudget?.movementRemainingFeet ?? 30,
+        movementRemainingFeet: movementBudget,
       });
 
-      if (pathResult.found && pathResult.path.length > 1) {
+      const truncated = truncatePathToBudget(
+        authState.grid,
+        mover,
+        pathResult,
+        movementBudget,
+        creatures,
+      );
+
+      if (truncated && truncated.path.length > 1) {
         await handleDispatch({
           type: 'COMBAT_MOVE',
           actorId: activeCombatant.id,
-          path: pathResult.path,
+          path: truncated.path,
         });
       }
     }
@@ -566,6 +599,14 @@ export function DungeonView({
         />
       )}
 
+      {/* Action feedback banner */}
+      {actionFeedback && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-950/95 border border-red-500 text-red-200 rounded-lg text-xs font-semibold shadow-2xl flex items-center gap-2 pointer-events-none">
+          <span>⚠️</span>
+          <span>{actionFeedback}</span>
+        </div>
+      )}
+
       {/* PixiJS Tactical Canvas Viewport */}
       <TacticalCanvasViewport
         grid={viewState.grid}
@@ -661,11 +702,91 @@ export function DungeonView({
           activeRoll={activeRoll}
           rollHistory={rollHistory}
           isPlayerControlled={!isMonsterTurn}
+          onSelectCombatant={(id) => setSelectedCombatantId(id)}
           onDeclareAttack={(weapon, opts) => {
-            if (!activeCombatantId) return;
-            const target = Object.values(viewState.combatants).find(
-              (c) => c.side !== activeCombatant?.side && !c.isDead && c.currentHp > 0,
+            if (!activeCombatantId || !activeCombatant) return;
+
+            const selectedCandidate = selectedCombatantId
+              ? viewState.combatants[selectedCombatantId]
+              : null;
+            const isSelectedHostile = Boolean(
+              selectedCandidate &&
+                selectedCandidate.side !== activeCombatant.side &&
+                !selectedCandidate.isDead &&
+                selectedCandidate.currentHp > 0,
             );
+
+            const livingHostiles = Object.values(viewState.combatants).filter(
+              (c) =>
+                c.side !== activeCombatant.side &&
+                !c.isDead &&
+                c.currentHp > 0,
+            );
+
+            if (livingHostiles.length === 0) {
+              showFeedback('No conscious enemies remaining.');
+              return;
+            }
+
+            const reachOrRange =
+              weapon.rangeType === 'ranged'
+                ? (weapon.rangeFeet?.long ?? weapon.rangeFeet?.normal ?? 120)
+                : (weapon.reachFeet ?? 5);
+
+            let target: (typeof livingHostiles)[0] | null = null;
+
+            if (isSelectedHostile && selectedCandidate) {
+              const dist = getFootprintDistanceFeet(
+                activeCombatant.position,
+                activeCombatant.size,
+                selectedCandidate.position,
+                selectedCandidate.size,
+              );
+              if (dist <= reachOrRange) {
+                target = selectedCandidate;
+              } else {
+                const inReachEnemy = livingHostiles.find(
+                  (h) =>
+                    getFootprintDistanceFeet(
+                      activeCombatant.position,
+                      activeCombatant.size,
+                      h.position,
+                      h.size,
+                    ) <= reachOrRange,
+                );
+                if (inReachEnemy) {
+                  target = inReachEnemy;
+                } else {
+                  showFeedback(
+                    `Target "${selectedCandidate.name}" is out of reach (${dist}ft > ${reachOrRange}ft). Move closer to attack!`,
+                  );
+                  return;
+                }
+              }
+            } else {
+              const sorted = livingHostiles
+                .map((h) => ({
+                  enemy: h,
+                  dist: getFootprintDistanceFeet(
+                    activeCombatant.position,
+                    activeCombatant.size,
+                    h.position,
+                    h.size,
+                  ),
+                }))
+                .sort((a, b) => a.dist - b.dist);
+
+              const closest = sorted[0]!;
+              if (closest.dist <= reachOrRange) {
+                target = closest.enemy;
+              } else {
+                showFeedback(
+                  `Nearest enemy is out of reach (${closest.dist}ft > ${reachOrRange}ft). Move closer to attack!`,
+                );
+                return;
+              }
+            }
+
             if (target) {
               void handleDispatch({
                 type: 'DECLARE_ATTACK',
@@ -679,16 +800,49 @@ export function DungeonView({
             }
           }}
           onCastSpell={(spellId, slotLevel) => {
-            if (!activeCombatantId) return;
-            const target = Object.values(viewState.combatants).find(
-              (c) => c.side !== activeCombatant?.side && !c.isDead && c.currentHp > 0,
+            if (!activeCombatantId || !activeCombatant) return;
+
+            const selectedCandidate = selectedCombatantId
+              ? viewState.combatants[selectedCombatantId]
+              : null;
+            const isSelectedHostile = Boolean(
+              selectedCandidate &&
+                selectedCandidate.side !== activeCombatant.side &&
+                !selectedCandidate.isDead &&
+                selectedCandidate.currentHp > 0,
             );
+
+            const livingHostiles = Object.values(viewState.combatants).filter(
+              (c) =>
+                c.side !== activeCombatant.side &&
+                !c.isDead &&
+                c.currentHp > 0,
+            );
+
+            let targetIds: string[] = [];
+            if (isSelectedHostile && selectedCandidate) {
+              targetIds = [selectedCandidate.id];
+            } else if (livingHostiles.length > 0) {
+              const sorted = livingHostiles
+                .map((h) => ({
+                  enemy: h,
+                  dist: getFootprintDistanceFeet(
+                    activeCombatant.position,
+                    activeCombatant.size,
+                    h.position,
+                    h.size,
+                  ),
+                }))
+                .sort((a, b) => a.dist - b.dist);
+              targetIds = [sorted[0]!.enemy.id];
+            }
+
             void handleDispatch({
               type: 'DECLARE_CAST_SPELL',
               actorId: activeCombatantId,
               spellId,
               slotLevel,
-              targetIds: target ? [target.id] : [],
+              targetIds,
             });
           }}
           onUseClassFeature={(featureId, optionId) => {

@@ -13,6 +13,8 @@ logs/
 npm-debug.log*
 pnpm-debug.log*
 coverage/
+artifacts/
+screenshot.png
 
 # Environment & Local config
 .env
