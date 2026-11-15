@@ -617,6 +617,73 @@ describe('SRD-306: AOE Template Targeting Rasterization', () => {
     expect(res.totalDamageByTarget['goblin-2']).toBeGreaterThan(0);
     expect(res.totalDamageByTarget['goblin-3']).toBeUndefined();
   });
+
+  describe('SRD-606: Configurable Friendly Fire AOE Filtering', () => {
+    it('harms BOTH ally and enemy in AOE cone when friendlyFireEnabled is true (5e RAW)', () => {
+      const burningHands = compendium.requireSpell('burning-hands');
+      const goblinData = compendium.requireMonster('goblin');
+      const enemyGoblin = createMonsterCombatant(goblinData, 'goblin-enemy', { x: 3, y: 1 });
+      const fighterSheet = computeDerivedCharacter(requirePregenCharacter('pregen-fighter'), compendium);
+      const fighterAlly = createCharacterCombatant(fighterSheet, { x: 2, y: 1 });
+
+      const state = createSpellEncounter();
+      // Place Fighter ally in the cone at (2,1)
+      const stateWithAllyAndEnemy: typeof state = {
+        ...state,
+        friendlyFireEnabled: true,
+        combatants: {
+          ...state.combatants,
+          ['pregen-fighter']: fighterAlly,
+          ['goblin-enemy']: enemyGoblin,
+        },
+      };
+
+      const res = executeSpellCast({
+        state: stateWithAllyAndEnemy,
+        casterId: 'pregen-wizard',
+        spell: burningHands,
+        direction: { x: 1, y: 0 },
+        friendlyFireEnabled: true,
+      });
+
+      // Under 5e RAW friendly fire, both ally and enemy take damage
+      expect(res.totalDamageByTarget['goblin-enemy']).toBeGreaterThan(0);
+      expect(res.totalDamageByTarget['pregen-fighter']).toBeGreaterThan(0);
+    });
+
+    it('spares ally and ONLY harms enemy in AOE cone when friendlyFireEnabled is false (Explorer Mode)', () => {
+      const burningHands = compendium.requireSpell('burning-hands');
+      const goblinData = compendium.requireMonster('goblin');
+      const enemyGoblin = createMonsterCombatant(goblinData, 'goblin-enemy', { x: 3, y: 1 });
+      const fighterSheet = computeDerivedCharacter(requirePregenCharacter('pregen-fighter'), compendium);
+      const fighterAlly = createCharacterCombatant(fighterSheet, { x: 2, y: 1 });
+
+      const state = createSpellEncounter();
+      // Place Fighter ally in the cone at (2,1)
+      const stateWithAllyAndEnemy: typeof state = {
+        ...state,
+        friendlyFireEnabled: false,
+        combatants: {
+          ...state.combatants,
+          ['pregen-fighter']: fighterAlly,
+          ['goblin-enemy']: enemyGoblin,
+        },
+      };
+
+      const res = executeSpellCast({
+        state: stateWithAllyAndEnemy,
+        casterId: 'pregen-wizard',
+        spell: burningHands,
+        direction: { x: 1, y: 0 },
+        friendlyFireEnabled: false,
+      });
+
+      // Ally is spared! Only enemy takes damage
+      expect(res.totalDamageByTarget['goblin-enemy']).toBeGreaterThan(0);
+      expect(res.totalDamageByTarget['pregen-fighter']).toBeUndefined();
+      expect(res.targetsHit.concat(res.targetsSaved, res.targetsFailedSave)).not.toContain('pregen-fighter');
+    });
+  });
 });
 
 describe('SRD-306: Monster Spellcaster Execution', () => {

@@ -11,6 +11,7 @@ export interface CampaignDifficultyConfig {
   permadeath: boolean;                // Party wipe deletes save (Tactician default: true)
   campSuppliesRequired: boolean;      // Rations needed for Long Rests (Standard/Tactician: true)
   fogOfWarEnabled: boolean;           // Dynamic Line of Sight mask (Standard: true)
+  friendlyFireEnabled: boolean;       // Offensive AOE spells (Fireball, etc.) harm allies (Explorer: false, Standard/Tactician: true)
   deathSaveRule: DeathSaveRuleId;     // 'forgiving' | 'core_raw' | 'hardcore'
   enemyHealthModifier: number;        // Multiplier on monster Max HP (0.8 Explorer, 1.0 Standard, 1.2 Tactician)
   enemyAttackBonus: number;           // Flat modifier to enemy attack rolls & DCs (-1, 0, +1)
@@ -147,7 +148,7 @@ export const DIFFICULTY_PRESETS: Record<Exclude<DifficultyPresetId, 'custom'>, D
     description:
       'Relaxed ruleset for adventurers who want to experience the narrative and tactical combat without lethal punishment.',
     highlights: [
-      'Relaxed SRD Rules',
+      'Relaxed SRD Rules & No Friendly Fire',
       'Advantage on Death Saving Throws',
       'Free Long Rests (Supplies Not Required)',
       'Enemy HP -20% & -1 Attack/DC Penalty',
@@ -158,6 +159,7 @@ export const DIFFICULTY_PRESETS: Record<Exclude<DifficultyPresetId, 'custom'>, D
       permadeath: false,
       campSuppliesRequired: false,
       fogOfWarEnabled: true,
+      friendlyFireEnabled: false,
       deathSaveRule: 'forgiving',
       enemyHealthModifier: 0.8,
       enemyAttackBonus: -1,
@@ -172,6 +174,7 @@ export const DIFFICULTY_PRESETS: Record<Exclude<DifficultyPresetId, 'custom'>, D
       'The authentic tabletop 5e experience. Full SRD rules, standard DC 10 death saves, and ration management during long rests.',
     highlights: [
       '100% SRD 5.1 RAW Ruleset',
+      'Friendly Fire Enabled (AOE Affects All)',
       'Standard Death Saves (DC 10)',
       'Camp Supplies Required for Long Rests',
       '100% Monster HP & Normal SRD Stats',
@@ -182,6 +185,7 @@ export const DIFFICULTY_PRESETS: Record<Exclude<DifficultyPresetId, 'custom'>, D
       permadeath: false,
       campSuppliesRequired: true,
       fogOfWarEnabled: true,
+      friendlyFireEnabled: true,
       deathSaveRule: 'core_raw',
       enemyHealthModifier: 1.0,
       enemyAttackBonus: 0,
@@ -196,6 +200,7 @@ export const DIFFICULTY_PRESETS: Record<Exclude<DifficultyPresetId, 'custom'>, D
       'High-stakes tactical punishment. Lethal monsters, ruthless AI focus, iron man permadeath, and unforgiving death saves.',
     highlights: [
       'Strict RAW + Hardcore Enforcement',
+      'Friendly Fire Enabled (Full AOE Lethality)',
       'Lethal Death Saves (Nat 1 = Instant Death)',
       'Iron Man Permadeath Enabled',
       'Enemy HP +20% & +1 to Hit/DCs',
@@ -206,6 +211,7 @@ export const DIFFICULTY_PRESETS: Record<Exclude<DifficultyPresetId, 'custom'>, D
       permadeath: true,
       campSuppliesRequired: true,
       fogOfWarEnabled: true,
+      friendlyFireEnabled: true,
       deathSaveRule: 'hardcore',
       enemyHealthModifier: 1.2,
       enemyAttackBonus: 1,

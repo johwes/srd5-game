@@ -589,4 +589,5 @@ export interface CombatState {
   roundHistory?: Array<{ round: number; turns: Array<{ entityId: string; timestamp: number }> }>;
   pendingReactionPrompt?: PendingReactionPrompt | null;
   reactionInterruptContext?: ReactionInterruptContext | null;
+  friendlyFireEnabled?: boolean;
 }

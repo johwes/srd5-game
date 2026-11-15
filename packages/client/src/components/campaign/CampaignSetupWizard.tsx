@@ -599,6 +599,23 @@ export function CampaignSetupWizard({
                     </div>
                   </label>
 
+                  {/* Friendly Fire Toggle */}
+                  <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-950/60 cursor-pointer hover:border-slate-700">
+                    <input
+                      type="checkbox"
+                      data-testid="wizard-toggle-friendly-fire"
+                      checked={difficultyConfig.friendlyFireEnabled}
+                      onChange={(e) => updateCustomRule('friendlyFireEnabled', e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-amber-400"
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-slate-200">🔥 Friendly Fire Enabled</div>
+                      <div className="text-[11px] text-slate-400">
+                        When disabled, offensive Area-of-Effect spells and hazards (Fireball, etc.) spare allies.
+                      </div>
+                    </div>
+                  </label>
+
                   {/* Fast AI Turns Toggle */}
                   <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-950/60 cursor-pointer hover:border-slate-700">
                     <input

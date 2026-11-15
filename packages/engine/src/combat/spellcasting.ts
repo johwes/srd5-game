@@ -404,6 +404,7 @@ export interface ExecuteSpellCastOptions {
   isReaction?: boolean;
   compendium?: SrdCompendium;
   skipReactionPrompts?: boolean;
+  friendlyFireEnabled?: boolean;
 }
 
 /**
@@ -699,6 +700,19 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         });
       }
 
+      const ffEnabled = options.friendlyFireEnabled ?? state.friendlyFireEnabled ?? true;
+      const isOffensiveAoe =
+        spell.targeting.targetFilter === 'enemy' ||
+        spell.effects.some(
+          (e: any) =>
+            e.step === 'attack_roll' ||
+            e.step === 'saving_throw' ||
+            (e.step === 'deal_damage' && e.damageType !== 'healing') ||
+            e.step === 'apply_condition',
+        ) ||
+        (spell.description &&
+          /saving throw|damage|hostile|takes \d/i.test(spell.description));
+
       // Collect creatures in AOE cells
       const aoeTargetIds: string[] = [];
       for (const combatant of allCombatants) {
@@ -713,13 +727,26 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
           } else if (spell.targeting.targetFilter === 'ally') {
             if (areAllied(caster, combatant, state.dispositionMatrix)) aoeTargetIds.push(combatant.id);
           } else {
-            aoeTargetIds.push(combatant.id);
+            // When friendly fire is disabled for offensive AOEs, only target hostiles
+            if (!ffEnabled && isOffensiveAoe) {
+              if (areHostile(caster, combatant, state.dispositionMatrix)) {
+                aoeTargetIds.push(combatant.id);
+              }
+            } else {
+              aoeTargetIds.push(combatant.id);
+            }
           }
         }
       }
 
       if (!options.targetIds || options.targetIds.length === 0) {
         resolvedTargetIds = aoeTargetIds;
+      } else if (!ffEnabled && isOffensiveAoe) {
+        // If caller explicitly passed targetIds, also filter out allies when friendly fire is disabled
+        resolvedTargetIds = options.targetIds.filter((tid) => {
+          const t = state.combatants[tid];
+          return t && areHostile(caster, t, state.dispositionMatrix);
+        });
       }
     }
   }

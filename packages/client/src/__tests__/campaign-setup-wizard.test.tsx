@@ -175,6 +175,12 @@ describe('SRD-602: CampaignSetupWizard (4-Stage "New Game" Launcher)', () => {
       fireEvent.click(permadeathToggle);
       expect(permadeathToggle.checked).toBe(true);
 
+      // Toggle friendly fire checkbox
+      const friendlyFireToggle = screen.getByTestId('wizard-toggle-friendly-fire') as HTMLInputElement;
+      expect(friendlyFireToggle.checked).toBe(true); // Standard preset defaults to true
+      fireEvent.click(friendlyFireToggle);
+      expect(friendlyFireToggle.checked).toBe(false);
+
       // Verify preset badge changes to "Custom Configuration"
       expect(screen.getByText('Custom Configuration')).toBeDefined();
 
