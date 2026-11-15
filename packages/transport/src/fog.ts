@@ -184,13 +184,35 @@ export function projectPlayerView(
   const controlledIds = new Set(slot.controlledCharacterIds);
 
   // 1. Identify Vision Observers
-  const partyCombatants = Object.values(
-    state.combat?.combatants ?? state.party,
-  ).filter((c) => c.side === 'party');
+  const potentialObservers = Object.values(state.combat?.combatants ?? state.party);
+  let observers: Combatant[];
 
-  const observers = sharedVision
-    ? partyCombatants
-    : partyCombatants.filter((c) => controlledIds.has(c.id));
+  if (controlledIds.size > 0) {
+    const controlled = potentialObservers.filter((c) => controlledIds.has(c.id));
+    if (controlled.length > 0) {
+      if (sharedVision) {
+        const friendlySides = new Set(controlled.map((c) => c.side));
+        const friendlyTeams = new Set(
+          controlled.map((c) => c.teamId).filter(Boolean),
+        );
+        observers = potentialObservers.filter(
+          (c) =>
+            friendlySides.has(c.side) ||
+            (c.teamId && friendlyTeams.has(c.teamId)),
+        );
+      } else {
+        observers = controlled;
+      }
+    } else {
+      observers = potentialObservers.filter((c) => c.side === 'party');
+    }
+  } else {
+    observers = potentialObservers.filter((c) => c.side === 'party');
+  }
+
+  if (observers.length === 0) {
+    observers = potentialObservers.filter((c) => !c.isDead && c.currentHp > 0);
+  }
 
   // 2. Compute Visible Grid Cells
   const visibleCells = computeVisibleGridCells(

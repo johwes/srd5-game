@@ -557,7 +557,11 @@ export function DungeonView({
         hoveredCell={hoveredCell}
         onCellHover={setHoveredCell}
         onCellClick={handleCellClick}
+        enableHoverPathPreview={true}
         enableFogOfWar={true}
+        showTokenHpArcs={true}
+        showConditionBadges={true}
+        showTokenNames={true}
         className="w-full h-full"
       />
 

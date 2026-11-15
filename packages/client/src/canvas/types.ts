@@ -206,6 +206,7 @@ export interface TerrainRenderOptions {
   showCoordinates?: boolean;
   hoveredCell?: Point | null;
   selectedCell?: Point | null;
+  ignoreVisibility?: boolean;
 }
 
 /**

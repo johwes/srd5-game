@@ -7,6 +7,7 @@ import { CreatureTokenRenderer } from './layers/CreatureTokenLayer.js';
 import { FloatingTextRenderer } from './layers/FloatingTextLayer.js';
 import { PathAndAoeRenderer } from './layers/PathAndAoeLayer.js';
 import { LightingAndFogRenderer } from './layers/LightingAndFogLayer.js';
+import { assetRegistry } from './assets/index.js';
 import {
   DEFAULT_CELL_SIZE,
   DEFAULT_ZOOM,
@@ -129,17 +130,32 @@ export function TacticalCanvasViewport({
     onCameraChange?.(state);
   }, [camera, onCameraChange]);
 
+  // Mutable refs to decouple PixiJS lifecycle from transient prop reference changes
+  const gridRef = useRef(grid);
+  gridRef.current = grid;
+
+  const cellSizeRef = useRef(cellSize);
+  cellSizeRef.current = cellSize;
+
+  const onCombatantClickRef = useRef(onCombatantClick);
+  onCombatantClickRef.current = onCombatantClick;
+
+  const onCombatantHoverRef = useRef(onCombatantHover);
+  onCombatantHoverRef.current = onCombatantHover;
+
   // Initialize PixiJS Application
   useEffect(() => {
     let isMounted = true;
+    let localApp: Application | null = null;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const app = new Application();
-    appRef.current = app;
-
     async function initPixi() {
       try {
+        const app = new Application();
+        localApp = app;
+        appRef.current = app;
+
         const rect = containerRef.current?.getBoundingClientRect();
         const initWidth = Math.max(100, Math.floor(rect?.width || 800));
         const initHeight = Math.max(100, Math.floor(rect?.height || 600));
@@ -152,11 +168,17 @@ export function TacticalCanvasViewport({
           antialias: true,
           autoDensity: true,
           resolution: typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1,
+          preference: 'webgl',
         });
 
         if (!isMounted) {
-          app.destroy(true);
+          app.destroy(false);
           return;
+        }
+
+        // Try loading spritesheet atlas once if not yet loaded
+        if (!assetRegistry.isLoaded) {
+          void assetRegistry.loadAtlas().catch(() => {});
         }
 
         const sceneGraph = createSceneGraph(app.stage);
@@ -178,24 +200,28 @@ export function TacticalCanvasViewport({
         fogRendererRef.current = fogRenderer;
 
         tokenRenderer.onTokenClick = (tokenId) => {
-          onCombatantClick?.(tokenId);
+          onCombatantClickRef.current?.(tokenId);
         };
         tokenRenderer.onTokenHover = (tokenId) => {
-          onCombatantHover?.(tokenId);
+          onCombatantHoverRef.current?.(tokenId);
         };
 
         // Continuous ticker animation
         app.ticker.add((ticker) => {
-          tokenRenderer.update(ticker.deltaMS, cellSize);
+          tokenRenderer.update(ticker.deltaMS, cellSizeRef.current);
           floatingTextRenderer.update(ticker.deltaMS);
         });
 
-        // Apply initial camera transform
+        // Apply initial camera transform centered and fitted on the grid
+        camera.fitGrid(gridRef.current.width, gridRef.current.height, initWidth, initHeight, 32);
         camera.applyToContainer(sceneGraph.viewport);
+        const camState = camera.getCamera();
+        setCurrentZoom(camState.zoom);
         setPixiReady(true);
       } catch (err) {
         // Fallback for headless environments (e.g. JSDOM without WebGL)
         // Allows tests and non-WebGL environments to operate cleanly
+        console.error('TacticalCanvasViewport: PixiJS init failed:', err);
         setPixiReady(true);
       }
     }
@@ -224,17 +250,18 @@ export function TacticalCanvasViewport({
         terrainRendererRef.current.destroy();
         terrainRendererRef.current = null;
       }
-      if (appRef.current) {
+      if (localApp) {
         try {
-          appRef.current.destroy(true);
+          localApp.destroy(false);
         } catch {
           // Ignore destruction errors on unmounted canvas
         }
-        appRef.current = null;
+        localApp = null;
       }
+      appRef.current = null;
       sceneGraphRef.current = null;
     };
-  }, [camera, cellSize, onCombatantClick, onCombatantHover]);
+  }, []);
 
   // Update Terrain Rendering whenever grid, highlights, or visibility toggles change
   useEffect(() => {
@@ -246,9 +273,10 @@ export function TacticalCanvasViewport({
         showCoordinates,
         hoveredCell: activeHoveredCell,
         selectedCell,
+        ignoreVisibility: enableFogOfWar === false,
       });
     }
-  }, [grid, cellSize, showGridLines, showCoordinates, activeHoveredCell, selectedCell, pixiReady]);
+  }, [grid, cellSize, showGridLines, showCoordinates, activeHoveredCell, selectedCell, enableFogOfWar, pixiReady]);
 
   // Sync token click and hover listeners
   useEffect(() => {

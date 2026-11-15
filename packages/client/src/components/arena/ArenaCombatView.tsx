@@ -628,6 +628,7 @@ export function ArenaCombatView({
             onCellClick={(pt) => void handleCellClick(pt)}
             onCombatantClick={(combatantId) => setSelectedCombatantId(combatantId)}
             enableHoverPathPreview={true}
+            enableFogOfWar={false}
             showTokenHpArcs={true}
             showConditionBadges={true}
             showTokenNames={true}

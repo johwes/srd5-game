@@ -29,6 +29,7 @@ export class TerrainTileRenderer {
   private lastCellSize = -1;
   private lastShowGridLines: boolean | undefined;
   private lastShowCoords: boolean | undefined;
+  private lastIgnoreVisibility: boolean | undefined;
 
   constructor(parent?: Container) {
     this.container = new Container();
@@ -67,18 +68,21 @@ export class TerrainTileRenderer {
       showCoordinates = false,
       hoveredCell,
       selectedCell,
+      ignoreVisibility = false,
     } = options;
 
     const gridChanged =
       this.lastGridWidth !== grid.width ||
       this.lastGridHeight !== grid.height ||
-      this.lastCellSize !== cellSize;
+      this.lastCellSize !== cellSize ||
+      this.lastIgnoreVisibility !== ignoreVisibility;
 
     if (gridChanged) {
       this.lastGridWidth = grid.width;
       this.lastGridHeight = grid.height;
       this.lastCellSize = cellSize;
-      this.drawTiles(grid, cellSize);
+      this.lastIgnoreVisibility = ignoreVisibility;
+      this.drawTiles(grid, cellSize, ignoreVisibility);
     }
 
     if (gridChanged || this.lastShowGridLines !== showGridLines) {
@@ -97,7 +101,7 @@ export class TerrainTileRenderer {
   /**
    * Redraws all individual terrain tiles.
    */
-  public drawTiles(grid: CanvasGridInput, cellSize: number): void {
+  public drawTiles(grid: CanvasGridInput, cellSize: number, ignoreVisibility = false): void {
     this.tilesGraphics.clear();
 
     const cellMap = new Map<string, CanvasCellInput>();
@@ -111,8 +115,13 @@ export class TerrainTileRenderer {
         const px = x * cellSize;
         const py = y * cellSize;
 
-        // If cell is unexplored in PlayerViewGrid, render opaque void and skip tile details
-        if (cell && 'visibility' in cell && (cell as any).visibility === 'unexplored') {
+        // If cell is unexplored in PlayerViewGrid, render opaque void and skip tile details (unless visibility check is bypassed)
+        if (
+          !ignoreVisibility &&
+          cell &&
+          'visibility' in cell &&
+          (cell as any).visibility === 'unexplored'
+        ) {
           this.tilesGraphics.rect(px, py, cellSize, cellSize).fill(0x000000);
           continue;
         }

@@ -82,27 +82,36 @@ export function extractVisionObservers(
       ? options.combatants
       : Object.values(options.combatants);
 
-    return list
-      .filter((c) => {
-        // Observers are conscious party members
-        const isParty = c.side === 'party';
-        const isConscious = !c.isDead && !c.conditions?.includes('unconscious');
-        return isParty && isConscious;
-      })
-      .map((c) => {
-        const darkvisionFeet =
-          (c as any).characterSheet?.darkvisionFeet ??
-          (c as any).monsterData?.darkvisionFeet ??
-          (c as any).darkvisionFeet ??
-          0;
-        return {
-          id: c.id,
-          x: c.position.x,
-          y: c.position.y,
-          size: (c.size as CreatureSize) ?? 'medium',
-          darkvisionFeet,
-        };
-      });
+    const partyObservers = list.filter((c) => {
+      // Observers are conscious party / allied team members
+      const isParty =
+        c.side === 'party' ||
+        c.teamId === 'party' ||
+        c.teamId === 'team_red' ||
+        c.teamId === 'team_a';
+      const isConscious = !c.isDead && !c.conditions?.includes('unconscious');
+      return isParty && isConscious;
+    });
+
+    const activeList =
+      partyObservers.length > 0
+        ? partyObservers
+        : list.filter((c) => !c.isDead && !c.conditions?.includes('unconscious'));
+
+    return activeList.map((c) => {
+      const darkvisionFeet =
+        (c as any).characterSheet?.darkvisionFeet ??
+        (c as any).monsterData?.darkvisionFeet ??
+        (c as any).darkvisionFeet ??
+        0;
+      return {
+        id: c.id,
+        x: c.position.x,
+        y: c.position.y,
+        size: (c.size as CreatureSize) ?? 'medium',
+        darkvisionFeet,
+      };
+    });
   }
 
   return [];
@@ -116,7 +125,7 @@ export function computeDynamicFog(
   options: FogOfWarOptions = {},
 ): Map<string, CellLightingInfo> {
   const result = new Map<string, CellLightingInfo>();
-  const showAll = options.showAll === true;
+  const showAll = options.showAll === true || options.enabled === false;
   const exploredCells = options.exploredCells ?? {};
   const lightSources = options.lightSources ?? [];
   const observers = extractVisionObservers(options);
