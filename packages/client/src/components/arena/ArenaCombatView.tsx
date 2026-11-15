@@ -461,7 +461,7 @@ export function ArenaCombatView({
   return (
     <div
       data-testid="arena-combat-view"
-      className="relative w-full h-[calc(100vh-140px)] min-h-[640px] flex flex-col bg-slate-950 overflow-hidden rounded-xl border border-slate-800"
+      className="relative w-full h-[calc(100vh-140px)] min-h-[460px] flex flex-col bg-slate-950 overflow-hidden rounded-xl border border-slate-800"
     >
       {/* Top Arena Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-slate-900/90 border-b border-slate-800 z-10">

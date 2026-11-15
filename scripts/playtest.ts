@@ -59,7 +59,7 @@ async function runPlaytest() {
   });
 
   const context = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
+    viewport: { width: 1280, height: 800 },
     deviceScaleFactor: 1,
   });
 
@@ -148,6 +148,40 @@ async function runPlaytest() {
       console.log('🎨 Monster and Player Token Sprites verified successfully!');
       if (!box || box.width === 0 || box.height === 0) {
         throw new Error('Canvas bounding box is 0 or not found!');
+      }
+
+      // Check Spells Tab and Action Hotbar responsive layout at 1280x800
+      const spellsTab = page.locator('[data-testid="hotbar-tab-spells"]');
+      if (await spellsTab.isVisible()) {
+        console.log('✨ Switching to Spells tab in Action Hotbar...');
+        await spellsTab.click();
+        await page.waitForTimeout(600);
+
+        const spellsPanel = page.locator('[data-testid="hotbar-panel-spells"]');
+        if (await spellsPanel.isVisible()) {
+          const castBtns = page.locator('[data-testid^="spell-cast-btn-"]');
+          const castCount = await castBtns.count();
+          console.log(`✨ Found ${castCount} cast buttons in Spells tab.`);
+          if (castCount > 0) {
+            const firstCastBtn = castBtns.first();
+            const castBox = await firstCastBtn.boundingBox();
+            console.log('✨ First Cast Button bounding box:', castBox);
+            if (!castBox || castBox.height < 20 || castBox.y + castBox.height > 800) {
+              throw new Error(`Cast button is outside visible viewport (1280x800) or clipped! ${JSON.stringify(castBox)}`);
+            }
+          }
+
+          // Test slot filter button (e.g. Cantrips)
+          const cantripFilter = page.locator('[data-testid="spell-filter-0"]');
+          if (await cantripFilter.isVisible()) {
+            console.log('✨ Clicking Cantrips filter...');
+            await cantripFilter.click();
+            await page.waitForTimeout(300);
+          }
+
+          await page.screenshot({ path: path.join(outputDir, '04b-arena-spells-hotbar.png') });
+          console.log('✅ Action Hotbar Spells & responsive layout verified at 1280x800.');
+        }
       }
 
       // Check if auto-AI toggle or step AI button exists

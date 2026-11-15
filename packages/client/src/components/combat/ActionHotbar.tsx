@@ -143,6 +143,12 @@ export function ActionHotbar({
   const hasExtraAttacks = (turnBudget?.extraAttacksRemaining ?? 0) > 0;
   const bonusActionSpellCast = Boolean(turnBudget?.bonusActionSpellCast);
 
+  const handleHorizontalWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0 && e.deltaX === 0) {
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
+
   return (
     <footer
       data-testid="action-hotbar"
@@ -303,10 +309,14 @@ export function ActionHotbar({
       </div>
 
       {/* Tab Panels */}
-      <div className="p-3 bg-slate-900/80 min-h-[110px] max-h-[180px] overflow-y-auto scrollbar-thin">
+      <div className="p-2.5 bg-slate-900/90 overflow-hidden">
         {/* ATTACK TAB */}
         {activeTab === 'attack' && (
-          <div data-testid="hotbar-panel-attack" className="flex flex-wrap gap-2">
+          <div
+            data-testid="hotbar-panel-attack"
+            onWheel={handleHorizontalWheel}
+            className="flex flex-nowrap overflow-x-auto gap-2.5 pb-2 pt-0.5 scrollbar-thin items-stretch"
+          >
             {attacks.length > 0 ? (
               attacks.map((wp) => {
                 const isOffHand = wp.slot === 'off_hand';
@@ -316,7 +326,7 @@ export function ActionHotbar({
                   <div
                     key={wp.id}
                     data-testid={`attack-action-card-${wp.id}`}
-                    className={`flex flex-col justify-between p-2 rounded-lg border min-w-[190px] max-w-[260px] text-xs transition-colors ${
+                    className={`flex flex-col justify-between p-2.5 rounded-lg border w-[220px] min-w-[210px] shrink-0 text-xs transition-colors shadow-sm ${
                       canUse
                         ? 'bg-slate-950/80 border-slate-700 hover:border-amber-500'
                         : 'bg-slate-950/40 border-slate-800 opacity-60'
@@ -327,7 +337,7 @@ export function ActionHotbar({
                         <GameIcon name="attack" category="action" size={14} />
                         <span>{wp.name}</span>
                       </span>
-                      <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] font-semibold text-amber-300">
+                      <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] font-semibold text-amber-300 shrink-0">
                         {wp.toHitBonus >= 0 ? `+${wp.toHitBonus}` : wp.toHitBonus} to hit
                       </span>
                     </div>
@@ -339,7 +349,7 @@ export function ActionHotbar({
                       <span>{wp.rangeFeet ? `${wp.rangeFeet.normal}/${wp.rangeFeet.long}ft` : `${wp.reachFeet}ft`}</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-1 mt-auto pt-1 border-t border-slate-800">
+                    <div className="flex items-center justify-between gap-1.5 mt-auto pt-1.5 border-t border-slate-800">
                       <span className="text-[10px] text-slate-500 capitalize">
                         {isOffHand ? 'Bonus Action' : 'Action'}
                       </span>
@@ -348,9 +358,9 @@ export function ActionHotbar({
                         data-testid={`attack-btn-${wp.id}`}
                         disabled={!canUse}
                         onClick={() => onDeclareAttack?.(wp, { isOffHand })}
-                        className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
+                        className={`px-3 py-1.5 min-h-[30px] rounded-md text-xs font-bold transition-all flex items-center justify-center ${
                           canUse
-                            ? 'bg-amber-600 hover:bg-amber-500 text-slate-950 active:scale-95'
+                            ? 'bg-amber-600 hover:bg-amber-500 text-slate-950 active:scale-95 shadow-md shadow-amber-900/30'
                             : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                         }`}
                       >
@@ -364,11 +374,11 @@ export function ActionHotbar({
               /* Fallback Unarmed Strike */
               <div
                 data-testid="attack-action-card-unarmed"
-                className="flex flex-col justify-between p-2 rounded-lg border border-slate-700 bg-slate-950/80 min-w-[190px] text-xs"
+                className="flex flex-col justify-between p-2.5 rounded-lg border border-slate-700 bg-slate-950/80 w-[220px] min-w-[210px] shrink-0 text-xs shadow-sm"
               >
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="font-bold text-slate-200">Unarmed Strike</span>
-                  <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] font-semibold text-amber-300">
+                  <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] font-semibold text-amber-300 shrink-0">
                     +2 to hit
                   </span>
                 </div>
@@ -403,7 +413,7 @@ export function ActionHotbar({
                       actionCost: 'action',
                     })
                   }
-                  className="px-2.5 py-1 rounded text-xs font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 transition-all self-end"
+                  className="px-3 py-1.5 min-h-[30px] rounded-md text-xs font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 transition-all self-end"
                 >
                   Strike
                 </button>
@@ -482,7 +492,7 @@ export function ActionHotbar({
             {bonusActionSpellCast && (
               <div
                 data-testid="hotbar-cantrip-restriction-banner"
-                className="px-2 py-1 rounded bg-purple-950/60 border border-purple-600 text-purple-300 text-[11px] flex items-center gap-1.5"
+                className="px-2.5 py-1 rounded bg-purple-950/60 border border-purple-600 text-purple-300 text-[11px] flex items-center gap-1.5 shrink-0"
               >
                 <span>⚠️</span>
                 <span>
@@ -492,7 +502,10 @@ export function ActionHotbar({
             )}
 
             {/* Spells List */}
-            <div className="flex flex-wrap gap-2">
+            <div
+              onWheel={handleHorizontalWheel}
+              className="flex flex-nowrap overflow-x-auto gap-2.5 pb-2 pt-0.5 scrollbar-thin items-stretch"
+            >
               {filteredSpells.length > 0 ? (
                 filteredSpells.map((spell) => {
                   const isCantrip = spell.level === 0;
@@ -524,7 +537,7 @@ export function ActionHotbar({
                     <div
                       key={spell.id}
                       data-testid={`spell-action-card-${spell.id}`}
-                      className={`flex flex-col justify-between p-2 rounded-lg border min-w-[210px] max-w-[280px] text-xs transition-colors ${
+                      className={`flex flex-col justify-between p-2.5 rounded-lg border w-[220px] min-w-[210px] shrink-0 text-xs transition-colors shadow-sm ${
                         canCast
                           ? 'bg-slate-950/80 border-slate-700 hover:border-purple-500'
                           : 'bg-slate-950/40 border-slate-800 opacity-60'
@@ -535,7 +548,7 @@ export function ActionHotbar({
                           <GameIcon name={spell.school} category="spell" size={14} />
                           <span>{spell.name}</span>
                         </span>
-                        <span className="px-1.5 py-0.2 rounded bg-purple-950 border border-purple-700 text-[10px] font-semibold text-purple-300">
+                        <span className="px-1.5 py-0.2 rounded bg-purple-950 border border-purple-700 text-[10px] font-semibold text-purple-300 shrink-0">
                           {isCantrip ? 'Cantrip' : `Level ${spell.level}`}
                         </span>
                       </div>
@@ -548,13 +561,13 @@ export function ActionHotbar({
                       <div className="flex items-center justify-between text-[10px] text-slate-500 mb-2">
                         <span>{formatSpellRange(spell.targeting)}</span>
                         {spell.concentration && (
-                          <span className="px-1 py-0.2 rounded bg-amber-950 border border-amber-600 text-amber-300 font-bold">
+                          <span className="px-1 py-0.2 rounded bg-amber-950 border border-amber-600 text-amber-300 font-bold shrink-0">
                             Conc.
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between gap-1 mt-auto pt-1 border-t border-slate-800">
+                      <div className="flex items-center justify-between gap-1.5 mt-auto pt-1.5 border-t border-slate-800">
                         {!isCantrip && availableSlotLevels.length > 0 ? (
                           <select
                             data-testid={`spell-slot-select-${spell.id}`}
@@ -565,7 +578,7 @@ export function ActionHotbar({
                                 [spell.id]: Number(e.target.value),
                               }))
                             }
-                            className="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-[10px] text-slate-300"
+                            className="bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-[11px] text-slate-300 cursor-pointer focus:ring-1 focus:ring-purple-400"
                           >
                             {availableSlotLevels
                               .filter((lvl) => lvl >= spell.level)
@@ -576,7 +589,7 @@ export function ActionHotbar({
                               ))}
                           </select>
                         ) : (
-                          <span className="text-[10px] text-slate-500">
+                          <span className="text-[11px] text-slate-400 font-medium">
                             {isCantrip ? 'Free' : `Slot L${spell.level}`}
                           </span>
                         )}
@@ -586,9 +599,9 @@ export function ActionHotbar({
                           data-testid={`spell-cast-btn-${spell.id}`}
                           disabled={!canCast}
                           onClick={() => onCastSpell?.(spell.id, defaultSlot)}
-                          className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
+                          className={`px-3 py-1.5 min-h-[30px] rounded-md text-xs font-bold transition-all flex items-center justify-center ${
                             canCast
-                              ? 'bg-purple-600 hover:bg-purple-500 text-white active:scale-95'
+                              ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-900/40 active:scale-95'
                               : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                           }`}
                         >
@@ -609,7 +622,11 @@ export function ActionHotbar({
 
         {/* CLASS FEATURES TAB */}
         {activeTab === 'features' && (
-          <div data-testid="hotbar-panel-features" className="flex flex-wrap gap-2">
+          <div
+            data-testid="hotbar-panel-features"
+            onWheel={handleHorizontalWheel}
+            className="flex flex-nowrap overflow-x-auto gap-2.5 pb-2 pt-0.5 scrollbar-thin items-stretch"
+          >
             {features.length > 0 ? (
               features.map((feat) => {
                 const canUse = isPlayerControlled && (feat.actionCost === 'bonus_action' ? hasBonusAction : hasAction);
@@ -618,7 +635,7 @@ export function ActionHotbar({
                   <div
                     key={feat.id}
                     data-testid={`feature-action-card-${feat.id}`}
-                    className={`flex flex-col justify-between p-2 rounded-lg border min-w-[200px] max-w-[280px] text-xs transition-colors ${
+                    className={`flex flex-col justify-between p-2.5 rounded-lg border w-[220px] min-w-[210px] shrink-0 text-xs transition-colors shadow-sm ${
                       canUse
                         ? 'bg-slate-950/80 border-slate-700 hover:border-amber-500'
                         : 'bg-slate-950/40 border-slate-800 opacity-60'
@@ -628,16 +645,16 @@ export function ActionHotbar({
                       <span className="font-bold text-slate-200 truncate">
                         {feat.name}
                       </span>
-                      <span className="px-1.5 py-0.2 rounded bg-amber-950 border border-amber-700 text-[10px] font-semibold text-amber-300 capitalize">
+                      <span className="px-1.5 py-0.2 rounded bg-amber-950 border border-amber-700 text-[10px] font-semibold text-amber-300 capitalize shrink-0">
                         {feat.actionCost.replace(/_/g, ' ')}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-400 line-clamp-2 mb-2">
+                    <p className="text-[11px] text-slate-400 line-clamp-2 mb-2 leading-relaxed">
                       {feat.description ?? 'Class feature ability'}
                     </p>
 
-                    <div className="flex items-center justify-between gap-1 mt-auto pt-1 border-t border-slate-800">
+                    <div className="flex items-center justify-between gap-1 mt-auto pt-1.5 border-t border-slate-800">
                       <span className="text-[10px] text-slate-500">
                         {feat.resourceCost ? `${feat.resourceCost.amount} use` : 'Ready'}
                       </span>
@@ -646,9 +663,9 @@ export function ActionHotbar({
                         data-testid={`feature-btn-${feat.id}`}
                         disabled={!canUse}
                         onClick={() => onUseClassFeature?.(feat.id)}
-                        className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
+                        className={`px-3 py-1.5 min-h-[30px] rounded-md text-xs font-bold transition-all flex items-center justify-center ${
                           canUse
-                            ? 'bg-amber-600 hover:bg-amber-500 text-slate-950 active:scale-95'
+                            ? 'bg-amber-600 hover:bg-amber-500 text-slate-950 active:scale-95 shadow-md shadow-amber-900/30'
                             : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                         }`}
                       >
@@ -668,7 +685,11 @@ export function ActionHotbar({
 
         {/* STANDARD ACTIONS TAB */}
         {activeTab === 'standard' && (
-          <div data-testid="hotbar-panel-standard" className="flex flex-wrap gap-2">
+          <div
+            data-testid="hotbar-panel-standard"
+            onWheel={handleHorizontalWheel}
+            className="flex flex-nowrap overflow-x-auto gap-2.5 pb-2 pt-0.5 scrollbar-thin items-stretch"
+          >
             {STANDARD_ACTIONS.map((action) => {
               const requiresAction = action.actionCost === 'action';
               const requiresBonus = action.actionCost === 'bonus_action';
@@ -681,7 +702,7 @@ export function ActionHotbar({
                 <div
                   key={action.id}
                   data-testid={`standard-action-card-${action.id}`}
-                  className={`flex flex-col justify-between p-2 rounded-lg border min-w-[190px] max-w-[240px] text-xs transition-colors ${
+                  className={`flex flex-col justify-between p-2.5 rounded-lg border w-[210px] min-w-[200px] shrink-0 text-xs transition-colors shadow-sm ${
                     canUse
                       ? 'bg-slate-950/80 border-slate-700 hover:border-sky-500'
                       : 'bg-slate-950/40 border-slate-800 opacity-60'
@@ -692,12 +713,12 @@ export function ActionHotbar({
                       <GameIcon name={action.id} category="action" size={16} />
                       <span>{action.name}</span>
                     </span>
-                    <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] text-slate-400 capitalize">
+                    <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] text-slate-400 capitalize shrink-0">
                       {action.actionCost}
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-400 mb-2 leading-snug">
+                  <p className="text-[11px] text-slate-400 mb-2 leading-relaxed">
                     {action.description}
                   </p>
 
@@ -706,9 +727,9 @@ export function ActionHotbar({
                     data-testid={`standard-action-btn-${action.id}`}
                     disabled={!canUse}
                     onClick={() => onStandardAction?.(action.id)}
-                    className={`mt-auto px-2.5 py-1 rounded text-xs font-bold transition-all ${
+                    className={`mt-auto px-3 py-1.5 min-h-[30px] rounded-md text-xs font-bold transition-all flex items-center justify-center ${
                       canUse
-                        ? 'bg-sky-600 hover:bg-sky-500 text-white active:scale-95'
+                        ? 'bg-sky-600 hover:bg-sky-500 text-white active:scale-95 shadow-md shadow-sky-900/30'
                         : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                     }`}
                   >
@@ -722,22 +743,26 @@ export function ActionHotbar({
 
         {/* ITEMS TAB */}
         {activeTab === 'items' && (
-          <div data-testid="hotbar-panel-items" className="flex flex-wrap gap-2">
+          <div
+            data-testid="hotbar-panel-items"
+            onWheel={handleHorizontalWheel}
+            className="flex flex-nowrap overflow-x-auto gap-2.5 pb-2 pt-0.5 scrollbar-thin items-stretch"
+          >
             {/* Standard Potion of Healing */}
             <div
               data-testid="item-card-potion-healing"
-              className="flex flex-col justify-between p-2 rounded-lg border border-slate-700 bg-slate-950/80 min-w-[190px] max-w-[240px] text-xs"
+              className="flex flex-col justify-between p-2.5 rounded-lg border border-slate-700 bg-slate-950/80 w-[220px] min-w-[210px] shrink-0 text-xs shadow-sm"
             >
               <div className="flex items-center justify-between gap-1 mb-1">
                 <span className="font-bold text-slate-200 flex items-center gap-1.5">
                   <GameIcon name="potion" category="item" size={16} />
                   <span>Potion of Healing</span>
                 </span>
-                <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] text-slate-400">
+                <span className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-[10px] text-slate-400 shrink-0">
                   Action
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-400 mb-2">
+              <p className="text-[11px] text-emerald-400 mb-2 leading-relaxed">
                 Drink or administer to regain 2d4 + 2 Hit Points.
               </p>
               <button
@@ -745,9 +770,9 @@ export function ActionHotbar({
                 data-testid="item-use-btn-potion-healing"
                 disabled={!isPlayerControlled || !hasAction}
                 onClick={() => onUseItem?.('potion-of-healing')}
-                className={`mt-auto px-2.5 py-1 rounded text-xs font-bold transition-all ${
+                className={`mt-auto px-3 py-1.5 min-h-[30px] rounded-md text-xs font-bold transition-all flex items-center justify-center ${
                   isPlayerControlled && hasAction
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95'
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95 shadow-md shadow-emerald-900/30'
                     : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                 }`}
               >

@@ -115,7 +115,7 @@ export function TacticalCombatHud({
   return (
     <div
       data-testid="tactical-combat-hud"
-      className={`relative flex flex-col w-full h-full min-h-[600px] bg-slate-950 text-slate-100 overflow-hidden select-none font-sans ${className}`}
+      className={`relative flex flex-col w-full h-full min-h-[460px] bg-slate-950 text-slate-100 overflow-hidden select-none font-sans ${className}`}
     >
       {/* Top Header Bar */}
       <header
