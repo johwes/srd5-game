@@ -1,6 +1,12 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const logFilePath = path.resolve(__dirname, 'client.log');
 
 function clientLoggerPlugin(): Plugin {
   return {
@@ -14,9 +20,13 @@ function clientLoggerPlugin(): Plugin {
         req.on('end', () => {
           try {
             const data = JSON.parse(body);
-            console.log(`[CLIENT ${data.type?.toUpperCase() ?? 'LOG'}]`, data.text ?? body);
+            const line = `[${new Date().toISOString()}] [CLIENT ${data.type?.toUpperCase() ?? 'LOG'}] ${data.text ?? body}\n`;
+            console.log(line.trim());
+            fs.appendFileSync(logFilePath, line, 'utf-8');
           } catch {
-            console.log('[CLIENT LOG]', body);
+            const line = `[${new Date().toISOString()}] [CLIENT LOG] ${body}\n`;
+            console.log(line.trim());
+            fs.appendFileSync(logFilePath, line, 'utf-8');
           }
           res.statusCode = 200;
           res.end('ok');
