@@ -58,6 +58,7 @@ export interface CampaignDifficultyConfig {
   permadeath: boolean;                // Party wipe deletes save (Tactician default: true)
   campSuppliesRequired: boolean;      // Rations needed for Long Rests (Standard/Tactician: true)
   fogOfWarEnabled: boolean;           // Dynamic Line of Sight mask (Standard: true)
+  friendlyFireEnabled: boolean;       // Offensive AOE spells (Fireball, etc.) harm allies (Explorer: false, Standard/Tactician: true)
   deathSaveRule: 'core_raw' | 'forgiving' | 'hardcore';
   enemyHealthModifier: number;        // Multiplier on monster Max HP (e.g., 0.8 for Explorer, 1.0 for Standard, 1.2 for Tactician)
   enemyAttackBonus: number;           // Flat modifier to enemy attack rolls & DCs (+0 or +1)
@@ -171,6 +172,7 @@ Provides 3 curated presets plus a custom toggle drawer:
 | Setting | Explorer (Story) | Standard (5e Core) | Tactician (Hardcore) |
 | :--- | :---: | :---: | :---: |
 | **Ruleset Enforcement** | Relaxed | 100% SRD 5.1 RAW | Strict RAW + Hardcore |
+| **Friendly Fire (AOE Spells)** | Disabled (Allies Spared) | Enabled (100% RAW) | Enabled (100% RAW) |
 | **Party Health Modifier** | +20% Max HP | 100% Core HP | 100% Core HP |
 | **Death Saving Throws** | Advantage on rolls | Normal (DC 10) | Nat 1 = 3 fails (Instant Death) |
 | **Camp Supplies / Rations**| Disabled | Required for Long Rest | Required + Food Spoilage |

@@ -80,6 +80,11 @@ Every AOE shape (`sphere`, `cylinder`, `cube`, `cone`, `line`) is rasterized ont
 - **Cone**: Originates from a corner/edge adjacent to the caster along a directional vector $\vec{v}$; width at distance $d$ from origin equals $d$, with total length $L$.
 - **Line**: Ray of length $L$ and width $W$ (default 5 ft) from the caster's boundary toward target point.
 
+#### 3.4.1 Configurable Friendly Fire AOE Filtering
+Under official SRD 5.1 Rules As Written (RAW), offensive area-of-effect spells (*Fireball*, *Burning Hands*, *Shatter*, etc.) affect every creature occupying the rasterized footprint regardless of allegiance.
+- **When `friendlyFireEnabled === true`** (Default for Standard 5e RAW and Tactician rulesets): All creatures overlapping the rasterized cells are included in `aoeTargetIds`.
+- **When `friendlyFireEnabled === false`** (Default for Explorer / Story ruleset, or toggled via Custom Ruleset): Offensive AOE spells and hazard zones filter out friendly allies (`areAllied(caster, combatant) === true`), targeting only hostile enemies. This prevents accidental party wipes on relaxed difficulty while preserving tactical spellcasting positioning.
+
 ---
 
 ## 4. Combat Turn Lifecycle & Action Economy
