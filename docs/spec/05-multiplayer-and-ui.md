@@ -125,6 +125,35 @@ Application.stage
 3. **Line of Sight & Cover Indicator**:
    - Hovering an enemy while a ranged weapon or targeted spell is selected draws a targeting ray showing hit probability (e.g., `65% to hit`) and any active cover badge (`Half Cover +2 AC`, `3/4 Cover +5 AC`, or `Blocked`).
 
+### 3.3 Open Game Asset Pipeline, Spritesheets & Procedural Fallbacks
+
+To ensure high visual quality, rapid rendering, and full coverage of all SRD 5.1 entities without missing assets, `@srd5/client` employs a **3-tier asset pipeline** leveraging open-source game assets (CC0 and CC-BY):
+
+```mermaid
+flowchart LR
+    EngineID["@srd5/engine State\n(tokenSpriteId, terrain, propKind)"] --> Registry["AssetRegistry\n(@srd5/client/src/canvas/assets)"]
+    Registry --> Atlas["1. PixiJS Spritesheet Atlas\n(Kenney CC0 / DawnLike CC-BY)"]
+    Registry --> SVG["2. Vector Icon Library\n(game-icons.net CC-BY SVGs)"]
+    Registry --> Procedural["3. Procedural Token Fallback\n(Canvas-drawn circular token + initials)"]
+```
+
+#### A. Asset Sources & Licensing Guardrails
+1. **Dungeon Tiles & Creature Tokens (CC0 Public Domain)**:
+   - **Kenney.nl (Tiny Dungeon / 1-Bit Roguelike)**: CC0 public domain 16×16 spritesheets bundled in `packages/client/public/assets/tiles/` and `tokens/`. Scaled using `PIXI.SCALE_MODES.NEAREST` for crisp tactical pixel art on high-DPI screens.
+2. **Action, Spell & Condition Icons (CC-BY 3.0)**:
+   - **game-icons.net**: Clean monochrome vector SVG icons for all 15 SRD conditions (*Blinded*, *Stunned*, *Poisoned*, *Paralyzed*), magic schools (*Evocation*, *Abjuration*), and standard actions (*Dash*, *Disengage*, *Dodge*, *Help*).
+   - Bundled in `packages/client/public/assets/icons/` with statutory attribution in `LEGAL.md` and the in-app Credits screen.
+
+#### B. The 3-Tier Resolution Strategy
+1. **Tier 1 (Explicit Spritesheet Texture)**: If `tokenSpriteId` or `terrain` matches an entry in `AssetManifest`, PixiJS renders the corresponding sub-texture from the packed spritesheet.
+2. **Tier 2 (Vector / SVG Icon)**: Used for UI action buttons, spellbook spell cards, and condition badges floating over tokens.
+3. **Tier 3 (Procedural Tabletop Token Fallback)**:
+   - If an SRD monster does not yet have a bespoke sprite, the canvas procedurally renders a **VTT Tabletop Token**:
+     - Circular base colored by team/allegiance (Green = Party, Red = Hostile, Blue = Team B / PvP, Gold = Boss).
+     - Centered creature monogram (e.g. `Ow` for Owlbear, `Gc` for Gelatinous Cube) or creature type silhouette (`dragon`, `undead`, `beast`, `fiend`).
+     - Dynamic HP ring arc (Green -> Yellow -> Red) and hovering condition badges.
+   - **Result**: Zero broken images; all ~320 SRD 5.1 monsters are immediately playable with crisp tactical clarity.
+
 ---
 
 ## 4. React UI Views & Tactical HUD (`@srd5/client/src/components`)

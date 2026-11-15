@@ -37,6 +37,12 @@ Every build, character export, and the in-app Credits/About screen MUST include 
 - **Included**: All 9 SRD races (+ subraces), 12 SRD classes (+ 1 SRD subclass each), 1 SRD background (Acolyte) + custom SRD-compliant background builder, SRD feats (Grappler) + custom ASI/Feat framework, ~320 SRD monsters, ~319 SRD spells, SRD equipment & magic items, conditions, and rules text.
 - **Excluded (Product Identity)**: Non-SRD monsters (e.g., Beholder, Mind Flayer, Displacer Beast, Carrion Crawler, Umber Hulk, Yuan-ti), non-SRD spells/subclasses, and trademarked setting names. The data validation pipeline enforces an allowlist matching the official SRD 5.1 index.
 
+### 3.3 Open Game Asset Licensing (CC0 & CC-BY)
+Graphics and UI icons bundled in `@srd5/client` adhere strictly to open-source licenses:
+- **Kenney.nl Tiny Dungeon / 1-Bit Roguelike Assets**: CC0 (Public Domain) — free for all uses.
+- **game-icons.net Icons**: CC-BY 3.0 (by authors listed at https://game-icons.net) — statutory attribution included in `packages/data/LEGAL.md` and in-app Credits.
+- **DawnLike Roguelike Tiles**: CC-BY 4.0 (by DragonDePlatino & DawnBringer) — attribution included in `packages/data/LEGAL.md`.
+
 ---
 
 ## 4. System Architecture & Monorepo Layout
