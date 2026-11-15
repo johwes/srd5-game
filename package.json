@@ -9,6 +9,7 @@
     "build": "pnpm -r --filter \"@srd5/*\" run build",
     "typecheck": "pnpm -r --filter \"@srd5/*\" run typecheck",
     "test": "pnpm -r --filter \"@srd5/*\" run test",
+    "test:e2e": "playwright test",
     "playtest": "tsx scripts/playtest.ts",
     "dev": "pnpm --filter @srd5/client run dev"
   },
@@ -18,6 +19,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@types/node": "^22.10.0",
     "playwright": "^1.65.1",
     "tsx": "^4.19.2",
