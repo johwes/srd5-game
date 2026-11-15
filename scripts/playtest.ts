@@ -99,12 +99,20 @@ async function runPlaytest() {
     // 2. Party Roster
     // -------------------------------------------------------------------------
     console.log('👥 Testing Party Roster View...');
-    const rosterNav = page.locator('[data-testid="app-nav-roster"]');
-    if (await rosterNav.isVisible()) {
-      await rosterNav.click();
+    const titleVaultBtn = page.locator('[data-testid="title-menu-vault-btn"]');
+    if (await titleVaultBtn.isVisible()) {
+      await titleVaultBtn.click();
       await page.waitForTimeout(800);
       await page.screenshot({ path: path.join(outputDir, '02-party-roster.png') });
-      console.log('✅ Party Roster rendered.');
+      console.log('✅ Party Roster rendered via Title Menu.');
+    } else {
+      const rosterNav = page.locator('[data-testid="app-nav-roster"]');
+      if (await rosterNav.isVisible()) {
+        await rosterNav.click();
+        await page.waitForTimeout(800);
+        await page.screenshot({ path: path.join(outputDir, '02-party-roster.png') });
+        console.log('✅ Party Roster rendered.');
+      }
     }
 
     // -------------------------------------------------------------------------
