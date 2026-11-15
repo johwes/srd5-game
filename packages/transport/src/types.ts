@@ -105,6 +105,9 @@ export interface PlayerViewCombatant {
   characterSheet?: DerivedCharacterSheet | undefined;
   levelUpAvailable?: boolean | undefined;
   buildState?: CharacterBuildState | undefined;
+  tokenSpriteId?: string | undefined;
+  monsterType?: string | undefined;
+  challengeRating?: number | undefined;
 }
 
 /**

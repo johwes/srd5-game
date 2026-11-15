@@ -147,6 +147,7 @@ export interface CreatureTokenData {
   isBoss?: boolean;
   challengeRating?: number;
   monsterType?: string;
+  classId?: string;
 }
 
 /**

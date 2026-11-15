@@ -78,6 +78,7 @@ export interface CreatureTokenResolutionInput {
   teamId?: string;
   tokenSpriteId?: string;
   monsterType?: string;
+  classId?: string;
   challengeRating?: number;
   isBoss?: boolean;
   color?: number;

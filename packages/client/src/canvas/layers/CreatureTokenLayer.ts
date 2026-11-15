@@ -309,14 +309,33 @@ export class CreatureTokenRenderer {
       node.currentFacing = data.facing;
     }
 
+    const anyData = data as unknown as {
+      classId?: string;
+      tokenSpriteId?: string;
+      characterSheet?: { tokenSpriteId?: string; classes?: Array<{ classId?: string }> };
+      buildState?: { classes?: Array<{ classId?: string }> };
+    };
+
+    const classId =
+      data.classId ??
+      anyData.classId ??
+      anyData.characterSheet?.classes?.[0]?.classId ??
+      anyData.buildState?.classes?.[0]?.classId;
+
+    const tokenSpriteId =
+      data.tokenSpriteId ??
+      anyData.tokenSpriteId ??
+      anyData.characterSheet?.tokenSpriteId;
+
     const resolvedAsset = assetRegistry.resolveCreatureToken({
       id: data.id,
       name: data.name,
       size: data.size,
       side: data.side,
       teamId: data.teamId,
-      tokenSpriteId: data.tokenSpriteId,
+      tokenSpriteId,
       monsterType: data.monsterType,
+      classId,
       challengeRating: data.challengeRating,
       isBoss: data.isBoss,
       color: data.color,

@@ -108,6 +108,67 @@ const CLASS_TO_SPRITE: Record<string, string> = {
 };
 
 /**
+ * Standard pregenerated hero names to Kenney sprite frames.
+ */
+const PREGEN_NAME_TO_SPRITE: Record<string, string> = {
+  valeros: 'hero_fighter',
+  aleron: 'hero_fighter',
+  ezren: 'hero_wizard',
+  merisiel: 'hero_rogue',
+  kyra: 'hero_cleric',
+  harsk: 'hero_ranger',
+  seelah: 'hero_paladin',
+  amiri: 'hero_barbarian',
+  lem: 'hero_bard',
+  lini: 'hero_druid',
+  sajan: 'hero_monk',
+  seoni: 'hero_sorcerer',
+  feiya: 'hero_warlock',
+};
+
+/**
+ * Monster name substring keyword mapping for fuzzy token sprite matching.
+ */
+const MONSTER_NAME_KEYWORD_MAP: Record<string, string> = {
+  goblin: 'monster_goblin',
+  orc: 'monster_orc',
+  skeleton: 'monster_skeleton',
+  zombie: 'monster_zombie',
+  ghoul: 'monster_ghoul',
+  spider: 'monster_spider',
+  bat: 'monster_bat',
+  rat: 'monster_rat',
+  wolf: 'monster_wolf',
+  cultist: 'monster_cultist',
+  ogre: 'monster_ogre',
+  troll: 'monster_ogre',
+  hobgoblin: 'monster_hobgoblin',
+  bugbear: 'monster_bugbear',
+  slime: 'monster_slime',
+  ooze: 'monster_slime',
+  pudding: 'monster_slime',
+  jelly: 'monster_slime',
+  cube: 'monster_slime',
+  dragon: 'monster_dragon',
+  demon: 'monster_demon',
+  fiend: 'monster_demon',
+  ghost: 'monster_ghost',
+  specter: 'monster_ghost',
+  wraith: 'monster_ghost',
+  kobold: 'monster_goblin',
+  bandit: 'monster_cultist',
+  thug: 'monster_cultist',
+  guard: 'hero_fighter',
+  knight: 'hero_paladin',
+  mage: 'hero_wizard',
+  apprentice: 'hero_wizard',
+  acolyte: 'hero_cleric',
+  priest: 'hero_cleric',
+  spy: 'hero_rogue',
+  thief: 'hero_rogue',
+};
+
+/**
  * 3-Tier Open Game Asset Registry:
  * Tier 1: PixiJS Spritesheet Atlas (Kenney CC0 Tiny Dungeon with NEAREST scaling).
  * Tier 2: Vector Icon Library (game-icons.net SVGs for actions, conditions, spells, items).
@@ -154,42 +215,83 @@ export class AssetRegistry {
       };
     }
 
-    // 2. Try monster name / subtype lookup
-    const normalizedName = input.name.trim().toLowerCase();
-    const monsterSpriteKey =
-      MONSTER_NAME_TO_SPRITE[normalizedName] ??
-      (input.monsterType ? MONSTER_NAME_TO_SPRITE[input.monsterType.toLowerCase()] : undefined);
-
-    if (monsterSpriteKey && KENNEY_SPRITE_FRAMES[monsterSpriteKey]) {
-      const frame = KENNEY_SPRITE_FRAMES[monsterSpriteKey]!;
-      return {
-        tier: 'spritesheet',
-        spriteKey: monsterSpriteKey,
-        frame,
-        texture: this.textures.get(monsterSpriteKey),
-        monogram,
-        baseColor: colors.base,
-        borderColor: colors.border,
-        glowColor: colors.glow,
-        creatureType: input.monsterType,
-        isBoss,
-      };
+    // 2. Try hero classId if available (for player characters)
+    if (input.classId) {
+      const classKey = CLASS_TO_SPRITE[input.classId.toLowerCase()];
+      if (classKey && KENNEY_SPRITE_FRAMES[classKey]) {
+        const frame = KENNEY_SPRITE_FRAMES[classKey]!;
+        return {
+          tier: 'spritesheet',
+          spriteKey: classKey,
+          frame,
+          texture: this.textures.get(classKey),
+          monogram,
+          baseColor: colors.base,
+          borderColor: colors.border,
+          glowColor: colors.glow,
+          creatureType: 'humanoid',
+          isBoss,
+        };
+      }
     }
 
-    // 3. Try hero class archetype lookup
-    const classSpriteKey = CLASS_TO_SPRITE[normalizedName];
-    if (classSpriteKey && KENNEY_SPRITE_FRAMES[classSpriteKey]) {
-      const frame = KENNEY_SPRITE_FRAMES[classSpriteKey]!;
+    // 3. Name normalization (strip "# 1", "#1", "(archer)", digits, symbols)
+    const rawName = (input.name ?? '').trim().toLowerCase();
+    const cleanName = rawName
+      .replace(/#\s*\d+/g, '')
+      .replace(/\([^)]*\)/g, '')
+      .replace(/\d+/g, '')
+      .trim();
+
+    let matchedSpriteKey: string | undefined =
+      MONSTER_NAME_TO_SPRITE[cleanName] ??
+      CLASS_TO_SPRITE[cleanName] ??
+      PREGEN_NAME_TO_SPRITE[cleanName] ??
+      MONSTER_NAME_TO_SPRITE[rawName];
+
+    // 4. Substring keyword matching for monsters
+    if (!matchedSpriteKey) {
+      for (const [keyword, spriteKey] of Object.entries(MONSTER_NAME_KEYWORD_MAP)) {
+        if (cleanName.includes(keyword) || rawName.includes(keyword)) {
+          matchedSpriteKey = spriteKey;
+          break;
+        }
+      }
+    }
+
+    // 5. Hero class keyword substring matching
+    if (!matchedSpriteKey) {
+      for (const [cls, spriteKey] of Object.entries(CLASS_TO_SPRITE)) {
+        if (cleanName.includes(cls) || rawName.includes(cls)) {
+          matchedSpriteKey = spriteKey;
+          break;
+        }
+      }
+    }
+
+    // 6. Monster type fallback if specifically mapped (e.g. 'dragon', 'demon')
+    if (!matchedSpriteKey && input.monsterType) {
+      const typeKey = input.monsterType.toLowerCase();
+      matchedSpriteKey = MONSTER_NAME_TO_SPRITE[typeKey];
+    }
+
+    // 7. Party fallback (if player character has no matching class or name, default to hero_fighter)
+    if (!matchedSpriteKey && input.side === 'party') {
+      matchedSpriteKey = 'hero_fighter';
+    }
+
+    if (matchedSpriteKey && KENNEY_SPRITE_FRAMES[matchedSpriteKey]) {
+      const frame = KENNEY_SPRITE_FRAMES[matchedSpriteKey]!;
       return {
         tier: 'spritesheet',
-        spriteKey: classSpriteKey,
+        spriteKey: matchedSpriteKey,
         frame,
-        texture: this.textures.get(classSpriteKey),
+        texture: this.textures.get(matchedSpriteKey),
         monogram,
         baseColor: colors.base,
         borderColor: colors.border,
         glowColor: colors.glow,
-        creatureType: 'humanoid',
+        creatureType: input.monsterType ?? (input.side === 'party' ? 'humanoid' : undefined),
         isBoss,
       };
     }

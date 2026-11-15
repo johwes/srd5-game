@@ -128,6 +128,24 @@ async function runPlaytest() {
       const canvas = page.locator('canvas');
       const box = await canvas.boundingBox();
       console.log(`🎨 Tactical Canvas bounding box: ${box?.width}x${box?.height}`);
+
+      const arenaAssetDebug = await page.evaluate(async () => {
+        const { assetRegistry } = await import('./src/canvas/assets/index.js');
+        const resolvedGoblin = assetRegistry.resolveCreatureToken({ id: 'm1', name: 'Goblin #1', side: 'monster' });
+        const resolvedValeros = assetRegistry.resolveCreatureToken({ id: 'p1', name: 'Valeros', side: 'party', classId: 'fighter' });
+        return {
+          isLoaded: assetRegistry.isLoaded,
+          hasMonsterGoblin: assetRegistry.hasTexture('monster_goblin'),
+          hasHeroFighter: assetRegistry.hasTexture('hero_fighter'),
+          hasGoblinTexture: Boolean(resolvedGoblin.texture),
+          hasValerosTexture: Boolean(resolvedValeros.texture),
+        };
+      });
+      console.log('⚔️ Token Sprite Resolution:', arenaAssetDebug);
+      if (!arenaAssetDebug.hasGoblinTexture || !arenaAssetDebug.hasValerosTexture) {
+        throw new Error('Token sprites failed to load/resolve texture!');
+      }
+      console.log('🎨 Monster and Player Token Sprites verified successfully!');
       if (!box || box.width === 0 || box.height === 0) {
         throw new Error('Canvas bounding box is 0 or not found!');
       }

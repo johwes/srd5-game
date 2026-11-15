@@ -74,6 +74,9 @@ export function toPlayerViewCombatant(c: Combatant): PlayerViewCombatant {
     characterSheet: c.characterSheet,
     levelUpAvailable: c.levelUpAvailable,
     buildState: c.buildState,
+    tokenSpriteId: c.characterSheet?.tokenSpriteId,
+    monsterType: c.monsterData?.type,
+    challengeRating: c.monsterData?.challengeRating,
   };
 }
 
