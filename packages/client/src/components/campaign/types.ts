@@ -29,7 +29,40 @@ export interface CampaignLaunchConfig {
   mode: CampaignModeId;
   difficulty: CampaignDifficultyConfig;
   party: CharacterBuildState[];
+  slotAssignments?: PartySlotAssignment[];
 }
+
+export type SlotRoleSuggestion = 'frontline' | 'striker' | 'controller' | 'support';
+
+export const SLOT_ROLE_SUGGESTIONS: SlotRoleSuggestion[] = [
+  'frontline',
+  'striker',
+  'controller',
+  'support',
+];
+
+export const SLOT_ROLE_LABELS: Record<SlotRoleSuggestion, { title: string; subtitle: string; icon: string }> = {
+  frontline: {
+    title: 'Frontline Anchor',
+    subtitle: 'Tank / Melee (Fighter, Paladin, Barbarian)',
+    icon: '🛡️',
+  },
+  striker: {
+    title: 'Striker & Scout',
+    subtitle: 'Infiltrator / Traps (Rogue, Ranger, Monk)',
+    icon: '🗝️',
+  },
+  controller: {
+    title: 'Arcane Controller',
+    subtitle: 'Blaster / Utility (Wizard, Sorcerer, Warlock)',
+    icon: '🔮',
+  },
+  support: {
+    title: 'Divine Support',
+    subtitle: 'Healer / Buffer (Cleric, Druid, Bard)',
+    icon: '✨',
+  },
+};
 
 export interface CampaignModeMeta {
   id: CampaignModeId;

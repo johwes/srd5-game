@@ -18,7 +18,11 @@ import {
 import { ArenaView } from './components/arena/index.js';
 import { DungeonView } from './components/dungeon/index.js';
 import { TitleMenuView } from './components/title/index.js';
-import { CampaignSetupWizard, type CampaignLaunchConfig } from './components/campaign/index.js';
+import {
+  CampaignSetupWizard,
+  type CampaignLaunchConfig,
+  type WizardStageNumber,
+} from './components/campaign/index.js';
 import {
   MAX_PARTY_SIZE,
   type PersistedRosterData,
@@ -76,6 +80,11 @@ export function App({
     useState<CharacterBuildState | null>(null);
   const [levelUpCharacterId, setLevelUpCharacterId] = useState<string | null>(
     null,
+  );
+  const [returnToPartySlot, setReturnToPartySlot] = useState<number | null>(null);
+  const [wizardStage, setWizardStage] = useState<WizardStageNumber>(1);
+  const [campaignParty, setCampaignParty] = useState<CharacterBuildState[] | undefined>(
+    undefined,
   );
 
   const transportInfo = getTransportInfo();
@@ -135,9 +144,27 @@ export function App({
 
   const handleSaveCharacterFromBuilder = (character: CharacterBuildState) => {
     const nextRoster = upsertRosterCharacter(roster, character, {
-      addToPartyIfRoom: true,
+      addToPartyIfRoom: returnToPartySlot === null,
     });
     persistAndSetRoster(nextRoster);
+
+    if (returnToPartySlot !== null) {
+      const slotIdx = returnToPartySlot;
+      setCampaignParty((prev) => {
+        const base = prev ?? [
+          getPregenCharacter('pregen-fighter')!,
+          getPregenCharacter('pregen-rogue')!,
+          getPregenCharacter('pregen-wizard')!,
+          getPregenCharacter('pregen-cleric')!,
+        ];
+        const updated = [...base];
+        updated[slotIdx] = character;
+        return updated;
+      });
+      setReturnToPartySlot(null);
+      setWizardStage(3);
+      setActiveView('campaign_setup');
+    }
   };
 
   const handleInspectCharacter = (character: CharacterBuildState) => {
@@ -226,19 +253,29 @@ export function App({
     return (
       <>
         <CampaignSetupWizard
+          initialStage={wizardStage}
           initialMode="campaign_kaelen"
           initialParty={
-            roster.characters.filter((c) => roster.activePartyIds.includes(c.id)).length > 0
+            campaignParty ??
+            (roster.characters.filter((c) => roster.activePartyIds.includes(c.id)).length > 0
               ? roster.characters.filter((c) => roster.activePartyIds.includes(c.id))
               : [
                   getPregenCharacter('pregen-fighter')!,
                   getPregenCharacter('pregen-rogue')!,
                   getPregenCharacter('pregen-wizard')!,
                   getPregenCharacter('pregen-cleric')!,
-                ].filter(Boolean)
+                ].filter(Boolean))
           }
           availableRosterCharacters={roster.characters}
-          onBackToMenu={() => setActiveView('title_menu')}
+          onBackToMenu={() => {
+            setWizardStage(1);
+            setActiveView('title_menu');
+          }}
+          onRollNewHero={(slotIndex) => {
+            setReturnToPartySlot(slotIndex);
+            setBuilderTargetCharacter(undefined);
+            setActiveView('builder');
+          }}
           onLaunch={(config: CampaignLaunchConfig) => {
             setLoadedGameState(undefined);
             if (config.party.length > 0) {
@@ -401,12 +438,42 @@ export function App({
         </header>
 
         {(activeView === 'builder' || activeView === 'character_builder') && (
-          <CharacterBuilderWizard
-            compendium={defaultCompendium}
-            initialCharacter={builderTargetCharacter}
-            onSaveCharacter={handleSaveCharacterFromBuilder}
-            onInspectCharacter={handleInspectCharacter}
-          />
+          <div className="space-y-3">
+            {returnToPartySlot !== null && (
+              <div
+                data-testid="builder-return-slot-banner"
+                className="rounded-xl border border-amber-600/40 bg-amber-950/30 p-3 flex items-center justify-between gap-2 text-xs text-amber-200"
+              >
+                <div className="flex items-center gap-2">
+                  <span>🎲</span>
+                  <span className="font-semibold">
+                    Recruiting Hero for Campaign Party Slot {returnToPartySlot + 1}
+                  </span>
+                  <span className="text-slate-400">
+                    &middot; Saving this character will automatically return them to your campfire lineup.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  data-testid="builder-cancel-return-btn"
+                  onClick={() => {
+                    setReturnToPartySlot(null);
+                    setWizardStage(3);
+                    setActiveView('campaign_setup');
+                  }}
+                  className="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-900 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white"
+                >
+                  ✕ Cancel &amp; Return to Setup
+                </button>
+              </div>
+            )}
+            <CharacterBuilderWizard
+              compendium={defaultCompendium}
+              initialCharacter={builderTargetCharacter}
+              onSaveCharacter={handleSaveCharacterFromBuilder}
+              onInspectCharacter={handleInspectCharacter}
+            />
+          </div>
         )}
 
         {(activeView === 'roster' || activeView === 'character_vault') && (

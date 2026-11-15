@@ -3,6 +3,9 @@ import {
   type CharacterBuildState,
   getPregenCharacter,
 } from '@srd5/data';
+import { parseSrd5JsonImport } from '../../persistence/index.js';
+import { CampfirePartySlotCard } from './CampfirePartySlotCard.js';
+import { VaultSelectionModal } from './VaultSelectionModal.js';
 import {
   CAMPAIGN_MODES,
   type CampaignDifficultyConfig,
@@ -12,15 +15,21 @@ import {
   DIFFICULTY_PRESETS,
   type DeathSaveRuleId,
   type DifficultyPresetId,
+  type PartySlotAssignment,
+  SLOT_ROLE_SUGGESTIONS,
 } from './types.js';
 
 export interface CampaignSetupWizardProps {
+  initialStage?: WizardStageNumber;
   initialMode?: CampaignModeId;
   initialPreset?: DifficultyPresetId;
   initialParty?: CharacterBuildState[];
+  initialSlotAssignments?: PartySlotAssignment[];
   availableRosterCharacters?: CharacterBuildState[];
   onBackToMenu?: () => void;
   onLaunch: (config: CampaignLaunchConfig) => void;
+  onRollNewHero?: (slotIndex: number) => void;
+  onImportCharacter?: (character: CharacterBuildState, slotIndex: number) => void;
 }
 
 export type WizardStageNumber = 1 | 2 | 3 | 4;
@@ -33,14 +42,18 @@ const STAGE_LABELS: Record<WizardStageNumber, string> = {
 };
 
 export function CampaignSetupWizard({
+  initialStage = 1,
   initialMode = 'campaign_kaelen',
   initialPreset = 'standard',
   initialParty,
+  initialSlotAssignments,
   availableRosterCharacters = [],
   onBackToMenu,
   onLaunch,
+  onRollNewHero,
+  onImportCharacter,
 }: CampaignSetupWizardProps) {
-  const [currentStage, setCurrentStage] = useState<WizardStageNumber>(1);
+  const [currentStage, setCurrentStage] = useState<WizardStageNumber>(initialStage);
   const [selectedMode, setSelectedMode] = useState<CampaignModeId>(initialMode);
   const [difficultyConfig, setDifficultyConfig] = useState<CampaignDifficultyConfig>(() => {
     if (initialPreset !== 'custom' && DIFFICULTY_PRESETS[initialPreset]) {
@@ -50,21 +63,42 @@ export function CampaignSetupWizard({
   });
   const [showCustomRulesDrawer, setShowCustomRulesDrawer] = useState<boolean>(false);
 
-  // Default party initialization: either provided initial party or 4 SRD iconics
-  const [partySlots, setPartySlots] = useState<Array<CharacterBuildState | null>>(() => {
-    if (initialParty && initialParty.length > 0) {
-      const slots: Array<CharacterBuildState | null> = [null, null, null, null];
-      for (let i = 0; i < 4; i++) {
-        slots[i] = initialParty[i] ?? null;
-      }
-      return slots;
+  // Vault Selection Modal state
+  const [vaultModalSlotIndex, setVaultModalSlotIndex] = useState<number | null>(null);
+
+  // File import feedback banner state
+  const [importStatus, setImportStatus] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+
+  // 4 Slot assignments state
+  const [slotAssignments, setSlotAssignments] = useState<PartySlotAssignment[]>(() => {
+    if (initialSlotAssignments && initialSlotAssignments.length === 4) {
+      return initialSlotAssignments;
     }
-    return [
-      getPregenCharacter('pregen-fighter') ?? null,
-      getPregenCharacter('pregen-rogue') ?? null,
-      getPregenCharacter('pregen-wizard') ?? null,
-      getPregenCharacter('pregen-cleric') ?? null,
-    ];
+    const defaultHeroes: Array<CharacterBuildState | null> =
+      initialParty !== undefined
+        ? [
+            initialParty[0] ?? null,
+            initialParty[1] ?? null,
+            initialParty[2] ?? null,
+            initialParty[3] ?? null,
+          ]
+        : [
+            getPregenCharacter('pregen-fighter') ?? null,
+            getPregenCharacter('pregen-rogue') ?? null,
+            getPregenCharacter('pregen-wizard') ?? null,
+            getPregenCharacter('pregen-cleric') ?? null,
+          ];
+
+    return SLOT_ROLE_SUGGESTIONS.map((role, idx) => ({
+      slotIndex: idx,
+      roleSuggestion: role,
+      character: defaultHeroes[idx] ?? null,
+      seatType: 'local' as const,
+      playerSeatId: `Player ${idx + 1}`,
+    }));
   });
 
   // Handle hardware Esc key to navigate back or exit
@@ -101,16 +135,99 @@ export function CampaignSetupWizard({
 
   // Reset party to 4 iconic SRD pregens
   const handleResetToIconics = () => {
-    setPartySlots([
-      getPregenCharacter('pregen-fighter') ?? null,
-      getPregenCharacter('pregen-rogue') ?? null,
-      getPregenCharacter('pregen-wizard') ?? null,
-      getPregenCharacter('pregen-cleric') ?? null,
+    setSlotAssignments((prev) => [
+      { ...prev[0]!, character: getPregenCharacter('pregen-fighter') ?? null },
+      { ...prev[1]!, character: getPregenCharacter('pregen-rogue') ?? null },
+      { ...prev[2]!, character: getPregenCharacter('pregen-wizard') ?? null },
+      { ...prev[3]!, character: getPregenCharacter('pregen-cleric') ?? null },
     ]);
+    setImportStatus(null);
+  };
+
+  // Clear all slots
+  const handleClearAllSlots = () => {
+    setSlotAssignments((prev) =>
+      prev.map((s) => ({ ...s, character: null })),
+    );
+    setImportStatus(null);
+  };
+
+  // Assign hero to specific slot
+  const handleAssignHero = (hero: CharacterBuildState | null, slotIndex: number) => {
+    setSlotAssignments((prev) => {
+      const next = [...prev];
+      if (next[slotIndex]) {
+        next[slotIndex] = { ...next[slotIndex]!, character: hero };
+      }
+      return next;
+    });
+  };
+
+  // Update seat type or seat ID for a slot
+  const handleUpdateSeat = (
+    slotIndex: number,
+    seatUpdates: Partial<Pick<PartySlotAssignment, 'seatType' | 'playerSeatId'>>,
+  ) => {
+    setSlotAssignments((prev) => {
+      const next = [...prev];
+      if (next[slotIndex]) {
+        next[slotIndex] = { ...next[slotIndex]!, ...seatUpdates };
+      }
+      return next;
+    });
+  };
+
+  // Parse and handle .srd5.json file drop/upload
+  const handleFileDrop = (fileText: string, targetSlotIndex?: number) => {
+    setImportStatus(null);
+    const result = parseSrd5JsonImport(fileText);
+    if (!result.ok) {
+      setImportStatus({
+        type: 'error',
+        message: result.errors.join('; '),
+      });
+      return;
+    }
+
+    if (result.format === 'srd5-character' || result.characters.length === 1) {
+      const importedChar = result.characters[0]!;
+      const slotIdx =
+        typeof targetSlotIndex === 'number'
+          ? targetSlotIndex
+          : slotAssignments.findIndex((s) => s.character === null);
+      const targetIdx = slotIdx >= 0 ? slotIdx : 0;
+
+      setSlotAssignments((prev) => {
+        const next = [...prev];
+        next[targetIdx] = { ...next[targetIdx]!, character: importedChar };
+        return next;
+      });
+      setImportStatus({
+        type: 'success',
+        message: `Successfully imported "${importedChar.name}" into Slot ${targetIdx + 1}.`,
+      });
+      onImportCharacter?.(importedChar, targetIdx);
+    } else if (result.format === 'srd5-roster' || result.characters.length > 1) {
+      setSlotAssignments((prev) => {
+        const next = [...prev];
+        for (let i = 0; i < 4; i++) {
+          if (result.characters[i]) {
+            next[i] = { ...next[i]!, character: result.characters[i]! };
+          }
+        }
+        return next;
+      });
+      setImportStatus({
+        type: 'success',
+        message: `Successfully imported party roster of ${result.characters.length} heroes.`,
+      });
+    }
   };
 
   // Assemble active party list (non-null slots)
-  const activeParty = partySlots.filter((c): c is CharacterBuildState => c !== null);
+  const activeParty = slotAssignments
+    .map((s) => s.character)
+    .filter((c): c is CharacterBuildState => c !== null);
 
   // Synergy badges calculation
   const hasFrontline = activeParty.some((c) =>
@@ -145,6 +262,7 @@ export function CampaignSetupWizard({
       mode: selectedMode,
       difficulty: difficultyConfig,
       party: activeParty,
+      slotAssignments,
     });
   };
 
@@ -574,156 +692,184 @@ export function CampaignSetupWizard({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="space-y-1">
                 <h2 className="text-xl sm:text-2xl font-bold font-serif text-slate-100 flex items-center gap-2">
+                  <span aria-hidden="true">🔥</span>
                   <span>Campfire Party Assembly</span>
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400">
-                  Assemble your 1–4 member adventuring party. Default SRD iconics are prepared for battle.
+                  Assemble your 1–4 member adventuring party around the campfire. Quick-pick SRD iconics, recruit from your vault, drop a .srd5.json file, or roll a new custom hero.
                 </p>
               </div>
 
-              <button
-                type="button"
-                data-testid="wizard-reset-iconics-btn"
-                onClick={handleResetToIconics}
-                className="min-h-[44px] px-3.5 py-1.5 rounded-lg border border-amber-900/60 bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-amber-300 transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none self-start sm:self-auto"
-              >
-                🔄 Reset to Iconic 4
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="wizard-reset-iconics-btn"
+                  onClick={handleResetToIconics}
+                  className="min-h-[44px] px-3.5 py-1.5 rounded-lg border border-amber-900/60 bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-amber-300 transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none self-start sm:self-auto"
+                >
+                  ⚡ Quick-Pick All 4 Pregens
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="wizard-clear-all-slots-btn"
+                  onClick={handleClearAllSlots}
+                  className="min-h-[44px] px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors focus:outline-none"
+                >
+                  ✕ Clear All
+                </button>
+              </div>
             </div>
 
-            {/* Live Party Synergy Advisor */}
-            <div
-              data-testid="wizard-synergy-ribbon"
-              className="rounded-xl border border-slate-800 bg-slate-900/70 p-3.5 flex flex-wrap items-center gap-2 text-xs"
-            >
-              <span className="font-bold text-slate-300 mr-1">Party Synergy:</span>
-              <span
-                className={`px-2 py-1 rounded-md font-semibold border ${
-                  hasFrontline
+            {/* File Import Feedback Alert */}
+            {importStatus && (
+              <div
+                data-testid={
+                  importStatus.type === 'success'
+                    ? 'wizard-import-success'
+                    : 'wizard-import-error'
+                }
+                className={`rounded-xl border p-3 text-xs flex items-center justify-between gap-2 ${
+                  importStatus.type === 'success'
                     ? 'border-emerald-600/50 bg-emerald-950/40 text-emerald-300'
-                    : 'border-slate-800 bg-slate-900/60 text-slate-500'
+                    : 'border-rose-600/50 bg-rose-950/40 text-rose-300'
                 }`}
               >
-                🛡️ Frontline Anchor {hasFrontline && '✓'}
-              </span>
-              <span
-                className={`px-2 py-1 rounded-md font-semibold border ${
-                  hasScoutOrTrap
-                    ? 'border-emerald-600/50 bg-emerald-950/40 text-emerald-300'
-                    : 'border-slate-800 bg-slate-900/60 text-slate-500'
-                }`}
+                <div className="flex items-center gap-2">
+                  <span>{importStatus.type === 'success' ? '✓' : '⚠️'}</span>
+                  <span>{importStatus.message}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setImportStatus(null)}
+                  className="text-slate-400 hover:text-white text-xs px-1.5 py-0.5"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Live Party Synergy Advisor & Warnings */}
+            <div className="space-y-2">
+              <div
+                data-testid="wizard-synergy-ribbon"
+                className="rounded-xl border border-slate-800 bg-slate-900/70 p-3.5 flex flex-wrap items-center gap-2 text-xs"
               >
-                🗝️ Trap &amp; Lock Specialist {hasScoutOrTrap && '✓'}
-              </span>
-              <span
-                className={`px-2 py-1 rounded-md font-semibold border ${
-                  hasDivineHealing
-                    ? 'border-emerald-600/50 bg-emerald-950/40 text-emerald-300'
-                    : 'border-slate-800 bg-slate-900/60 text-slate-500'
-                }`}
-              >
-                ✨ Divine Healing {hasDivineHealing && '✓'}
-              </span>
-              <span
-                className={`px-2 py-1 rounded-md font-semibold border ${
-                  hasArcaneUtility
-                    ? 'border-emerald-600/50 bg-emerald-950/40 text-emerald-300'
-                    : 'border-slate-800 bg-slate-900/60 text-slate-500'
-                }`}
-              >
-                🔮 Arcane Utility {hasArcaneUtility && '✓'}
-              </span>
+                <span className="font-bold text-slate-300 mr-1">Party Synergy:</span>
+                <span
+                  data-testid="wizard-synergy-frontline"
+                  className={`px-2 py-1 rounded-md font-semibold border ${
+                    hasFrontline
+                      ? 'border-emerald-600/50 bg-emerald-950/40 text-emerald-300'
+                      : 'border-slate-800 bg-slate-900/60 text-slate-500'
+                  }`}
+                >
+                  🛡️ Frontline Anchor {hasFrontline && '✓'}
+                </span>
+                <span
+                  data-testid="wizard-synergy-scout"
+                  className={`px-2 py-1 rounded-md font-semibold border ${
+                    hasScoutOrTrap
+                      ? 'border-emerald-600/50 bg-emerald-950/40 text-emerald-300'
+                      : 'border-slate-800 bg-slate-900/60 text-slate-500'
+                  }`}
+                >
+                  🗝️ Trap &amp; Lock Specialist {hasScoutOrTrap && '✓'}
+                </span>
+                <span
+                  data-testid="wizard-synergy-divine"
+                  className={`px-2 py-1 rounded-md font-semibold border ${
+                    hasDivineHealing
+                      ? 'border-emerald-600/50 bg-emerald-950/40 text-emerald-300'
+                      : 'border-slate-800 bg-slate-900/60 text-slate-500'
+                  }`}
+                >
+                  ✨ Divine Healing {hasDivineHealing && '✓'}
+                </span>
+                <span
+                  data-testid="wizard-synergy-arcane"
+                  className={`px-2 py-1 rounded-md font-semibold border ${
+                    hasArcaneUtility
+                      ? 'border-emerald-600/50 bg-emerald-950/40 text-emerald-300'
+                      : 'border-slate-800 bg-slate-900/60 text-slate-500'
+                  }`}
+                >
+                  🔮 Arcane Utility {hasArcaneUtility && '✓'}
+                </span>
+              </div>
+
+              {/* Soft Warning Badges if party < 4 or missing critical roles */}
+              {activeParty.length > 0 && activeParty.length < 4 && (
+                <div
+                  data-testid="wizard-synergy-warning-undersized"
+                  className="rounded-lg border border-amber-600/30 bg-amber-950/20 px-3 py-1.5 text-xs text-amber-300 flex items-center gap-2"
+                >
+                  <span>⚠️</span>
+                  <span>
+                    Undersized Party ({activeParty.length}/4 heroes): Tactical combat will be significantly more challenging without a full 4-member party.
+                  </span>
+                </div>
+              )}
+
+              {activeParty.length > 0 && !hasDivineHealing && (
+                <div
+                  data-testid="wizard-synergy-warning-roles"
+                  className="rounded-lg border border-sky-600/30 bg-sky-950/20 px-3 py-1.5 text-xs text-sky-300 flex items-center gap-2"
+                >
+                  <span>💡</span>
+                  <span>
+                    Missing Divine Healing: Consider bringing healing potions into the dungeon and planning rests carefully.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* 4 Party Slots Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {partySlots.map((hero, slotIndex) => {
-                const roleSuggestions = [
-                  'Slot 0 · Frontline Tank',
-                  'Slot 1 · Striker / Scout',
-                  'Slot 2 · Arcane Controller',
-                  'Slot 3 · Divine Support',
-                ];
-                return (
-                  <div
-                    key={slotIndex}
-                    data-testid={`wizard-party-slot-${slotIndex}`}
-                    className={`rounded-xl border p-4 flex flex-col justify-between space-y-3 transition-colors ${
-                      hero
-                        ? 'border-amber-600/40 bg-gradient-to-b from-slate-900 to-amber-950/20'
-                        : 'border-dashed border-slate-800 bg-slate-900/30 text-slate-500'
-                    }`}
-                  >
-                    <div>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400/80">
-                        {roleSuggestions[slotIndex]}
-                      </div>
-
-                      {hero ? (
-                        <div className="mt-2 space-y-1">
-                          <h4 className="text-base font-bold font-serif text-slate-100">
-                            {hero.name}
-                          </h4>
-                          <p className="text-xs text-amber-300/90 capitalize font-medium">
-                            {hero.raceId} {hero.classes[0]?.classId} (Level {hero.classes[0]?.level})
-                          </p>
-                          {hero.baseAbilities && (
-                            <div className="grid grid-cols-3 gap-1 pt-2 text-[10px] text-slate-400 font-mono">
-                              <div>STR {hero.baseAbilities.str}</div>
-                              <div>DEX {hero.baseAbilities.dex}</div>
-                              <div>CON {hero.baseAbilities.con}</div>
-                              <div>INT {hero.baseAbilities.int}</div>
-                              <div>WIS {hero.baseAbilities.wis}</div>
-                              <div>CHA {hero.baseAbilities.cha}</div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="py-6 text-center text-xs text-slate-500">
-                          (Empty Hero Slot)
-                        </div>
-                      )}
-                    </div>
-
-                    {availableRosterCharacters.length > 0 && (
-                      <div className="pt-2 border-t border-slate-800/80">
-                        <label className="text-[10px] text-slate-400 block mb-1">
-                          Swap Hero:
-                        </label>
-                        <select
-                          data-testid={`wizard-slot-${slotIndex}-select`}
-                          value={hero?.id ?? ''}
-                          onChange={(e) => {
-                            const found =
-                              availableRosterCharacters.find((c) => c.id === e.target.value) ??
-                              getPregenCharacter(e.target.value) ??
-                              null;
-                            setPartySlots((prev) => {
-                              const updated = [...prev];
-                              updated[slotIndex] = found;
-                              return updated;
-                            });
-                          }}
-                          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 focus:outline-none"
-                        >
-                          <option value="">(None)</option>
-                          {availableRosterCharacters.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name} ({c.raceId} {c.classes[0]?.classId})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {slotAssignments.map((assignment, slotIndex) => (
+                <CampfirePartySlotCard
+                  key={slotIndex}
+                  slotIndex={slotIndex}
+                  assignment={assignment}
+                  availableRosterCharacters={availableRosterCharacters}
+                  onAssignHero={handleAssignHero}
+                  onUpdateSeat={handleUpdateSeat}
+                  onOpenVaultModal={(idx) => setVaultModalSlotIndex(idx)}
+                  onRollNewHero={onRollNewHero}
+                  onFileDrop={handleFileDrop}
+                />
+              ))}
             </div>
 
             {activeParty.length === 0 && (
-              <p className="text-xs text-rose-400 text-center font-medium">
+              <p
+                data-testid="wizard-party-empty-warning"
+                className="text-xs text-rose-400 text-center font-medium"
+              >
                 ⚠️ You must have at least 1 hero in your party to embark.
               </p>
+            )}
+
+            {/* Vault Selection Modal */}
+            {vaultModalSlotIndex !== null && (
+              <VaultSelectionModal
+                slotIndex={vaultModalSlotIndex}
+                availableCharacters={
+                  availableRosterCharacters.length > 0
+                    ? availableRosterCharacters
+                    : [
+                        getPregenCharacter('pregen-fighter')!,
+                        getPregenCharacter('pregen-rogue')!,
+                        getPregenCharacter('pregen-wizard')!,
+                        getPregenCharacter('pregen-cleric')!,
+                      ].filter(Boolean)
+                }
+                onSelectCharacter={(char) => {
+                  handleAssignHero(char, vaultModalSlotIndex);
+                  setVaultModalSlotIndex(null);
+                }}
+                onClose={() => setVaultModalSlotIndex(null)}
+              />
             )}
           </section>
         )}
