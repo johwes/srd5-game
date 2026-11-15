@@ -68,6 +68,7 @@ export function TacticalCanvasViewport({
   const [localHoveredCell, setLocalHoveredCell] = useState<Point | null>(null);
   const [currentZoom, setCurrentZoom] = useState<number>(initialCamera?.zoom ?? DEFAULT_ZOOM);
   const [pixiReady, setPixiReady] = useState(false);
+  const [atlasLoaded, setAtlasLoaded] = useState(() => assetRegistry.isLoaded);
 
   // Active hovered cell: controlled prop takes precedence over local state
   const activeHoveredCell = controlledHoveredCell !== undefined ? controlledHoveredCell : localHoveredCell;
@@ -178,7 +179,14 @@ export function TacticalCanvasViewport({
 
         // Try loading spritesheet atlas once if not yet loaded
         if (!assetRegistry.isLoaded) {
-          void assetRegistry.loadAtlas().catch(() => {});
+          void assetRegistry
+            .loadAtlas()
+            .then((loaded) => {
+              if (loaded && isMounted) {
+                setAtlasLoaded(true);
+              }
+            })
+            .catch(() => {});
         }
 
         const sceneGraph = createSceneGraph(app.stage);
@@ -316,6 +324,7 @@ export function TacticalCanvasViewport({
     showTokenFacing,
     showTokenNames,
     pixiReady,
+    atlasLoaded,
   ]);
 
   // Update Interactive Overlays (Path preview, AOE templates, Targeting rays)
@@ -415,6 +424,7 @@ export function TacticalCanvasViewport({
     grid,
     cellSize,
     pixiReady,
+    atlasLoaded,
   ]);
 
   // Update Dynamic Lighting & Fog-of-War Layer

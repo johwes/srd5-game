@@ -280,6 +280,10 @@ export function DungeonView({
       const auth = transport.getAuthoritativeState();
       if (!auth.combat) return;
 
+      if (auth.combat.pendingReactionPrompt) {
+        return;
+      }
+
       const plan = planAiTurn({
         state: auth.combat,
         activeCombatantId,
@@ -287,18 +291,35 @@ export function DungeonView({
       });
 
       for (const cmd of plan.commands) {
+        const currentCombat = transport.getAuthoritativeState().combat;
+        if (currentCombat?.pendingReactionPrompt) {
+          return;
+        }
         await transport.dispatch(cmd);
+        const postCombat = transport.getAuthoritativeState().combat;
+        if (postCombat?.pendingReactionPrompt) {
+          return;
+        }
       }
     } catch (err) {
       console.error('Error executing AI monster turn:', err);
-      await transport.dispatch({ type: 'END_TURN', actorId: activeCombatantId });
+      const postCombat = transport.getAuthoritativeState().combat;
+      if (!postCombat?.pendingReactionPrompt && activeCombatantId) {
+        try {
+          await transport.dispatch({ type: 'END_TURN', actorId: activeCombatantId });
+        } catch {
+          // Ignore fallback dispatch failure
+        }
+      }
     } finally {
       setIsAiThinking(false);
     }
   }, [activeCombatant, activeCombatantId, isMonsterTurn, isAiThinking, transport]);
 
+  const hasPendingReaction = Boolean(viewState.combat?.pendingReactionPrompt);
+
   useEffect(() => {
-    if (isMonsterTurn && !isAiThinking) {
+    if (isMonsterTurn && !isAiThinking && !hasPendingReaction) {
       aiTurnTimeoutRef.current = setTimeout(() => {
         void executeAiMonsterTurn();
       }, 500);
@@ -308,7 +329,7 @@ export function DungeonView({
         clearTimeout(aiTurnTimeoutRef.current);
       }
     };
-  }, [isMonsterTurn, isAiThinking, executeAiMonsterTurn]);
+  }, [isMonsterTurn, isAiThinking, hasPendingReaction, executeAiMonsterTurn]);
 
   // Adjacent props relative to lead explorer
   const adjacentProps = leadCombatant?.position

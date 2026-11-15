@@ -1,4 +1,4 @@
-import { Rectangle, Texture } from 'pixi.js';
+import { Assets, Rectangle, Texture } from 'pixi.js';
 import type { ConditionId, CreatureSize } from '@srd5/data';
 import type { CombatantSide, TileTerrainType } from '@srd5/engine';
 import {
@@ -116,6 +116,7 @@ const CLASS_TO_SPRITE: Record<string, string> = {
 export class AssetRegistry {
   private textures = new Map<string, Texture>();
   private _isLoaded = false;
+  private _loadingPromise: Promise<boolean> | null = null;
   private baseTexture: Texture | null = null;
 
   public get isLoaded(): boolean {
@@ -330,26 +331,44 @@ export class AssetRegistry {
 
   /**
    * Initializes or loads the Kenney Tiny Dungeon spritesheet atlas with NEAREST scaling.
-   * Can be supplied with an existing PixiJS Texture, or creates subtextures from a loaded source.
+   * Can be supplied with an existing PixiJS Texture, or asynchronously loads from the specified path.
    */
   public async loadAtlas(customSource?: Texture | string): Promise<boolean> {
+    if (this._isLoaded) {
+      return true;
+    }
+    if (this._loadingPromise) {
+      return this._loadingPromise;
+    }
+    this._loadingPromise = this._loadAtlasInternal(customSource);
+    try {
+      return await this._loadingPromise;
+    } finally {
+      this._loadingPromise = null;
+    }
+  }
+
+  private async _loadAtlasInternal(customSource?: Texture | string): Promise<boolean> {
     try {
       let base: Texture;
 
       if (customSource instanceof Texture) {
         base = customSource;
-      } else if (typeof customSource === 'string') {
-        base = Texture.from(customSource);
       } else {
-        base = Texture.from(KENNEY_ATLAS_META.imagePath);
+        const path = typeof customSource === 'string' ? customSource : KENNEY_ATLAS_META.imagePath;
+        base = await Assets.load<Texture>(path);
+      }
+
+      // Ensure base texture has finished loading and has valid dimensions
+      if (!base || !base.source || base.source.width <= 0 || base.source.height <= 0) {
+        this._isLoaded = false;
+        return false;
       }
 
       this.baseTexture = base;
 
       // Enforce NEAREST scaling for crisp pixel art on high-DPI displays
-      if (base.source) {
-        base.source.scaleMode = 'nearest';
-      }
+      base.source.scaleMode = 'nearest';
 
       // Slice sub-textures for each packed frame
       for (const [key, frame] of Object.entries(KENNEY_SPRITE_FRAMES)) {

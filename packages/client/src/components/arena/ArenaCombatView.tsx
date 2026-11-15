@@ -200,6 +200,11 @@ export function ArenaCombatView({
       const authState = transport.getAuthoritativeState();
       if (!authState.combat) return;
 
+      // Halt if waiting for a reaction prompt to resolve
+      if (authState.combat.pendingReactionPrompt) {
+        return;
+      }
+
       const plan = planAiTurn({
         state: authState.combat,
         activeCombatantId,
@@ -207,16 +212,33 @@ export function ArenaCombatView({
       });
 
       for (const cmd of plan.commands) {
+        const currentCombat = transport.getAuthoritativeState().combat;
+        if (currentCombat?.pendingReactionPrompt) {
+          return;
+        }
         await transport.dispatch(cmd);
+        const postCombat = transport.getAuthoritativeState().combat;
+        if (postCombat?.pendingReactionPrompt) {
+          return;
+        }
       }
     } catch (err) {
       console.error('Error executing AI monster turn:', err);
-      // Fallback: force end turn if AI encounters an unexpected issue
-      await transport.dispatch({ type: 'END_TURN', actorId: activeCombatantId });
+      // Fallback: force end turn only if not waiting on a reaction prompt
+      const postCombat = transport.getAuthoritativeState().combat;
+      if (!postCombat?.pendingReactionPrompt && activeCombatantId) {
+        try {
+          await transport.dispatch({ type: 'END_TURN', actorId: activeCombatantId });
+        } catch {
+          // Ignore fallback dispatch failure
+        }
+      }
     } finally {
       setIsAiThinking(false);
     }
   }, [activeCombatant, activeCombatantId, isMonsterTurn, isAiThinking, transport]);
+
+  const hasPendingReaction = Boolean(combat?.pendingReactionPrompt);
 
   // Trigger automatic AI turn if enabled
   useEffect(() => {
@@ -224,6 +246,7 @@ export function ArenaCombatView({
       isMonsterTurn &&
       autoAiTurn &&
       !isAiThinking &&
+      !hasPendingReaction &&
       !showBreatherModal &&
       !showMatchEndModal
     ) {
@@ -240,6 +263,7 @@ export function ArenaCombatView({
     isMonsterTurn,
     autoAiTurn,
     isAiThinking,
+    hasPendingReaction,
     showBreatherModal,
     showMatchEndModal,
     executeAiMonsterTurn,

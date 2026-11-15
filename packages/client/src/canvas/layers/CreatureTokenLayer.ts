@@ -342,8 +342,18 @@ export class CreatureTokenRenderer {
     // 2. Base Disc & Frame (with procedural team/allegiance colors)
     this.drawBaseDisc(node.baseDiscGraphics, radius, data, resolvedAsset);
 
-    // 2b. Tier 1 Spritesheet Texture (if loaded and available)
-    if (resolvedAsset.texture && !data.isDead && data.currentHp > 0) {
+    // 2b. Tier 1 Spritesheet Texture (if loaded and available with valid positive dimensions)
+    const hasValidTexture =
+      Boolean(resolvedAsset.texture) &&
+      Boolean(
+        resolvedAsset.texture?.orig &&
+          resolvedAsset.texture.orig.width > 0 &&
+          resolvedAsset.texture.orig.height > 0,
+      ) &&
+      !data.isDead &&
+      data.currentHp > 0;
+
+    if (hasValidTexture && resolvedAsset.texture) {
       node.spriteNode.texture = resolvedAsset.texture;
       const spriteSize = radius * 1.5;
       node.spriteNode.width = spriteSize;
