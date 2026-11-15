@@ -56,6 +56,7 @@ export interface DungeonViewProps {
   partyCharacters?: CharacterBuildState[];
   compendium?: SrdCompendium;
   initialFloorId?: string;
+  initialGameState?: GameState;
   gameMode?: 'campaign' | 'roguelite';
   onExitToRoster: () => void;
   onOpenCharacterSheet?: (characterId: string) => void;
@@ -65,13 +66,16 @@ export function DungeonView({
   partyCharacters = [],
   compendium = defaultCompendium,
   initialFloorId = 'kaelen-floor-1',
+  initialGameState,
   gameMode = 'campaign',
   onExitToRoster,
   onOpenCharacterSheet,
 }: DungeonViewProps) {
   const campaignModule = getSunkenCryptModule();
   const [dungeonMode, setDungeonMode] = useState<'campaign' | 'roguelite'>(gameMode);
-  const [currentFloorId, setCurrentFloorId] = useState<string>(initialFloorId);
+  const [currentFloorId, setCurrentFloorId] = useState<string>(
+    initialGameState?.dungeon?.floorId ?? initialFloorId,
+  );
 
   const [rogueliteState, setRogueliteState] = useState<{
     runState: DeepDescentRunState;
@@ -93,6 +97,12 @@ export function DungeonView({
       : (getCampaignFloor(campaignModule, currentFloorId) ?? campaignModule.floors[0]!);
 
   const [transport, setTransport] = useState<LocalTransport>(() => {
+    if (initialGameState) {
+      return new LocalTransport({
+        initialState: initialGameState,
+        defaultPlayerId: 'player-1',
+      });
+    }
     if (gameMode === 'roguelite') {
       const sess = buildRogueliteSession(partyCharacters, compendium);
       return sess.transport;

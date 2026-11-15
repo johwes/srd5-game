@@ -494,7 +494,7 @@ describe('SRD-408: The Arena Mode (PvE Skirmish, Endless Waves & Hot-Seat PvP 1v
 
   describe('App Navigation and Roster integration', () => {
     it('navigates to The Arena from global App navigation bar', () => {
-      render(<App />);
+      render(<App initialView="roster" />);
 
       const arenaNavBtn = screen.getByTestId('app-nav-arena');
       expect(arenaNavBtn).toBeDefined();

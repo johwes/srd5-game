@@ -15,7 +15,7 @@ afterEach(() => {
 
 describe('SRD-207: 7-Step Character Builder Wizard UI', () => {
   it('switches between Character Builder and SRD 5.1 Compendium in App shell', () => {
-    render(<App />);
+    render(<App initialView="builder" />);
 
     expect(screen.getByTestId('character-builder-wizard')).toBeDefined();
 

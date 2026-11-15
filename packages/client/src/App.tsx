@@ -6,6 +6,7 @@ import {
   defaultCompendium,
   getPregenCharacter,
 } from '@srd5/data';
+import { type GameState } from '@srd5/engine';
 import { getTransportInfo } from '@srd5/transport';
 import { CharacterBuilderWizard } from './components/builder/index.js';
 import { CompendiumBrowser } from './components/compendium/index.js';
@@ -16,12 +17,15 @@ import {
 } from './components/roster/index.js';
 import { ArenaView } from './components/arena/index.js';
 import { DungeonView } from './components/dungeon/index.js';
+import { TitleMenuView } from './components/title/index.js';
 import {
   MAX_PARTY_SIZE,
   type PersistedRosterData,
   type RosterStorageAdapter,
+  type DungeonStorageAdapter,
   createDefaultRosterData,
   defaultRosterStorageAdapter,
+  defaultDungeonStorageAdapter,
   formatSrd5Filename,
   loadStoredRosterIfPresent,
   resetPersistedRosterToIconics,
@@ -31,18 +35,35 @@ import {
   upsertRosterCharacter,
 } from './persistence/index.js';
 
-export type AppViewMode = 'builder' | 'roster' | 'compendium' | 'arena' | 'dungeon' | 'roguelite';
+export type AppViewMode =
+  | 'title_menu'
+  | 'campaign_setup'
+  | 'gameplay'
+  | 'character_vault'
+  | 'character_builder'
+  | 'compendium'
+  | 'settings'
+  | 'builder'
+  | 'roster'
+  | 'arena'
+  | 'dungeon'
+  | 'roguelite';
 
 export interface AppProps {
   initialView?: AppViewMode;
   storageAdapter?: RosterStorageAdapter;
+  dungeonStorageAdapter?: DungeonStorageAdapter;
 }
 
 export function App({
-  initialView = 'builder',
+  initialView = 'title_menu',
   storageAdapter = defaultRosterStorageAdapter,
+  dungeonStorageAdapter = defaultDungeonStorageAdapter,
 }: AppProps) {
   const [activeView, setActiveView] = useState<AppViewMode>(initialView);
+  const [loadedGameState, setLoadedGameState] = useState<GameState | undefined>(
+    undefined,
+  );
   const [roster, setRoster] = useState<PersistedRosterData>(() =>
     createDefaultRosterData(),
   );
@@ -153,6 +174,53 @@ export function App({
         : null))
     : null;
 
+  if (activeView === 'title_menu') {
+    return (
+      <>
+        <TitleMenuView
+          storageAdapter={dungeonStorageAdapter}
+          onContinue={(slot) => {
+            setLoadedGameState(slot.gameState);
+            setActiveView('dungeon');
+          }}
+          onNewGame={() => {
+            setLoadedGameState(undefined);
+            setActiveView('dungeon');
+          }}
+          onLoadSlot={(slot) => {
+            setLoadedGameState(slot.gameState);
+            setActiveView('dungeon');
+          }}
+          onOpenVault={() => setActiveView('roster')}
+          onOpenBuilder={() => {
+            setBuilderTargetCharacter(undefined);
+            setActiveView('builder');
+          }}
+          onOpenCompendium={() => setActiveView('compendium')}
+          onOpenArena={() => setActiveView('arena')}
+        />
+
+        {activeSheetCharacter && (
+          <CharacterSheetDrawer
+            character={activeSheetCharacter}
+            compendium={defaultCompendium}
+            onClose={() => {
+              setSheetCharacterId(null);
+              setSheetFallbackCharacter(null);
+            }}
+            onUpdateCharacter={handleUpdateCharacterFromSheetOrLevelUp}
+            onOpenLevelUp={(hero) => setLevelUpCharacterId(hero.id)}
+            onExportCharacter={(hero) => {
+              const content = serializeCharacterToSrd5Json(hero);
+              const filename = formatSrd5Filename(hero.name, 'character');
+              triggerSrd5FileDownload(filename, content);
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-3 sm:p-6 gap-4">
       <div className="max-w-7xl mx-auto w-full space-y-4 flex-1 flex flex-col">
@@ -172,11 +240,20 @@ export function App({
             <div className="flex rounded-lg bg-slate-900 p-1 border border-slate-800">
               <button
                 type="button"
+                data-testid="app-nav-title"
+                aria-pressed={false}
+                onClick={() => setActiveView('title_menu')}
+                className="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors text-amber-400 hover:text-amber-300"
+              >
+                🏰 Title Menu
+              </button>
+              <button
+                type="button"
                 data-testid="app-nav-builder"
-                aria-pressed={activeView === 'builder'}
+                aria-pressed={activeView === 'builder' || activeView === 'character_builder'}
                 onClick={() => setActiveView('builder')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  activeView === 'builder'
+                  activeView === 'builder' || activeView === 'character_builder'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-300 hover:text-white'
                 }`}
@@ -186,10 +263,10 @@ export function App({
               <button
                 type="button"
                 data-testid="app-nav-roster"
-                aria-pressed={activeView === 'roster'}
+                aria-pressed={activeView === 'roster' || activeView === 'character_vault'}
                 onClick={() => setActiveView('roster')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  activeView === 'roster'
+                  activeView === 'roster' || activeView === 'character_vault'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-300 hover:text-white'
                 }`}
@@ -225,10 +302,10 @@ export function App({
               <button
                 type="button"
                 data-testid="app-nav-dungeon"
-                aria-pressed={activeView === 'dungeon'}
+                aria-pressed={activeView === 'dungeon' || activeView === 'gameplay' || activeView === 'campaign_setup'}
                 onClick={() => setActiveView('dungeon')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  activeView === 'dungeon'
+                  activeView === 'dungeon' || activeView === 'gameplay' || activeView === 'campaign_setup'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-300 hover:text-white'
                 }`}
@@ -259,7 +336,7 @@ export function App({
           </div>
         </header>
 
-        {activeView === 'builder' && (
+        {(activeView === 'builder' || activeView === 'character_builder') && (
           <CharacterBuilderWizard
             compendium={defaultCompendium}
             initialCharacter={builderTargetCharacter}
@@ -268,7 +345,7 @@ export function App({
           />
         )}
 
-        {activeView === 'roster' && (
+        {(activeView === 'roster' || activeView === 'character_vault') && (
           <PartyRosterView
             roster={roster}
             compendium={defaultCompendium}
@@ -315,11 +392,12 @@ export function App({
           />
         )}
 
-        {activeView === 'dungeon' && (
+        {(activeView === 'dungeon' || activeView === 'gameplay' || activeView === 'campaign_setup') && (
           <DungeonView
             partyCharacters={roster.characters.filter((c) =>
               roster.activePartyIds.includes(c.id),
             )}
+            initialGameState={loadedGameState}
             compendium={defaultCompendium}
             gameMode="campaign"
             onOpenCharacterSheet={(charId) => {
@@ -330,7 +408,7 @@ export function App({
                 handleInspectCharacter(char);
               }
             }}
-            onExitToRoster={() => setActiveView('roster')}
+            onExitToRoster={() => setActiveView('title_menu')}
           />
         )}
 

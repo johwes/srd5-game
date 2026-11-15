@@ -4,3 +4,4 @@ export * from './roster/index.js';
 export * from './combat/index.js';
 export * from './arena/index.js';
 export * from './dungeon/index.js';
+export * from './title/index.js';

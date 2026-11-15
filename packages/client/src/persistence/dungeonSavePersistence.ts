@@ -226,6 +226,21 @@ export function buildDungeonSaveMeta(
 }
 
 /**
+ * Returns the most recently updated DungeonSaveSlotData from a collection of slots, or null.
+ */
+export function getLatestDungeonSaveSlot(
+  slots: Record<string, DungeonSaveSlotData>,
+): DungeonSaveSlotData | null {
+  const slotList = Object.values(slots);
+  if (slotList.length === 0) return null;
+  return slotList.reduce((latest, current) => {
+    const latestTime = new Date(latest.savedAt).getTime();
+    const currentTime = new Date(current.savedAt).getTime();
+    return currentTime > latestTime ? current : latest;
+  }, slotList[0]!);
+}
+
+/**
  * Loads all saved dungeon slots from storage.
  */
 export async function loadDungeonSaveSlots(
