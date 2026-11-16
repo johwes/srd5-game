@@ -16,6 +16,7 @@ import {
   executeActionSurge,
   executeMoveCombatant,
 } from '../combat/state-machine.js';
+import { isCombatantEligibleForTurn } from '../combat/initiative.js';
 import { executeWeaponAttack, executeGrapple, executeShove } from '../combat/attack.js';
 import { executeMonsterAction } from '../combat/monster-actions.js';
 import { executeSpellCast } from '../combat/spellcasting.js';
@@ -933,6 +934,32 @@ export function reduceGame(
       nextState = lvlRes.nextState;
       events.push(...lvlRes.events);
       break;
+    }
+  }
+
+  // Auto-advance past a defeated active combatant: if the turn owner died
+  // mid-turn (opportunity attack, hazard zone, readied action), their turn
+  // ends immediately per SRD 5.1 instead of stalling on the corpse until
+  // someone presses End Turn. Skipped while a reaction prompt is pending
+  // or combat has already ended.
+  if (
+    nextState.mode === 'combat' &&
+    nextState.combat &&
+    nextState.combat.phase === 'active_turn' &&
+    !nextState.combat.pendingReactionPrompt &&
+    !nextState.combat.reactionInterruptContext &&
+    nextState.combat.activeCombatantId
+  ) {
+    const active = nextState.combat.combatants[nextState.combat.activeCombatantId];
+    if (active && !isCombatantEligibleForTurn(active)) {
+      const advRes = endTurn(nextState.combat);
+      nextState.combat = advRes.state;
+      nextState.rngState = advRes.state.rngState;
+      for (const [id, c] of Object.entries(advRes.state.combatants)) {
+        if (c.side === 'party') nextState.party[id] = c;
+        else nextState.monsters[id] = c;
+      }
+      events.push(...advRes.events);
     }
   }
 

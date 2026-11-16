@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   type Combatant,
+  createHazardZone,
   createInitialGameState,
   createTacticalGrid,
   reduceGame,
@@ -187,8 +188,7 @@ describe('SRD-311: reduceGame Authoritative Reducer', () => {
     expect(closedProp?.blocksSight).toBe(true);
   });
 
-  it('transitions to combat mode on START_COMBAT and rolls initiative', () => {
-    const grid = createTacticalGrid(10, 10);
+  it('transitions to combat mode on START_COMBAT and rolls initiative', () => {    const grid = createTacticalGrid(10, 10);
     const hero = makeHero('fighter', 'Fighter', 1, 1);
     const goblin = makeGoblin('goblin-1', 5, 5);
     const state = createInitialGameState({
@@ -208,5 +208,66 @@ describe('SRD-311: reduceGame Authoritative Reducer', () => {
     expect(nextState.combat?.round).toBe(1);
     expect(events.some((e) => e.type === 'MODE_CHANGED')).toBe(true);
     expect(events.some((e) => e.type === 'COMBAT_STARTED')).toBe(true);
+  });
+
+  it('auto-advances past the active combatant when they die mid-turn', () => {
+    const grid = createTacticalGrid(10, 10);
+    const hero = makeHero('fighter', 'Fighter', 5, 5);
+    const cleric = makeHero('cleric', 'Cleric', 5, 7);
+    const goblin = makeGoblin('goblin-1', 1, 1);
+    let state = createInitialGameState({
+      grid,
+      party: [hero, cleric],
+      monsters: [goblin],
+    });
+
+    const started = reduceGame(state, {
+      type: 'START_COMBAT',
+      encounterId: 'mid-turn-death',
+    });
+    state = started.nextState;
+    expect(state.combat?.phase).toBe('active_turn');
+    const activeId = state.combat!.activeCombatantId!;
+    const activePos = state.combat!.combatants[activeId]!.position;
+
+    // Wound whoever holds the turn to 1 HP and place a lethal zone next door.
+    const targetCell = { x: activePos.x + 1, y: activePos.y };
+    const wounded = { ...state.combat!.combatants[activeId]!, currentHp: 1 };
+    const withWound = {
+      ...state.combat!,
+      combatants: { ...state.combat!.combatants, [activeId]: wounded },
+    };
+    const hz = createHazardZone(withWound, {
+      zoneId: 'test-lethal-cloud',
+      casterId: 'goblin-1',
+      sourceName: 'Test Cloudkill',
+      shape: 'sphere',
+      origin: targetCell,
+      sizeFeet: 5,
+      durationRounds: 10,
+      requiresConcentration: false,
+      difficultTerrain: false,
+      onEnterOrStartTurn: [
+        { step: 'deal_damage', diceFormula: '999', damageType: 'poison', isMagical: true },
+      ],
+      triggerImmediatelyOnPlacement: false,
+      cells: [targetCell],
+    });
+    state = { ...state, combat: hz.state, rngState: hz.state.rngState };
+
+    // Step into the lethal zone: the mover dies mid-move.
+    const res = reduceGame(state, {
+      type: 'COMBAT_MOVE',
+      actorId: activeId,
+      path: [targetCell],
+    });
+
+    const dead = res.nextState.combat!.combatants[activeId]!;
+    expect(dead.isDead).toBe(true);
+    // The turn must not stall on the corpse: it ends and passes on.
+    expect(res.nextState.combat!.phase).toBe('active_turn');
+    expect(res.nextState.combat!.activeCombatantId).not.toBe(activeId);
+    expect(res.events.some((e) => e.type === 'TURN_ENDED')).toBe(true);
+    expect(res.events.some((e) => e.type === 'TURN_STARTED')).toBe(true);
   });
 });
