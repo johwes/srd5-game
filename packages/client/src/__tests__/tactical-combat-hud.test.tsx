@@ -616,5 +616,47 @@ describe('SRD-406: React Tactical Combat HUD', () => {
       fireEvent.click(endTurnBtn);
       expect(onEndTurn).toHaveBeenCalledTimes(1);
     });
+
+    it('honors parent-controlled log/dice visibility (Arena mode)', () => {
+      const { viewState } = createMockPlayerViewState();
+      const onToggleLog = vi.fn();
+      const onToggleDice = vi.fn();
+
+      const { rerender } = render(
+        <TacticalCombatHud
+          viewState={viewState}
+          compendium={defaultCompendium}
+          showCombatLog={false}
+          showDiceTray={false}
+          onToggleCombatLog={onToggleLog}
+          onToggleDiceTray={onToggleDice}
+        />,
+      );
+
+      // Closed by parent: no right panel rendered
+      expect(screen.queryByTestId('combat-hud-right-panel')).toBeNull();
+
+      // Toggle buttons delegate to the parent instead of internal state
+      fireEvent.click(screen.getByTestId('combat-hud-toggle-log-btn'));
+      expect(onToggleLog).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByTestId('combat-hud-toggle-dice-btn'));
+      expect(onToggleDice).toHaveBeenCalledTimes(1);
+      // Internal state must not open the panel behind the parent's back
+      expect(screen.queryByTestId('combat-hud-right-panel')).toBeNull();
+
+      // Parent opens both: panel renders with log and dice tray
+      rerender(
+        <TacticalCombatHud
+          viewState={viewState}
+          compendium={defaultCompendium}
+          showCombatLog
+          showDiceTray
+          onToggleCombatLog={onToggleLog}
+          onToggleDiceTray={onToggleDice}
+        />,
+      );
+      expect(screen.getByTestId('combat-hud-right-panel')).toBeDefined();
+      expect(screen.getByTestId('combat-hud-toggle-log-btn').getAttribute('aria-pressed')).toBe('true');
+    });
   });
 });

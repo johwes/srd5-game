@@ -55,6 +55,17 @@ export function TacticalCombatHud({
   const selectedCombatantId =
     controlledSelectedId !== undefined ? controlledSelectedId : internalSelectedId;
 
+  // Log / dice tray visibility honors controlled props when the parent owns
+  // the toggle state (Arena), and falls back to internal state otherwise
+  // (Dungeon). Reading only the initial prop value here used to freeze the
+  // Arena's panels shut.
+  const isLogControlled = onToggleCombatLog !== undefined;
+  const isDiceTrayControlled = onToggleDiceTray !== undefined;
+  const effectiveShowLog = isLogControlled ? showCombatLog : internalShowLog;
+  const effectiveShowDiceTray = isDiceTrayControlled
+    ? showDiceTray
+    : internalShowDiceTray;
+
   const handleSelectCombatant = (id: string) => {
     if (onSelectCombatant) {
       onSelectCombatant(id);
@@ -79,9 +90,23 @@ export function TacticalCombatHud({
     }
   };
 
+  const handleCollapseDiceTray = () => {
+    if (isDiceTrayControlled) {
+      if (showDiceTray) {
+        onToggleDiceTray?.();
+      }
+    } else {
+      setInternalShowDiceTray(false);
+    }
+  };
+
   const handleInspectRoll = (roll: DiceRollRecord, label?: string) => {
     setInspectedRoll(roll);
-    if (!internalShowDiceTray) {
+    if (isDiceTrayControlled) {
+      if (!showDiceTray) {
+        onToggleDiceTray?.();
+      }
+    } else if (!internalShowDiceTray) {
       setInternalShowDiceTray(true);
     }
     if (onInspectRoll) {
@@ -206,9 +231,9 @@ export function TacticalCombatHud({
                 type="button"
                 data-testid="combat-hud-toggle-log-btn"
                 onClick={handleToggleLog}
-                aria-pressed={internalShowLog}
+                aria-pressed={effectiveShowLog}
                 className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
-                  internalShowLog
+                  effectiveShowLog
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                     : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
                 }`}
@@ -221,9 +246,9 @@ export function TacticalCombatHud({
                 type="button"
                 data-testid="combat-hud-toggle-dice-btn"
                 onClick={handleToggleDiceTray}
-                aria-pressed={internalShowDiceTray}
+                aria-pressed={effectiveShowDiceTray}
                 className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
-                  internalShowDiceTray
+                  effectiveShowDiceTray
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                     : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
                 }`}
@@ -270,21 +295,21 @@ export function TacticalCombatHud({
         >
           {rightPanel}
         </div>
-      ) : (internalShowLog || internalShowDiceTray) && (
+      ) : (effectiveShowLog || effectiveShowDiceTray) && (
         <div
           data-testid="combat-hud-right-panel"
           className="absolute top-14 right-2 sm:right-3 z-20 pointer-events-auto w-72 sm:w-80 max-h-[calc(100%-190px)] flex flex-col gap-2.5 overflow-hidden shadow-2xl"
         >
-          {internalShowDiceTray && (
+          {effectiveShowDiceTray && (
             <AnimatedDiceTray
               activeRoll={currentActiveRoll}
               rollHistory={rollHistory}
               onSelectHistoryRoll={(roll) => setInspectedRoll(roll)}
-              onToggleCollapse={() => setInternalShowDiceTray(false)}
+              onToggleCollapse={handleCollapseDiceTray}
             />
           )}
 
-          {internalShowLog && (
+          {effectiveShowLog && (
             <CombatLog
               events={events}
               combatants={viewState.combatants}
