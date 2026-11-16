@@ -131,6 +131,16 @@ export function DungeonView({
   const [modalState, setModalState] = useState<DungeonModalMode>(null);
   const [levelUpCharacter, setLevelUpCharacter] =
     useState<CharacterBuildState | null>(null);
+
+  const handleOpenLevelUp = useCallback(
+    (characterId: string) => {
+      const hero = partyCharacters.find((c) => c.id === characterId);
+      if (hero) {
+        setLevelUpCharacter(hero);
+      }
+    },
+    [partyCharacters],
+  );
   const [activeLoot, setActiveLoot] = useState<{
     sourcePropId?: string;
     sourceName?: string;
@@ -641,16 +651,8 @@ export function DungeonView({
   return (
     <div
       data-testid="dungeon-view-container"
-      className="fixed inset-0 z-40 w-screen h-screen overflow-hidden bg-slate-950 flex flex-col select-none shadow-2xl"
+      className="fixed inset-0 z-40 w-screen h-screen overflow-hidden bg-slate-950 select-none shadow-2xl"
     >
-      {/* Roguelite Top Status HUD */}
-      {dungeonMode === 'roguelite' && rogueliteState && (
-        <RogueliteHud
-          runState={rogueliteState.runState}
-          onOpenRestCamp={() => setModalState('rest_camp')}
-        />
-      )}
-
       {/* Action feedback banner */}
       {actionFeedback && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-950/95 border border-red-500 text-red-200 rounded-lg text-xs font-semibold shadow-2xl flex items-center gap-2 pointer-events-none">
@@ -659,102 +661,35 @@ export function DungeonView({
         </div>
       )}
 
-      {/* PixiJS Tactical Canvas Viewport */}
-      <TacticalCanvasViewport
-        grid={viewState.grid}
-        combatants={
-          viewState.mode === 'combat' ? viewState.combatants : viewState.party
-        }
-        selectedCombatantId={selectedCombatantId}
-        activeCombatantId={
-          viewState.mode === 'combat' ? activeCombatantId : leadExplorerId
-        }
-        hoveredCell={hoveredCell}
-        onCellHover={setHoveredCell}
-        onCellClick={handleCellClick}
-        onCombatantClick={(combatantId) => setSelectedCombatantId(combatantId)}
-        enableHoverPathPreview={true}
-        enableFogOfWar={true}
-        showTokenHpArcs={true}
-        showConditionBadges={true}
-        showTokenNames={true}
-        className="w-full h-full"
-      />
-
-      {/* Exploration HUD (Active during Exploration Mode) */}
-      {viewState.mode === 'exploration' && (
-        <DungeonExplorationHud
-          viewState={viewState}
-          gameState={authState}
-          compendium={compendium}
-          campaignName={campaignModule.name}
-          floorSpec={floorSpec}
-          leadExplorerId={leadExplorerId}
-          inStealth={authState.partyInStealth ?? false}
-          formation={marchingConfig.formation}
-          adjacentProps={adjacentProps}
-          hasUnclaimedLoot={Boolean(activeLoot)}
-          onToggleStealth={() =>
-            handleDispatch({
-              type: 'SET_PARTY_STEALTH',
-              inStealth: !authState.partyInStealth,
-            })
-          }
-          onOpenMarchingOrder={() => setModalState('marching_order')}
-          onOpenRestCamp={() => setModalState('rest_camp')}
-          onOpenLootInventory={() => setModalState('loot_inventory')}
-          onOpenSaveLoad={() => setModalState('save_load')}
-          onOpenPauseMenu={() => setModalState('pause_menu')}
-          onPerformSearch={() =>
-            handleDispatch({
-              type: 'EXPLORE_SEARCH',
-              actorId: leadExplorerId,
-            })
-          }
-          onSelectLeadExplorer={(id) =>
-            handleDispatch({
-              type: 'SET_MARCHING_ORDER',
-              leadExplorerId: id,
-            })
-          }
-          onInspectCharacter={onOpenCharacterSheet}
-          onInteractProp={(propId, interaction) => {
-            const p = adjacentProps.find((pr) => pr.id === propId);
-            if (p && p.kind === 'shrine') {
-              setActiveShrine(p);
-              setModalState('shrine');
-              return;
-            }
-            handleDispatch({
-              type: 'INTERACT_PROP',
-              actorId: leadExplorerId,
-              propId,
-              interaction,
-            });
-          }}
-          onDescendStairs={
-            adjacentProps.some((p) => p.kind === 'stairs_down')
-              ? handleDescendStairs
-              : undefined
-          }
-          onAscendStairs={
-            adjacentProps.some((p) => p.kind === 'stairs_up')
-              ? handleAscendStairs
-              : undefined
-          }
-          onExitDelve={onExitToRoster}
-        />
-      )}
-
-      {/* Tactical Combat HUD (Active during Tactical Combat Mode) */}
-      {viewState.mode === 'combat' && (
+      {/* COMBAT MODE: Full-bleed BG3-docked TacticalCombatHud wrapping TacticalCanvasViewport */}
+      {viewState.mode === 'combat' ? (
         <TacticalCombatHud
-          className="absolute inset-0 pointer-events-none bg-transparent z-40"
+          className="w-full h-full"
           viewState={viewState}
           compendium={compendium}
           selectedCombatantId={selectedCombatantId}
-          title={`${campaignModule.name} — ${floorSpec.name}`}
-          subtitle="Combat Encounter in Progress"
+          title={
+            dungeonMode === 'roguelite'
+              ? `The Deep Descent — Depth ${rogueliteState?.runState.currentDepth ?? 1}`
+              : `${campaignModule.name} — ${floorSpec.name}`
+          }
+          subtitle={
+            dungeonMode === 'roguelite' && rogueliteState
+              ? `${rogueliteState.floor.name} · Rations: ${rogueliteState.runState.suppliesRemaining}`
+              : "Combat Encounter in Progress"
+          }
+          headerExtras={
+            dungeonMode === 'roguelite' && rogueliteState ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  🍖 {rogueliteState.runState.suppliesRemaining} Rations
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+                  ⭐ {rogueliteState.runState.score.toLocaleString()} pts
+                </span>
+              </div>
+            ) : undefined
+          }
           onToggleMenu={() => setModalState('pause_menu')}
           menuButtonText="⚙️ Menu"
           menuButtonTestId="combat-hud-system-menu-btn"
@@ -763,6 +698,8 @@ export function DungeonView({
           rollHistory={rollHistory}
           isPlayerControlled={!isMonsterTurn}
           onSelectCombatant={(id) => setSelectedCombatantId(id)}
+          onOpenCharacterSheet={onOpenCharacterSheet}
+          onLevelUpCharacter={handleOpenLevelUp}
           onDeclareAttack={(weapon, opts) => {
             if (!activeCombatantId || !activeCombatant) return;
 
@@ -932,8 +869,116 @@ export function DungeonView({
               decision,
             });
           }}
-          onOpenCharacterSheet={onOpenCharacterSheet}
-        />
+        >
+          <TacticalCanvasViewport
+            grid={viewState.grid}
+            combatants={viewState.combatants}
+            selectedCombatantId={selectedCombatantId}
+            activeCombatantId={activeCombatantId}
+            hoveredCell={hoveredCell}
+            onCellHover={setHoveredCell}
+            onCellClick={handleCellClick}
+            onCombatantClick={(combatantId) => setSelectedCombatantId(combatantId)}
+            enableHoverPathPreview={true}
+            enableFogOfWar={true}
+            showTokenHpArcs={true}
+            showConditionBadges={true}
+            showTokenNames={true}
+            className="w-full h-full"
+          />
+        </TacticalCombatHud>
+      ) : (
+        /* EXPLORATION MODE */
+        <div className="relative w-full h-full flex flex-col overflow-hidden">
+          {/* Roguelite Top Status HUD */}
+          {dungeonMode === 'roguelite' && rogueliteState && (
+            <RogueliteHud
+              runState={rogueliteState.runState}
+              onOpenRestCamp={() => setModalState('rest_camp')}
+            />
+          )}
+
+          <div className="relative flex-1 min-h-0 w-full overflow-hidden">
+            <TacticalCanvasViewport
+              grid={viewState.grid}
+              combatants={viewState.party}
+              selectedCombatantId={selectedCombatantId}
+              activeCombatantId={leadExplorerId}
+              hoveredCell={hoveredCell}
+              onCellHover={setHoveredCell}
+              onCellClick={handleCellClick}
+              onCombatantClick={(combatantId) => setSelectedCombatantId(combatantId)}
+              enableHoverPathPreview={true}
+              enableFogOfWar={true}
+              showTokenHpArcs={true}
+              showConditionBadges={true}
+              showTokenNames={true}
+              className="w-full h-full"
+            />
+
+            <DungeonExplorationHud
+              viewState={viewState}
+              gameState={authState}
+              compendium={compendium}
+              campaignName={campaignModule.name}
+              floorSpec={floorSpec}
+              leadExplorerId={leadExplorerId}
+              inStealth={authState.partyInStealth ?? false}
+              formation={marchingConfig.formation}
+              adjacentProps={adjacentProps}
+              hasUnclaimedLoot={Boolean(activeLoot)}
+              onToggleStealth={() =>
+                handleDispatch({
+                  type: 'SET_PARTY_STEALTH',
+                  inStealth: !authState.partyInStealth,
+                })
+              }
+              onOpenMarchingOrder={() => setModalState('marching_order')}
+              onOpenRestCamp={() => setModalState('rest_camp')}
+              onOpenLootInventory={() => setModalState('loot_inventory')}
+              onOpenSaveLoad={() => setModalState('save_load')}
+              onOpenPauseMenu={() => setModalState('pause_menu')}
+              onPerformSearch={() =>
+                handleDispatch({
+                  type: 'EXPLORE_SEARCH',
+                  actorId: leadExplorerId,
+                })
+              }
+              onSelectLeadExplorer={(id) =>
+                handleDispatch({
+                  type: 'SET_MARCHING_ORDER',
+                  leadExplorerId: id,
+                })
+              }
+              onInspectCharacter={onOpenCharacterSheet}
+              onInteractProp={(propId, interaction) => {
+                const p = adjacentProps.find((pr) => pr.id === propId);
+                if (p && p.kind === 'shrine') {
+                  setActiveShrine(p);
+                  setModalState('shrine');
+                  return;
+                }
+                handleDispatch({
+                  type: 'INTERACT_PROP',
+                  actorId: leadExplorerId,
+                  propId,
+                  interaction,
+                });
+              }}
+              onDescendStairs={
+                adjacentProps.some((p) => p.kind === 'stairs_down')
+                  ? handleDescendStairs
+                  : undefined
+              }
+              onAscendStairs={
+                adjacentProps.some((p) => p.kind === 'stairs_up')
+                  ? handleAscendStairs
+                  : undefined
+              }
+              onExitDelve={onExitToRoster}
+            />
+          </div>
+        </div>
       )}
 
       {/* Marching Order Modal */}
