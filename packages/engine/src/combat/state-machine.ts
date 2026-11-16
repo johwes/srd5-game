@@ -740,6 +740,12 @@ export function executeMoveCombatant(
 
   for (let i = 0; i < path.length; i++) {
     const step = path[i]!;
+    // Paths from findPath/truncatePathToBudget are start-inclusive; skip
+    // no-op entries already at the current position so the origin cell is
+    // never charged as a 5-ft step (preview parity: evaluatePath semantics).
+    if (step.x === currentPos.x && step.y === currentPos.y) {
+      continue;
+    }
     const isDifficult =
       (grid && isFootprintStepDifficultTerrain(grid, { id: mover.id, x: step.x, y: step.y, size: mover.size }, step)) ||
       isCellInHazardDifficultTerrain(currentState.hazardZones, step);
