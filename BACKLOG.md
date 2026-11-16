@@ -1,6 +1,6 @@
 # SRD 5.1 Tactical Dungeon Crawler — Implementation Backlog
 
-This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md)) into granular, dependency-ordered engineering tickets.
+This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md)) into granular, dependency-ordered engineering tickets.
 
 ## Status Legend
 - `[ ]` Todo
@@ -21,6 +21,9 @@ flowchart LR
     E5 --> E6["Epic 6: Steam-Ready Title Screen &\nCampaign Setup Wizard"]
     E4 --> E7["Epic 7: Multiplayer\nTransport (Co-op & PvP)"]
     E5 --> E8["Epic 8: The Realm\n(Strategic Overworld)"]
+    E3 --> E9["Epic 9: Summoned Creatures &\nConjured Tokens"]
+    E4 --> E9
+    E7 --> E9
 ```
 
 ---
@@ -194,3 +197,19 @@ flowchart LR
 
 ### Epic 8 Acceptance Criteria Details
 - [ ] **SRD-801..805**: Players can generate an expansive procedural world map, travel between towns and factions across biomes, accept bounty and dungeon quests, recruit or buy gear in settlements, and engage wandering enemies or enter dungeon POIs with seamless transition into tactical turn-based combat on the 5-ft grid.
+
+---
+
+## Epic 9: Summoned Creatures & Conjured Tokens
+**Spec Reference**: [08-summoned-creatures.md](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md)
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-901** | `[ ]` | Define `summon_creature` Effect DSL step, summon statblock schema, and `@casterMaxHp` formula variable | `@srd5/data` | SRD-310 |
+| **SRD-902** | `[ ]` | Implement engine summon pipeline (spawn, initiative, commanded actions, autonomous triggers, expiry/despawn) | `@srd5/engine` | SRD-304, SRD-308, SRD-901 |
+| **SRD-903** | `[ ]` | Implement transitive summon ownership and Fog-of-War projection (transport + server) | `@srd5/transport`, `@srd5/server` | SRD-701, SRD-902 |
+| **SRD-904** | `[ ]` | Build client summon presentation (token ring, medallion chip, hotbar switching, targeting exclusion) | `@srd5/client` | SRD-402, SRD-902 |
+| **SRD-905** | `[ ]` | Author executable overlays for Faithful Hound, Guardian of Faith, Arcane Hand, Arcane Sword (+ `3d10` correction) with headless tests | `@srd5/data`, `@srd5/engine` | SRD-902, SRD-903 |
+
+### Epic 9 Acceptance Criteria Details
+- [ ] **SRD-901..905**: Casting *Faithful Hound*, *Guardian of Faith*, *Arcane Hand*, or *Arcane Sword* spawns a rules-accurate token (correct team, AC/HP, initiative, concentration linkage) instead of an adjudication card. Commanded summons take player-controlled turns; the hound auto-bites at its caster's turn start; the guardian triggers saves vs 20 radiant and despawns after dealing 60; ownership and fog behave in co-op/PvP; and the canvas shows summon rings, buffs, and labels with zero console errors at 1280×800.
