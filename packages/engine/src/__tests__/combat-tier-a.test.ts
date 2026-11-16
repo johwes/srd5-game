@@ -293,8 +293,37 @@ describe('SRD-310: Combat Tier A Executable Effect DSL Definitions Suite', () =>
       expect(res.state.combatants[hero.id]!.characterSheet?.resources?.second_wind?.available).toBe(0);
     });
 
-    it('executes Turn Undead Channel Divinity forcing WIS save on undead', () => {
-      const cleric = createMonsterCombatant(compendium.requireMonster('acolyte'), 'cleric', { x: 0, y: 0 }, { side: 'party' });
+    it('resolves player class features from the character sheet without an explicit spec (USE_CLASS_FEATURE path)', () => {
+      // Regression test: the reducer only passes abilityId, so Second Wind
+      // must resolve from characterSheet.activatedAbilities instead of
+      // throwing `not found on "<name>"`.
+      const hero = createMonsterCombatant(compendium.requireMonster('bandit'), 'fighter', { x: 0, y: 0 }, { side: 'party' });
+      hero.maxHp = 30;
+      hero.currentHp = 10;
+      const secondWindAbility = compendium.requireFeature('second-wind').activatedAbilities?.[0];
+      expect(secondWindAbility).toBeDefined();
+      hero.characterSheet = {
+        totalLevel: 3,
+        classes: [{ classId: 'fighter', level: 3 }],
+        resources: {
+          second_wind: { resourceId: 'second_wind', name: 'Second Wind', max: 1, available: 1, recovery: 'short_rest' },
+        },
+        activatedAbilities: [secondWindAbility],
+      } as any;
+
+      const state = buildTestState([hero]);
+      const res = executeActivatedAbility({
+        state,
+        actorId: hero.id,
+        abilityId: secondWindAbility!.id,
+      });
+
+      expect(res.events.some((e) => e.type === 'HEAL_APPLIED')).toBe(true);
+      expect(res.state.combatants[hero.id]!.currentHp).toBeGreaterThan(10);
+      expect(res.state.combatants[hero.id]!.characterSheet?.resources?.second_wind?.available).toBe(0);
+    });
+
+    it('executes Turn Undead Channel Divinity forcing WIS save on undead', () => {      const cleric = createMonsterCombatant(compendium.requireMonster('acolyte'), 'cleric', { x: 0, y: 0 }, { side: 'party' });
       cleric.characterSheet = {
         totalLevel: 3,
         classes: [{ classId: 'cleric', level: 3 }],

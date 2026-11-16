@@ -451,6 +451,9 @@ export function ArenaCombatView({
   };
 
   // SRD-410: token click handler for manual targeting picks.
+  // Targeting clicks commit the armed action and must NOT change selection:
+  // otherwise every attack/spell pick also pops the enemy info card.
+  // Selection only changes when no targeting is armed (plain inspect clicks).
   const handleCombatantClickForTarget = useCallback(
     (combatantId: string) => {
       if (!activeCombatant || !isPlayerControlled || isMonsterTurn) {
@@ -463,7 +466,6 @@ export function ArenaCombatView({
       }
       const candidate = viewState.combatants[combatantId];
       if (!candidate) {
-        setSelectedCombatantId(combatantId);
         return;
       }
       const authState = transport.getAuthoritativeState() as unknown as {
@@ -480,7 +482,6 @@ export function ArenaCombatView({
         showFeedback(validation.error ?? 'Invalid target.');
         return;
       }
-      setSelectedCombatantId(combatantId);
 
       if (pendingTarget.kind === 'single') {
         if (pendingTarget.action === 'attack') {
@@ -529,7 +530,7 @@ export function ArenaCombatView({
           return { ...prev, picked: [...prev.picked, combatantId] };
         });
       }
-      // AOE: token clicks only change selection, origin comes from cell clicks.
+      // AOE: token clicks never change selection while armed; origin comes from cell clicks.
     },
     [activeCombatant, handleDispatch, isMonsterTurn, isPlayerControlled, pendingTarget, showFeedback, transport, viewState.combatants],
   );

@@ -49,6 +49,13 @@ export function executeActivatedAbility(options: ExecuteActivatedAbilityOptions)
       }
     }
   }
+  if (!ability && actor.characterSheet?.activatedAbilities) {
+    // Player characters carry their class/racial activated abilities on the
+    // derived sheet (e.g. Second Wind, Rage, Cunning Action). The
+    // USE_CLASS_FEATURE command only carries the ability id, so resolve here
+    // instead of requiring callers to pass the full spec.
+    ability = actor.characterSheet.activatedAbilities.find((a) => a.id === abilityId);
+  }
 
   if (!ability) {
     throw new Error(`Activated ability "${abilityId}" not found on "${actor.name}"`);

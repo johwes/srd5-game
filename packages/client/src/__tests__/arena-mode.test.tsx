@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import {
   defaultCompendium,
   getPregenCharacter,
@@ -490,8 +490,49 @@ describe('SRD-408: The Arena Mode (PvE Skirmish, Endless Waves & Hot-Seat PvP 1v
       expect(screen.getAllByText(/Red Dragons/i).length).toBeGreaterThan(0);
     });
 
-    it('ArenaView toggles between Setup and Combat views seamlessly', () => {
-      render(<ArenaView />);
+    it('targeting clicks commit the armed action without popping the enemy info card', async () => {
+      const party = getDefaultPartyCharacters();
+      const config: ArenaConfig = {
+        id: 'test-target-no-select',
+        name: 'The Arena — Custom Skirmish',
+        mode: 'custom_skirmish',
+        mapId: 'arena-10x10-open',
+        gridWidth: 10,
+        gridHeight: 10,
+        environmentObstacles: 'open_sands',
+        pveSettings: {
+          difficultyTier: 'medium',
+          waveCount: 1,
+          restFrequencyWaves: 2,
+        },
+      };
+
+      render(
+        <ArenaCombatView
+          config={config}
+          partyCharacters={party}
+          onExitToSetup={vi.fn()}
+        />,
+      );
+
+      // Active combatant is the party wizard — arm a ranged cantrip
+      fireEvent.click(screen.getByTestId('hotbar-tab-spells'));
+      fireEvent.click(screen.getByTestId('spell-filter-0'));
+      fireEvent.click(screen.getByTestId('spell-cast-btn-fire-bolt'));
+      expect(screen.getByTestId('targeting-commit-bar')).toBeDefined();
+
+      // Clicking an enemy portrait commits the target (no enemy card popup)
+      const foeCards = screen.getAllByTestId(/initiative-foe-card-/);
+      expect(foeCards.length).toBeGreaterThan(0);
+      fireEvent.click(foeCards[0]!);
+
+      await waitFor(() =>
+        expect(screen.queryByTestId('targeting-commit-bar')).toBeNull(),
+      );
+      expect(screen.queryByTestId('selected-enemy-card')).toBeNull();
+    });
+
+    it('ArenaView toggles between Setup and Combat views seamlessly', () => {      render(<ArenaView />);
 
       // Initially renders setup
       expect(screen.getByTestId('arena-setup-view')).toBeDefined();
