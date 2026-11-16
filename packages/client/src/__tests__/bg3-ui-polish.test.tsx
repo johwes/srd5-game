@@ -248,6 +248,30 @@ describe('SRD-608: BG3-Reference UI Polish', () => {
       expect(panel.className).toContain('flex-wrap');
       expect(panel.style.maxHeight).toBe('174px');
     });
+
+    it('shows weapon-specific icons instead of one generic glyph', () => {
+      const pregen = getPregenCharacter('pregen-fighter')!;
+      const derived = computeDerivedCharacter(pregen, defaultCompendium);
+      const fighter = makePartyCombatant('hero-fighter', derived.name, {
+        characterSheet: derived,
+      });
+
+      render(
+        <ActionHotbar
+          activeCombatant={fighter}
+          turnBudget={null}
+          compendium={defaultCompendium}
+        />,
+      );
+
+      const firstWeapon = derived.weaponAttacks[0]!;
+      const card = screen.getByTestId(`attack-action-card-${firstWeapon.id}`);
+      // Longsword-class weapons resolve to the broadsword glyph, not crossed swords
+      const icons = card.querySelectorAll('img[data-testid^="game-icon-"]');
+      expect(icons.length).toBeGreaterThan(0);
+      const testIds = Array.from(icons).map((img) => img.getAttribute('data-testid'));
+      expect(testIds.some((id) => id !== 'game-icon-attack')).toBe(true);
+    });
   });
 
   describe('PauseMenu hotbar density setting', () => {

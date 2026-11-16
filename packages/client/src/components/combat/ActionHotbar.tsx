@@ -91,6 +91,23 @@ function summarizeSpellEffects(spell: SpellData): string[] {
   return out;
 }
 
+/**
+ * Picks a BG3-style weapon icon from an attack profile: bows for ranged,
+ * axe/dagger/sword heuristics for melee (falls back to crossed swords).
+ */
+function weaponIcon(wp: DerivedWeaponAttackProfile): { name: string; category: 'item' | 'action' } {
+  if (wp.rangeType === 'ranged') return { name: 'bow', category: 'item' };
+  const haystack = `${wp.weaponId} ${wp.name}`.toLowerCase();
+  if (haystack.includes('axe')) return { name: 'axe', category: 'item' };
+  if (haystack.includes('dagger') || haystack.includes('knife')) {
+    return { name: 'dagger', category: 'item' };
+  }
+  if (haystack.includes('sword') || haystack.includes('scimitar') || haystack.includes('rapier')) {
+    return { name: 'sword', category: 'item' };
+  }
+  return { name: 'attack', category: 'action' };
+}
+
 export const STANDARD_ACTIONS: StandardActionDefinition[] = [  {
     id: 'dash',
     name: 'Dash',
@@ -408,6 +425,7 @@ export function ActionHotbar({
               attacks.map((wp) => {
                 const isOffHand = wp.slot === 'off_hand';
                 const canUse = isPlayerControlled && (isOffHand ? hasBonusAction : (hasAction || hasExtraAttacks));
+                const icon = weaponIcon(wp);
 
                 return (
                   <div
@@ -427,7 +445,7 @@ export function ActionHotbar({
                       }`}
                       title={`${wp.name} (${wp.damageFormula})`}
                     >
-                      <GameIcon name="attack" category="action" size={20} alt="" />
+                      <GameIcon name={icon.name} category={icon.category} size={20} alt="" />
                       {/* Action Cost Pip */}
                       <span
                         className={`absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase ${
@@ -446,7 +464,7 @@ export function ActionHotbar({
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
                       <ActionTooltipCard
                         testId={`attack-tooltip-${wp.id}`}
-                        icon={<GameIcon name="attack" category="action" size={14} alt="" />}
+                        icon={<GameIcon name={icon.name} category={icon.category} size={14} alt="" />}
                         name={wp.name}
                         badge={wp.rangeType === 'ranged' ? 'Ranged Weapon' : 'Melee Weapon'}
                         subtitle={`${wp.damageType} · ${wp.rangeFeet ? `${wp.rangeFeet.normal}/${wp.rangeFeet.long}ft range` : `${wp.reachFeet}ft reach`} · to hit ${wp.toHitBonus >= 0 ? `+${wp.toHitBonus}` : wp.toHitBonus}`}

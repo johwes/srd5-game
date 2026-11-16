@@ -257,7 +257,6 @@ export function TacticalCombatHud({
             combatants={viewState.combatants}
             activeCombatantId={activeCombatantId}
             selectedCombatantId={selectedCombatantId}
-            round={combat.round}
             onSelectCombatant={handleSelectCombatant}
           />
         </div>
