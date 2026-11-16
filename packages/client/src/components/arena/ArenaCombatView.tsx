@@ -500,8 +500,8 @@ export function ArenaCombatView({
               ? `${config.pvpSettings?.teamA.teamName} (Player 1)`
               : `${config.pvpSettings?.teamB.teamName} (Player 2)`
             : config.mode === 'endless_waves'
-            ? `Endless Wave ${currentWave} &middot; Score ${score}`
-            : `Skirmish &middot; Tier: ${config.pveSettings?.difficultyTier ?? 'medium'}`
+            ? `Endless Wave ${currentWave} · Score ${score}`
+            : `Skirmish · Tier: ${config.pveSettings?.difficultyTier ?? 'medium'}`
         }
         onToggleMenu={onExitToSetup}
         menuButtonText="&larr; Exit Arena"

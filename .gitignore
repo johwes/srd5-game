@@ -15,6 +15,7 @@ pnpm-debug.log*
 coverage/
 artifacts/
 screenshot.png
+Screenshot*.png
 test-results/
 playwright-report/
 

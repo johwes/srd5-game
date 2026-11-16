@@ -712,7 +712,7 @@ export function TacticalCanvasViewport({
       {/* Floating Tactical Camera & Overlay Toolbar */}
       <div
         data-testid={`${testId}-toolbar`}
-        className="absolute top-3 left-72 z-10 flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg shadow-lg text-xs text-slate-200"
+        className="absolute top-1/2 -translate-y-1/2 right-3 z-10 flex flex-col items-center gap-1.5 p-1.5 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg shadow-lg text-xs text-slate-200"
       >
         <button
           type="button"
@@ -751,7 +751,7 @@ export function TacticalCanvasViewport({
           ⛶
         </button>
 
-        <div className="h-4 w-px bg-slate-700 mx-0.5" />
+        <div className="w-4 h-px bg-slate-700 my-0.5" />
 
         <button
           type="button"
@@ -781,7 +781,7 @@ export function TacticalCanvasViewport({
           (X,Y)
         </button>
 
-        <div className="h-4 w-px bg-slate-700 mx-0.5" />
+        <div className="w-4 h-px bg-slate-700 my-0.5" />
 
         <span
           data-testid={`${testId}-zoom-indicator`}

@@ -20,12 +20,14 @@ export function PartyPortraits({
   return (
     <aside
       data-testid="party-portraits"
-      className={`flex flex-col gap-2 p-2 bg-slate-900/90 border border-slate-800 rounded-lg shadow-lg backdrop-blur-sm transition-all select-none ${
-        collapsed ? 'w-16' : 'w-64 sm:w-72'
+      className={`flex flex-col gap-2 transition-all select-none ${
+        collapsed
+          ? 'w-[68px] p-1 bg-transparent'
+          : 'w-64 sm:w-72 p-2 bg-slate-900/90 border border-slate-800 rounded-lg shadow-lg backdrop-blur-sm'
       } ${className}`}
     >
       {/* Header with Collapsible Toggle */}
-      <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-800">
+      <div className={`flex items-center justify-between px-1 ${collapsed ? 'order-last justify-center' : 'pb-1 border-b border-slate-800'}`}>
         {!collapsed && (
           <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
             Party ({partyList.length})
@@ -45,7 +47,11 @@ export function PartyPortraits({
       </div>
 
       {/* Hero Cards List */}
-      <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-250px)] scrollbar-thin">
+      <div
+        className={`flex flex-col gap-2 ${
+          collapsed ? 'overflow-visible' : 'overflow-y-auto max-h-[calc(100vh-250px)] scrollbar-thin'
+        }`}
+      >
         {partyList.map((hero) => {
           const isActive = hero.id === activeCombatantId;
           const isSelected = hero.id === selectedCombatantId;

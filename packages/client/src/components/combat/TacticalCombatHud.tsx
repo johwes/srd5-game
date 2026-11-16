@@ -135,7 +135,7 @@ export function TacticalCombatHud({
         data-testid="combat-hud-header"
         className="absolute top-2 inset-x-2 sm:inset-x-3 z-30 flex items-center justify-between gap-2 pointer-events-none"
       >
-        <div className="flex items-center gap-2 pointer-events-auto bg-slate-950/85 backdrop-blur-md border border-slate-800/80 rounded-xl px-2.5 py-1.5 shadow-lg">
+        <div className="flex items-center gap-2 pointer-events-auto max-w-[24vw] overflow-hidden bg-slate-950/85 backdrop-blur-md border border-slate-800/80 rounded-xl px-2.5 py-1.5 shadow-lg">
           {onToggleMenu && (
             <button
               type="button"
@@ -147,15 +147,15 @@ export function TacticalCombatHud({
             </button>
           )}
 
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-2">
               <h2
                 data-testid="combat-hud-title"
-                className="text-xs sm:text-sm font-extrabold tracking-tight text-amber-400"
+                className="text-xs sm:text-sm font-extrabold tracking-tight text-amber-400 truncate"
               >
                 {title}
               </h2>
-              {headerExtras}
+              <div className="hidden xl:block">{headerExtras}</div>
             </div>
             {subtitle && (
               <span
@@ -168,9 +168,9 @@ export function TacticalCombatHud({
           </div>
         </div>
 
-        {/* Initiative Ribbon in Floating Pill */}
+        {/* Initiative Ribbon: centered top, BG3 style */}
         {combat ? (
-          <div className="pointer-events-auto flex items-center gap-2 bg-slate-950/85 backdrop-blur-md border border-slate-800/80 rounded-xl px-2.5 py-1 shadow-lg max-w-4xl">
+          <div className="pointer-events-auto absolute left-1/2 -translate-x-1/2 top-0 flex items-center gap-2 bg-gradient-to-b from-slate-950/90 to-slate-950/60 backdrop-blur-md border border-slate-800/70 rounded-2xl px-3 py-1 shadow-lg max-w-[55vw]">
             <InitiativeRibbon
               round={combat.round}
               phase={combat.phase}
@@ -180,9 +180,16 @@ export function TacticalCombatHud({
               selectedCombatantId={selectedCombatantId}
               onSelectCombatant={handleSelectCombatant}
             />
+          </div>
+        ) : (
+          <div className="pointer-events-auto absolute left-1/2 -translate-x-1/2 text-xs text-slate-500 italic bg-slate-950/85 px-2.5 py-1 rounded-xl border border-slate-800/80">
+            No combat in progress
+          </div>
+        )}
 
-            {/* Sidebar Toggle Buttons */}
-            <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-slate-800">
+        {/* Right utility pill: Log / Dice */}
+        <div className="pointer-events-auto ml-auto flex items-center gap-1.5 bg-slate-950/85 backdrop-blur-md border border-slate-800/80 rounded-xl px-2 py-1.5 shadow-lg">
+            <div className="contents">
               <button
                 type="button"
                 data-testid="combat-hud-toggle-log-btn"
@@ -213,16 +220,11 @@ export function TacticalCombatHud({
                 🎲 Dice
               </button>
             </div>
-          </div>
-        ) : (
-          <div className="pointer-events-auto text-xs text-slate-500 italic bg-slate-950/85 px-2.5 py-1 rounded-xl border border-slate-800/80">
-            No combat in progress
-          </div>
-        )}
+        </div>
       </header>
 
       {/* 3. Left Floating Party Portraits Panel */}
-      <div className="absolute top-14 left-2 sm:left-3 z-20 pointer-events-auto">
+      <div className="absolute top-1/2 -translate-y-1/2 left-2 sm:left-3 z-20 pointer-events-auto">
         <PartyPortraits
           party={viewState.party}
           activeCombatantId={activeCombatantId}
@@ -282,8 +284,8 @@ export function TacticalCombatHud({
       )}
 
       {/* 6. Floating Docked Bottom Action Hotbar */}
-      <div className="absolute bottom-2 inset-x-2 sm:inset-x-4 z-30 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto max-w-5xl w-full">
+      <div className="absolute bottom-2 inset-x-2 z-30 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto max-w-full">
           <ActionHotbar
             activeCombatant={activeCombatant}
             turnBudget={combat?.turnBudget ?? null}

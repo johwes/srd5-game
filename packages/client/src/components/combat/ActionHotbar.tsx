@@ -158,164 +158,134 @@ export function ActionHotbar({
   return (
     <footer
       data-testid="action-hotbar"
-      className={`flex flex-col bg-slate-950/95 border border-slate-800/90 rounded-2xl backdrop-blur-md shadow-2xl select-none text-slate-100 overflow-hidden ${className}`}
+      className={`flex flex-col items-center gap-1.5 select-none text-slate-100 ${className}`}
     >
-      {/* Top Bar: Active Combatant Status, Turn Budget & End Turn Button */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 border-b border-slate-800/80 bg-slate-900/70">
-        {/* Active Hero Summary */}
-        <div className="flex items-center gap-2">
+      {/* Floating Action-Economy Pips (BG3 style) above the dock */}
+      <div className="px-3 py-1 rounded-full bg-slate-950/80 border border-slate-800/80 backdrop-blur-md shadow-lg">
+        <TurnBudgetIndicator
+          turnBudget={turnBudget}
+          speedFeet={activeCombatant?.speedFeet ?? 30}
+        />
+      </div>
+
+      {/* Docked Hotbar */}
+      <div className="flex items-stretch gap-3 px-3 py-2.5 max-w-full bg-gradient-to-b from-slate-900/95 to-slate-950/95 border border-amber-700/30 rounded-2xl backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.6)]">
+        {/* Active Hero Portrait */}
+        <div className="flex flex-col items-center justify-center gap-1 w-24 shrink-0 pr-3 border-r border-slate-800">
           {activeCombatant ? (
             <>
-              <div className="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center font-bold text-amber-300 text-xs shrink-0 shadow">
+              <div className="w-14 h-14 rounded-full bg-amber-500/15 border-2 border-amber-400 flex items-center justify-center font-black text-amber-300 text-xl shadow-[0_0_14px_rgba(251,191,36,0.45)]">
                 {activeCombatant.name.charAt(0)}
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    data-testid="hotbar-active-hero-name"
-                    className="text-xs font-bold text-amber-300 truncate"
-                  >
-                    {activeCombatant.name}
-                  </span>
-                  <span className="px-1.5 py-0.2 rounded bg-amber-950 border border-amber-600 text-amber-400 text-[9px] font-black uppercase">
-                    Your Turn
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <span
-                    data-testid="hotbar-active-hero-hp"
-                    className="font-semibold text-slate-200"
-                  >
-                    HP {activeCombatant.currentHp}/{activeCombatant.maxHp}
-                  </span>
-                  <span>&middot;</span>
-                  <span>AC {activeCombatant.armorClass}</span>
-                  <span>&middot;</span>
-                  <span>Speed {activeCombatant.speedFeet}ft</span>
-                </div>
+              <span
+                data-testid="hotbar-active-hero-name"
+                className="text-xs font-bold text-amber-300 truncate max-w-full"
+              >
+                {activeCombatant.name}
+              </span>
+              <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                <div
+                  className="h-full bg-emerald-400"
+                  style={{
+                    width: `${activeCombatant.maxHp > 0 ? Math.max(0, Math.min(100, (activeCombatant.currentHp / activeCombatant.maxHp) * 100)) : 0}%`,
+                  }}
+                />
               </div>
+              <span
+                data-testid="hotbar-active-hero-hp"
+                className="text-[11px] font-semibold text-slate-200"
+              >
+                HP {activeCombatant.currentHp}/{activeCombatant.maxHp}
+              </span>
+              <span className="text-[10px] text-slate-400">
+                AC {activeCombatant.armorClass} &middot; {activeCombatant.speedFeet}ft
+              </span>
             </>
           ) : (
-            <span className="text-xs text-slate-500 italic">No combatant active</span>
+            <span className="text-xs text-slate-500 italic text-center">
+              No combatant active
+            </span>
           )}
         </div>
 
-        {/* Turn Budget Indicator */}
-        <div className="flex-1 max-w-2xl flex justify-center">
-          <TurnBudgetIndicator
-            turnBudget={turnBudget}
-            speedFeet={activeCombatant?.speedFeet ?? 30}
-          />
-        </div>
-
-        {/* End Turn Button */}
-        <div>
-          <button
-            type="button"
-            data-testid="hotbar-end-turn-btn"
-            disabled={!isPlayerControlled || !activeCombatant}
-            onClick={onEndTurn}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-all shadow-md ${
-              isPlayerControlled && activeCombatant
-                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 active:scale-95 shadow-amber-500/20'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
-            }`}
-          >
-            <span>End Turn</span>
-            <span>&raquo;</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Tabs Navigation */}
-      <div className="flex items-center gap-1 px-3 pt-1 border-b border-slate-800 bg-slate-900/40 overflow-x-auto">
-        <button
-          type="button"
-          data-testid="hotbar-tab-attack"
-          aria-pressed={activeTab === 'attack'}
-          onClick={() => setTab('attack')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-semibold transition-colors border-t border-x ${
-            activeTab === 'attack'
-              ? 'bg-slate-900 border-slate-700 text-amber-400 border-b-transparent shadow'
-              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'
-          }`}
-        >
-          <span>⚔️</span>
-          <span>Attack</span>
-          <span className="text-[10px] text-slate-500">
-            ({attacks.length > 0 ? attacks.length : 1})
-          </span>
-        </button>
-
-        <button
-          type="button"
-          data-testid="hotbar-tab-spells"
-          aria-pressed={activeTab === 'spells'}
-          onClick={() => setTab('spells')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-semibold transition-colors border-t border-x ${
-            activeTab === 'spells'
-              ? 'bg-slate-900 border-slate-700 text-amber-400 border-b-transparent shadow'
-              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'
-          }`}
-        >
-          <span>✨</span>
-          <span>Spells</span>
-          {spellIds.length > 0 && (
-            <span className="text-[10px] text-slate-500">({spellIds.length})</span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          data-testid="hotbar-tab-features"
-          aria-pressed={activeTab === 'features'}
-          onClick={() => setTab('features')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-semibold transition-colors border-t border-x ${
-            activeTab === 'features'
-              ? 'bg-slate-900 border-slate-700 text-amber-400 border-b-transparent shadow'
-              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'
-          }`}
-        >
-          <span>⭐</span>
-          <span>Features</span>
-          {features.length > 0 && (
-            <span className="text-[10px] text-slate-500">({features.length})</span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          data-testid="hotbar-tab-standard"
-          aria-pressed={activeTab === 'standard'}
-          onClick={() => setTab('standard')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-semibold transition-colors border-t border-x ${
-            activeTab === 'standard'
-              ? 'bg-slate-900 border-slate-700 text-amber-400 border-b-transparent shadow'
-              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'
-          }`}
-        >
-          <span>🛡️</span>
-          <span>Standard Actions</span>
-        </button>
-
-        <button
-          type="button"
-          data-testid="hotbar-tab-items"
-          aria-pressed={activeTab === 'items'}
-          onClick={() => setTab('items')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-t-lg text-xs font-semibold transition-colors border-t border-x ${
-            activeTab === 'items'
-              ? 'bg-slate-900 border-slate-700 text-amber-400 border-b-transparent shadow'
-              : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'
-          }`}
-        >
-          <span>🎒</span>
-          <span>Items</span>
-        </button>
-      </div>
-
-      {/* Tab Panels */}
-      <div className="p-2 bg-slate-900/90 overflow-hidden">
+        {/* Tabs + Slot Grid */}
+        <div className="flex flex-col gap-1.5 min-w-0 min-w-[320px] sm:min-w-[420px]">
+          <div className="flex items-center gap-1 overflow-x-auto">
+            <button
+              type="button"
+              data-testid="hotbar-tab-attack"
+              aria-pressed={activeTab === 'attack'}
+              onClick={() => setTab('attack')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors border ${
+                activeTab === 'attack'
+                  ? 'bg-amber-500/15 border-amber-500/60 text-amber-300'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <span>⚔️</span>
+              <span>Attack</span>
+            <span className="text-[10px] text-slate-500">({attacks.length > 0 ? attacks.length : 1})</span>
+            </button>
+            <button
+              type="button"
+              data-testid="hotbar-tab-spells"
+              aria-pressed={activeTab === 'spells'}
+              onClick={() => setTab('spells')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors border ${
+                activeTab === 'spells'
+                  ? 'bg-amber-500/15 border-amber-500/60 text-amber-300'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <span>✨</span>
+              <span>Spells</span>
+            <span className="text-[10px] text-slate-500">{spellIds.length > 0 && `(${spellIds.length})`}</span>
+            </button>
+            <button
+              type="button"
+              data-testid="hotbar-tab-features"
+              aria-pressed={activeTab === 'features'}
+              onClick={() => setTab('features')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors border ${
+                activeTab === 'features'
+                  ? 'bg-amber-500/15 border-amber-500/60 text-amber-300'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <span>⭐</span>
+              <span>Features</span>
+            <span className="text-[10px] text-slate-500">{features.length > 0 && `(${features.length})`}</span>
+            </button>
+            <button
+              type="button"
+              data-testid="hotbar-tab-standard"
+              aria-pressed={activeTab === 'standard'}
+              onClick={() => setTab('standard')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors border ${
+                activeTab === 'standard'
+                  ? 'bg-amber-500/15 border-amber-500/60 text-amber-300'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <span>🛡️</span>
+              <span>Actions</span>
+            </button>
+            <button
+              type="button"
+              data-testid="hotbar-tab-items"
+              aria-pressed={activeTab === 'items'}
+              onClick={() => setTab('items')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors border ${
+                activeTab === 'items'
+                  ? 'bg-amber-500/15 border-amber-500/60 text-amber-300'
+                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <span>🎒</span>
+              <span>Items</span>
+            </button>
+          </div>
+          <div className="overflow-hidden">
         {/* ATTACK TAB */}
         {activeTab === 'attack' && (
           <div
@@ -871,6 +841,25 @@ export function ActionHotbar({
             </div>
           </div>
         )}
+          </div>
+        </div>
+        {/* End Turn */}
+        <div className="flex items-center pl-3 border-l border-slate-800 shrink-0">
+          <button
+            type="button"
+            data-testid="hotbar-end-turn-btn"
+            disabled={!isPlayerControlled || !activeCombatant}
+            onClick={onEndTurn}
+            className={`flex flex-col items-center justify-center gap-0.5 w-20 h-16 rounded-xl font-black text-[11px] uppercase tracking-wider transition-all shadow-md ${
+              isPlayerControlled && activeCombatant
+                ? 'bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 active:scale-95 shadow-amber-500/30'
+                : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+            }`}
+          >
+            <span className="text-lg leading-none">&raquo;</span>
+            <span>End Turn</span>
+          </button>
+        </div>
       </div>
     </footer>
   );
