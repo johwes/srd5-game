@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RoomServerError } from '../errors.js';
 import { Room } from '../room.js';
-import { makeTestState } from './fixtures.js';
+import { makeSplitState, makeTestState } from './fixtures.js';
 
 function makeRoom(): Room {
   const room = new Room({
@@ -111,6 +111,35 @@ describe('SRD-701: authoritative Room', () => {
     expect(room2.getSlotAssignments().find((s) => s.playerId === 'coop')?.controlledCharacterIds).toEqual([
       'hero-b',
     ]);
+  });
+
+  it('tracks Fog-of-War exploration memory independently for each player (SRD-703)', () => {
+    const room = new Room({
+      roomId: 'ROOM-FOG',
+      initialState: makeSplitState(),
+      projectionOptions: { sharedVision: false, maxVisionRangeFeet: 15 },
+    });
+    room.addMember({ playerId: 'p1' }, null);
+    room.addMember({ playerId: 'p2' }, null);
+
+    const cell = (playerId: string, x: number, y: number) =>
+      room
+        .getView(playerId)
+        .grid.cells.find((c) => c.x === x && c.y === y)?.visibility;
+
+    expect(cell('p1', 1, 1)).toBe('visible');
+    expect(cell('p2', 1, 1)).toBe('unexplored');
+
+    room.dispatch('p1', {
+      type: 'EXPLORE_MOVE',
+      actorId: 'hero-a',
+      path: [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }, { x: 1, y: 5 }],
+    });
+
+    // p1 remembers the corridor it walked; p2 never saw it.
+    expect(cell('p1', 1, 1)).toBe('remembered');
+    expect(cell('p2', 1, 1)).toBe('unexplored');
+    expect(cell('p2', 10, 10)).toBe('visible');
   });
 
   it('validates explicit slot assignments and rejects double-booked characters', () => {

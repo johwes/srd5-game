@@ -241,4 +241,77 @@ describe('SRD-311: projectPlayerView Fog-of-War State Filter', () => {
     const visibleCount = view.grid.cells.filter((c) => c.visibility === 'visible').length;
     expect(visibleCount).toBe(0);
   });
+
+  it('honours per-player exploredCells instead of the shared authoritative memory (SRD-703)', () => {
+    let grid = createTacticalGrid(10, 10);
+    grid = setGridCells(
+      grid,
+      Array.from({ length: 10 }, (_, y) => ({
+        x: 5,
+        y,
+        terrain: 'wall_solid' as const,
+        blocksSight: true,
+        blocksMovement: true,
+      })),
+    );
+    const hero = makePartyMember('hero-1', 'Hero', 2, 5);
+    const state = createInitialGameState({ grid, party: [hero] });
+    // The global state claims a cell behind the wall was explored.
+    state.exploredCells['7,5'] = true;
+
+    const defaultView = projectPlayerView(state, 'player-1');
+    expect(defaultView.grid.cells.find((c) => c.x === 7 && c.y === 5)?.visibility).toBe(
+      'remembered',
+    );
+
+    // A player who never visited that cell gets an isolated memory override.
+    const isolatedView = projectPlayerView(state, 'player-1', { exploredCells: {} });
+    expect(isolatedView.grid.cells.find((c) => c.x === 7 && c.y === 5)?.visibility).toBe(
+      'unexplored',
+    );
+  });
+
+  it('projects the reaction deadline only to the controlling player (SRD-703)', () => {
+    const grid = createTacticalGrid(10, 10);
+    const hero = makePartyMember('hero-1', 'Hero', 2, 2);
+    const goblin = makeMonster('goblin-1', 'Goblin', 3, 2);
+    let state = createInitialGameState({
+      grid,
+      party: [hero],
+      monsters: [goblin],
+      slots: [
+        { playerId: 'player-1', displayName: 'P1', controlledCharacterIds: ['hero-1'] },
+        { playerId: 'player-2', displayName: 'P2', controlledCharacterIds: ['goblin-1'] },
+      ],
+    });
+    state = reduceGame(state, { type: 'START_COMBAT', encounterId: 'combat-rxn' }).nextState;
+    state.combat!.phase = 'reaction_prompt';
+    state.combat!.pendingReactionPrompt = {
+      promptId: 'prompt-1',
+      reactorEntityId: 'hero-1',
+      triggerType: 'attack_roll_hit',
+      triggerDescription: 'Goblin hits Hero',
+      availableReactions: [
+        {
+          id: 'shield',
+          label: 'Cast Shield',
+          reactionType: 'shield',
+          slotLevel: 1,
+        },
+      ],
+      timeoutMs: 30000,
+    };
+
+    const ownerView = projectPlayerView(state, 'player-1', {
+      reactionPromptDeadline: 1700000000000,
+    });
+    const otherView = projectPlayerView(state, 'player-2', {
+      reactionPromptDeadline: 1700000000000,
+    });
+
+    expect(ownerView.combat?.pendingReactionPrompt?.promptId).toBe('prompt-1');
+    expect(ownerView.combat?.reactionPromptDeadline).toBe(1700000000000);
+    expect(otherView.combat?.pendingReactionPrompt).toBeNull();
+    expect(otherView.combat?.reactionPromptDeadline).toBeNull();
+  });
 });

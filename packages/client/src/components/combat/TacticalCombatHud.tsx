@@ -275,6 +275,10 @@ export function TacticalCombatHud({
         <ReactionInterruptModal
           prompt={pendingReactionPrompt}
           reactorCombatant={reactorEntity}
+          deadlineMs={viewState.combat?.reactionPromptDeadline}
+          serverAuthoritativeTimeout={
+            typeof viewState.combat?.reactionPromptDeadline === 'number'
+          }
           onResolve={(decision) => {
             if (onResolveReaction) {
               onResolveReaction(decision);

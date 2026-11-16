@@ -19,6 +19,9 @@ interface ConnectionState {
   playerId: string | null;
 }
 
+/** Default grace period for an unanswered reaction prompt before it auto-passes. */
+export const DEFAULT_REACTION_PROMPT_TIMEOUT_MS = 30_000;
+
 export interface RoomServerOptions {
   /** Custom room-code generator (defaults to a random 6-character code). */
   generateRoomId?: () => string;
@@ -26,6 +29,16 @@ export interface RoomServerOptions {
   compendium?: SrdCompendium;
   maxPlayers?: number;
   maxRooms?: number;
+  /** Fallback reaction timeout when the engine prompt omits `timeoutMs`. */
+  reactionPromptTimeoutMs?: number;
+  /** Set false to leave prompts pending until a player responds (default true). */
+  autoResolveReactionPrompts?: boolean;
+}
+
+/** One active reaction countdown, scoped to a room. */
+interface ReactionTimer {
+  promptId: string;
+  timer: ReturnType<typeof setTimeout>;
 }
 
 export interface CreateRoomOptions {
@@ -51,6 +64,7 @@ export const ROOM_CLOSE_REASON = {
 export class RoomServer {
   private readonly rooms = new Map<string, Room>();
   private readonly options: RoomServerOptions;
+  private readonly reactionTimers = new Map<string, ReactionTimer>();
   private playerSequence = 0;
 
   constructor(options: RoomServerOptions = {}) {
@@ -74,6 +88,53 @@ export class RoomServer {
 
   public getRoom(roomId: string): Room | undefined {
     return this.rooms.get(roomId);
+  }
+
+  /**
+   * Starts (or refreshes) the countdown for a room's pending reaction prompt.
+   * The reactor alone receives the deadline in its Fog-of-War projection; when
+   * the timer fires the prompt is auto-passed and the resumed state is
+   * broadcast to every member (Spec 03 Section 5.2 / SRD-703).
+   */
+  public maybeScheduleReactionTimer(room: Room): void {
+    const prompt = room.getPendingReactionPrompt();
+    const existing = this.reactionTimers.get(room.roomId);
+    if (!prompt || this.options.autoResolveReactionPrompts === false) {
+      this.clearReactionTimer(room);
+      return;
+    }
+    if (existing?.promptId === prompt.promptId) return;
+    this.clearReactionTimer(room);
+
+    const timeoutMs =
+      prompt.timeoutMs ?? this.options.reactionPromptTimeoutMs ?? DEFAULT_REACTION_PROMPT_TIMEOUT_MS;
+    const timer = setTimeout(() => {
+      this.reactionTimers.delete(room.roomId);
+      this.handleReactionTimeout(room.roomId, prompt.promptId);
+    }, timeoutMs);
+    // A pending reaction must not keep a Node process alive by itself.
+    timer.unref?.();
+    this.reactionTimers.set(room.roomId, { promptId: prompt.promptId, timer });
+    room.setReactionPromptDeadline(Date.now() + timeoutMs);
+  }
+
+  /** Cancels a room's reaction countdown and clears its projected deadline. */
+  public clearReactionTimer(room: Room): void {
+    const existing = this.reactionTimers.get(room.roomId);
+    if (existing) {
+      clearTimeout(existing.timer);
+      this.reactionTimers.delete(room.roomId);
+    }
+    room.setReactionPromptDeadline(null);
+  }
+
+  private handleReactionTimeout(roomId: string, promptId: string): void {
+    const room = this.rooms.get(roomId);
+    if (!room || room.getPendingReactionPrompt()?.promptId !== promptId) return;
+
+    const events = room.passReactionPromptBySystem(promptId);
+    room.setReactionPromptDeadline(null);
+    this.broadcastState(room, events, '');
   }
 
   public createRoom(options: CreateRoomOptions): Room {
@@ -104,6 +165,7 @@ export class RoomServer {
   public deleteRoom(roomId: string, reason: string = ROOM_CLOSE_REASON.DELETED): boolean {
     const room = this.rooms.get(roomId);
     if (!room) return false;
+    this.clearReactionTimer(room);
     this.broadcast(room, () => ({ type: 'ROOM_CLOSED', roomId, reason }));
     for (const member of room.getMembers()) {
       member.socket = null;
@@ -254,6 +316,7 @@ export class RoomServer {
       case 'DISPATCH_COMMAND': {
         const { room, playerId } = this.requireMembership(state);
         const events = room.dispatch(playerId, message.command);
+        this.maybeScheduleReactionTimer(room);
         this.broadcastState(room, events, playerId, message.requestId);
         break;
       }
@@ -313,6 +376,7 @@ export class RoomServer {
     );
 
     if (room.isEmpty()) {
+      this.clearReactionTimer(room);
       this.rooms.delete(room.roomId);
     }
   }
@@ -336,7 +400,15 @@ export class RoomServer {
         }),
         playerId,
       );
+      // Do not stall the encounter when the only player who could answer leaves.
+      const pending = room.getPendingReactionPrompt();
+      if (pending && room.getReactionOwnerPlayerId(pending) === playerId) {
+        const events = room.passReactionPromptBySystem(pending.promptId);
+        this.clearReactionTimer(room);
+        this.broadcastState(room, events, '');
+      }
       if (room.isEmpty()) {
+        this.clearReactionTimer(room);
         this.rooms.delete(room.roomId);
       }
     }

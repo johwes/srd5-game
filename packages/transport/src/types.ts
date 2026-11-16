@@ -132,6 +132,12 @@ export interface PlayerViewCombatState {
   turnBudget: TurnBudget | null;
   outcome: CombatVictoryOutcome;
   pendingReactionPrompt?: PendingReactionPrompt | null | undefined;
+  /**
+   * Absolute epoch-ms deadline for the pending reaction prompt. Projected only
+   * to the player who controls the reactor so multiplayer clients can show an
+   * authoritative countdown (Spec 03 Section 5.2 / SRD-703).
+   */
+  reactionPromptDeadline?: number | null | undefined;
   hazardZones?: HazardZone[] | undefined;
 }
 

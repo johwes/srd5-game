@@ -100,6 +100,10 @@ export interface ReactionInterruptModalProps {
       | { execute: true; reactionId: string; slotLevel?: number },
   ) => void;
   isOpen?: boolean;
+  /** Server-authoritative absolute epoch-ms deadline (multiplayer). */
+  deadlineMs?: number | null;
+  /** When true the server owns timeout resolution; expiry only stops the UI clock. */
+  serverAuthoritativeTimeout?: boolean;
   className?: string;
 }
 

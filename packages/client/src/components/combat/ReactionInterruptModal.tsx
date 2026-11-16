@@ -7,35 +7,52 @@ export function ReactionInterruptModal({
   reactorCombatant,
   onResolve,
   isOpen = true,
+  deadlineMs = null,
+  serverAuthoritativeTimeout = false,
   className = '',
 }: ReactionInterruptModalProps) {
   const [selectedSlotLevels, setSelectedSlotLevels] = useState<Record<string, number>>({});
   const [remainingMs, setRemainingMs] = useState<number | null>(
     prompt?.timeoutMs ?? null,
   );
+  const [totalMs, setTotalMs] = useState<number | null>(prompt?.timeoutMs ?? null);
 
-  // Initialize or reset timeout and slot level selections when prompt changes
+  // Local prompts own their timer; multiplayer prompts follow the server deadline.
   useEffect(() => {
     if (!prompt) return;
 
-    if (prompt.timeoutMs) {
-      setRemainingMs(prompt.timeoutMs);
-      const startTime = Date.now();
-      const interval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const left = Math.max(0, prompt.timeoutMs! - elapsed);
-        setRemainingMs(left);
-        if (left <= 0) {
-          clearInterval(interval);
-          onResolve({ execute: false });
-        }
-      }, 100);
+    const authoritative = serverAuthoritativeTimeout && typeof deadlineMs === 'number';
+    const startedAt = Date.now();
+    const deadline = authoritative
+      ? deadlineMs!
+      : prompt.timeoutMs
+        ? startedAt + prompt.timeoutMs
+        : null;
+    const windowMs = authoritative
+      ? (prompt.timeoutMs ?? Math.max(1, deadline! - startedAt))
+      : (prompt.timeoutMs ?? null);
 
-      return () => clearInterval(interval);
-    } else {
+    if (deadline === null || windowMs === null) {
       setRemainingMs(null);
+      setTotalMs(null);
+      return;
     }
-  }, [prompt, onResolve]);
+
+    setTotalMs(windowMs);
+    setRemainingMs(Math.max(0, deadline - Date.now()));
+    const interval = setInterval(() => {
+      const left = Math.max(0, deadline - Date.now());
+      setRemainingMs(left);
+      if (left <= 0) {
+        clearInterval(interval);
+        // The authoritative server resolves (auto-passes) the prompt; dispatching
+        // here too would race with it and produce an engine error.
+        if (!authoritative) onResolve({ execute: false });
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [prompt, onResolve, deadlineMs, serverAuthoritativeTimeout]);
 
   // Keyboard navigation: Escape to pass, number keys to choose reaction
   useEffect(() => {
@@ -102,12 +119,12 @@ export function ReactionInterruptModal({
     >
       <div className="relative w-full max-w-lg bg-slate-900 border-2 border-amber-500/80 rounded-xl shadow-2xl shadow-amber-950/50 overflow-hidden">
         {/* Animated Timeout Progress Bar */}
-        {prompt.timeoutMs && remainingMs !== null && (
+        {totalMs && remainingMs !== null && (
           <div className="w-full bg-slate-800 h-1.5 overflow-hidden">
             <div
               className="bg-amber-400 h-full transition-all duration-100 ease-linear"
               style={{
-                width: `${Math.max(0, Math.min(100, (remainingMs / prompt.timeoutMs) * 100))}%`,
+                width: `${Math.max(0, Math.min(100, (remainingMs / totalMs) * 100))}%`,
               }}
             />
           </div>
@@ -132,11 +149,21 @@ export function ReactionInterruptModal({
             </div>
           </div>
 
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${badge.color}`}
-          >
-            {badge.label}
-          </span>
+          <div className="flex items-center gap-2">
+            {remainingMs !== null && (
+              <span
+                data-testid="reaction-countdown"
+                className="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/40"
+              >
+                {Math.ceil(remainingMs / 1000)}s
+              </span>
+            )}
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${badge.color}`}
+            >
+              {badge.label}
+            </span>
+          </div>
         </div>
 
         {/* Modal Body */}

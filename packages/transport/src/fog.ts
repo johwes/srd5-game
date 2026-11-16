@@ -31,6 +31,17 @@ export interface ProjectPlayerViewOptions {
    * Maximum vision cutoff distance in feet (default 120 ft / 24 squares).
    */
   maxVisionRangeFeet?: number;
+  /**
+   * Per-player exploration memory. When supplied, this replaces the global
+   * `state.exploredCells` so one player's discovered cells never leak into
+   * another player's Fog-of-War projection (SRD-703).
+   */
+  exploredCells?: Record<string, boolean>;
+  /**
+   * Absolute epoch-ms deadline of the pending reaction prompt. Only attached
+   * to the projection of the player who controls the reactor (SRD-703).
+   */
+  reactionPromptDeadline?: number | null;
 }
 
 /**
@@ -175,6 +186,7 @@ export function projectPlayerView(
 ): PlayerViewState {
   const sharedVision = options.sharedVision ?? true;
   const maxVisionRangeFeet = options.maxVisionRangeFeet ?? 120;
+  const exploredCells = options.exploredCells ?? state.exploredCells;
 
   const slot =
     state.slots.find((s) => s.playerId === playerId) ??
@@ -244,7 +256,7 @@ export function projectPlayerView(
       };
     }
 
-    if (state.exploredCells[key]) {
+    if (exploredCells[key]) {
       return {
         x: cell.x,
         y: cell.y,
@@ -363,6 +375,8 @@ export function projectPlayerView(
       turnBudget: isMyTurn ? state.combat.turnBudget : null,
       outcome: state.combat.outcome,
       pendingReactionPrompt: isMyReaction ? pendingPrompt : null,
+      reactionPromptDeadline:
+        isMyReaction && pendingPrompt ? (options.reactionPromptDeadline ?? null) : null,
       hazardZones: visibleHazardZones,
     };
   }

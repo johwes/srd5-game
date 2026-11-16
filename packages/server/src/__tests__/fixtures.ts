@@ -64,6 +64,24 @@ export function makeTestState(): GameState {
   });
 }
 
+/** Two heroes far apart so each player owns a disjoint slice of the map. */
+export function makeSplitState(): GameState {
+  const heroA = makeHero('hero-a', 'Valeros', 1, 1);
+  const heroB = makeHero('hero-b', 'Merisiel', 10, 10);
+  const monster = makeMonster('goblin-1', 'Goblin', 9, 9);
+  return createInitialGameState({
+    id: 'split-game',
+    grid: createTacticalGrid(12, 12),
+    party: [heroA, heroB],
+    monsters: [monster],
+    rngState: 424242,
+    slots: [
+      { playerId: 'p1', displayName: 'Player One', controlledCharacterIds: ['hero-a'] },
+      { playerId: 'p2', displayName: 'Player Two', controlledCharacterIds: ['hero-b'] },
+    ],
+  });
+}
+
 /** In-memory socket that records parsed server messages and simulates the wire. */
 export class FakeSocket implements RoomSocket {
   public readonly sent: ServerMessage[] = [];

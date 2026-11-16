@@ -3,6 +3,7 @@ import {
   type GameCommand,
   type GameEvent,
   type GameState,
+  type PendingReactionPrompt,
   type PlayerSlotAssignment,
   reduceGame,
 } from '@srd5/engine';
@@ -58,6 +59,9 @@ export class Room {
   private readonly projectionOptions: ProjectPlayerViewOptions;
   private readonly compendium?: SrdCompendium;
   private hostPlayerId: string | null = null;
+  /** Exploration memory is tracked per player, never shared via global state (SRD-703). */
+  private readonly exploredCellsByPlayer = new Map<string, Set<string>>();
+  private reactionPromptDeadline: number | null = null;
 
   constructor(options: RoomOptions) {
     this.roomId = options.roomId;
@@ -66,6 +70,7 @@ export class Room {
     this.authoritativeState = structuredClone(options.initialState);
     this.projectionOptions = options.projectionOptions ?? { sharedVision: true };
     this.compendium = options.compendium;
+    this.syncExploration();
   }
 
   /** Rebinds the room's first slot to the creating player (the host). */
@@ -85,6 +90,7 @@ export class Room {
         controlledCharacterIds: Object.keys(this.authoritativeState.party),
       });
     }
+    this.syncExploration();
   }
 
   /** True when the room has no connected participants. */
@@ -144,6 +150,7 @@ export class Room {
     }
 
     this.ensureSlotForMember(member, requestedCharacterIds);
+    this.syncExploration();
     return { ...member };
   }
 
@@ -169,7 +176,39 @@ export class Room {
 
   /** Per-player Fog-of-War projection. Never exposes the authoritative state. */
   public getView(playerId: string): PlayerViewState {
-    return projectPlayerView(this.authoritativeState, playerId, this.projectionOptions);
+    return projectPlayerView(this.authoritativeState, playerId, {
+      ...this.projectionOptions,
+      exploredCells: this.getExploredCells(playerId),
+      reactionPromptDeadline: this.reactionPromptDeadline,
+    });
+  }
+
+  /** Snapshot of the cells a given player has personally discovered. */
+  public getExploredCells(playerId: string): Record<string, boolean> {
+    const cells: Record<string, boolean> = {};
+    for (const key of this.exploredCellsByPlayer.get(playerId) ?? []) cells[key] = true;
+    return cells;
+  }
+
+  /**
+   * Refreshes every member's exploration memory from current visibility. Cells
+   * newly seen become 'remembered' for that player alone on later projections.
+   */
+  public syncExploration(): void {
+    for (const member of this.members.values()) {
+      let memory = this.exploredCellsByPlayer.get(member.playerId);
+      if (!memory) {
+        memory = new Set<string>();
+        this.exploredCellsByPlayer.set(member.playerId, memory);
+      }
+      const view = projectPlayerView(this.authoritativeState, member.playerId, {
+        ...this.projectionOptions,
+        exploredCells: this.getExploredCells(member.playerId),
+      });
+      for (const cell of view.grid.cells) {
+        if (cell.visibility === 'visible') memory.add(`${cell.x},${cell.y}`);
+      }
+    }
   }
 
   /** Authoritative state clone — for snapshots, persistence, or diagnostics only. */
@@ -180,6 +219,7 @@ export class Room {
   /** Loads an authoritative state (host migration / save restore). */
   public setAuthoritativeState(state: GameState): void {
     this.authoritativeState = structuredClone(state);
+    this.syncExploration();
   }
 
   /**
@@ -228,6 +268,7 @@ export class Room {
     }
 
     this.authoritativeState.slots = structuredClone(assignments);
+    this.syncExploration();
     return this.getSlotAssignments();
   }
 
@@ -251,6 +292,11 @@ export class Room {
       }
     }
 
+    return this.applyAuthoritativeCommand(command);
+  }
+
+  /** Applies a validated command through the authoritative reducer. */
+  private applyAuthoritativeCommand(command: GameCommand): GameEvent[] {
     let result: ReturnType<typeof reduceGame>;
     try {
       result = reduceGame(this.authoritativeState, command, { compendium: this.compendium });
@@ -260,7 +306,49 @@ export class Room {
     }
 
     this.authoritativeState = result.nextState;
+    if (!this.authoritativeState.combat?.pendingReactionPrompt) {
+      this.reactionPromptDeadline = null;
+    }
+    this.syncExploration();
     return result.events;
+  }
+
+  /** The reaction prompt currently pausing the authoritative game, if any. */
+  public getPendingReactionPrompt(): PendingReactionPrompt | null {
+    return this.authoritativeState.combat?.pendingReactionPrompt ?? null;
+  }
+
+  /** Player who controls the creature a reaction prompt asks about. */
+  public getReactionOwnerPlayerId(prompt: PendingReactionPrompt): string | null {
+    const slot = this.authoritativeState.slots.find((s) =>
+      s.controlledCharacterIds.includes(prompt.reactorEntityId),
+    );
+    return slot?.playerId ?? null;
+  }
+
+  /** Absolute epoch-ms currently advertised to the reactor, if any. */
+  public getReactionPromptDeadline(): number | null {
+    return this.reactionPromptDeadline;
+  }
+
+  public setReactionPromptDeadline(deadline: number | null): void {
+    this.reactionPromptDeadline = deadline;
+  }
+
+  /**
+   * Server-authoritative pass for an unanswered reaction prompt. Bypasses player
+   * ownership checks (the reactor may have disconnected) but still runs the
+   * engine reducer so the interrupted action resumes correctly (SRD-703).
+   */
+  public passReactionPromptBySystem(promptId: string): GameEvent[] {
+    const prompt = this.getPendingReactionPrompt();
+    if (!prompt || prompt.promptId !== promptId) return [];
+    return this.applyAuthoritativeCommand({
+      type: 'RESOLVE_REACTION_PROMPT',
+      promptId,
+      reactorId: prompt.reactorEntityId,
+      decision: { execute: false },
+    });
   }
 
   private ensureSlotForMember(member: RoomMember, requestedCharacterIds?: string[]): void {
