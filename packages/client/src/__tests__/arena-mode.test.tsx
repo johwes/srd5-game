@@ -521,8 +521,11 @@ describe('SRD-408: The Arena Mode (PvE Skirmish, Endless Waves & Hot-Seat PvP 1v
       fireEvent.click(screen.getByTestId('spell-cast-btn-fire-bolt'));
       expect(screen.getByTestId('targeting-commit-bar')).toBeDefined();
 
-      // Clicking an enemy portrait commits the target (no enemy card popup)
-      const foeCards = screen.getAllByTestId(/initiative-foe-card-/);
+      // Clicking an enemy portrait commits the target (no enemy card popup).
+      // Ribbon cards route through the same targeting handler as tokens.
+      const foeCards = screen
+        .getAllByTestId(/initiative-card-/)
+        .filter((el) => /goblin|wolf/i.test(el.getAttribute('data-testid') ?? ''));
       expect(foeCards.length).toBeGreaterThan(0);
       fireEvent.click(foeCards[0]!);
 

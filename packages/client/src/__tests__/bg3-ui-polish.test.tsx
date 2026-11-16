@@ -8,7 +8,6 @@ import type { PlayerViewCombatant } from '@srd5/transport';
 import {
   ActionHotbar,
   CombatantMedallion,
-  InitiativePortraits,
   SelectedEnemyCard,
   computeIconSize,
 } from '../components/combat/index.js';
@@ -75,47 +74,6 @@ function makeMonsterCombatant(
 }
 
 describe('SRD-608: BG3-Reference UI Polish', () => {
-  describe('InitiativePortraits', () => {
-    it('renders enemies and allies rows with HP text and selects on click', () => {
-      const fighter = makePartyCombatant('hero-fighter', 'Valeros');
-      const goblin = makeMonsterCombatant('goblin-1', 'Klaw');
-      const onSelect = vi.fn();
-
-      render(
-        <InitiativePortraits
-          initiativeOrder={[
-            { entityId: 'goblin-1', initiative: 18, isVisible: true },
-            { entityId: 'hero-fighter', initiative: 12, isVisible: true },
-          ]}
-          combatants={{ 'hero-fighter': fighter, 'goblin-1': goblin }}
-          activeCombatantId="goblin-1"
-          round={2}
-        />,
-      );
-
-      expect(screen.getByTestId('initiative-portraits')).toBeDefined();
-      expect(screen.getByTestId('initiative-portraits-round').textContent).toContain('2');
-      // BG3-style HP text on cards
-      expect(screen.getByTestId('initiative-foe-card-goblin-1').textContent).toContain('13/26');
-      expect(screen.getByTestId('initiative-ally-card-hero-fighter').textContent).toContain('24/32');
-    });
-
-    it('selects a combatant when its portrait card is clicked', () => {
-      const goblin = makeMonsterCombatant('goblin-1', 'Klaw');
-      const onSelect = vi.fn();
-      render(
-        <InitiativePortraits
-          initiativeOrder={[{ entityId: 'goblin-1', initiative: 18, isVisible: true }]}
-          combatants={{ 'goblin-1': goblin }}
-          activeCombatantId={null}
-          onSelectCombatant={onSelect}
-        />,
-      );
-      fireEvent.click(screen.getByTestId('initiative-foe-card-goblin-1'));
-      expect(onSelect).toHaveBeenCalledWith('goblin-1');
-    });
-  });
-
   describe('SelectedEnemyCard', () => {
     it('shows hostile HP, conditions and buffs with a close button', () => {
       const goblin = makeMonsterCombatant('goblin-1', 'Klaw', {

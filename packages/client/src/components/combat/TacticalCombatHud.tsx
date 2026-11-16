@@ -4,8 +4,8 @@ import type { DiceRollRecord } from '@srd5/engine';
 import { ActionHotbar } from './ActionHotbar.js';
 import { AnimatedDiceTray } from './AnimatedDiceTray.js';
 import { CombatLog } from './CombatLog.js';
-import { InitiativePortraits, SelectedEnemyCard } from './InitiativePortraits.js';
 import { InitiativeRibbon } from './InitiativeRibbon.js';
+import { SelectedEnemyCard } from './SelectedEnemyCard.js';
 import { PartyPortraits } from './PartyPortraits.js';
 import { ReactionInterruptModal } from './ReactionInterruptModal.js';
 import type { TacticalCombatHudProps } from './types.js';
@@ -249,20 +249,9 @@ export function TacticalCombatHud({
         />
       </div>
 
-      {/* 3b. BG3-style Initiative Portraits (top-left, enemies over allies) */}
-      {combat && combat.initiativeOrder.length > 0 && (
-        <div className="absolute top-16 left-2 sm:left-3 z-20 pointer-events-auto">
-          <InitiativePortraits
-            initiativeOrder={combat.initiativeOrder}
-            combatants={viewState.combatants}
-            activeCombatantId={activeCombatantId}
-            selectedCombatantId={selectedCombatantId}
-            onSelectCombatant={handleSelectCombatant}
-          />
-        </div>
-      )}
-
-      {/* 3c. BG3-style Selected-Enemy Card (top-center, under the ribbon) */}
+      {/* 3b. BG3-style Selected-Enemy Card (top-center, under the ribbon).
+          Turn order lives in the ribbon above; the card shows details for the
+          current selection only. */}
       {showEnemyCard && selectedCombatant && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20">
           <SelectedEnemyCard
