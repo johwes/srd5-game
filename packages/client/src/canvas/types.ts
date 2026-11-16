@@ -9,6 +9,7 @@ import type {
   GridCell,
   GridCreature,
   GridPoint,
+  HazardZone,
   LightLevel,
   LightSource,
   PathfindingResult,
@@ -338,6 +339,8 @@ export interface TacticalCanvasViewportProps {
   showConditionBadges?: boolean;
   showTokenFacing?: boolean;
   showTokenNames?: boolean;
+  /** Persistent spell hazard zones (Grease, Web, Spike Growth, …) rendered as ground overlays. */
+  hazardZones?: readonly HazardZone[];
   /** Live combat/dungeon events rendered as floating combat text (MISS, CONCENTRATION BROKEN, …). */
   events?: GameEvent[];
   pathPreview?: PathPreviewOptions | null;

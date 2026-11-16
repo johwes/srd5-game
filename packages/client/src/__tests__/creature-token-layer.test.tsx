@@ -6,8 +6,10 @@ import { createTacticalGrid } from '@srd5/engine';
 import {
   CreatureTokenRenderer,
   FloatingTextRenderer,
+  HazardZoneRenderer,
   TacticalCanvasViewport,
   facingToAngleRad,
+  hazardVisualFamilyOf,
   vectorToFacing,
   type CreatureFacing,
   type CreatureTokenData,
@@ -453,6 +455,77 @@ describe('SRD-403: PixiJS Creature Token Layer & Floating Text', () => {
       );
 
       expect(renderer.getActiveCount()).toBe(5);
+    });
+  });
+
+  describe('HazardZoneRenderer', () => {
+    it('maps zone ids to visual families', () => {
+      expect(hazardVisualFamilyOf('grease-zone')).toBe('slick');
+      expect(hazardVisualFamilyOf('web-zone')).toBe('webs');
+      expect(hazardVisualFamilyOf('entangle-zone')).toBe('webs');
+      expect(hazardVisualFamilyOf('black-tentacles-zone')).toBe('webs');
+      expect(hazardVisualFamilyOf('spike-growth-zone')).toBe('thorns');
+      expect(hazardVisualFamilyOf('cloudkill-zone')).toBe('fog');
+      expect(hazardVisualFamilyOf('darkness-zone')).toBe('fog');
+      expect(hazardVisualFamilyOf('stinking-cloud-zone')).toBe('fog');
+      expect(hazardVisualFamilyOf('silence-zone')).toBe('fog');
+      expect(hazardVisualFamilyOf('wall-of-fire-zone')).toBe('flames');
+      expect(hazardVisualFamilyOf('flaming-sphere-zone')).toBe('flames');
+      expect(hazardVisualFamilyOf('spirit-guardians-zone')).toBe('radiant');
+      expect(hazardVisualFamilyOf('ice-storm-difficult-terrain')).toBe('frost');
+      expect(hazardVisualFamilyOf('confusion-zone')).toBe('mind');
+      expect(hazardVisualFamilyOf('mystery-zone')).toBe('arcane');
+    });
+
+    function makeZone(
+      id: string,
+      zoneId: string,
+      sourceName: string,
+      cells: Array<{ x: number; y: number }>,
+    ) {
+      return {
+        id,
+        zoneId,
+        casterId: 'caster-1',
+        sourceName,
+        shape: 'cube' as const,
+        origin: cells[0]!,
+        sizeFeet: 10,
+        cells,
+        durationRounds: 10,
+        remainingRounds: 10,
+        requiresConcentration: false,
+        difficultTerrain: true,
+        triggeredCreaturesThisTurn: [],
+        onEnterOrStartTurn: [],
+      };
+    }
+
+    it('draws one connected overlay plus label per zone and clears on empty', () => {
+      const parent = new Container();
+      const renderer = new HazardZoneRenderer(parent);
+
+      renderer.render({
+        zones: [
+          makeZone('hz1', 'grease-zone', 'Grease', [
+            { x: 5, y: 5 },
+            { x: 6, y: 5 },
+          ]),
+          makeZone('hz2', 'web-zone', 'Web', [{ x: 2, y: 2 }]),
+        ],
+        cellSize: 48,
+      });
+
+      const labels = renderer.container.children.map((c) => c.label);
+      expect(labels).toContain('Hazard_hz1');
+      expect(labels).toContain('HazardLabel_hz1');
+      expect(labels).toContain('Hazard_hz2');
+      expect(labels).toContain('HazardLabel_hz2');
+
+      renderer.render({ zones: [], cellSize: 48 });
+      expect(renderer.container.children.length).toBe(0);
+
+      renderer.destroy();
     });
   });
 

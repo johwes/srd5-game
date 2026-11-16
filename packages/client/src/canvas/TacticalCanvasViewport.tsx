@@ -5,6 +5,7 @@ import { createSceneGraph } from './layers/SceneGraph.js';
 import { TerrainTileRenderer } from './layers/TerrainTileLayer.js';
 import { CreatureTokenRenderer } from './layers/CreatureTokenLayer.js';
 import { FloatingTextRenderer } from './layers/FloatingTextLayer.js';
+import { HazardZoneRenderer } from './layers/HazardZoneLayer.js';
 import { PathAndAoeRenderer } from './layers/PathAndAoeLayer.js';
 import { LightingAndFogRenderer } from './layers/LightingAndFogLayer.js';
 import { assetRegistry } from './assets/index.js';
@@ -40,6 +41,7 @@ export function TacticalCanvasViewport({
   showConditionBadges = true,
   showTokenFacing = true,
   showTokenNames = true,
+  hazardZones = [],
   pathPreview = null,
   enableHoverPathPreview = true,
   activeAoeTemplate = null,
@@ -103,6 +105,7 @@ export function TacticalCanvasViewport({
   const sceneGraphRef = useRef<TacticalSceneGraph | null>(null);
   const terrainRendererRef = useRef<TerrainTileRenderer | null>(null);
   const tokenRendererRef = useRef<CreatureTokenRenderer | null>(null);
+  const hazardZoneRendererRef = useRef<HazardZoneRenderer | null>(null);
   const floatingTextRendererRef = useRef<FloatingTextRenderer | null>(null);
   const pathAndAoeRendererRef = useRef<PathAndAoeRenderer | null>(null);
   const fogRendererRef = useRef<LightingAndFogRenderer | null>(null);
@@ -225,6 +228,9 @@ export function TacticalCanvasViewport({
         const tokenRenderer = new CreatureTokenRenderer(sceneGraph.tokenLayer);
         tokenRendererRef.current = tokenRenderer;
 
+        const hazardZoneRenderer = new HazardZoneRenderer(sceneGraph.hazardLayer);
+        hazardZoneRendererRef.current = hazardZoneRenderer;
+
         const floatingTextRenderer = new FloatingTextRenderer(sceneGraph.floatingTextLayer);
         floatingTextRendererRef.current = floatingTextRenderer;
 
@@ -284,6 +290,10 @@ export function TacticalCanvasViewport({
         if (floatingTextRendererRef.current) {
           floatingTextRendererRef.current.destroy();
           floatingTextRendererRef.current = null;
+        }
+        if (hazardZoneRendererRef.current) {
+          hazardZoneRendererRef.current.destroy();
+          hazardZoneRendererRef.current = null;
         }
         if (terrainRendererRef.current) {
           terrainRendererRef.current.destroy();
@@ -390,6 +400,16 @@ export function TacticalCanvasViewport({
       }
     }
   }, [events, combatants, cellSize, pixiReady]);
+
+  // Update Hazard Zone ground overlays (Grease, Web, Spike Growth, …)
+  useEffect(() => {
+    if (hazardZoneRendererRef.current) {
+      hazardZoneRendererRef.current.render({
+        zones: hazardZones,
+        cellSize,
+      });
+    }
+  }, [hazardZones, cellSize, pixiReady]);
 
   // Update Interactive Overlays (Path preview, AOE templates, Targeting rays)
   useEffect(() => {
