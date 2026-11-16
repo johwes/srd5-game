@@ -247,6 +247,63 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
       expect(onClaim).toHaveBeenCalledTimes(1);
     });
 
+    it('opens on the targeted hero instead of always the first party member', () => {
+      const { initialState } = buildDungeonSession(floor1, [], defaultCompendium);
+      const partyIds = Object.keys(initialState.party);
+      expect(partyIds.length).toBeGreaterThan(2);
+      const targetedId = partyIds[2]!;
+      const onClose = vi.fn();
+
+      const lootBundle = { gp: 25, items: ['potion-of-healing'] };
+      const lootProps = {
+        activeLoot: {
+          sourcePropId: 'chest-1',
+          sourceName: 'Stone Chest',
+          bundle: lootBundle,
+        },
+      };
+
+      const { rerender } = render(
+        <LootInventoryModal
+          isOpen={true}
+          party={initialState.party}
+          initialHeroId={targetedId}
+          compendium={defaultCompendium}
+          onClose={onClose}
+          onClaimLoot={vi.fn()}
+          onEquipItem={vi.fn()}
+          onAttuneItem={vi.fn()}
+          onUnattuneItem={vi.fn()}
+          {...lootProps}
+        />,
+      );
+
+      // Recipient selector and hero tab both honor the targeted hero
+      expect(
+        (screen.getByTestId('loot-recipient-select') as HTMLSelectElement).value,
+      ).toBe(targetedId);
+
+      // Reopening for a different targeted hero switches selection
+      const otherId = partyIds[1]!;
+      rerender(
+        <LootInventoryModal
+          isOpen={true}
+          party={initialState.party}
+          initialHeroId={otherId}
+          compendium={defaultCompendium}
+          onClose={onClose}
+          onClaimLoot={vi.fn()}
+          onEquipItem={vi.fn()}
+          onAttuneItem={vi.fn()}
+          onUnattuneItem={vi.fn()}
+          {...lootProps}
+        />,
+      );
+      expect(
+        (screen.getByTestId('loot-recipient-select') as HTMLSelectElement).value,
+      ).toBe(otherId);
+    });
+
     it('switches between hero inventories and shows equipment loadout', () => {
       const { initialState } = buildDungeonSession(floor1, [], defaultCompendium);
       const onClaim = vi.fn();
@@ -466,6 +523,61 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
       const descendBtn = screen.getByTestId('prop-descend-stairs-btn');
       fireEvent.click(descendBtn);
       expect(onDescendStairs).toHaveBeenCalledTimes(1);
+    });
+
+    it('opens the character sheet for the targeted hero and shows buff/condition status', () => {
+      const { transport, initialState } = buildDungeonSession(floor1, [], defaultCompendium);
+      const viewState = transport.getPlayerViewState();
+      const partyIds = Object.keys(viewState.party);
+      const targetedId = partyIds[1]!;
+
+      // Give the targeted hero a condition and an active buff
+      viewState.party[targetedId]!.conditions = ['poisoned'];
+      viewState.party[targetedId]!.activeEffects = [
+        {
+          effectId: 'bless-buff',
+          name: 'Bless',
+          requiresConcentration: true,
+          remainingRounds: 8,
+          modifiers: [],
+        },
+      ];
+
+      const onInspect = vi.fn();
+
+      render(
+        <DungeonExplorationHud
+          viewState={viewState}
+          gameState={initialState}
+          compendium={defaultCompendium}
+          campaignName={campaign.name}
+          floorSpec={floor1}
+          leadExplorerId={partyIds[0]!}
+          inStealth={false}
+          formation="single_file"
+          adjacentProps={[]}
+          onToggleStealth={vi.fn()}
+          onOpenMarchingOrder={vi.fn()}
+          onOpenRestCamp={vi.fn()}
+          onOpenLootInventory={vi.fn()}
+          onOpenSaveLoad={vi.fn()}
+          onPerformSearch={vi.fn()}
+          onSelectLeadExplorer={vi.fn()}
+          onInspectCharacter={onInspect}
+          onInteractProp={vi.fn()}
+          onExitDelve={vi.fn()}
+        />,
+      );
+
+      // Status indication shows both the condition and the buff
+      const status = screen.getByTestId(`exploration-status-${targetedId}`);
+      expect(status.textContent).toContain('poisoned');
+      expect(status.textContent).toContain('Bless');
+
+      // Inspect button opens the sheet for the targeted hero, not the first
+      fireEvent.click(screen.getByTestId(`exploration-inspect-hero-${targetedId}`));
+      expect(onInspect).toHaveBeenCalledTimes(1);
+      expect(onInspect).toHaveBeenCalledWith(targetedId);
     });
   });
 

@@ -342,6 +342,38 @@ export function DungeonView({
   const leadExplorerId = marchingConfig.leadExplorerId;
   const leadCombatant = authState.party[leadExplorerId] ?? partyList[0];
 
+  // Targeting-aware Character Sheet shortcut ('C' / 'I'): opens the sheet for
+  // the currently selected combatant (falling back to the lead explorer) so
+  // targeting actually determines whose sheet opens. Registered on capture so
+  // the App-level fallback (which always opens the first party member) never
+  // fires while the dungeon view is mounted.
+  useEffect(() => {
+    const handleSheetShortcut = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key !== 'c' && key !== 'i') return;
+      e.preventDefault();
+      e.stopPropagation();
+      const heroId = selectedCombatantId ?? leadExplorerId;
+      if (heroId && onOpenCharacterSheet) {
+        onOpenCharacterSheet(heroId);
+      }
+    };
+
+    window.addEventListener('keydown', handleSheetShortcut, { capture: true });
+    return () => window.removeEventListener('keydown', handleSheetShortcut, { capture: true });
+  }, [selectedCombatantId, leadExplorerId, onOpenCharacterSheet]);
+
   // AI monster turn execution
   const activeCombatantId = viewState.combat?.activeCombatantId ?? null;
   const activeCombatant = activeCombatantId
@@ -1082,6 +1114,7 @@ export function DungeonView({
       <LootInventoryModal
         isOpen={modalState === 'loot_inventory'}
         party={viewState.party}
+        initialHeroId={selectedCombatantId ?? leadExplorerId}
         compendium={compendium}
         activeLoot={activeLoot}
         onClose={() => {

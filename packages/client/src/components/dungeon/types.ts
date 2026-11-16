@@ -56,6 +56,8 @@ export interface RestCampModalProps {
 export interface LootInventoryModalProps {
   isOpen: boolean;
   party: Record<string, PlayerViewCombatant | Combatant>;
+  /** Hero to select when the modal opens (targeted/selected combatant, else lead). */
+  initialHeroId?: string | null;
   compendium: SrdCompendium;
   activeLoot?: {
     sourcePropId?: string;

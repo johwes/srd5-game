@@ -314,4 +314,36 @@ describe('SRD-311: projectPlayerView Fog-of-War State Filter', () => {
     expect(otherView.combat?.pendingReactionPrompt).toBeNull();
     expect(otherView.combat?.reactionPromptDeadline).toBeNull();
   });
+
+  it('projects active buffs and concentration so the client can show status', () => {
+    const grid = createTacticalGrid(10, 10);
+    const hero = makePartyMember('hero-1', 'Hero', 2, 2);
+    hero.conditions.push('poisoned');
+    hero.activeEffects = [
+      {
+        effectId: 'bless-buff',
+        name: 'Bless',
+        requiresConcentration: true,
+        remainingRounds: 8,
+        modifiers: [],
+      },
+    ];
+    hero.concentratingOn = {
+      sourceId: 'bless',
+      sourceName: 'Bless',
+      targetEntityIds: ['hero-1'],
+      remainingRounds: 8,
+    };
+
+    const state = createInitialGameState({
+      grid,
+      party: [hero],
+    });
+
+    const view = projectPlayerView(state, 'player-1');
+    expect(view.party['hero-1']?.conditions).toContain('poisoned');
+    expect(view.party['hero-1']?.activeEffects).toHaveLength(1);
+    expect(view.party['hero-1']?.activeEffects?.[0]?.name).toBe('Bless');
+    expect(view.party['hero-1']?.concentratingOn?.sourceId).toBe('bless');
+  });
 });

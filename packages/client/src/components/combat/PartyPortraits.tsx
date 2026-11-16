@@ -180,6 +180,28 @@ export function PartyPortraits({
                     </span>
                   </div>
 
+                  {(hero.conditions.length > 0 || (hero.activeEffects?.length ?? 0) > 0) && (
+                    <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                      {hero.conditions.map((condition) => (
+                        <span
+                          key={condition}
+                          className="px-1 py-0.2 rounded bg-amber-950 border border-amber-600 text-amber-200 font-bold text-[9px] uppercase"
+                        >
+                          {condition}
+                        </span>
+                      ))}
+                      {(hero.activeEffects ?? []).map((effect) => (
+                        <span
+                          key={effect.effectId}
+                          className="px-1 py-0.2 rounded bg-emerald-950 border border-emerald-600 text-emerald-200 font-bold text-[9px]"
+                          title={`${effect.name}${effect.remainingRounds !== undefined ? ` (${effect.remainingRounds} rounds left)` : ''}`}
+                        >
+                          ✨ {effect.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {onOpenCharacterSheet && (
                     <button
                       type="button"
@@ -401,6 +423,35 @@ export function PartyPortraits({
                         {condition}
                       </span>
                     ))}
+                  </div>
+                )}
+
+                {/* Active Buff / Debuff Badges (Bless, Haste, Rage, Shield, ...) */}
+                {(hero.activeEffects?.length ?? 0) > 0 && (
+                  <div
+                    data-testid={`party-card-buffs-${hero.id}`}
+                    className="flex flex-wrap items-center gap-1 w-full pt-0.5"
+                  >
+                    {hero.activeEffects!.slice(0, 4).map((effect) => (
+                      <span
+                        key={effect.effectId}
+                        className="px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-600 text-emerald-200 font-bold text-[9px] uppercase"
+                        title={`${effect.name}${effect.remainingRounds !== undefined ? ` (${effect.remainingRounds} rounds left)` : ''}${effect.requiresConcentration ? ' [Concentration]' : ''}`}
+                      >
+                        ✨ {effect.name}
+                        {effect.remainingRounds !== undefined
+                          ? ` (${effect.remainingRounds})`
+                          : ''}
+                      </span>
+                    ))}
+                    {hero.activeEffects!.length > 4 && (
+                      <span
+                        className="px-1.5 py-0.2 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[9px]"
+                        title={hero.activeEffects!.slice(4).map((e) => e.name).join(', ')}
+                      >
+                        +{hero.activeEffects!.length - 4} more
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

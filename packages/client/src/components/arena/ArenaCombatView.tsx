@@ -244,6 +244,35 @@ export function ArenaCombatView({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // Targeting-aware Character Sheet shortcut ('C' / 'I'): opens the sheet for
+  // the currently selected combatant instead of always the first party member.
+  useEffect(() => {
+    const handleSheetShortcut = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key !== 'c' && key !== 'i') return;
+      e.preventDefault();
+      e.stopPropagation();
+      const heroId = selectedCombatantId ?? viewState.party[viewState.combat?.activeCombatantId ?? '']?.id ?? Object.keys(viewState.party)[0];
+      if (heroId && onOpenCharacterSheet) {
+        onOpenCharacterSheet(heroId);
+      }
+    };
+
+    window.addEventListener('keydown', handleSheetShortcut, { capture: true });
+    return () => window.removeEventListener('keydown', handleSheetShortcut, { capture: true });
+  }, [selectedCombatantId, viewState.party, viewState.combat, onOpenCharacterSheet]);
+
   useEffect(() => {
     setPendingTarget({ kind: 'none' });
   }, [activeCombatantId]);

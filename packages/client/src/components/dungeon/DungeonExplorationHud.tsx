@@ -420,7 +420,54 @@ export function DungeonExplorationHud({
                     </span>
                     <span>AC {hero.armorClass}</span>
                   </div>
+
+                  {/* Status indication: conditions + active buffs */}
+                  {(hero.conditions.length > 0 || (hero.activeEffects?.length ?? 0) > 0) && (
+                    <div
+                      data-testid={`exploration-status-${hero.id}`}
+                      className="flex flex-wrap items-center gap-1"
+                    >
+                      {hero.conditions.map((condition) => (
+                        <span
+                          key={condition}
+                          className="px-1 py-0.2 rounded bg-amber-950 border border-amber-600 text-amber-200 font-bold text-[9px] uppercase"
+                          title={condition}
+                        >
+                          {condition}
+                        </span>
+                      ))}
+                      {(hero.activeEffects ?? []).slice(0, 3).map((effect) => (
+                        <span
+                          key={effect.effectId}
+                          className="px-1 py-0.2 rounded bg-emerald-950 border border-emerald-600 text-emerald-200 font-bold text-[9px]"
+                          title={`${effect.name}${effect.remainingRounds !== undefined ? ` (${effect.remainingRounds} rounds left)` : ''}${effect.requiresConcentration ? ' [Concentration]' : ''}`}
+                        >
+                          ✨ {effect.name}
+                        </span>
+                      ))}
+                      {(hero.activeEffects?.length ?? 0) > 3 && (
+                        <span className="text-[9px] text-slate-400">
+                          +{(hero.activeEffects?.length ?? 0) - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {onInspectCharacter && (
+                  <button
+                    type="button"
+                    data-testid={`exploration-inspect-hero-${hero.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onInspectCharacter(hero.id);
+                    }}
+                    title={`Open character sheet for ${hero.name} (shows buffs, conditions & inventory)`}
+                    className="shrink-0 p-1 rounded hover:bg-slate-700 text-slate-500 hover:text-amber-300 transition-colors text-xs"
+                  >
+                    📜
+                  </button>
+                )}
               </div>
             );
           })}

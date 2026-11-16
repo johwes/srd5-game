@@ -1,8 +1,10 @@
 import {
+  type ActiveEffectInstance,
   type ConditionId,
   type CreatureSize,
 } from '@srd5/data';
 import {
+  type ActiveConcentration,
   type CombatPhase,
   type CombatVictoryOutcome,
   type CombatantSide,
@@ -99,6 +101,8 @@ export interface PlayerViewCombatant {
   tempHp: number;
   armorClass: number;
   conditions: ConditionId[];
+  activeEffects?: ActiveEffectInstance[] | undefined;
+  concentratingOn?: ActiveConcentration | undefined;
   isDead: boolean;
   isStable: boolean;
   reactionAvailable?: boolean | undefined;

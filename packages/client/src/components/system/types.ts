@@ -18,6 +18,7 @@ export interface PauseMenuPartyMember {
   maxHp: number;
   ac?: number;
   conditions?: string[];
+  buffs?: Array<{ effectId: string; name: string; remainingRounds?: number }>;
 }
 
 export interface PauseMenuModalProps {

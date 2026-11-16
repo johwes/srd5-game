@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { InventoryItemInstance } from '@srd5/data';
 import type { LootInventoryModalProps } from './types.js';
 
 export function LootInventoryModal({
   isOpen,
   party,
+  initialHeroId,
   compendium,
   activeLoot,
   onClose,
@@ -21,6 +22,28 @@ export function LootInventoryModal({
   const [activeTab, setActiveTab] = useState<'discovered' | 'inventory'>(
     activeLoot ? 'discovered' : 'inventory',
   );
+
+  // Sync the selected hero whenever the modal opens: honor the targeted hero
+  // (selected combatant / lead explorer) instead of sticking to whoever was
+  // selected during a previous open.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (initialHeroId && party[initialHeroId]) {
+      setSelectedHeroId(initialHeroId);
+    } else if (!party[selectedHeroId]) {
+      const fallback = partyList[0]?.id ?? '';
+      setSelectedHeroId(fallback);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialHeroId]);
+
+  // Keep selection valid if the party roster changes while open.
+  useEffect(() => {
+    if (isOpen && !party[selectedHeroId] && partyList[0]) {
+      setSelectedHeroId(partyList[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, party]);
 
   if (!isOpen) return null;
 

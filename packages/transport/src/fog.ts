@@ -79,6 +79,8 @@ export function toPlayerViewCombatant(c: Combatant): PlayerViewCombatant {
     tempHp: c.tempHp,
     armorClass: c.armorClass,
     conditions: [...c.conditions],
+    activeEffects: c.activeEffects ? [...c.activeEffects] : undefined,
+    concentratingOn: c.concentratingOn ? { ...c.concentratingOn } : undefined,
     isDead: c.isDead,
     isStable: c.isStable,
     reactionAvailable: c.reactionAvailable,

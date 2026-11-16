@@ -344,6 +344,37 @@ describe('SRD-406: React Tactical Combat HUD', () => {
       expect(onOpenSheet).toHaveBeenCalledWith('hero-fighter');
     });
 
+    it('renders condition and active buff badges for status indication', () => {
+      const { viewState } = createMockPlayerViewState();
+
+      render(
+        <PartyPortraits
+          party={{
+            ...viewState.party,
+            'hero-wizard': {
+              ...viewState.party['hero-wizard']!,
+              conditions: ['poisoned'],
+              activeEffects: [
+                {
+                  effectId: 'bless-buff',
+                  name: 'Bless',
+                  requiresConcentration: true,
+                  remainingRounds: 8,
+                  modifiers: [],
+                },
+              ],
+            },
+          }}
+          activeCombatantId="hero-fighter"
+        />,
+      );
+
+      expect(screen.getByTestId('party-card-conditions-hero-wizard').textContent).toContain('poisoned');
+      const buffs = screen.getByTestId('party-card-buffs-hero-wizard');
+      expect(buffs.textContent).toContain('Bless');
+      expect(buffs.textContent).toContain('(8)');
+    });
+
     it('supports collapsing and expanding party sidebar', () => {
       const { viewState } = createMockPlayerViewState();
       const onToggle = vi.fn();

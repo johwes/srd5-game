@@ -115,6 +115,14 @@ export function PauseMenuModal({
       const conditions: string[] = (hero.conditions ?? []).map((c: any) =>
         typeof c === 'string' ? c : c.condition ?? c.name ?? 'unknown',
       );
+      const buffs = Array.isArray(hero.activeEffects)
+        ? hero.activeEffects.map((e: any) => ({
+            effectId: String(e.effectId ?? e.name ?? `buff-${idx}`),
+            name: String(e.name ?? e.effectId ?? 'Buff'),
+            remainingRounds:
+              typeof e.remainingRounds === 'number' ? e.remainingRounds : undefined,
+          }))
+        : [];
 
       return {
         id: hero.id ?? `party-hero-${idx}`,
@@ -125,6 +133,7 @@ export function PauseMenuModal({
         maxHp,
         ac,
         conditions,
+        buffs,
       };
     });
   })();
@@ -659,6 +668,28 @@ export function PauseMenuModal({
                               className="text-[10px] px-1.5 py-0.5 rounded bg-red-950/60 border border-red-800/40 text-red-300 font-medium"
                             >
                               {cond}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Active buffs (Bless, Haste, Rage, Shield, ...) */}
+                      {hero.buffs && hero.buffs.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {hero.buffs.map((buff) => (
+                            <span
+                              key={buff.effectId}
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40 text-emerald-300 font-medium"
+                              title={
+                                buff.remainingRounds !== undefined
+                                  ? `${buff.name} (${buff.remainingRounds} rounds left)`
+                                  : buff.name
+                              }
+                            >
+                              ✨ {buff.name}
+                              {buff.remainingRounds !== undefined
+                                ? ` (${buff.remainingRounds})`
+                                : ''}
                             </span>
                           ))}
                         </div>
