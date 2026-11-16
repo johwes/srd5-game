@@ -567,6 +567,20 @@ export type CombatEvent =
       survivingHeroIds?: string[];
       encounterId?: string;
       lootBundle?: LootBundleSpec;
+    }
+  /**
+   * Tier C fallback: a spell/feature whose full effect cannot be resolved
+   * automatically. Carries a structured card the UI can surface to the player.
+   */
+  | {
+      type: 'MANUAL_ADJUDICATION_REQUIRED';
+      actorId: string;
+      sourceName: string;
+      adjudicationId: string;
+      title: string;
+      guidance: string;
+      suggestedRoll?: string | undefined;
+      targetId?: string | undefined;
     };
 
 /**

@@ -62,7 +62,27 @@
         ]
       }
     ],
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-additional-fighting-style",
+        "name": "Additional Fighting Style — Choose a Second Style",
+        "description": "Choose a second Fighting Style option from the fighter list (or the champion list if applicable).",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-additional-fighting-style",
+            "title": "Additional Fighting Style — Choose a Second Style",
+            "guidance": "Choose a second Fighting Style option from the fighter list (or the champion list if applicable)."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "additional-magical-secrets",
@@ -71,7 +91,27 @@
     "subclassId": "lore",
     "level": 6,
     "description": "At 6th level, you learn two spells of your choice from any class of a level you can cast or cantrips.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-additional-magical-secrets",
+        "name": "Additional Magical Secrets — Learn Spells",
+        "description": "Choose two spells from any class list that you have the spell slots to cast. Add them to your known spells.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-additional-magical-secrets",
+            "title": "Additional Magical Secrets — Learn Spells",
+            "guidance": "Choose two spells from any class list that you have the spell slots to cast. Add them to your known spells."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "arcane-recovery",
@@ -103,7 +143,27 @@
     "classId": "druid",
     "level": 20,
     "description": "At 20th level, you can use your Wild Shape an unlimited number of times.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-archdruid",
+        "name": "Archdruid — Unlimited Wild Shape",
+        "description": "You can use Wild Shape an unlimited number of times and can assume a form with a CR of 1 or lower as a bonus action.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-archdruid",
+            "title": "Archdruid — Unlimited Wild Shape",
+            "guidance": "You can use Wild Shape an unlimited number of times and can assume a form with a CR of 1 or lower as a bonus action."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "asi-barbarian",
@@ -292,7 +352,27 @@
     "classId": "druid",
     "level": 18,
     "description": "Beginning at 18th level, you can cast many of your druid spells in any shape you assume using Wild Shape.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-beast-spells",
+        "name": "Beast Spells — Cast in Wild Shape",
+        "description": "You can cast many of your druid spells while in a Wild Shape beast form, and you can use verbal and somatic components in beast form.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-beast-spells",
+            "title": "Beast Spells — Cast in Wild Shape",
+            "guidance": "You can cast many of your druid spells while in a Wild Shape beast form, and you can use verbal and somatic components in beast form."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "blessed-healer",
@@ -301,7 +381,27 @@
     "subclassId": "life",
     "level": 6,
     "description": "Beginning at 6th level, the healing spells you cast on others heal you as well (regain 2 + spell level hit points).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-blessed-healer",
+        "name": "Blessed Healer — Shared Healing",
+        "description": "When you cast a healing spell on another creature, you regain 2 + the spell’s level hit points.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-blessed-healer",
+            "title": "Blessed Healer — Shared Healing",
+            "guidance": "When you cast a healing spell on another creature, you regain 2 + the spell’s level hit points."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "blindsense",
@@ -309,7 +409,27 @@
     "classId": "rogue",
     "level": 14,
     "description": "Starting at 14th level, if you are able to hear, you are aware of the location of any hidden or invisible creature within 10 feet of you.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-blindsense",
+        "name": "Blindsense — Locate Hidden Creatures",
+        "description": "If you can hear, you are aware of the location of any hidden or invisible creature within 10 feet of you.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-blindsense",
+            "title": "Blindsense — Locate Hidden Creatures",
+            "guidance": "If you can hear, you are aware of the location of any hidden or invisible creature within 10 feet of you."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "bonus-cantrip-land",
@@ -492,7 +612,27 @@
     "classId": "paladin",
     "level": 14,
     "description": "Beginning at 14th level, you can use your action to end one spell on yourself or on one willing creature that you touch.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-cleansing-touch",
+        "name": "Cleansing Touch — End a Spell",
+        "description": "Use your action to end one spell on yourself or a willing creature you touch.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-cleansing-touch",
+            "title": "Cleansing Touch — End a Spell",
+            "guidance": "Use your action to end one spell on yourself or a willing creature you touch."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "countercharm",
@@ -500,7 +640,20 @@
     "classId": "bard",
     "level": 6,
     "description": "At 6th level, you gain the ability to use musical notes or words of power to disrupt mind-influencing effects.",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "roll_mode",
+        "mode": "advantage",
+        "target": "all_saving_throws",
+        "condition": "save_against_charmed"
+      },
+      {
+        "type": "roll_mode",
+        "mode": "advantage",
+        "target": "all_saving_throws",
+        "condition": "save_against_frightened"
+      }
+    ]
   },
   {
     "id": "cunning-action",
@@ -577,7 +730,28 @@
     "subclassId": "fiend",
     "level": 6,
     "description": "Starting at 6th level, you can call on your patron to alter fate in your favor, adding 1d10 to an ability check or saving throw once per short or long rest.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-dark-ones-own-luck",
+        "name": "Dark One’s Own Luck — Add 1d10 to a Roll",
+        "description": "When you make an ability check or saving throw, you can add 1d10 to the roll. Once you do so, you cannot use this feature again until you finish a short or long rest.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-dark-ones-own-luck",
+            "title": "Dark One’s Own Luck — Add 1d10 to a Roll",
+            "guidance": "When you make an ability check or saving throw, you can add 1d10 to the roll. Once you do so, you cannot use this feature again until you finish a short or long rest.",
+            "suggestedRoll": "1d10"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "defensive-tactics",
@@ -586,7 +760,27 @@
     "subclassId": "hunter",
     "level": 7,
     "description": "At 7th level, you gain one of the following features of your choice: Escape the Horde, Multiattack Defense, or Steel Will.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-defensive-tactics",
+        "name": "Defensive Tactics — Choose a Benefit",
+        "description": "Choose Escape the Horde (disadvantage on opportunity attacks against you), Multiattack Defense (+4 AC against attacks from a creature that hit you), or Steel Wind Strike-style protection.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-defensive-tactics",
+            "title": "Defensive Tactics — Choose a Benefit",
+            "guidance": "Choose Escape the Horde (disadvantage on opportunity attacks against you), Multiattack Defense (+4 AC against attacks from a creature that hit you), or Steel Wind Strike-style protection."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "deflect-missiles",
@@ -632,7 +826,27 @@
     "classId": "monk",
     "level": 14,
     "description": "Beginning at 14th level, your mastery of ki grants you proficiency in all saving throws.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-diamond-soul",
+        "name": "Diamond Soul — Proficiency in All Saves",
+        "description": "You have proficiency in all saving throws. If you already have proficiency in a save from another source, you gain no additional benefit.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-diamond-soul",
+            "title": "Diamond Soul — Proficiency in All Saves",
+            "guidance": "You have proficiency in all saving throws. If you already have proficiency in a save from another source, you gain no additional benefit."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "disciple-of-life",
@@ -665,7 +879,27 @@
     "classId": "cleric",
     "level": 10,
     "description": "Beginning at 10th level, you can call on your deity to intervene on your behalf when your need is great.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-divine-intervention",
+        "name": "Divine Intervention — Call on Your Deity",
+        "description": "You can call on your deity to intervene; describe the desired aid and the DM determines whether and how it occurs. Once used, you cannot use it again for 7 days.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-divine-intervention",
+            "title": "Divine Intervention — Call on Your Deity",
+            "guidance": "You can call on your deity to intervene; describe the desired aid and the DM determines whether and how it occurs. Once used, you cannot use it again for 7 days."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "divine-sense",
@@ -714,7 +948,27 @@
     "subclassId": "life",
     "level": 8,
     "description": "At 8th level, you gain the ability to infuse your weapon strikes with divine energy, dealing an extra 1d8 radiant damage once per turn.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-divine-strike-life",
+        "name": "Divine Strike — Extra Radiant Damage",
+        "description": "Once per turn when you hit a creature with a weapon attack, deal an extra 1d8 radiant damage.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-divine-strike-life",
+            "title": "Divine Strike — Extra Radiant Damage",
+            "guidance": "Once per turn when you hit a creature with a weapon attack, deal an extra 1d8 radiant damage."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "draconic-presence",
@@ -723,7 +977,28 @@
     "subclassId": "draconic",
     "level": 18,
     "description": "Beginning at 18th level, you can channel the dread presence of your dragon ancestor, causing those around you to become awestruck or frightened.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-draconic-presence",
+        "name": "Draconic Presence — Frighten with Ancestry",
+        "description": "As an action, spend 5 sorcery points to cause creatures within 60 feet that can see you to be frightened for 1 minute (WIS save to end).",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-draconic-presence",
+            "title": "Draconic Presence — Frighten with Ancestry",
+            "guidance": "As an action, spend 5 sorcery points to cause creatures within 60 feet that can see you to be frightened for 1 minute (WIS save to end).",
+            "suggestedRoll": "1d20 + @wisMod"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "draconic-resilience",
@@ -763,7 +1038,27 @@
     "subclassId": "draconic",
     "level": 14,
     "description": "At 14th level, you gain the ability to sprout a pair of dragon wings from your back, gaining a flying speed equal to your current speed.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-dragon-wings",
+        "name": "Dragon Wings — Fly",
+        "description": "Sprout draconic wings, gaining a flying speed equal to your walking speed.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-dragon-wings",
+            "title": "Dragon Wings — Fly",
+            "guidance": "Sprout draconic wings, gaining a flying speed equal to your walking speed."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "druid-circle",
@@ -812,7 +1107,27 @@
     "classId": "warlock",
     "level": 20,
     "description": "At 20th level, you can spend 1 minute entreating your patron for aid to regain all your expended spell slots from your Pact Magic feature once per long rest.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-eldritch-master",
+        "name": "Eldritch Master — Refill Spell Slots",
+        "description": "Spend 1 minute entreating your patron to regain all your expended warlock spell slots. Once used, you cannot do so again until you finish a long rest.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-eldritch-master",
+            "title": "Eldritch Master — Refill Spell Slots",
+            "guidance": "Spend 1 minute entreating your patron to regain all your expended warlock spell slots. Once used, you cannot do so again until you finish a long rest."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "elemental-affinity",
@@ -821,7 +1136,27 @@
     "subclassId": "draconic",
     "level": 6,
     "description": "Starting at 6th level, when you cast a spell that deals damage of the type associated with your draconic ancestry, you can add your Charisma modifier to one damage roll of that spell.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-elemental-affinity",
+        "name": "Elemental Affinity — Ignore Resistance",
+        "description": "When you cast a spell that deals damage matching your draconic ancestry, you ignore the target’s resistance to that damage type, and add your CHARISMA modifier to one damage roll of the spell.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-elemental-affinity",
+            "title": "Elemental Affinity — Ignore Resistance",
+            "guidance": "When you cast a spell that deals damage matching your draconic ancestry, you ignore the target’s resistance to that damage type, and add your CHARISMA modifier to one damage roll of the spell."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "elusive",
@@ -829,7 +1164,27 @@
     "classId": "rogue",
     "level": 18,
     "description": "Beginning at 18th level, no attack roll has advantage against you while you aren’t incapacitated.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-elusive",
+        "name": "Elusive — No Advantage Against You",
+        "description": "No attack roll has advantage against you while you aren’t incapacitated.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-elusive",
+            "title": "Elusive — No Advantage Against You",
+            "guidance": "No attack roll has advantage against you while you aren’t incapacitated."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "empowered-evocation",
@@ -838,7 +1193,27 @@
     "subclassId": "evocation",
     "level": 10,
     "description": "Beginning at 10th level, you can add your Intelligence modifier to one damage roll of any wizard evocation spell you cast.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-empowered-evocation",
+        "name": "Empowered Evocation — Add INT to Damage",
+        "description": "Add your Intelligence modifier to one damage roll of any wizard evocation spell you cast.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-empowered-evocation",
+            "title": "Empowered Evocation — Add INT to Damage",
+            "guidance": "Add your Intelligence modifier to one damage roll of any wizard evocation spell you cast."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "empty-body",
@@ -846,7 +1221,30 @@
     "classId": "monk",
     "level": 18,
     "description": "Beginning at 18th level, you can use your action to spend 4 ki points to become invisible for 1 minute.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "empty-body-invisibility",
+        "name": "Empty Body — Invisibility",
+        "description": "Spend 4 ki points to become invisible for 1 minute.",
+        "actionCost": "action",
+        "resourceCost": {
+          "resourceId": "ki",
+          "amount": 4
+        },
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_condition",
+            "conditionId": "invisible",
+            "durationRounds": 10
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "evasion-monk",
@@ -854,7 +1252,27 @@
     "classId": "monk",
     "level": 7,
     "description": "At 7th level, your instinctive agility lets you dodge out of the way of certain area effects, taking no damage on a successful DEX save and half damage on a failed save.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-evasion",
+        "name": "Evasion — Halve or Negate Area Damage",
+        "description": "When you succeed on a DEX saving throw against an area effect, you take no damage; on a failure you take only half damage.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-evasion",
+            "title": "Evasion — Halve or Negate Area Damage",
+            "guidance": "When you succeed on a DEX saving throw against an area effect, you take no damage; on a failure you take only half damage."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "evasion-rogue",
@@ -862,7 +1280,27 @@
     "classId": "rogue",
     "level": 7,
     "description": "Beginning at 7th level, you can nimbly dodge out of the way of certain area effects, taking no damage on a successful DEX save and half damage on a failed save.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-evasion",
+        "name": "Evasion — Halve or Negate Area Damage",
+        "description": "When you succeed on a DEX saving throw against an area effect, you take no damage; on a failure you take only half damage.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-evasion",
+            "title": "Evasion — Halve or Negate Area Damage",
+            "guidance": "When you succeed on a DEX saving throw against an area effect, you take no damage; on a failure you take only half damage."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "evocation-savant",
@@ -1038,7 +1476,27 @@
     "classId": "ranger",
     "level": 18,
     "description": "At 18th level, you gain preternatural senses that help you fight creatures you can’t see.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-feral-senses",
+        "name": "Feral Senses — Fight the Unseen",
+        "description": "You are aware of the location of any invisible creature within 30 feet, and you do not suffer disadvantage on attack rolls against creatures you cannot see.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-feral-senses",
+            "title": "Feral Senses — Fight the Unseen",
+            "guidance": "You are aware of the location of any invisible creature within 30 feet, and you do not suffer disadvantage on attack rolls against creatures you cannot see."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "fiendish-resilience",
@@ -1047,7 +1505,27 @@
     "subclassId": "fiend",
     "level": 10,
     "description": "Starting at 10th level, you can choose one damage type when you finish a short or long rest and gain resistance to that damage type.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-fiendish-resilience",
+        "name": "Fiendish Resilience — Choose a Resistance",
+        "description": "Choose one damage type when you finish a short or long rest. You gain resistance to that damage type until you choose a different one with this feature.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-fiendish-resilience",
+            "title": "Fiendish Resilience — Choose a Resistance",
+            "guidance": "Choose one damage type when you finish a short or long rest. You gain resistance to that damage type until you choose a different one with this feature."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "fighting-style-archery",
@@ -1239,7 +1717,27 @@
     "classId": "ranger",
     "level": 20,
     "description": "At 20th level, you become an unparalleled hunter of your enemies, adding your Wisdom modifier to an attack roll or damage roll against a favored enemy once on each of your turns.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-foe-slayer",
+        "name": "Foe Slayer — Add Wisdom to Attack/Damage",
+        "description": "Add your Wisdom modifier to the attack roll or damage roll of one attack against your favored enemy per turn.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-foe-slayer",
+            "title": "Foe Slayer — Add Wisdom to Attack/Damage",
+            "guidance": "Add your Wisdom modifier to the attack roll or damage roll of one attack against your favored enemy per turn."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "font-of-inspiration",
@@ -1298,7 +1796,27 @@
     "classId": "ranger",
     "level": 10,
     "description": "Starting at 10th level, you can spend 1 minute creating camouflage for yourself (+10 to Dexterity (Stealth) checks).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-hide-in-plain-sight",
+        "name": "Hide in Plain Sight — Camouflage",
+        "description": "Spend 1 minute to create camouflage for yourself, granting advantage on DEX (Stealth) checks while you do not move.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-hide-in-plain-sight",
+            "title": "Hide in Plain Sight — Camouflage",
+            "guidance": "Spend 1 minute to create camouflage for yourself, granting advantage on DEX (Stealth) checks while you do not move."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "holy-nimbus",
@@ -1307,7 +1825,28 @@
     "subclassId": "devotion",
     "level": 20,
     "description": "At 20th level, as an action, you can emanate an aura of sunlight for 1 minute.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-holy-nimbus",
+        "name": "Holy Nimbus — Radiant Aura",
+        "description": "As an action, emanate sunlight for 1 minute. Hostile creatures that start their turn within 30 feet take 10 radiant damage and are blinded until the end of their turn.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-holy-nimbus",
+            "title": "Holy Nimbus — Radiant Aura",
+            "guidance": "As an action, emanate sunlight for 1 minute. Hostile creatures that start their turn within 30 feet take 10 radiant damage and are blinded until the end of their turn.",
+            "suggestedRoll": "10"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "hunters-prey",
@@ -1345,7 +1884,27 @@
     "subclassId": "fiend",
     "level": 14,
     "description": "Starting at 14th level, when you hit a creature with an attack, you can use this feature to instantly transport the target through the lower planes (10d10 psychic damage if not a fiend).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-hurl-through-hell",
+        "name": "Hurl Through Hell — Banish on Hit",
+        "description": "When you hit a creature with an attack, you can teleport it to the Feywild or another plane for one round, dealing 10d10 psychic damage when it returns.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-hurl-through-hell",
+            "title": "Hurl Through Hell — Banish on Hit",
+            "guidance": "When you hit a creature with an attack, you can teleport it to the Feywild or another plane for one round, dealing 10d10 psychic damage when it returns."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "improved-critical",
@@ -1370,7 +1929,27 @@
     "classId": "paladin",
     "level": 11,
     "description": "By 11th level, whenever you hit a creature with a melee weapon, the creature takes an extra 1d8 radiant damage.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-improved-divine-smite",
+        "name": "Improved Divine Smite — Radiant Damage on Every Hit",
+        "description": "Whenever you hit a creature with a melee weapon, the creature takes an extra 1d8 radiant damage.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-improved-divine-smite",
+            "title": "Improved Divine Smite — Radiant Damage on Every Hit",
+            "guidance": "Whenever you hit a creature with a melee weapon, the creature takes an extra 1d8 radiant damage."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "indomitable",
@@ -1378,7 +1957,28 @@
     "classId": "fighter",
     "level": 9,
     "description": "Beginning at 9th level, you can reroll a saving throw that you fail. If you do so, you must use the new roll.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-indomitable",
+        "name": "Indomitable — Reroll a Failed Save",
+        "description": "Reroll a saving throw you just failed. You must use the new roll.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-indomitable",
+            "title": "Indomitable — Reroll a Failed Save",
+            "guidance": "Reroll a saving throw you just failed. You must use the new roll.",
+            "suggestedRoll": "1d20"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "indomitable-might",
@@ -1386,7 +1986,27 @@
     "classId": "barbarian",
     "level": 18,
     "description": "Beginning at 18th level, if your total for a Strength check is less than your Strength score, you can use that score in place of the total.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-indomitable-might",
+        "name": "Indomitable Might — Minimum Strength Check",
+        "description": "If your total for a Strength check is less than your Strength score, you can use that score in place of the total.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-indomitable-might",
+            "title": "Indomitable Might — Minimum Strength Check",
+            "guidance": "If your total for a Strength check is less than your Strength score, you can use that score in place of the total."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "intimidating-presence",
@@ -1395,7 +2015,34 @@
     "subclassId": "berserker",
     "level": 10,
     "description": "Beginning at 10th level, you can use your action to frighten someone with your menacing presence.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "intimidating-presence-frighten",
+        "name": "Intimidating Presence",
+        "description": "Use your action to frighten a creature within 30 feet of you.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "wis",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "frightened",
+                "durationRounds": 10
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "jack-of-all-trades",
@@ -1433,7 +2080,27 @@
     "classId": "monk",
     "level": 6,
     "description": "Starting at 6th level, your unarmed strikes count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-ki-empowered-strikes",
+        "name": "Ki-Empowered Strikes — Magical Unarmed Attacks",
+        "description": "Your unarmed strikes count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-ki-empowered-strikes",
+            "title": "Ki-Empowered Strikes — Magical Unarmed Attacks",
+            "guidance": "Your unarmed strikes count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "lands-stride",
@@ -1442,7 +2109,27 @@
     "subclassId": "land",
     "level": 6,
     "description": "Starting at 6th level, moving through nonmagical difficult terrain costs you no extra movement.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-lands-stride",
+        "name": "Land’s Stride — Ignore Difficult Terrain",
+        "description": "Moving through nonmagical difficult terrain costs you no extra movement, and you can pass through nonmagical plants without being slowed or damaged.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-lands-stride",
+            "title": "Land’s Stride — Ignore Difficult Terrain",
+            "guidance": "Moving through nonmagical difficult terrain costs you no extra movement, and you can pass through nonmagical plants without being slowed or damaged."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "lands-stride-ranger",
@@ -1450,7 +2137,27 @@
     "classId": "ranger",
     "level": 8,
     "description": "Starting at 8th level, moving through nonmagical difficult terrain costs you no extra movement.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-lands-stride-ranger",
+        "name": "Land’s Stride — Ignore Difficult Terrain",
+        "description": "Moving through nonmagical difficult terrain costs you no extra movement, and you can pass through nonmagical plants without being slowed or damaged.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-lands-stride-ranger",
+            "title": "Land’s Stride — Ignore Difficult Terrain",
+            "guidance": "Moving through nonmagical difficult terrain costs you no extra movement, and you can pass through nonmagical plants without being slowed or damaged."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "lay-on-hands",
@@ -1474,7 +2181,27 @@
     "classId": "bard",
     "level": 10,
     "description": "By 10th level, you have plundered magical knowledge from a wide spectrum of disciplines. Choose two spells from any class.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-magical-secrets",
+        "name": "Magical Secrets — Learn Spells",
+        "description": "Choose two spells from any class list that you have the spell slots to cast. Add them to your known spells.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-magical-secrets",
+            "title": "Magical Secrets — Learn Spells",
+            "guidance": "Choose two spells from any class list that you have the spell slots to cast. Add them to your known spells."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "martial-archetype",
@@ -1599,7 +2326,27 @@
     "subclassId": "hunter",
     "level": 11,
     "description": "At 11th level, you gain one of the following features of your choice: Volley or Whirlwind Attack.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-multiattack-hunter",
+        "name": "Multiattack — Volley or Whirlwind Attack",
+        "description": "Choose Volley (ranged attacks against up to two targets within 10 feet of each other) or Whirlwind Attack (melee attacks against all creatures within 5 feet).",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-multiattack-hunter",
+            "title": "Multiattack — Volley or Whirlwind Attack",
+            "guidance": "Choose Volley (ranged attacks against up to two targets within 10 feet of each other) or Whirlwind Attack (melee attacks against all creatures within 5 feet)."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "mystic-arcanum-6",
@@ -1607,7 +2354,27 @@
     "classId": "warlock",
     "level": 11,
     "description": "At 11th level, your patron bestows upon you a magical secret called an arcanum (one 6th-level warlock spell once per long rest).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-mystic-arcanum-6",
+        "name": "Mystic Arcanum (6th Level)",
+        "description": "You gain a 6th-level warlock spell that you can cast once per long rest without expending a spell slot.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-mystic-arcanum-6",
+            "title": "Mystic Arcanum (6th Level)",
+            "guidance": "You gain a 6th-level warlock spell that you can cast once per long rest without expending a spell slot."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "mystic-arcanum-7",
@@ -1615,7 +2382,27 @@
     "classId": "warlock",
     "level": 13,
     "description": "At 13th level, you gain a 7th-level warlock spell that you can cast once per long rest without expending a spell slot.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-mystic-arcanum-7",
+        "name": "Mystic Arcanum (7th Level)",
+        "description": "You gain a 7th-level warlock spell that you can cast once per long rest without expending a spell slot.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-mystic-arcanum-7",
+            "title": "Mystic Arcanum (7th Level)",
+            "guidance": "You gain a 7th-level warlock spell that you can cast once per long rest without expending a spell slot."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "mystic-arcanum-8",
@@ -1623,7 +2410,27 @@
     "classId": "warlock",
     "level": 15,
     "description": "At 15th level, you gain an 8th-level warlock spell that you can cast once per long rest without expending a spell slot.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-mystic-arcanum-8",
+        "name": "Mystic Arcanum (8th Level)",
+        "description": "You gain an 8th-level warlock spell that you can cast once per long rest without expending a spell slot.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-mystic-arcanum-8",
+            "title": "Mystic Arcanum (8th Level)",
+            "guidance": "You gain an 8th-level warlock spell that you can cast once per long rest without expending a spell slot."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "mystic-arcanum-9",
@@ -1631,7 +2438,27 @@
     "classId": "warlock",
     "level": 17,
     "description": "At 17th level, you gain a 9th-level warlock spell that you can cast once per long rest without expending a spell slot.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-mystic-arcanum-9",
+        "name": "Mystic Arcanum (9th Level)",
+        "description": "You gain a 9th-level warlock spell that you can cast once per long rest without expending a spell slot.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-mystic-arcanum-9",
+            "title": "Mystic Arcanum (9th Level)",
+            "guidance": "You gain a 9th-level warlock spell that you can cast once per long rest without expending a spell slot."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "natural-explorer",
@@ -1657,7 +2484,27 @@
     "subclassId": "land",
     "level": 14,
     "description": "When you reach 14th level, creatures of the natural world sense your connection to nature and become hesitant to attack you.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-natures-sanctuary",
+        "name": "Nature’s Sanctuary — Beasts and Plants Hesitate",
+        "description": "Beasts and plants are hesitant to attack you; they have disadvantage on attack rolls against you unless you attack them first.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-natures-sanctuary",
+            "title": "Nature’s Sanctuary — Beasts and Plants Hesitate",
+            "guidance": "Beasts and plants are hesitant to attack you; they have disadvantage on attack rolls against you unless you attack them first."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "natures-ward",
@@ -1666,7 +2513,27 @@
     "subclassId": "land",
     "level": 10,
     "description": "When you reach 10th level, you can’t be charmed or frightened by elementals or fey, and you are immune to poison and disease.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-natures-ward",
+        "name": "Nature’s Ward — Elemental/Fey Resistance",
+        "description": "You cannot be charmed or frightened by elementals or fey, and you are immune to poison and being poisoned.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-natures-ward",
+            "title": "Nature’s Ward — Elemental/Fey Resistance",
+            "guidance": "You cannot be charmed or frightened by elementals or fey, and you are immune to poison and being poisoned."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "open-hand-technique",
@@ -1692,7 +2559,27 @@
     "subclassId": "evocation",
     "level": 14,
     "description": "Starting at 14th level, you can increase the power of your simpler spells, dealing maximum damage with a wizard spell of 1st through 5th level.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-overchannel",
+        "name": "Overchannel — Maximum Damage",
+        "description": "Deal maximum damage with a wizard spell of level 5 or lower. Using this feature on a spell of level 1–5 causes 2d12 necrotic damage to you and locks it out until a long rest.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-overchannel",
+            "title": "Overchannel — Maximum Damage",
+            "guidance": "Deal maximum damage with a wizard spell of level 5 or lower. Using this feature on a spell of level 1–5 causes 2d12 necrotic damage to you and locks it out until a long rest."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "pact-boon",
@@ -1731,7 +2618,28 @@
     "subclassId": "lore",
     "level": 14,
     "description": "Starting at 14th level, when you make an ability check, you can expend one use of Bardic Inspiration and add it to the check.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-peerless-skill",
+        "name": "Peerless Skill — Add Bardic Inspiration",
+        "description": "Expend one use of Bardic Inspiration and add the die result to an ability check you just made.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-peerless-skill",
+            "title": "Peerless Skill — Add Bardic Inspiration",
+            "guidance": "Expend one use of Bardic Inspiration and add the die result to an ability check you just made.",
+            "suggestedRoll": "1d12"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "perfect-self",
@@ -1739,7 +2647,27 @@
     "classId": "monk",
     "level": 20,
     "description": "At 20th level, when you roll for initiative and have no ki points remaining, you regain 4 ki points.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-perfect-self",
+        "name": "Perfect Self — Refund Ki on Initiative",
+        "description": "When you roll for initiative and have no ki points remaining, you regain 4 ki points.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-perfect-self",
+            "title": "Perfect Self — Refund Ki on Initiative",
+            "guidance": "When you roll for initiative and have no ki points remaining, you regain 4 ki points."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "persistent-rage",
@@ -1747,7 +2675,27 @@
     "classId": "barbarian",
     "level": 15,
     "description": "Beginning at 15th level, your rage is so fierce that it ends early only if you fall unconscious or if you choose to end it.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-persistent-rage",
+        "name": "Persistent Rage — Sustain Rage",
+        "description": "Your rage lasts until you fall unconscious or choose to end it, rather than ending after 1 minute.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-persistent-rage",
+            "title": "Persistent Rage — Sustain Rage",
+            "guidance": "Your rage lasts until you fall unconscious or choose to end it, rather than ending after 1 minute."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "potent-cantrip",
@@ -1756,7 +2704,27 @@
     "subclassId": "evocation",
     "level": 6,
     "description": "Starting at 6th level, your damaging cantrips affect even creatures that avoid the brunt of the effect (taking half damage on a successful saving throw).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-potent-cantrip",
+        "name": "Potent Cantrip — Half Damage on Save",
+        "description": "Your damaging cantrips affect even creatures that avoid the brunt of the effect: a target that succeeds on the save takes half the cantrip’s damage.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-potent-cantrip",
+            "title": "Potent Cantrip — Half Damage on Save",
+            "guidance": "Your damaging cantrips affect even creatures that avoid the brunt of the effect: a target that succeeds on the save takes half the cantrip’s damage."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "primal-champion",
@@ -1824,7 +2792,27 @@
     "subclassId": "devotion",
     "level": 15,
     "description": "Beginning at 15th level, you are always under the effects of a protection from evil and good spell.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-purity-of-spirit",
+        "name": "Purity of Spirit — Permanent Protection",
+        "description": "You are always under the effects of a protection from evil and good spell (advantage on saves against aberrations, celestials, elementals, fey, fiends, and undead).",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-purity-of-spirit",
+            "title": "Purity of Spirit — Permanent Protection",
+            "guidance": "You are always under the effects of a protection from evil and good spell (advantage on saves against aberrations, celestials, elementals, fey, fiends, and undead)."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "quivering-palm",
@@ -1833,7 +2821,27 @@
     "subclassId": "open-hand",
     "level": 17,
     "description": "At 17th level, you gain the ability to set up lethal vibrations in someone’s body (spend 3 ki points).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-quivering-palm",
+        "name": "Quivering Palm — Delayed Death",
+        "description": "Spend 3 ki points to set lethal vibrations in a creature you hit. Within 1 year, use an action to force a CON save (DC 8 + WIS + prof); on a failure the target drops to 0 HP, on a success it takes 10d10 necrotic damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-quivering-palm",
+            "title": "Quivering Palm — Delayed Death",
+            "guidance": "Spend 3 ki points to set lethal vibrations in a creature you hit. Within 1 year, use an action to force a CON save (DC 8 + WIS + prof); on a failure the target drops to 0 HP, on a success it takes 10d10 necrotic damage."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "rage",
@@ -1949,7 +2957,28 @@
     "classId": "barbarian",
     "level": 11,
     "description": "Starting at 11th level, your rage can keep you fighting despite grievous wounds.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-relentless-rage",
+        "name": "Relentless Rage — Survive at 0 HP",
+        "description": "If you drop to 0 HP while raging and did not die outright, make a CON save (DC 10 + 5 per previous use since a short rest) to drop to 1 HP instead.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-relentless-rage",
+            "title": "Relentless Rage — Survive at 0 HP",
+            "guidance": "If you drop to 0 HP while raging and did not die outright, make a CON save (DC 10 + 5 per previous use since a short rest) to drop to 1 HP instead.",
+            "suggestedRoll": "1d20 + @conMod"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "reliable-talent",
@@ -1957,7 +2986,27 @@
     "classId": "rogue",
     "level": 11,
     "description": "By 11th level, whenever you make an ability check that lets you add your proficiency bonus, you can treat a d20 roll of 9 or lower as a 10.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-reliable-talent",
+        "name": "Reliable Talent — Minimum 10 on Proficiency Checks",
+        "description": "Whenever you make an ability check that lets you add your proficiency bonus, treat a d20 roll of 9 or lower as a 10.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-reliable-talent",
+            "title": "Reliable Talent — Minimum 10 on Proficiency Checks",
+            "guidance": "Whenever you make an ability check that lets you add your proficiency bonus, treat a d20 roll of 9 or lower as a 10."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "remarkable-athlete",
@@ -1966,7 +3015,27 @@
     "subclassId": "champion",
     "level": 7,
     "description": "Starting at 7th level, you can add half your proficiency bonus (round up) to any Strength, Dexterity, or Constitution check you make that doesn’t already use your proficiency bonus.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-remarkable-athlete",
+        "name": "Remarkable Athlete — Half Proficiency",
+        "description": "Add half your proficiency bonus (rounded up) to any Strength, Dexterity, or Constitution check that does not already include your proficiency bonus.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-remarkable-athlete",
+            "title": "Remarkable Athlete — Half Proficiency",
+            "guidance": "Add half your proficiency bonus (rounded up) to any Strength, Dexterity, or Constitution check that does not already include your proficiency bonus."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "retaliation",
@@ -1975,7 +3044,27 @@
     "subclassId": "berserker",
     "level": 14,
     "description": "Starting at 14th level, when you take damage from a creature that is within 5 feet of you, you can use your reaction to make a melee weapon attack against that creature.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-retaliation",
+        "name": "Retaliation — Reactive Attack",
+        "description": "When a creature within 5 feet damages you, you can use your reaction to make a melee weapon attack against it.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-retaliation",
+            "title": "Retaliation — Reactive Attack",
+            "guidance": "When a creature within 5 feet damages you, you can use your reaction to make a melee weapon attack against it."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "roguish-archetype",
@@ -2092,7 +3181,27 @@
     "classId": "wizard",
     "level": 20,
     "description": "When you reach 20th level, you gain mastery over two powerful 3rd-level wizard spells and can cast them with minimal effort.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-signature-spells",
+        "name": "Signature Spells — At-Will 3rd Level",
+        "description": "Choose two 3rd-level wizard spells you know; you can cast each of them once without expending a spell slot, regaining the uses on a short or long rest.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-signature-spells",
+            "title": "Signature Spells — At-Will 3rd Level",
+            "guidance": "Choose two 3rd-level wizard spells you know; you can cast each of them once without expending a spell slot, regaining the uses on a short or long rest."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "slippery-mind",
@@ -2100,7 +3209,27 @@
     "classId": "rogue",
     "level": 15,
     "description": "By 15th level, you have acquired greater mental strength. You gain proficiency in Wisdom saving throws.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-slippery-mind",
+        "name": "Slippery Mind — Wisdom Save Proficiency",
+        "description": "You gain proficiency in Wisdom saving throws.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-slippery-mind",
+            "title": "Slippery Mind — Wisdom Save Proficiency",
+            "guidance": "You gain proficiency in Wisdom saving throws."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "slow-fall",
@@ -2173,7 +3302,27 @@
     "classId": "sorcerer",
     "level": 20,
     "description": "At 20th level, you regain 4 expended sorcery points whenever you finish a short rest.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-sorcerous-restoration",
+        "name": "Sorcerous Restoration — Refund Sorcery Points",
+        "description": "You regain 4 expended sorcery points whenever you finish a short rest.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-sorcerous-restoration",
+            "title": "Sorcerous Restoration — Refund Sorcery Points",
+            "guidance": "You regain 4 expended sorcery points whenever you finish a short rest."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "spell-mastery",
@@ -2181,7 +3330,27 @@
     "classId": "wizard",
     "level": 18,
     "description": "At 18th level, you have achieved such mastery over certain spells that you can cast them at will (one 1st-level and one 2nd-level wizard spell).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-spell-mastery",
+        "name": "Spell Mastery — At-Will Spell",
+        "description": "Choose one 1st-level and one 2nd-level wizard spell you know; you can cast them at their lowest level without expending a spell slot.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-spell-mastery",
+            "title": "Spell Mastery — At-Will Spell",
+            "guidance": "Choose one 1st-level and one 2nd-level wizard spell you know; you can cast them at their lowest level without expending a spell slot."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "spellcasting-bard",
@@ -2245,7 +3414,27 @@
     "classId": "monk",
     "level": 7,
     "description": "Starting at 7th level, you can use your action to end one effect on yourself that is causing you to be charmed or frightened.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-stillness-of-mind",
+        "name": "Stillness of Mind — End Charm/Fear",
+        "description": "Use your action to end one effect on yourself that is causing you to be charmed or frightened.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-stillness-of-mind",
+            "title": "Stillness of Mind — End Charm/Fear",
+            "guidance": "Use your action to end one effect on yourself that is causing you to be charmed or frightened."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "stroke-of-luck",
@@ -2253,7 +3442,27 @@
     "classId": "rogue",
     "level": 20,
     "description": "At 20th level, you have an uncanny knack for succeeding when you need to (turn a missed attack into a hit or treat an ability check roll as a 20 once per short or long rest).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-stroke-of-luck",
+        "name": "Stroke of Luck — Turn a Miss into a Hit",
+        "description": "Once per short rest, turn a missed attack into a hit or fail an ability check you just made into a success.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-stroke-of-luck",
+            "title": "Stroke of Luck — Turn a Miss into a Hit",
+            "guidance": "Once per short rest, turn a missed attack into a hit or fail an ability check you just made into a success."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "stunning-strike",
@@ -2313,7 +3522,27 @@
     "subclassId": "hunter",
     "level": 15,
     "description": "At 15th level, you gain one of the following features of your choice: Evasion, Stand Against the Tide, or Uncanny Dodge.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-superior-hunters-defense",
+        "name": "Superior Hunter’s Defense — Choose a Benefit",
+        "description": "Choose Evasion, Stand Against the Tide (reaction to force a miss to reroll), or Uncanny Dodge (halve damage on a hit).",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-superior-hunters-defense",
+            "title": "Superior Hunter’s Defense — Choose a Benefit",
+            "guidance": "Choose Evasion, Stand Against the Tide (reaction to force a miss to reroll), or Uncanny Dodge (halve damage on a hit)."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "superior-inspiration",
@@ -2321,7 +3550,27 @@
     "classId": "bard",
     "level": 20,
     "description": "At 20th level, when you roll initiative and have no uses of Bardic Inspiration left, you regain one use.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-superior-inspiration",
+        "name": "Superior Inspiration — Refill on Initiative",
+        "description": "When you roll initiative and have no uses of Bardic Inspiration left, you regain one use.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-superior-inspiration",
+            "title": "Superior Inspiration — Refill on Initiative",
+            "guidance": "When you roll initiative and have no uses of Bardic Inspiration left, you regain one use."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "supreme-healing",
@@ -2330,7 +3579,27 @@
     "subclassId": "life",
     "level": 17,
     "description": "Starting at 17th level, when you would normally roll one or more dice to restore hit points with a spell, you instead use the highest number possible for each die.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-supreme-healing",
+        "name": "Supreme Healing — Maximum Healing Dice",
+        "description": "When you would roll one or more dice to restore HP with a spell, use the maximum result instead.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-supreme-healing",
+            "title": "Supreme Healing — Maximum Healing Dice",
+            "guidance": "When you would roll one or more dice to restore HP with a spell, use the maximum result instead."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "supreme-sneak",
@@ -2339,7 +3608,27 @@
     "subclassId": "thief",
     "level": 9,
     "description": "Starting at 9th level, you have advantage on a Dexterity (Stealth) check if you move no more than half your speed on the same turn.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-supreme-sneak",
+        "name": "Supreme Sneak — Advantage on Stealth",
+        "description": "You have advantage on a DEX (Stealth) check if you move no more than half your speed on the same turn.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-supreme-sneak",
+            "title": "Supreme Sneak — Advantage on Stealth",
+            "guidance": "You have advantage on a DEX (Stealth) check if you move no more than half your speed on the same turn."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "survivor",
@@ -2348,7 +3637,25 @@
     "subclassId": "champion",
     "level": 18,
     "description": "At 18th level, you attain the pinnacle of resilience in battle, regaining 5 + CON modifier hit points at the start of each turn if you have no more than half your hit points left.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "survivor-heal",
+        "name": "Survivor",
+        "description": "Regain hit points at the start of each of your turns if at or below half maximum HP.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "heal",
+            "diceFormula": "5 + @conMod"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "thiefs-reflexes",
@@ -2357,7 +3664,27 @@
     "subclassId": "thief",
     "level": 17,
     "description": "When you reach 17th level, you can take two turns during the first round of any combat.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-thiefs-reflexes",
+        "name": "Thief’s Reflexes — Two Turns in the First Round",
+        "description": "You can take two turns during the first round of any combat. The second turn occurs immediately after your first.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-thiefs-reflexes",
+            "title": "Thief’s Reflexes — Two Turns in the First Round",
+            "guidance": "You can take two turns during the first round of any combat. The second turn occurs immediately after your first."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "thieves-cant-feature",
@@ -2373,7 +3700,27 @@
     "classId": "druid",
     "level": 18,
     "description": "Starting at 18th level, the primal magic that you wield causes you to age more slowly.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-timeless-body-druid",
+        "name": "Timeless Body — Slow Aging",
+        "description": "The primal magic you wield causes you to age more slowly; you cannot be aged magically and no longer need food or water.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-timeless-body-druid",
+            "title": "Timeless Body — Slow Aging",
+            "guidance": "The primal magic you wield causes you to age more slowly; you cannot be aged magically and no longer need food or water."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "timeless-body-monk",
@@ -2381,7 +3728,27 @@
     "classId": "monk",
     "level": 15,
     "description": "At 15th level, your ki sustains you so that you suffer none of the frailty of old age.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-timeless-body-monk",
+        "name": "Timeless Body — Slow Aging",
+        "description": "Your ki sustains you so that you suffer none of the frailty of old age; you cannot be aged magically and no longer need food or water.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-timeless-body-monk",
+            "title": "Timeless Body — Slow Aging",
+            "guidance": "Your ki sustains you so that you suffer none of the frailty of old age; you cannot be aged magically and no longer need food or water."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "tongue-of-the-sun-and-moon",
@@ -2389,7 +3756,27 @@
     "classId": "monk",
     "level": 13,
     "description": "Starting at 13th level, you learn to touch the ki of other minds so that you understand all spoken languages.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-tongue-of-the-sun-and-moon",
+        "name": "Tongue of the Sun and Moon — Understand All Speech",
+        "description": "You can understand all spoken languages, and any creature that understands a language you speak can understand you.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-tongue-of-the-sun-and-moon",
+            "title": "Tongue of the Sun and Moon — Understand All Speech",
+            "guidance": "You can understand all spoken languages, and any creature that understands a language you speak can understand you."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "tranquility",
@@ -2398,7 +3785,27 @@
     "subclassId": "open-hand",
     "level": 11,
     "description": "Beginning at 11th level, you can enter a special meditation that surrounds you with an aura of peace (sanctuary effect after a long rest).",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-tranquility",
+        "name": "Tranquility — Aura of Peace",
+        "description": "Enter a special meditation for 10 minutes. Hostile creatures that start their turn within 30 feet must succeed on a WIS save or be charmed by you for 1 minute.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-tranquility",
+            "title": "Tranquility — Aura of Peace",
+            "guidance": "Enter a special meditation for 10 minutes. Hostile creatures that start their turn within 30 feet must succeed on a WIS save or be charmed by you for 1 minute."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "turn-the-unholy",
@@ -2518,7 +3925,27 @@
     "subclassId": "thief",
     "level": 13,
     "description": "By 13th level, you have learned enough about the workings of magic that you can improvise the use of items even when they are not intended for you.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-use-magic-device",
+        "name": "Use Magic Device — Improvise Items",
+        "description": "You can use almost any magic item, ignoring class/race/alignment requirements, and can mimic class features to activate wands and scrolls.",
+        "actionCost": "free",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-use-magic-device",
+            "title": "Use Magic Device — Improvise Items",
+            "guidance": "You can use almost any magic item, ignoring class/race/alignment requirements, and can mimic class features to activate wands and scrolls."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "vanish",
@@ -2526,7 +3953,27 @@
     "classId": "ranger",
     "level": 14,
     "description": "Starting at 14th level, you can use the Hide action as a bonus action on your turn.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "adjudicate-vanish",
+        "name": "Vanish — Bonus Action Hide",
+        "description": "You can take the Hide action as a bonus action on your turn.",
+        "actionCost": "bonus_action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "adjudicate-vanish",
+            "title": "Vanish — Bonus Action Hide",
+            "guidance": "You can take the Hide action as a bonus action on your turn."
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "wholeness-of-body",
@@ -2535,7 +3982,29 @@
     "subclassId": "open-hand",
     "level": 6,
     "description": "At 6th level, you gain the ability to heal yourself. As an action, you can regain hit points equal to three times your monk level once per long rest.",
-    "modifiers": []
+    "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "wholeness-of-body-heal",
+        "name": "Wholeness of Body",
+        "description": "As an action, spend 2 ki points to regain hit points equal to three times your monk level.",
+        "actionCost": "action",
+        "resourceCost": {
+          "resourceId": "ki",
+          "amount": 2
+        },
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "heal",
+            "diceFormula": "@classLevel * 3"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "wild-shape",

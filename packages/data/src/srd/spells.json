@@ -188,7 +188,32 @@
       "type": "single",
       "rangeFeet": 120
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "4d6",
+            "damageType": "force",
+            "isMagical": true
+          },
+          {
+            "step": "forced_movement",
+            "direction": "push_from_actor",
+            "distanceFeet": 5
+          }
+        ]
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "arcane-hand-grapple",
+        "title": "Arcane Hand — Grapple / Clenched Fist",
+        "guidance": "The hand can grapple a Large or smaller creature (contested STR (Athletics) vs the target) and restrain it while grappled; you can also use it to interpose for half cover."
+      }
+    ],
     "description": "You create a Large hand of shimmering, translucent force in an unoccupied space that you can see within range."
   },
   {
@@ -216,7 +241,32 @@
       "type": "single",
       "rangeFeet": 60
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "4d8",
+            "damageType": "force",
+            "isMagical": true
+          },
+          {
+            "step": "forced_movement",
+            "direction": "push_from_actor",
+            "distanceFeet": 10
+          }
+        ]
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "arcane-sword-guard",
+        "title": "Arcane Sword — Guard / Strike",
+        "guidance": "The sword can guard a space (granting half cover) and strike a creature that enters or starts its turn within 15 feet for 4d8 force damage."
+      }
+    ],
     "description": "You create a sword-shaped plane of force that hovers within range."
   },
   {
@@ -356,7 +406,27 @@
       "type": "single",
       "rangeFeet": 60
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "cha",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "incapacitated",
+            "durationRounds": 10,
+            "requiresConcentration": true
+          },
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "banishment-other-plane",
+            "title": "Banishment — Remove from the Battlefield",
+            "guidance": "On a failed CHARISMA save the target is sent to another plane. Remove it from combat until concentration ends or 1 minute passes; if the target is native to the plane, it is instead incapacitated for 1 minute."
+          }
+        ]
+      }
+    ],
     "description": "You attempt to send one creature that you can see within range to another plane of existence."
   },
   {
@@ -487,7 +557,38 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "black-tentacles-zone",
+        "shape": "cube",
+        "sizeFeet": 20,
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "difficultTerrain": true,
+        "obscurement": "heavy",
+        "onEnterOrStartTurn": [
+          {
+            "step": "saving_throw",
+            "ability": "str",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "restrained",
+                "durationRounds": 1
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d6",
+                "damageType": "bludgeoning",
+                "isMagical": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "Squirming, ebony tentacles fill a 20-foot square on ground that you can see within range."
   },
   {
@@ -583,7 +684,26 @@
       "type": "single",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "con",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "8d8",
+            "damageType": "necrotic",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d8"
+    },
     "description": "Necromantic energy washes over a creature of your choice that you can see within range, draining moisture and vitality from it (8d8 necrotic damage, CON save for half)."
   },
   {
@@ -788,6 +908,10 @@
         ]
       }
     ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d8"
+    },
     "description": "You create a bolt of lightning that arcs toward a target of your choice that you can see within range (10d8 lightning damage)."
   },
   {
@@ -924,7 +1048,38 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "cloudkill-zone",
+        "shape": "sphere",
+        "sizeFeet": 20,
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "obscurement": "heavy",
+        "onEnterOrStartTurn": [
+          {
+            "step": "saving_throw",
+            "ability": "con",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "5d8",
+                "damageType": "poison",
+                "halfOnSaveSuccess": true,
+                "isMagical": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d8"
+    },
     "description": "You create a 20-foot-radius sphere of poisonous, yellow-green fog centered on a point you choose within range."
   },
   {
@@ -1006,7 +1161,14 @@
       "type": "self",
       "rangeFeet": 0
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "commune-divine-answers",
+        "title": "Commune — Ask the Deity",
+        "guidance": "Ask up to three yes/no questions of your deity or a divine proxy. The DM answers truthfully; a deceptive answer is only possible if the proxy is not your deity and chooses to lie."
+      }
+    ],
     "description": "You contact your deity or a divine proxy and ask up to three questions that can be answered with a yes or no."
   },
   {
@@ -1056,6 +1218,10 @@
         ]
       }
     ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d8"
+    },
     "description": "A blast of cold air erupts from your hands in a 60-foot cone (8d8 cold damage, CON save for half)."
   },
   {
@@ -1089,7 +1255,33 @@
         "sizeFeet": 10
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "confusion-zone",
+        "shape": "sphere",
+        "sizeFeet": 10,
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "onEnterOrStartTurn": [
+          {
+            "step": "saving_throw",
+            "ability": "wis",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "manual_adjudication",
+                "adjudicationId": "confusion-compelled-action",
+                "title": "Confusion — Roll on the Confusion Table",
+                "guidance": "Until the end of its turn the creature is confused: roll 1d10 each turn to determine its compelled action, repeat the WIS save at the end of each of its turns to end the effect.",
+                "suggestedRoll": "1d10"
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "This spell assaults and twists creatures’ minds, spawning delusions and provoking uncontrolled action."
   },
   {
@@ -1290,7 +1482,22 @@
       "type": "touch",
       "rangeFeet": 5
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "death-ward-ward",
+        "name": "Death Ward",
+        "durationRounds": 4800,
+        "requiresConcentration": false,
+        "modifiers": []
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "death-ward-negate",
+        "title": "Death Ward — Negate Instant Death",
+        "guidance": "The first time the target would drop to 0 HP, it instead drops to 1 HP and the spell ends. It is also immune to effects that would kill it outright."
+      }
+    ],
     "description": "You touch a creature and grant it a measure of protection from death."
   },
   {
@@ -1361,7 +1568,12 @@
       "type": "self",
       "rangeFeet": 500
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "teleport",
+        "maxDistanceFeet": 500
+      }
+    ],
     "description": "You teleport yourself from your current location to any other spot within range (500 feet)."
   },
   {
@@ -1477,7 +1689,27 @@
       "type": "single",
       "rangeFeet": 60
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "charmed",
+            "durationRounds": 600,
+            "requiresConcentration": true
+          },
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "dominate-monster-control",
+            "title": "Dominate Monster — Issue Mental Commands",
+            "guidance": "The creature is dominated and obeys your telepathic commands. It repeats the WIS save when it takes damage, ending the effect on a success."
+          }
+        ]
+      }
+    ],
     "description": "You attempt to beguile a creature that you can see within range."
   },
   {
@@ -1506,7 +1738,27 @@
       "type": "single",
       "rangeFeet": 60
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "charmed",
+            "durationRounds": 600,
+            "requiresConcentration": true
+          },
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "dominate-person-control",
+            "title": "Dominate Person — Issue Mental Commands",
+            "guidance": "While charmed, the humanoid is dominated. You can issue telepathic commands it must obey; it can repeat the WIS save when it takes damage, ending the effect on a success."
+          }
+        ]
+      }
+    ],
     "description": "You attempt to beguile a humanoid that you can see within range."
   },
   {
@@ -1736,7 +1988,14 @@
       "type": "single",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "faithful-hound-summon",
+        "title": "Faithful Hound — Place the Phantom Watchdog",
+        "guidance": "Conjure an invisible watchdog in an unoccupied space within range. It has AC 19, 4 HP, and alerts you to any creature that comes within 30 feet. It can make one opportunity attack of 4d8 + your spellcasting ability modifier force damage."
+      }
+    ],
     "description": "You conjure a phantom watchdog in an unoccupied space that you can see within range."
   },
   {
@@ -1908,6 +2167,10 @@
         ]
       }
     ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d8"
+    },
     "description": "You send negative energy coursing through a creature that you can see within range, causing it searing pain (7d8 + 30 necrotic damage)."
   },
   {
@@ -1992,7 +2255,37 @@
       "type": "self",
       "rangeFeet": 0
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "fire-shield-resistance",
+        "name": "Fire Shield (Cold/Fire Resistance)",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": [
+          {
+            "type": "damage_mitigation",
+            "mitigation": "resistance",
+            "damageTypes": [
+              "cold"
+            ]
+          },
+          {
+            "type": "damage_mitigation",
+            "mitigation": "resistance",
+            "damageTypes": [
+              "fire"
+            ]
+          }
+        ]
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "fire-shield-retaliation",
+        "title": "Fire Shield — Retaliation Aura",
+        "guidance": "Whenever a creature within 5 feet hits you with a melee attack, it takes 2d8 cold damage (chill shield) or 2d8 fire damage (flame shield)."
+      }
+    ],
     "description": "Thin and wispy flames wreathe your body for the duration, shedding bright light in a 10-foot radius."
   },
   {
@@ -2102,6 +2395,10 @@
         ]
       }
     ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d6"
+    },
     "description": "A vertical column of divine fire roars down from the heavens in a location you specify (4d6 fire + 4d6 radiant damage in a 10-foot-radius cylinder)."
   },
   {
@@ -2279,7 +2576,32 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "foresight-buff",
+        "name": "Foresight",
+        "durationRounds": 4800,
+        "requiresConcentration": false,
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls"
+          },
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws"
+          },
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_ability_checks"
+          }
+        ]
+      }
+    ],
     "description": "You touch a willing creature and bestow a limited ability to see into the immediate future."
   },
   {
@@ -2314,7 +2636,22 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "freedom-of-movement-buff",
+        "name": "Freedom of Movement",
+        "durationRounds": 4800,
+        "requiresConcentration": false,
+        "modifiers": []
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "freedom-of-movement-adjudicate",
+        "title": "Freedom of Movement — Ignore Restriction",
+        "guidance": "The target ignores difficult terrain and is unaffected by magical slowing/restraint. A grappled creature can escape automatically by spending 5 feet of movement."
+      }
+    ],
     "description": "You touch a willing creature. For the duration, the target’s movement is unaffected by difficult terrain, and spells and other magical effects can neither reduce the target’s speed nor cause the target to be paralyzed or restrained."
   },
   {
@@ -2344,7 +2681,27 @@
         "sizeFeet": 60
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "10d6",
+            "damageType": "cold",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          },
+          {
+            "step": "forced_movement",
+            "direction": "push_from_actor",
+            "distanceFeet": 5
+          }
+        ]
+      }
+    ],
     "description": "A frigid globe of cold energy streaks from your fingertips to a point of your choice within range, where it explodes in a 60-foot-radius sphere."
   },
   {
@@ -2376,7 +2733,14 @@
         "sizeFeet": 10
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "globe-of-invulnerability-ward",
+        "title": "Globe of Invulnerability — Nullify Low-Level Magic",
+        "guidance": "A 10-foot-radius sphere blocks spells of 5th level or lower cast from outside: they fail to pass through. The caster can cast spells through the globe."
+      }
+    ],
     "description": "An immobile, faintly shimmering barrier springs into existence in a 10-foot radius around you."
   },
   {
@@ -2460,7 +2824,14 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_condition",
+        "conditionId": "invisible",
+        "durationRounds": 600,
+        "requiresConcentration": true
+      }
+    ],
     "description": "You or a creature you touch becomes invisible until the spell ends."
   },
   {
@@ -2488,7 +2859,14 @@
       "type": "touch",
       "rangeFeet": 5
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "greater-restoration-cure",
+        "title": "Greater Restoration — End a Debilitating Effect",
+        "guidance": "End one of: charmed, petrified, cursed, reduced ability score, or 1d8×100 HP drain. Choose the condition/healing to remove when adjudicating."
+      }
+    ],
     "description": "You imbue a creature you touch with positive energy to undo a debilitating effect."
   },
   {
@@ -2519,7 +2897,14 @@
       "type": "single",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "guardian-of-faith-summon",
+        "title": "Guardian of Faith — Place the Spectral Guardian",
+        "guidance": "A Large spectral guardian occupies an unoccupied space within 30 feet for 1 minute. Hostile creatures that enter or start their turn within 10 feet take 20 radiant damage (DC save for half). It disappears after dealing 60 damage in total."
+      }
+    ],
     "description": "A Large spectral guardian appears and hovers for the duration in an unoccupied space of your choice that you can see within range."
   },
   {
@@ -2645,7 +3030,14 @@
       "type": "touch",
       "rangeFeet": 5
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "hallow-consecrate",
+        "title": "Hallow — Consecrate an Area",
+        "guidance": "Infuse a 60-foot radius area with holy or unholy power for 24 hours and choose one additional effect (e.g. undead have disadvantage to attack in the area, or the wounded regain 1d8 HP at the start of their turn)."
+      }
+    ],
     "description": "You touch a point and infuse an area around it with holy (or unholy) power."
   },
   {
@@ -2736,6 +3128,10 @@
         "diceFormula": "70"
       }
     ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "10"
+    },
     "description": "Choose a creature that you can see within range. A surge of positive energy washes through the creature, causing it to regain 70 hit points."
   },
   {
@@ -2959,7 +3355,29 @@
       "type": "single",
       "rangeFeet": 90
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "paralyzed",
+            "durationRounds": 10,
+            "requiresConcentration": true,
+            "repeatSaveAtTurnEnd": {
+              "ability": "wis",
+              "dcFormula": "@spellSaveDC"
+            }
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusTargetsPerSlotAboveBase": 1
+    },
     "description": "Choose a creature that you can see within range. The target must succeed on a Wisdom saving throw or be paralyzed for the duration."
   },
   {
@@ -3147,7 +3565,43 @@
         "sizeFeet": 20
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "2d8",
+            "damageType": "bludgeoning",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          },
+          {
+            "step": "deal_damage",
+            "diceFormula": "4d6",
+            "damageType": "cold",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      },
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "ice-storm-difficult-terrain",
+        "shape": "cylinder",
+        "sizeFeet": 20,
+        "durationRounds": 1,
+        "requiresConcentration": false,
+        "difficultTerrain": true,
+        "onEnterOrStartTurn": []
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d6"
+    },
     "description": "A hail of rock-hard ice pounds to the ground in a 20-foot-radius, 40-foot-high cylinder centered on a point within range."
   },
   {
@@ -3254,7 +3708,14 @@
       "type": "touch",
       "rangeFeet": 5
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "instant-summons-mark",
+        "title": "Instant Summons — Mark and Recall an Item",
+        "guidance": "Place a sapphire gem worth 1,000 gp on an object; later crush the gem to teleport the object to your hand if it is on the same plane."
+      }
+    ],
     "description": "You touch an object weighing 10 pounds or less whose longest dimension is 6 feet or less."
   },
   {
@@ -3324,7 +3785,40 @@
       "type": "single",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "incapacitated",
+            "durationRounds": 10,
+            "requiresConcentration": true
+          },
+          {
+            "step": "apply_active_effect",
+            "effectId": "irresistible-dance-debuff",
+            "name": "Irresistible Dance (-2 AC,Disadvantage Saves)",
+            "durationRounds": 10,
+            "requiresConcentration": true,
+            "modifiers": [
+              {
+                "type": "flat_bonus",
+                "target": "ac",
+                "value": -2
+              },
+              {
+                "type": "roll_mode",
+                "mode": "disadvantage",
+                "target": "all_saving_throws"
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "Choose one creature that you can see within range. The target begins a comic dance in place."
   },
   {
@@ -3654,7 +4148,14 @@
       "type": "single",
       "rangeFeet": 300
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "magnificent-mansion-portal",
+        "title": "Magnificent Mansion — Open the Door",
+        "guidance": "Create an extradimensional mansion on a solid surface within 300 feet for 24 hours. The entrance is an invisible portal that only you can open; the interior is furnished and comfortable."
+      }
+    ],
     "description": "You conjure an extradimensional dwelling in range that lasts for the duration."
   },
   {
@@ -3695,6 +4196,10 @@
         "diceFormula": "3d8 + @spellMod"
       }
     ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d8"
+    },
     "description": "A wave of healing energy washes out from a point of your choice within range, restoring 3d8 + spellcasting ability modifier hit points to up to six creatures."
   },
   {
@@ -4075,7 +4580,29 @@
       "type": "single",
       "rangeFeet": 60
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "wis",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "polymorph-beast-form",
+            "name": "Polymorph (Beast Form)",
+            "durationRounds": 600,
+            "requiresConcentration": true,
+            "modifiers": []
+          },
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "polymorph-beast-statblock",
+            "title": "Polymorph — Assume Beast Statblock",
+            "guidance": "Swap the target’s statistics with a beast of CR ≤ its level/CR. Its HP becomes the beast’s; on dropping to 0 HP it reverts and takes the excess damage. It loses spellcasting and speech while transformed."
+          }
+        ]
+      }
+    ],
     "description": "This spell transforms a creature that you can see within range into a new beast form."
   },
   {
@@ -4104,7 +4631,14 @@
       "type": "single",
       "rangeFeet": 60
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "power-word-kill-hp-gate",
+        "title": "Power Word Kill — Check Hit Points",
+        "guidance": "If the target has 100 HP or fewer it dies instantly. Creatures that cannot be killed by this spell (e.g. undead) are unaffected. No saving throw."
+      }
+    ],
     "description": "You utter a word of power that can compel one creature you can see within range to die instantly if it has 100 hit points or fewer."
   },
   {
@@ -4133,7 +4667,19 @@
       "type": "single",
       "rangeFeet": 60
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_condition",
+        "conditionId": "stunned",
+        "durationRounds": 10
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "power-word-stun-hp-gate",
+        "title": "Power Word Stun — Check Hit Points",
+        "guidance": "Only applies if the target has 150 HP or fewer. A stunned target repeats a CON save at the end of each of its turns (DC 8 + your spellcasting ability modifier) to end the stun."
+      }
+    ],
     "description": "You speak a word of power that can overwhelm the mind of one creature you can see within range, leaving it stunned if it has 150 hit points or fewer."
   },
   {
@@ -4203,7 +4749,14 @@
         "sizeFeet": 100
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "private-sanctum-ward",
+        "title": "Private Sanctum — Ward the Area",
+        "guidance": "Ward a 100-foot cube for 24 hours: no one can see/hear into it, teleport in or out, scry it, or summon creatures into it. One of four additional effects applies as described in the spell."
+      }
+    ],
     "description": "You make an area within range magically secure."
   },
   {
@@ -4340,7 +4893,18 @@
       "rangeFeet": 5,
       "targetFilter": "corpse"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "heal",
+        "diceFormula": "1"
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "raise-dead-revive",
+        "title": "Raise Dead — Restore Life",
+        "guidance": "The target returns to life with 1 HP (and loses any remaining death save failures). It cannot have been dead longer than 10 days and must not have died of old age."
+      }
+    ],
     "description": "You return a dead creature you touch to life, provided that it has been dead no longer than 10 days."
   },
   {
@@ -4436,7 +5000,27 @@
       "type": "single",
       "rangeFeet": 30
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "str",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "restrained",
+            "durationRounds": 10,
+            "requiresConcentration": true
+          }
+        ]
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "resilient-sphere-isolate",
+        "title": "Resilient Sphere — Enclose the Target",
+        "guidance": "The target is enclosed in an immovable sphere. Nothing can pass through the sphere and the target cannot escape by mundane means; it can be moved by teleportation or by dispelling the sphere."
+      }
+    ],
     "description": "A sphere of shimmering force encloses a creature or object of Large size or smaller within range."
   },
   {
@@ -4690,7 +5274,14 @@
       "type": "touch",
       "rangeFeet": 5
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "secret-chest-stash",
+        "title": "Secret Chest — Hide the Receptacle",
+        "guidance": "Send a chest and contents to the Ethereal Plane for 60 days. You can call it back with an action; after 60 days it is permanently lost."
+      }
+    ],
     "description": "You hide a chest, and all its contents, on the Ethereal Plane."
   },
   {
@@ -5366,7 +5957,27 @@
       "rangeFeet": 5,
       "targetFilter": "willing"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "stoneskin-resistance",
+        "name": "Stoneskin",
+        "durationRounds": 600,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "damage_mitigation",
+            "mitigation": "resistance",
+            "damageTypes": [
+              "bludgeoning",
+              "piercing",
+              "slashing"
+            ],
+            "bypassedBy": "magical"
+          }
+        ]
+      }
+    ],
     "description": "This spell turns the flesh of a willing creature you touch as hard as stone, granting resistance to nonmagical bludgeoning, piercing, and slashing damage."
   },
   {
@@ -5439,7 +6050,14 @@
       "rangeFeet": 30,
       "maxTargets": 8
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "telepathic-bond-link",
+        "title": "Telepathic Bond — Link the Party",
+        "guidance": "Up to eight willing creatures within 30 feet can communicate telepathically regardless of distance for 1 hour (same plane)."
+      }
+    ],
     "description": "You forge a telepathic link among up to eight willing creatures of your choice within range."
   },
   {
@@ -5559,7 +6177,15 @@
       "type": "self",
       "rangeFeet": 0
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "time-stop-boon",
+        "title": "Time Stop — Take Extra Turns",
+        "guidance": "You take 1d4 + 1 turns in a row before other creatures act again. Other creatures are effectively inactive and cannot react during this window.",
+        "suggestedRoll": "1d4 + 1"
+      }
+    ],
     "description": "You briefly stop the flow of time for everyone but yourself."
   },
   {
@@ -5631,7 +6257,18 @@
       "type": "self",
       "rangeFeet": 0
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "teleport",
+        "maxDistanceFeet": 500
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "tree-stride-transit",
+        "title": "Tree Stride — Step Between Trees",
+        "guidance": "Enter a tree and step out of another tree of the same kind within 500 feet. Requires a tree of the same kind at both ends of the transit."
+      }
+    ],
     "description": "You gain the ability to enter a tree and move from inside it to inside another tree of the same kind within 500 feet."
   },
   {
@@ -5659,7 +6296,14 @@
       "rangeFeet": 5,
       "targetFilter": "corpse"
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "true-resurrection-revive",
+        "title": "True Resurrection — Restore Life Fully",
+        "guidance": "The target returns to life with all its HP, reverting any age changes, missing limbs restored, and no death save failures. It can have been dead up to 200 years and need not have a body."
+      }
+    ],
     "description": "You touch a creature that has been dead for no longer than 200 years and that died for any reason except old age."
   },
   {
@@ -5812,7 +6456,33 @@
         "widthFeet": 5
       }
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "wall-of-fire-zone",
+        "shape": "line",
+        "sizeFeet": 60,
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "onEnterOrStartTurn": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "@spellSaveDC",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "5d8",
+                "damageType": "fire",
+                "halfOnSaveSuccess": true,
+                "isMagical": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "You create a wall of fire on a solid surface within range."
   },
   {
@@ -5900,7 +6570,14 @@
       "type": "self",
       "rangeFeet": 0
     },
-    "effects": [],
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "wish-adjudicate",
+        "title": "Wish — Adjudicate the Request",
+        "guidance": "Wish can duplicate any spell of level 8 or lower (no costly component), or produce an effect beyond normal spellcasting. If used for anything other than duplicating a spell, there is a 33% chance of never being able to cast Wish again and the stress may incapacitate you."
+      }
+    ],
     "description": "Wish is the mightiest spell a mortal creature can cast. By simply speaking aloud, you can alter the very foundations of reality."
   },
   {

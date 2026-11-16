@@ -201,6 +201,19 @@ export function executeActivatedAbility(options: ExecuteActivatedAbilityOptions)
         });
         const followSteps = passed ? (step.onSuccess ?? []) : step.onFail;
         executeSteps(followSteps, target);
+      } else if (step.step === 'manual_adjudication') {
+        // Tier C fallback for class features: surface an adjudication card
+        // instead of silently skipping an effect the engine cannot automate.
+        events.push({
+          type: 'MANUAL_ADJUDICATION_REQUIRED',
+          actorId: actor.id,
+          sourceName: ability!.name,
+          adjudicationId: step.adjudicationId,
+          title: step.title,
+          guidance: step.guidance,
+          ...(step.suggestedRoll ? { suggestedRoll: step.suggestedRoll } : {}),
+          targetId: target.id,
+        });
       }
     }
   }

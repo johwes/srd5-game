@@ -257,6 +257,11 @@ function collectEffectStepFormulas(
       case 'create_hazard_zone':
         collectEffectStepFormulas(step.onEnterOrStartTurn, onFormula);
         break;
+      case 'manual_adjudication':
+        if (step.suggestedRoll) {
+          onFormula(step.suggestedRoll, `manual_adjudication(${step.adjudicationId}).suggestedRoll`);
+        }
+        break;
       default:
         break;
     }

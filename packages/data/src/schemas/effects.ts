@@ -343,6 +343,13 @@ export type EffectStepSpec =
       step: 'spend_resource';
       resourceId: string;
       amount: number;
+    }
+  | {
+      step: 'manual_adjudication';
+      adjudicationId: string;
+      title: string;
+      guidance: string;
+      suggestedRoll?: string | undefined;
     };
 
 export const EffectStepSpecSchema: z.ZodType<EffectStepSpec> = z.lazy(() =>
@@ -421,6 +428,13 @@ export const EffectStepSpecSchema: z.ZodType<EffectStepSpec> = z.lazy(() =>
       step: z.literal('spend_resource'),
       resourceId: z.string().min(1),
       amount: z.number().int().positive(),
+    }),
+    z.object({
+      step: z.literal('manual_adjudication'),
+      adjudicationId: z.string().min(1),
+      title: z.string().min(1),
+      guidance: z.string().min(1),
+      suggestedRoll: FormulaStringSchema.optional(),
     }),
   ]),
 );

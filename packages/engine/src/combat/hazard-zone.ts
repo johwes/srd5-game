@@ -422,6 +422,17 @@ export function executeHazardZoneEffects(
           },
         };
         events.push(...condRes.events);
+      } else if (step.step === 'manual_adjudication') {
+        events.push({
+          type: 'MANUAL_ADJUDICATION_REQUIRED',
+          actorId: zone.casterId,
+          sourceName: zone.sourceName,
+          adjudicationId: step.adjudicationId,
+          title: step.title,
+          guidance: step.guidance,
+          ...(step.suggestedRoll ? { suggestedRoll: step.suggestedRoll } : {}),
+          targetId: currentTarget.id,
+        });
       }
     }
   }

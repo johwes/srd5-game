@@ -151,12 +151,33 @@
       {
         "id": "amphibious",
         "name": "Amphibious",
-        "description": "The dragon can breathe air and water."
+        "description": "The dragon can breathe air and water.",
+        "modifiers": []
       },
       {
         "id": "legendary-resistance",
         "name": "Legendary Resistance (3/Day)",
-        "description": "If the dragon fails a saving throw, it can choose to succeed instead."
+        "description": "If the dragon fails a saving throw, it can choose to succeed instead.",
+        "activatedAbilities": [
+          {
+            "id": "legendary-resistance",
+            "name": "Legendary Resistance (3/Day)",
+            "description": "If the dragon fails a saving throw, it can choose to succeed instead.",
+            "actionCost": "free",
+            "targeting": {
+              "type": "self",
+              "rangeFeet": 0
+            },
+            "effects": [
+              {
+                "step": "manual_adjudication",
+                "adjudicationId": "adult-black-dragon-legendary-resistance",
+                "title": "Legendary Resistance — Succeed on a Failed Save",
+                "guidance": "If the dragon fails a saving throw, it can choose to succeed instead. It has three uses of this feature per day."
+              }
+            ]
+          }
+        ]
       }
     ],
     "actions": [
@@ -2128,36 +2149,27 @@
     "traits": [],
     "spellcasting": {
       "ability": "int",
-      "spellSaveDc": 14,
-      "spellAttackBonus": 6,
-      "casterLevel": 9,
+      "spellSaveDc": 15,
+      "spellAttackBonus": 7,
+      "casterLevel": 6,
       "classId": "wizard",
       "slotsByLevel": {
         "1": 4,
         "2": 3,
         "3": 3,
-        "4": 3,
+        "4": 2,
         "5": 1
       },
-      "atWillSpellIds": [
-        "fire-bolt",
-        "light",
-        "mage-hand",
-        "prestidigitation"
-      ],
       "preparedSpellIds": [
-        "detect-magic",
-        "mage-armor",
         "magic-missile",
         "shield",
-        "misty-step",
-        "suggestion",
-        "counterspell",
-        "fireball",
+        "invisibility",
         "fly",
-        "greater-invisibility",
-        "ice-storm",
-        "cone-of-cold"
+        "fireball",
+        "lightning-bolt",
+        "counterspell",
+        "cone-of-cold",
+        "stoneskin"
       ]
     },
     "actions": [
@@ -2181,6 +2193,34 @@
                 "step": "deal_damage",
                 "diceFormula": "1d4 + 2",
                 "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "reactions": [
+      {
+        "id": "mage-shield",
+        "name": "Shield (Reaction)",
+        "description": "The mage casts shield in response to being hit by an attack, gaining +5 AC until the start of its next turn.",
+        "actionCost": "reaction",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "mage-shield-ac",
+            "name": "Shield (+5 AC)",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "flat_bonus",
+                "target": "ac",
+                "value": 5
               }
             ]
           }
@@ -2381,7 +2421,39 @@
       {
         "id": "petrifying-gaze",
         "name": "Petrifying Gaze",
-        "description": "When a creature that can see the medusa’s eyes starts its turn within 30 feet of the medusa, the medusa can force it to make a DC 14 Constitution saving throw if the medusa isn’t incapacitated and can see the creature."
+        "description": "When a creature that can see the medusa’s eyes starts its turn within 30 feet of the medusa, the medusa can force it to make a DC 14 Constitution saving throw if the medusa isn’t incapacitated and can see the creature.",
+        "activatedAbilities": [
+          {
+            "id": "petrifying-gaze",
+            "name": "Petrifying Gaze",
+            "description": "A creature that can see the medusa’s eyes must succeed on a DC 14 CON save at the start of its turn or be petrified until freed by greater restoration.",
+            "actionCost": "free",
+            "targeting": {
+              "type": "single",
+              "rangeFeet": 30,
+              "requiresSight": true,
+              "targetFilter": "enemy"
+            },
+            "effects": [
+              {
+                "step": "saving_throw",
+                "ability": "con",
+                "dcFormula": "14",
+                "onFail": [
+                  {
+                    "step": "apply_condition",
+                    "conditionId": "petrified",
+                    "durationRounds": 600,
+                    "repeatSaveAtTurnEnd": {
+                      "ability": "con",
+                      "dcFormula": "14"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ],
     "actions": [
@@ -3554,7 +3626,8 @@
       {
         "id": "amphibious",
         "name": "Amphibious",
-        "description": "The dragon can breathe air and water."
+        "description": "The dragon can breathe air and water.",
+        "modifiers": []
       }
     ],
     "actions": [

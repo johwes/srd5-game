@@ -1251,6 +1251,19 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
           path: [newPos],
           mode: 'forced',
         });
+      } else if (step.step === 'manual_adjudication') {
+        // Tier C fallback: never crash or soft-lock on a spell whose full
+        // effect cannot be expressed in the tactical DSL. Surface a card instead.
+        events.push({
+          type: 'MANUAL_ADJUDICATION_REQUIRED',
+          actorId: caster.id,
+          sourceName: spell.name,
+          adjudicationId: step.adjudicationId,
+          title: step.title,
+          guidance: step.guidance,
+          ...(step.suggestedRoll ? { suggestedRoll: step.suggestedRoll } : {}),
+          targetId: target.id,
+        });
       }
     }
   }
