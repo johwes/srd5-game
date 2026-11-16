@@ -307,6 +307,44 @@ describe('SRD-403: PixiJS Creature Token Layer & Floating Text', () => {
       expect(renderer.getTokenNode('t2')).toBeUndefined();
     });
 
+    it('renders corpses below living tokens and ignores clicks/hovers on them', () => {
+      const parent = new Container();
+      const renderer = new CreatureTokenRenderer(parent);
+
+      const onClick = vi.fn();
+      const onHover = vi.fn();
+      renderer.onTokenClick = onClick;
+      renderer.onTokenHover = onHover;
+
+      renderer.render({
+        combatants: [
+          { id: 'hero', name: 'Valeros', side: 'party', size: 'medium', position: { x: 5, y: 5 }, currentHp: 20, maxHp: 20 },
+          { id: 'gob', name: 'Goblin', side: 'monster', size: 'medium', position: { x: 6, y: 5 }, currentHp: 0, maxHp: 7, isDead: true },
+        ],
+        cellSize: 48,
+      });
+
+      const hero = renderer.getTokenNode('hero')!;
+      const corpse = renderer.getTokenNode('gob')!;
+      expect(hero).toBeDefined();
+      expect(corpse).toBeDefined();
+      // Corpse sorts below the living token so it can never cover it.
+      expect(corpse.container.zIndex).toBeLessThan(hero.container.zIndex);
+
+      const fakeEvent = { stopPropagation: vi.fn() } as never;
+      corpse.container.emit('pointerdown', fakeEvent);
+      expect(onClick).not.toHaveBeenCalled();
+
+      hero.container.emit('pointerdown', fakeEvent);
+      expect(onClick).toHaveBeenCalledWith('hero');
+
+      corpse.container.emit('pointerover', {} as never);
+      expect(onHover).toHaveBeenLastCalledWith(null);
+
+      hero.container.emit('pointerover', {} as never);
+      expect(onHover).toHaveBeenLastCalledWith('hero');
+    });
+
     it('animates token movement along a path and updates facing', async () => {
       const parent = new Container();
       const renderer = new CreatureTokenRenderer(parent);

@@ -143,6 +143,9 @@ export class CreatureTokenRenderer {
   constructor(parent?: Container) {
     this.container = new Container();
     this.container.label = 'CreatureTokenRenderer';
+    // Dead tokens sort below living ones so a corpse marker can never
+    // cover an adjacent (or stacked) living combatant's token.
+    this.container.sortableChildren = true;
 
     if (parent) {
       parent.addChild(this.container);
@@ -220,12 +223,18 @@ export class CreatureTokenRenderer {
       container.eventMode = 'static';
       container.cursor = 'pointer';
 
+      // Corpses are not selectable: clicking a dead token must not select it
+      // or pop the enemy info card over the living combatants.
       container.on('pointerdown', (e) => {
+        const liveNode = this.tokenNodes.get(data.id);
+        if (liveNode?.data.isDead) return;
         e.stopPropagation();
         this.onTokenClick?.(data.id);
       });
       container.on('pointerover', () => {
-        this.onTokenHover?.(data.id);
+        const liveNode = this.tokenNodes.get(data.id);
+        // Clearing (rather than ignoring) drops stale hover highlights.
+        this.onTokenHover?.(liveNode?.data.isDead ? null : data.id);
       });
       container.on('pointerout', () => {
         this.onTokenHover?.(null);
@@ -352,6 +361,10 @@ export class CreatureTokenRenderer {
     const sizeCells = CREATURE_SIZE_CELLS[data.size] ?? 1;
     const footprintPx = sizeCells * opts.cellSize;
     const radius = Math.max(12, footprintPx * 0.44);
+
+    // Living tokens render above corpses so a death marker can never
+    // cover an adjacent (or stacked) living combatant.
+    node.container.zIndex = data.isDead ? 0 : 1;
 
     // If no active move animation, position container directly at grid center
     if (!this.activeAnimations.has(data.id)) {
