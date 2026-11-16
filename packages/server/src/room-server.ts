@@ -3,6 +3,7 @@ import type { GameEvent, GameState, PlayerSlotAssignment } from '@srd5/engine';
 import type { ProjectPlayerViewOptions } from '@srd5/transport';
 import { RoomServerError } from './errors.js';
 import {
+  ROOM_CODE_ALPHABET,
   parseClientMessage,
   serializeServerMessage,
   type ClientMessage,
@@ -11,8 +12,6 @@ import {
   type ServerMessage,
 } from './protocol.js';
 import { Room } from './room.js';
-
-const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 /** Per-connection routing state. */
 interface ConnectionState {

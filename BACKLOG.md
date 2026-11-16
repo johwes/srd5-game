@@ -170,12 +170,13 @@ flowchart LR
 | ID | Status | Title | Package | Depends On |
 | :--- | :---: | :--- | :--- | :--- |
 | **SRD-701** | `[x]` | Implement authoritative WebSocket Room Server (`@srd5/server`) wrapping `@srd5/engine` | `@srd5/server` | SRD-311, SRD-504 |
-| **SRD-702** | `[ ]` | Implement `WebSocketTransport` client adapter, Lobby room codes, and Player-to-Character slot assignment (Co-op & PvP) | `@srd5/transport`, `@srd5/client` | SRD-701 |
+| **SRD-702** | `[x]` | Implement `WebSocketTransport` client adapter, Lobby room codes, and Player-to-Character slot assignment (Co-op & PvP) | `@srd5/transport`, `@srd5/client` | SRD-701 |
 | **SRD-703** | `[ ]` | Implement multiplayer Reaction prompt timers and per-player Fog-of-War state synchronization | `@srd5/server`, `@srd5/client` | SRD-702 |
 | **SRD-704** | `[ ]` | Expand Combat Tier B & C Effect DSL coverage (Levels 6–20 spells, features, and CR 6–20 monsters) | `@srd5/data`, `@srd5/engine` | SRD-310 |
 
 ### Epic 7 Acceptance Criteria Details
 - [x] **SRD-701**: `@srd5/server` hosts authoritative `@srd5/engine` game sessions in isolated rooms; runtime-validated client messages (`CREATE_ROOM`, `JOIN_ROOM`, `ASSIGN_SLOTS`, `DISPATCH_COMMAND`, `GET_STATE`, `LEAVE_ROOM`) are routed through `reduceGame()`, ownership checks reject commands for characters a player does not control, and each connected player receives only its own Fog-of-War `PlayerViewState` (hidden traps/monsters and the authoritative RNG seed stripped). Verified by unit tests over an in-memory socket and the `ws` transport adapter.
+- [x] **SRD-702**: `@srd5/transport` exposes a single shared wire protocol plus a fully implemented `WebSocketTransport` (`GameTransport`) that connects via an injectable browser socket factory, hosts/joins rooms by normalized 6-character room codes (`abc-234` &rarr; `ABC234`), correlates `DISPATCH_COMMAND`/`ASSIGN_SLOTS`/`GET_STATE`/`LEAVE_ROOM` replies by `requestId`, projects Fog-of-War views to subscribers, and rejects server `ERROR`s with their coded error. `@srd5/client` adds a Multiplayer Lobby view (Title Menu &rarr; Co-op/PvP) that maps campfire seats to engine `PlayerSlotAssignment`s, distributes heroes evenly or splits them into two PvP teams, and launches a mission scoped to the local player's controlled heroes. Verified by transport/client unit tests and an end-to-end client-server integration test over an in-memory socket pipe.
 
 ---
 

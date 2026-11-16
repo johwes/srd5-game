@@ -7,7 +7,12 @@ import {
   getPregenCharacter,
 } from '@srd5/data';
 import { type GameState } from '@srd5/engine';
-import { getTransportInfo } from '@srd5/transport';
+import { type PlayerSlotAssignment, getTransportInfo } from '@srd5/transport';
+import {
+  MultiplayerLobby,
+  getControlledCharacters,
+  type MultiplayerMode,
+} from './multiplayer/index.js';
 import { CharacterBuilderWizard } from './components/builder/index.js';
 import { CompendiumBrowser } from './components/compendium/index.js';
 import {
@@ -52,7 +57,8 @@ export type AppViewMode =
   | 'roster'
   | 'arena'
   | 'dungeon'
-  | 'roguelite';
+  | 'roguelite'
+  | 'multiplayer_lobby';
 
 export interface AppProps {
   initialView?: AppViewMode;
@@ -86,8 +92,17 @@ export function App({
   const [campaignParty, setCampaignParty] = useState<CharacterBuildState[] | undefined>(
     undefined,
   );
+  const [multiplayerCharacterIds, setMultiplayerCharacterIds] = useState<string[] | null>(
+    null,
+  );
 
   const transportInfo = getTransportInfo();
+
+  // In a networked mission each seat commands only its assigned heroes.
+  const missionPartyCharacters = roster.characters.filter((character) => {
+    if (!roster.activePartyIds.includes(character.id)) return false;
+    return multiplayerCharacterIds === null || multiplayerCharacterIds.includes(character.id);
+  });
 
   // Load persisted roster on mount if stored
   useEffect(() => {
@@ -213,6 +228,7 @@ export function App({
           }}
           onNewGame={() => {
             setLoadedGameState(undefined);
+            setMultiplayerCharacterIds(null);
             setActiveView('campaign_setup');
           }}
           onLoadSlot={(slot) => {
@@ -226,6 +242,7 @@ export function App({
           }}
           onOpenCompendium={() => setActiveView('compendium')}
           onOpenArena={() => setActiveView('arena')}
+          onOpenMultiplayer={() => setActiveView('multiplayer_lobby')}
         />
 
         {activeSheetCharacter && (
@@ -278,6 +295,7 @@ export function App({
           }}
           onLaunch={(config: CampaignLaunchConfig) => {
             setLoadedGameState(undefined);
+            setMultiplayerCharacterIds(null);
             if (config.party.length > 0) {
               const nextRoster = {
                 ...roster,
@@ -319,6 +337,28 @@ export function App({
           />
         )}
       </>
+    );
+  }
+
+  if (activeView === 'multiplayer_lobby') {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6">
+        <MultiplayerLobby
+          partyCharacters={roster.characters.filter((c) =>
+            roster.activePartyIds.includes(c.id),
+          )}
+          compendium={defaultCompendium}
+          onBack={() => setActiveView('title_menu')}
+          onLaunch={(
+            assignments: PlayerSlotAssignment[],
+            mode: MultiplayerMode,
+            localPlayerId: string,
+          ) => {
+            setMultiplayerCharacterIds(getControlledCharacters(assignments, localPlayerId));
+            setActiveView(mode === 'pvp' ? 'arena' : 'dungeon');
+          }}
+        />
+      </main>
     );
   }
 
@@ -507,9 +547,7 @@ export function App({
 
         {activeView === 'arena' && (
           <ArenaView
-            rosterCharacters={roster.characters.filter((c) =>
-              roster.activePartyIds.includes(c.id),
-            )}
+            rosterCharacters={missionPartyCharacters}
             compendium={defaultCompendium}
             onOpenCharacterSheet={(charId) => {
               const char =
@@ -525,9 +563,7 @@ export function App({
 
         {(activeView === 'dungeon' || activeView === 'gameplay') && (
           <DungeonView
-            partyCharacters={roster.characters.filter((c) =>
-              roster.activePartyIds.includes(c.id),
-            )}
+            partyCharacters={missionPartyCharacters}
             initialGameState={loadedGameState}
             compendium={defaultCompendium}
             gameMode="campaign"
@@ -546,9 +582,7 @@ export function App({
 
         {activeView === 'roguelite' && (
           <DungeonView
-            partyCharacters={roster.characters.filter((c) =>
-              roster.activePartyIds.includes(c.id),
-            )}
+            partyCharacters={missionPartyCharacters}
             initialGameState={loadedGameState}
             compendium={defaultCompendium}
             gameMode="roguelite"

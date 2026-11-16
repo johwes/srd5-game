@@ -11,6 +11,7 @@ export interface TitleMenuViewProps {
   onOpenBuilder?: () => void;
   onOpenCompendium?: () => void;
   onOpenArena?: () => void;
+  onOpenMultiplayer?: () => void;
   storageAdapter?: DungeonStorageAdapter;
   activeSave?: DungeonSaveSlotData | null;
   settings?: AppSettings;
