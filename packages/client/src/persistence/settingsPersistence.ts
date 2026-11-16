@@ -7,6 +7,8 @@ export interface AppSettings {
   gridBrightness: number; // 0 to 100
   diceTray3d: boolean;
   fastAiTurns: boolean;
+  /** BG3-style hotbar density: visible icon-grid rows (1–3). */
+  hotbarRows: 1 | 2 | 3;
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -18,6 +20,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   gridBrightness: 70,
   diceTray3d: true,
   fastAiTurns: false,
+  hotbarRows: 2,
 };
 
 export const SETTINGS_STORAGE_KEY = 'srd5_settings_v1';

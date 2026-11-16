@@ -88,6 +88,9 @@ export interface ActionHotbarProps {
   onStandardAction?: (action: StandardActionType) => void;
   onUseItem?: (itemId: string) => void;
   onEndTurn?: () => void;
+  onOpenCharacterSheet?: (combatantId: string) => void;
+  /** Initial hotbar icon-grid rows (1–3); defaults to persisted AppSettings. */
+  initialRows?: number;
   className?: string;
 }
 

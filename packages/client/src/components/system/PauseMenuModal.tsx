@@ -813,6 +813,28 @@ export function PauseMenuModal({
                 </div>
 
                 <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-300">Hotbar Icon Rows</span>
+                  <div className="flex rounded-lg bg-slate-950 p-1 border border-slate-800">
+                    {([1, 2, 3] as const).map((rowCount) => (
+                      <button
+                        key={rowCount}
+                        type="button"
+                        data-testid={`pause-settings-hotbar-rows-${rowCount}`}
+                        onClick={() => handleUpdateSetting('hotbarRows', rowCount)}
+                        title={`Show ${rowCount} icon row${rowCount === 1 ? '' : 's'} in the action hotbar (or drag the ═══ handle above the dock)`}
+                        className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
+                          settings.hotbarRows === rowCount
+                            ? 'bg-amber-500 text-slate-950'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {rowCount}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-xs text-slate-300">Animation Speed</span>
                   <div className="flex rounded-lg bg-slate-950 p-1 border border-slate-800">
                     {(['normal', 'fast', 'instant'] as const).map((spd) => (

@@ -133,6 +133,8 @@ export interface CreatureTokenData {
   tempHp?: number;
   armorClass?: number;
   conditions?: ConditionId[];
+  activeEffects?: Array<{ effectId: string; name: string; remainingRounds?: number }>;
+  concentrating?: boolean;
   isDead?: boolean;
   isStable?: boolean;
   facing?: CreatureFacing;
@@ -336,6 +338,8 @@ export interface TacticalCanvasViewportProps {
   showConditionBadges?: boolean;
   showTokenFacing?: boolean;
   showTokenNames?: boolean;
+  /** Live combat/dungeon events rendered as floating combat text (MISS, CONCENTRATION BROKEN, …). */
+  events?: GameEvent[];
   pathPreview?: PathPreviewOptions | null;
   enableHoverPathPreview?: boolean;
   activeAoeTemplate?: AoeOverlayOptions | null;

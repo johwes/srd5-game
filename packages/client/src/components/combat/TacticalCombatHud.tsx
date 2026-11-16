@@ -4,6 +4,7 @@ import type { DiceRollRecord } from '@srd5/engine';
 import { ActionHotbar } from './ActionHotbar.js';
 import { AnimatedDiceTray } from './AnimatedDiceTray.js';
 import { CombatLog } from './CombatLog.js';
+import { InitiativePortraits, SelectedEnemyCard } from './InitiativePortraits.js';
 import { InitiativeRibbon } from './InitiativeRibbon.js';
 import { PartyPortraits } from './PartyPortraits.js';
 import { ReactionInterruptModal } from './ReactionInterruptModal.js';
@@ -114,6 +115,17 @@ export function TacticalCombatHud({
     : null;
 
   const currentActiveRoll = controlledActiveRoll ?? inspectedRoll;
+
+  // BG3-style selected-enemy card: show when the selection is a hostile (or
+  // any non-party) combatant, mirroring the "Klaw" card in the references.
+  const selectedCombatant =
+    selectedCombatantId != null
+      ? (viewState.combatants[selectedCombatantId] ??
+        viewState.party[selectedCombatantId] ??
+        null)
+      : null;
+  const showEnemyCard =
+    selectedCombatant != null && selectedCombatant.side !== 'party';
 
   return (
     <div
@@ -237,6 +249,31 @@ export function TacticalCombatHud({
         />
       </div>
 
+      {/* 3b. BG3-style Initiative Portraits (top-left, enemies over allies) */}
+      {combat && combat.initiativeOrder.length > 0 && (
+        <div className="absolute top-16 left-2 sm:left-3 z-20 pointer-events-auto">
+          <InitiativePortraits
+            initiativeOrder={combat.initiativeOrder}
+            combatants={viewState.combatants}
+            activeCombatantId={activeCombatantId}
+            selectedCombatantId={selectedCombatantId}
+            round={combat.round}
+            onSelectCombatant={handleSelectCombatant}
+          />
+        </div>
+      )}
+
+      {/* 3c. BG3-style Selected-Enemy Card (top-center, under the ribbon) */}
+      {showEnemyCard && selectedCombatant && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20">
+          <SelectedEnemyCard
+            combatant={selectedCombatant}
+            onClose={() => handleSelectCombatant(activeCombatantId ?? '')}
+            onOpenCharacterSheet={onOpenCharacterSheet}
+          />
+        </div>
+      )}
+
       {/* 4. Right Panel Slot (Custom or default Combat Log & Dice Tray) */}
       {rightPanel ? (
         <div
@@ -303,6 +340,7 @@ export function TacticalCombatHud({
             onStandardAction={onStandardAction}
             onUseItem={onUseItem}
             onEndTurn={onEndTurn}
+            onOpenCharacterSheet={onOpenCharacterSheet}
           />
         </div>
       </div>

@@ -59,6 +59,7 @@ export function TacticalCanvasViewport({
   width = '100%',
   height = '100%',
   testId = 'tactical-canvas-viewport',
+  events = [],
 }: TacticalCanvasViewportProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -357,6 +358,38 @@ export function TacticalCanvasViewport({
     pixiReady,
     atlasLoaded,
   ]);
+
+  // Feed new GameEvents into the floating combat text layer (BG3-style
+  // MISS / CRITICAL / CONCENTRATION BROKEN callouts). Tracks the last
+  // processed event count so re-renders never replay old callouts.
+  const processedEventCountRef = useRef(0);
+  useEffect(() => {
+    const renderer = floatingTextRendererRef.current;
+    if (!renderer || !combatants) return;
+    if (events.length < processedEventCountRef.current) {
+      processedEventCountRef.current = 0;
+    }
+    const fresh = events.slice(processedEventCountRef.current);
+    processedEventCountRef.current = events.length;
+    if (fresh.length === 0) return;
+
+    const combatantList = Array.isArray(combatants)
+      ? combatants
+      : Object.values(combatants);
+    const getEntityPos = (id: string) => {
+      const c = combatantList.find((entry) => entry.id === id);
+      if (!c) return undefined;
+      const sizeCells = c.size === 'large' ? 2 : c.size === 'huge' ? 3 : c.size === 'gargantuan' ? 4 : 1;
+      return { x: c.position.x + sizeCells / 2 - 0.5, y: c.position.y };
+    };
+    for (const event of fresh) {
+      try {
+        renderer.handleGameEvent(event, getEntityPos, cellSize);
+      } catch {
+        // Never let a cosmetic callout break the render loop.
+      }
+    }
+  }, [events, combatants, cellSize, pixiReady]);
 
   // Update Interactive Overlays (Path preview, AOE templates, Targeting rays)
   useEffect(() => {

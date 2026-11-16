@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import type { SpellData } from '@srd5/data';
+import React, { useRef, useState } from 'react';
+import type { EffectStepSpec, SpellData } from '@srd5/data';
 import type { DerivedWeaponAttackProfile } from '@srd5/engine';
 import { GameIcon } from '../../canvas/assets/index.js';
 import { formatSpellRange } from '../compendium/formatters.js';
@@ -7,7 +7,10 @@ import {
   formatSpellTargetingSummary,
   resolveSpellTargets,
 } from '../../utils/combatTargeting.js';
+import { loadAppSettings, saveAppSettings } from '../../persistence/settingsPersistence.js';
 import { TurnBudgetIndicator } from './TurnBudgetIndicator.js';
+import { ActionTooltipCard } from './ActionTooltipCard.js';
+import { CombatantMedallion } from './CombatantMedallion.js';
 import type {
   ActionHotbarProps,
   CombatActionTab,
@@ -15,8 +18,80 @@ import type {
   StandardActionType,
 } from './types.js';
 
-export const STANDARD_ACTIONS: StandardActionDefinition[] = [
-  {
+/**
+ * Summarizes a spell's executable effect pipeline into BG3-tooltip style
+ * one-line effect descriptions (reference: screenshots 085 / 086).
+ */
+function collectSpellEffectLines(
+  steps: readonly EffectStepSpec[] | undefined,
+  depth = 0,
+): string[] {
+  if (!steps || depth > 2) return [];
+  const lines: string[] = [];
+  for (const step of steps) {
+    switch (step.step) {
+      case 'deal_damage':
+        lines.push(
+          `Deal ${step.diceFormula} ${step.damageType} damage${step.halfOnSaveSuccess ? ' (half on successful save)' : ''}.`,
+        );
+        break;
+      case 'saving_throw':
+        lines.push(`Saving throw: ${step.ability.toUpperCase()} vs your spell save DC.`);
+        lines.push(...collectSpellEffectLines(step.onFail, depth + 1));
+        lines.push(...collectSpellEffectLines(step.onSuccess, depth + 1));
+        break;
+      case 'attack_roll':
+        lines.push(`Spell attack roll (${step.attackType.replace(/_/g, ' ')}).`);
+        lines.push(...collectSpellEffectLines(step.onHit, depth + 1));
+        lines.push(...collectSpellEffectLines(step.onMiss, depth + 1));
+        break;
+      case 'heal':
+        lines.push(`Restore ${step.diceFormula} hit points.`);
+        break;
+      case 'grant_temp_hp':
+        lines.push(`Grant ${step.amountFormula} temporary hit points.`);
+        break;
+      case 'apply_condition':
+        lines.push(`Inflict ${String(step.conditionId).replace(/-/g, ' ')}.`);
+        break;
+      case 'apply_active_effect':
+        lines.push(`Apply ${step.name}.`);
+        break;
+      case 'create_hazard_zone':
+        lines.push(`Create a ${step.sizeFeet} ft ${step.shape} hazard zone.`);
+        break;
+      case 'teleport':
+        lines.push(`Teleport up to ${step.maxDistanceFeet} ft.`);
+        break;
+      case 'forced_movement':
+        lines.push(
+          `${step.direction === 'push_from_actor' ? 'Push' : 'Pull'} up to ${step.distanceFeet} ft.`,
+        );
+        break;
+      case 'manual_adjudication':
+        lines.push(step.title);
+        break;
+      case 'spend_resource':
+        break;
+    }
+  }
+  return lines;
+}
+
+function summarizeSpellEffects(spell: SpellData): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const line of collectSpellEffectLines(spell.effects)) {
+    if (!seen.has(line)) {
+      seen.add(line);
+      out.push(line);
+    }
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+
+export const STANDARD_ACTIONS: StandardActionDefinition[] = [  {
     id: 'dash',
     name: 'Dash',
     actionCost: 'action',
@@ -96,11 +171,24 @@ export function ActionHotbar({
   onStandardAction,
   onUseItem,
   onEndTurn,
+  onOpenCharacterSheet,
+  initialRows,
   className = '',
 }: ActionHotbarProps) {
   const [internalTab, setInternalTab] = useState<CombatActionTab>('attack');
   const [spellLevelFilter, setSpellLevelFilter] = useState<number | 'all'>('all');
   const [selectedSlotLevels, setSelectedSlotLevels] = useState<Record<string, number>>({});
+  // BG3-style customizable hotbar density: rows persisted to AppSettings.
+  const [rows, setRows] = useState<number>(() => {
+    if (initialRows !== undefined) return initialRows;
+    try {
+      const saved = loadAppSettings().hotbarRows;
+      return saved >= 1 && saved <= 3 ? saved : 2;
+    } catch {
+      return 2;
+    }
+  });
+  const resizeDragRef = useRef<{ startY: number; startRows: number } | null>(null);
 
   const activeTab = controlledTab ?? internalTab;
   const setTab = (tab: CombatActionTab) => {
@@ -155,6 +243,42 @@ export function ActionHotbar({
     }
   };
 
+  // BG3-style resizable icon grid: 1–3 rows, shared by every tab panel.
+  const iconGridClassName =
+    rows > 1
+      ? 'flex flex-wrap overflow-y-auto gap-2 pt-0.5 scrollbar-thin items-center content-start'
+      : 'flex flex-nowrap overflow-x-auto gap-2 pb-2 pt-0.5 scrollbar-thin items-center';
+  const iconGridStyle: React.CSSProperties | undefined =
+    rows > 1 ? { maxHeight: rows * 58 } : undefined;
+
+  const persistRows = (nextRows: number) => {
+    const clamped = Math.max(1, Math.min(3, nextRows));
+    setRows(clamped);
+    try {
+      saveAppSettings({ ...loadAppSettings(), hotbarRows: clamped as 1 | 2 | 3 });
+    } catch {
+      // Ignore persistence failures; in-memory rows still apply.
+    }
+  };
+
+  const handleResizePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    resizeDragRef.current = { startY: e.clientY, startRows: rows };
+    const handleMove = (moveEvent: PointerEvent) => {
+      const drag = resizeDragRef.current;
+      if (!drag) return;
+      const delta = Math.round((drag.startY - moveEvent.clientY) / 30);
+      persistRows(drag.startRows + delta);
+    };
+    const handleUp = () => {
+      resizeDragRef.current = null;
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+  };
+
   return (
     <footer
       data-testid="action-hotbar"
@@ -168,44 +292,30 @@ export function ActionHotbar({
         />
       </div>
 
+      {/* BG3-style drag handle: resize the icon grid between 1–3 rows */}
+      <div
+        data-testid="hotbar-resize-handle"
+        role="slider"
+        aria-label="Hotbar rows"
+        aria-valuemin={1}
+        aria-valuemax={3}
+        aria-valuenow={rows}
+        title={`Drag to resize hotbar (${rows} row${rows === 1 ? '' : 's'})`}
+        onPointerDown={handleResizePointerDown}
+        className="px-6 py-0.5 rounded-full bg-slate-900/90 border border-slate-800 hover:border-amber-500/60 text-slate-500 hover:text-amber-300 text-[10px] cursor-ns-resize select-none transition-colors"
+      >
+        ═══
+      </div>
+
       {/* Docked Hotbar */}
       <div className="flex items-stretch gap-3 px-3 py-2.5 max-w-full bg-gradient-to-b from-slate-900/95 to-slate-950/95 border border-amber-700/30 rounded-2xl backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.6)]">
-        {/* Active Hero Portrait */}
-        <div className="flex flex-col items-center justify-center gap-1 w-24 shrink-0 pr-3 border-r border-slate-800">
-          {activeCombatant ? (
-            <>
-              <div className="w-14 h-14 rounded-full bg-amber-500/15 border-2 border-amber-400 flex items-center justify-center font-black text-amber-300 text-xl shadow-[0_0_14px_rgba(251,191,36,0.45)]">
-                {activeCombatant.name.charAt(0)}
-              </div>
-              <span
-                data-testid="hotbar-active-hero-name"
-                className="text-xs font-bold text-amber-300 truncate max-w-full"
-              >
-                {activeCombatant.name}
-              </span>
-              <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                <div
-                  className="h-full bg-emerald-400"
-                  style={{
-                    width: `${activeCombatant.maxHp > 0 ? Math.max(0, Math.min(100, (activeCombatant.currentHp / activeCombatant.maxHp) * 100)) : 0}%`,
-                  }}
-                />
-              </div>
-              <span
-                data-testid="hotbar-active-hero-hp"
-                className="text-[11px] font-semibold text-slate-200"
-              >
-                HP {activeCombatant.currentHp}/{activeCombatant.maxHp}
-              </span>
-              <span className="text-[10px] text-slate-400">
-                AC {activeCombatant.armorClass} &middot; {activeCombatant.speedFeet}ft
-              </span>
-            </>
-          ) : (
-            <span className="text-xs text-slate-500 italic text-center">
-              No combatant active
-            </span>
-          )}
+        {/* Active Hero Medallion (portrait-centered dock, BG3 style) */}
+        <div className="flex items-center pr-3 border-r border-slate-800 shrink-0">
+          <CombatantMedallion
+            combatant={activeCombatant}
+            turnBudget={turnBudget}
+            onOpenCharacterSheet={onOpenCharacterSheet}
+          />
         </div>
 
         {/* Tabs + Slot Grid */}
@@ -291,7 +401,8 @@ export function ActionHotbar({
           <div
             data-testid="hotbar-panel-attack"
             onWheel={handleHorizontalWheel}
-            className="flex flex-nowrap overflow-x-auto gap-2 pb-2 pt-0.5 scrollbar-thin items-center"
+            className={iconGridClassName}
+            style={iconGridStyle}
           >
             {attacks.length > 0 ? (
               attacks.map((wp) => {
@@ -332,23 +443,17 @@ export function ActionHotbar({
                     </button>
 
                     {/* BG3 Floating Tooltip Card on Hover */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950/95 border border-amber-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left">
-                      <div className="flex items-center justify-between gap-1 border-b border-slate-800 pb-1.5 mb-1.5">
-                        <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
-                          <GameIcon name="attack" category="action" size={14} alt="" />
-                          <span>{wp.name}</span>
-                        </span>
-                        <span className="text-[10px] text-slate-400 capitalize">
-                          {isOffHand ? 'Bonus Action' : 'Action'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-emerald-400 font-mono mb-1">
-                        <span>{wp.damageFormula} {wp.damageType}</span>
-                        <span className="text-slate-400">{wp.rangeFeet ? `${wp.rangeFeet.normal}/${wp.rangeFeet.long}ft` : `${wp.reachFeet}ft reach`}</span>
-                      </div>
-                      <div className="text-[11px] text-slate-400">
-                        To-hit bonus: <span className="text-amber-300 font-bold">{wp.toHitBonus >= 0 ? `+${wp.toHitBonus}` : wp.toHitBonus}</span>
-                      </div>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                      <ActionTooltipCard
+                        testId={`attack-tooltip-${wp.id}`}
+                        icon={<GameIcon name="attack" category="action" size={14} alt="" />}
+                        name={wp.name}
+                        badge={wp.rangeType === 'ranged' ? 'Ranged Weapon' : 'Melee Weapon'}
+                        subtitle={`${wp.damageType} · ${wp.rangeFeet ? `${wp.rangeFeet.normal}/${wp.rangeFeet.long}ft range` : `${wp.reachFeet}ft reach`} · to hit ${wp.toHitBonus >= 0 ? `+${wp.toHitBonus}` : wp.toHitBonus}`}
+                        effectLines={[`Deal ${wp.damageFormula} ${wp.damageType} damage.`]}
+                        cost={{ action: isOffHand ? 'Bonus Action' : 'Action' }}
+                        accent="amber"
+                      />
                     </div>
                   </div>
                 );
@@ -488,7 +593,8 @@ export function ActionHotbar({
             {/* Spells Slot Grid */}
             <div
               onWheel={handleHorizontalWheel}
-              className="flex flex-nowrap overflow-x-auto gap-2 pb-2 pt-0.5 scrollbar-thin items-center"
+              className={iconGridClassName}
+            style={iconGridStyle}
             >
               {filteredSpells.length > 0 ? (
                 filteredSpells.map((spell) => {
@@ -570,54 +676,43 @@ export function ActionHotbar({
                       </button>
 
                       {/* BG3 Floating Tooltip Card on Hover */}
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-950/95 border border-purple-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between gap-1 border-b border-slate-800 pb-1.5">
-                          <span className="font-bold text-slate-100 text-xs flex items-center gap-1.5">
-                            <GameIcon name={spell.school} category="spell" size={14} alt="" />
-                            <span>{spell.name}</span>
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded bg-purple-950 border border-purple-700 text-[10px] font-semibold text-purple-300 shrink-0">
-                            {isCantrip ? 'Cantrip' : `Level ${spell.level}`}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between text-[11px] text-slate-400">
-                          <span className="capitalize">{spell.school}</span>
-                          <span className="text-amber-400">{spell.castingTime}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between text-[10px] text-slate-500 gap-1">
-                          <span
-                            className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold truncate ${targetingSummary.badgeStyle}`}
-                            title={targetingSummary.badgeLabel}
-                          >
-                            {targetingSummary.badgeLabel}
-                          </span>
-                          {spell.concentration && (
-                            <span className="px-1 py-0.2 rounded bg-amber-950 border border-amber-600 text-amber-300 font-bold shrink-0">
-                              Conc.
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between text-[10px] text-slate-400 px-1.5 py-0.5 rounded bg-slate-900/60 border border-slate-800/80">
-                          <span className="text-slate-500 font-medium shrink-0">Target:</span>
-                          <span
-                            className="font-semibold text-slate-200 truncate ml-1 text-right"
-                            title={targetingSummary.previewLabel}
-                          >
-                            {targetingSummary.previewLabel}
-                          </span>
-                        </div>
-
-                        <div className="text-[11px] text-slate-400">
-                          Range: <span className="text-slate-200">{formatSpellRange(spell.targeting)}</span>
-                        </div>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                        <ActionTooltipCard
+                          testId={`spell-tooltip-${spell.id}`}
+                          icon={<GameIcon name={spell.school} category="spell" size={14} alt="" />}
+                          name={spell.name}
+                          badge={isCantrip ? 'Cantrip' : `Level ${spell.level}`}
+                          subtitle={`${spell.school} · ${spell.castingTime}`}
+                          effectLines={[
+                            ...summarizeSpellEffects(spell),
+                            `Target: ${targetingSummary.previewLabel}`,
+                            `Range: ${formatSpellRange(spell.targeting)}`,
+                          ]}
+                          warning={
+                            blockedByBaRule
+                              ? 'Bonus Action spell cast: only cantrips remain this turn.'
+                              : !hasSlots
+                                ? `No level ${defaultSlot} spell slots left.`
+                                : !hasEconomy
+                                  ? `Requires ${isBonusActionTime ? 'a bonus action' : isReactionTime ? 'a reaction' : 'an action'}.`
+                                  : undefined
+                          }
+                          concentration={spell.concentration}
+                          cost={{
+                            action: isBonusActionTime
+                              ? 'Bonus Action'
+                              : isReactionTime
+                                ? 'Reaction'
+                                : 'Action',
+                            resource: isCantrip ? undefined : `Level ${defaultSlot} Slot`,
+                          }}
+                          accent="purple"
+                        />
 
                         {/* Slot Picker if Upcastable */}
                         {!isCantrip && availableSlotLevels.length > 0 && (
                           <div
-                            className="flex items-center justify-between pt-1.5 border-t border-slate-800 mt-1"
+                            className="flex items-center justify-between pt-1.5 border-t border-slate-800 mt-1 px-3 pb-2 bg-slate-950/95 rounded-b-xl"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <span className="text-[10px] text-slate-400">Cast at level:</span>
@@ -661,7 +756,8 @@ export function ActionHotbar({
           <div
             data-testid="hotbar-panel-features"
             onWheel={handleHorizontalWheel}
-            className="flex flex-nowrap overflow-x-auto gap-2 pb-2 pt-0.5 scrollbar-thin items-center"
+            className={iconGridClassName}
+            style={iconGridStyle}
           >
             {features.length > 0 ? (
               features.map((feat) => {
@@ -691,17 +787,30 @@ export function ActionHotbar({
                       </span>
                     </button>
 
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950/95 border border-amber-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left flex flex-col gap-1">
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-1">
-                        <span className="font-bold text-amber-300 text-xs">{feat.name}</span>
-                        <span className="text-[10px] text-slate-400 capitalize">{feat.actionCost.replace(/_/g, ' ')}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-300 leading-relaxed">{feat.description ?? 'Class feature ability'}</p>
-                      {feat.resourceCost && (
-                        <div className="text-[10px] text-slate-400 border-t border-slate-800 pt-1">
-                          Resource cost: {feat.resourceCost.amount} use
-                        </div>
-                      )}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                      <ActionTooltipCard
+                        testId={`feature-tooltip-${feat.id}`}
+                        icon={<span aria-hidden>⭐</span>}
+                        name={feat.name}
+                        badge="Class Feature"
+                        effectLines={[feat.description ?? 'Class feature ability']}
+                        warning={
+                          feat.resourceCost
+                            ? `Resource cost: ${feat.resourceCost.amount} use.`
+                            : undefined
+                        }
+                        cost={{
+                          action:
+                            feat.actionCost === 'bonus_action'
+                              ? 'Bonus Action'
+                              : feat.actionCost === 'reaction'
+                                ? 'Reaction'
+                                : feat.actionCost === 'free'
+                                  ? 'Free'
+                                  : 'Action',
+                        }}
+                        accent="amber"
+                      />
                     </div>
                   </div>
                 );
@@ -719,7 +828,8 @@ export function ActionHotbar({
           <div
             data-testid="hotbar-panel-standard"
             onWheel={handleHorizontalWheel}
-            className="flex flex-nowrap overflow-x-auto gap-2 pb-2 pt-0.5 scrollbar-thin items-center"
+            className={iconGridClassName}
+            style={iconGridStyle}
           >
             {STANDARD_ACTIONS.map((action) => {
               const requiresAction = action.actionCost === 'action';
@@ -753,15 +863,25 @@ export function ActionHotbar({
                     </span>
                   </button>
 
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950/95 border border-sky-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left flex flex-col gap-1">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-1">
-                      <span className="font-bold text-sky-300 text-xs flex items-center gap-1.5">
-                        <GameIcon name={action.id} category="action" size={14} alt="" />
-                        <span>{action.name}</span>
-                      </span>
-                      <span className="text-[10px] text-slate-400 capitalize">{action.actionCost}</span>
-                    </div>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">{action.description}</p>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                    <ActionTooltipCard
+                      testId={`standard-tooltip-${action.id}`}
+                      icon={<GameIcon name={action.id} category="action" size={14} alt="" />}
+                      name={action.name}
+                      badge="Standard Action"
+                      effectLines={[action.description]}
+                      cost={{
+                        action:
+                          action.actionCost === 'bonus_action'
+                            ? 'Bonus Action'
+                            : action.actionCost === 'movement'
+                              ? 'Movement'
+                              : action.actionCost === 'free'
+                                ? 'Free'
+                                : 'Action',
+                      }}
+                      accent="sky"
+                    />
                   </div>
                 </div>
               );
@@ -774,7 +894,8 @@ export function ActionHotbar({
           <div
             data-testid="hotbar-panel-items"
             onWheel={handleHorizontalWheel}
-            className="flex flex-nowrap overflow-x-auto gap-2 pb-2 pt-0.5 scrollbar-thin items-center"
+            className={iconGridClassName}
+            style={iconGridStyle}
           >
             {/* Standard Potion of Healing */}
             <div
@@ -799,12 +920,16 @@ export function ActionHotbar({
                 </span>
               </button>
 
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3 bg-slate-950/95 border border-emerald-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left flex flex-col gap-1">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-1">
-                  <span className="font-bold text-emerald-300 text-xs">Potion of Healing</span>
-                  <span className="text-[10px] text-slate-400">Action</span>
-                </div>
-                <p className="text-[11px] text-emerald-400">Drink or administer to regain 2d4 + 2 Hit Points.</p>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                <ActionTooltipCard
+                  testId="item-tooltip-potion-healing"
+                  icon={<GameIcon name="potion" category="item" size={14} alt="" />}
+                  name="Potion of Healing"
+                  badge="Consumable"
+                  effectLines={['Drink or administer to regain 2d4 + 2 hit points.']}
+                  cost={{ action: 'Action' }}
+                  accent="emerald"
+                />
               </div>
             </div>
 
@@ -831,33 +956,38 @@ export function ActionHotbar({
                 </span>
               </button>
 
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-60 p-3 bg-slate-950/95 border border-emerald-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left flex flex-col gap-1">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-1">
-                  <span className="font-bold text-emerald-300 text-xs">Potion of Greater Healing</span>
-                  <span className="text-[10px] text-slate-400">Action</span>
-                </div>
-                <p className="text-[11px] text-emerald-400">Drink or administer to regain 4d4 + 4 Hit Points.</p>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                <ActionTooltipCard
+                  testId="item-tooltip-potion-greater-healing"
+                  icon={<GameIcon name="potion" category="item" size={14} alt="" />}
+                  name="Potion of Greater Healing"
+                  badge="Consumable"
+                  effectLines={['Drink or administer to regain 4d4 + 4 hit points.']}
+                  cost={{ action: 'Action' }}
+                  accent="emerald"
+                />
               </div>
             </div>
           </div>
         )}
           </div>
         </div>
-        {/* End Turn */}
+        {/* End Turn — BG3 hourglass medallion */}
         <div className="flex items-center pl-3 border-l border-slate-800 shrink-0">
           <button
             type="button"
             data-testid="hotbar-end-turn-btn"
             disabled={!isPlayerControlled || !activeCombatant}
             onClick={onEndTurn}
-            className={`flex flex-col items-center justify-center gap-0.5 w-20 h-16 rounded-xl font-black text-[11px] uppercase tracking-wider transition-all shadow-md ${
+            title="End Turn"
+            className={`flex flex-col items-center justify-center gap-0.5 w-16 h-16 rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-md border-2 ${
               isPlayerControlled && activeCombatant
-                ? 'bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 active:scale-95 shadow-amber-500/30'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
+                ? 'bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 border-amber-200/60 active:scale-95 shadow-amber-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed opacity-60'
             }`}
           >
-            <span className="text-lg leading-none">&raquo;</span>
-            <span>End Turn</span>
+            <span className="text-xl leading-none">⏳</span>
+            <span className="leading-none">End Turn</span>
           </button>
         </div>
       </div>

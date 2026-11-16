@@ -105,6 +105,7 @@ export interface TokenNode {
   facingGraphics: Graphics;
   initialText: Text;
   conditionsContainer: Container;
+  buffsContainer: Container;
   nameText: Text;
   data: CreatureTokenData;
   targetPos: Point;
@@ -263,6 +264,9 @@ export class CreatureTokenRenderer {
       const conditionsContainer = new Container();
       conditionsContainer.label = 'ConditionsContainer';
 
+      const buffsContainer = new Container();
+      buffsContainer.label = 'BuffsContainer';
+
       const nameText = new Text({
         text: '',
         style: {
@@ -283,6 +287,7 @@ export class CreatureTokenRenderer {
       container.addChild(facingGraphics);
       container.addChild(initialText);
       container.addChild(conditionsContainer);
+      container.addChild(buffsContainer);
       container.addChild(nameText);
 
       this.container.addChild(container);
@@ -296,6 +301,7 @@ export class CreatureTokenRenderer {
         facingGraphics,
         initialText,
         conditionsContainer,
+        buffsContainer,
         nameText,
         data,
         targetPos: { ...data.position },
@@ -355,8 +361,15 @@ export class CreatureTokenRenderer {
       node.targetPos = { ...data.position };
     }
 
-    // 1. Aura / Selection / Hover Ring
-    this.drawAura(node.auraGraphics, radius, opts);
+    // 1. Aura / Selection / Hover Ring (concentration gets a gold swirl)
+    // PlayerViewCombatant carries `concentratingOn`; test fixtures may set `concentrating`.
+    const concentrating =
+      data.concentrating === true ||
+      (data as unknown as { concentratingOn?: unknown }).concentratingOn != null;
+    this.drawAura(node.auraGraphics, radius, {
+      ...opts,
+      concentrating,
+    });
 
     // 2. Base Disc & Frame (with procedural team/allegiance colors)
     this.drawBaseDisc(node.baseDiscGraphics, radius, data, resolvedAsset);
@@ -412,6 +425,15 @@ export class CreatureTokenRenderer {
       node.conditionsContainer.visible = false;
     }
 
+    // 6b. Active Buff Pips (BG3-style emerald status dots above the token)
+    if (opts.showConditionBadges && data.activeEffects && data.activeEffects.length > 0) {
+      this.drawBuffPips(node.buffsContainer, radius, data.activeEffects);
+      node.buffsContainer.visible = true;
+    } else {
+      node.buffsContainer.removeChildren().forEach((c) => c.destroy());
+      node.buffsContainer.visible = false;
+    }
+
     // 7. Name Tag
     if (opts.showNameTags) {
       node.nameText.text = data.name;
@@ -425,12 +447,12 @@ export class CreatureTokenRenderer {
   }
 
   /**
-   * Draws selection glow, active turn gold ring, and hover ring.
+   * Draws selection glow, active turn gold ring, concentration swirl, and hover ring.
    */
   private drawAura(
     g: Graphics,
     radius: number,
-    opts: { isSelected: boolean; isActive: boolean; isHovered: boolean },
+    opts: { isSelected: boolean; isActive: boolean; isHovered: boolean; concentrating?: boolean },
   ): void {
     g.clear();
 
@@ -438,6 +460,12 @@ export class CreatureTokenRenderer {
       // Golden turn pulse ring
       g.circle(0, 0, radius + 4).stroke({ color: 0xf59e0b, width: 3, alpha: 0.85 });
       g.circle(0, 0, radius + 7).stroke({ color: 0xfbbf24, width: 1.5, alpha: 0.4 });
+    }
+
+    if (opts.concentrating) {
+      // BG3-style concentration swirl: violet dashed ring outside the turn ring
+      g.circle(0, 0, radius + 10).stroke({ color: 0xa855f7, width: 2, alpha: 0.9 });
+      g.circle(0, 0, radius + 10).stroke({ color: 0xe9d5ff, width: 0.75, alpha: 0.5 });
     }
 
     if (opts.isSelected) {
@@ -662,6 +690,82 @@ export class CreatureTokenRenderer {
       extraBadge.position.set(startX + visibleConditions.length * badgeSpacing, badgeY);
 
       container.addChild(extraBadge);
+    }
+  }
+
+  /**
+   * Renders emerald active-buff pips along the top edge of the token
+   * (BG3-style status dots; shows up to 3 plus a "+N" overflow pip).
+   */
+  private drawBuffPips(
+    container: Container,
+    radius: number,
+    effects: Array<{ effectId: string; name: string }>,
+  ): void {
+    container.removeChildren().forEach((c) => c.destroy());
+
+    const maxPipsToShow = 3;
+    const visible = effects.slice(0, maxPipsToShow);
+    const extraCount = effects.length - maxPipsToShow;
+
+    const pipRadius = 6;
+    const pipSpacing = 13;
+    const totalPips = visible.length + (extraCount > 0 ? 1 : 0);
+    const startX = -((totalPips - 1) * pipSpacing) / 2;
+    const pipY = -(radius * 0.78);
+
+    visible.forEach((effect, index) => {
+      const pip = new Container();
+      pip.label = `Buff_${effect.effectId}`;
+
+      const bg = new Graphics();
+      bg.circle(0, 0, pipRadius).fill(0x065f46);
+      bg.circle(0, 0, pipRadius).stroke({ color: 0x6ee7b7, width: 1.5 });
+
+      const label = new Text({
+        text: '✦',
+        style: {
+          fontFamily: 'sans-serif',
+          fontSize: 7,
+          fontWeight: 'bold',
+          fill: 0xa7f3d0,
+          align: 'center',
+        },
+      });
+      label.anchor.set(0.5, 0.5);
+
+      pip.addChild(bg);
+      pip.addChild(label);
+      pip.position.set(startX + index * pipSpacing, pipY);
+
+      container.addChild(pip);
+    });
+
+    if (extraCount > 0) {
+      const extraPip = new Container();
+      extraPip.label = 'Buff_More';
+
+      const bg = new Graphics();
+      bg.circle(0, 0, pipRadius).fill(0x334155);
+      bg.circle(0, 0, pipRadius).stroke({ color: 0x94a3b8, width: 1.5 });
+
+      const label = new Text({
+        text: `+${extraCount}`,
+        style: {
+          fontFamily: 'sans-serif',
+          fontSize: 6.5,
+          fontWeight: 'bold',
+          fill: 0xf8fafc,
+          align: 'center',
+        },
+      });
+      label.anchor.set(0.5, 0.5);
+
+      extraPip.addChild(bg);
+      extraPip.addChild(label);
+      extraPip.position.set(startX + visible.length * pipSpacing, pipY);
+
+      container.addChild(extraPip);
     }
   }
 

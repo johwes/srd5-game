@@ -916,6 +916,7 @@ export function DungeonView({
             showTokenHpArcs={true}
             showConditionBadges={true}
             showTokenNames={true}
+            events={events}
             className="w-full h-full"
           />
         </TacticalCombatHud>

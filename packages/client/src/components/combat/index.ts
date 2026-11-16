@@ -1,6 +1,9 @@
 export * from './types.js';
 export { TurnBudgetIndicator } from './TurnBudgetIndicator.js';
 export { InitiativeRibbon } from './InitiativeRibbon.js';
+export { InitiativePortraits, SelectedEnemyCard } from './InitiativePortraits.js';
+export { ActionTooltipCard } from './ActionTooltipCard.js';
+export { CombatantMedallion } from './CombatantMedallion.js';
 export { PartyPortraits } from './PartyPortraits.js';
 export { ActionHotbar, STANDARD_ACTIONS } from './ActionHotbar.js';
 export { TacticalCombatHud } from './TacticalCombatHud.js';

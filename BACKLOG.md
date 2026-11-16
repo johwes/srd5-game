@@ -152,6 +152,7 @@ flowchart LR
 | **SRD-605** | `[x]` | Build automated Playwright E2E suite verifying the complete New Game creation & launch flow across all 3 game modes at 1280×800 resolution | `@srd5/client` | SRD-602, SRD-603, SRD-604 |
 | **SRD-606** | `[x]` | Implement Configurable Friendly Fire Ruleset & AOE Targeting Filter (`friendlyFireEnabled`) | `@srd5/engine`, `@srd5/client` | SRD-306, SRD-602 |
 | **SRD-607** | `[x]` | Refactor Tactical Viewport to Full-Bleed Canvas with BG3-Style Docked Action Hotbar | `@srd5/client` | SRD-406, SRD-605 |
+| **SRD-608** | `[x]` | BG3-Reference UI Polish: initiative portraits + enemy card, rich hotbar tooltips, token buff badges, portrait dock, floating combat text wiring, resizable hotbar | `@srd5/client` | SRD-607 |
 
 ### Epic 6 Acceptance Criteria Details
 - [x] **SRD-601**: App launch defaults to `TitleMenuView` with CRPG dark-fantasy aesthetic, animated torchlight/vignette styling, active save detection ("Continue" enabled with floor/party info), Character Vault, Compendium, Settings, and statutory CC-BY-4.0 attribution modal.
