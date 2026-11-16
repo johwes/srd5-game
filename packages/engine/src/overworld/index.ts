@@ -7,3 +7,4 @@ export * from './factions.js';
 export * from './settlements.js';
 export * from './shops.js';
 export * from './quests.js';
+export * from './battles.js';

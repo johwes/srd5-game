@@ -192,7 +192,7 @@ flowchart LR
 | **SRD-801** | `[x]` | Implement `OverworldMap` procedural generator (macro hex/tile grid, biomes, rivers, roads, elevation) | `@srd5/engine` | SRD-508 |
 | **SRD-802** | `[x]` | Implement Overworld Party Travel loop (daily movement pace, foraging, weather, camping, day/night cycles) | `@srd5/engine` | SRD-504, SRD-801 |
 | **SRD-803** | `[x]` | Implement Faction reputation engine (-100 to +100), procedural settlements, shops, and quest boards | `@srd5/engine` | SRD-801 |
-| **SRD-804** | `[ ]` | Implement Seamless Overworld-to-Tactical Grid battle generator (Wilderness encounters and Dungeon POI entries) | `@srd5/engine` | SRD-301, SRD-802 |
+| **SRD-804** | `[x]` | Implement Seamless Overworld-to-Tactical Grid battle generator (Wilderness encounters and Dungeon POI entries) | `@srd5/engine` | SRD-301, SRD-802 |
 | **SRD-805** | `[ ]` | Build PixiJS Overworld Viewport & Strategic Settlement HUD (World navigation, town services, quest journal) | `@srd5/client` | SRD-402, SRD-803, SRD-804 |
 | **SRD-806** | `[ ]` | Integrate Deep Descent generator + run loop as Realm dungeon-delver (dungeon_entrance POIs, lairs, shrines) and Endless Delve quick option, including New Game wizard tile rework (3 tiles) | `@srd5/engine`, `@srd5/client` | SRD-508, SRD-509, SRD-801, SRD-802 |
 
