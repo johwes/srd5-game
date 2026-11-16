@@ -316,7 +316,7 @@ export function ActionHotbar({
                       }`}
                       title={`${wp.name} (${wp.damageFormula})`}
                     >
-                      <GameIcon name="attack" category="action" size={20} />
+                      <GameIcon name="attack" category="action" size={20} alt="" />
                       {/* Action Cost Pip */}
                       <span
                         className={`absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase ${
@@ -335,7 +335,7 @@ export function ActionHotbar({
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950/95 border border-amber-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left">
                       <div className="flex items-center justify-between gap-1 border-b border-slate-800 pb-1.5 mb-1.5">
                         <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
-                          <GameIcon name="attack" category="action" size={14} />
+                          <GameIcon name="attack" category="action" size={14} alt="" />
                           <span>{wp.name}</span>
                         </span>
                         <span className="text-[10px] text-slate-400 capitalize">
@@ -389,7 +389,7 @@ export function ActionHotbar({
                   className="relative w-12 h-12 rounded-xl flex flex-col items-center justify-center border border-slate-700 bg-slate-900 hover:border-amber-400 hover:bg-slate-800 text-xs shadow-md transition-all cursor-pointer active:scale-95"
                   title="Unarmed Strike (1+STR)"
                 >
-                  <GameIcon name="attack" category="action" size={20} />
+                  <GameIcon name="attack" category="action" size={20} alt="" />
                   <span className="absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase bg-emerald-600 text-slate-950 shadow">
                     A
                   </span>
@@ -550,7 +550,7 @@ export function ActionHotbar({
                         title={`${spell.name} (${spell.school})`}
                       >
                         <span className="sr-only">Cast {spell.name}</span>
-                        <GameIcon name={spell.school} category="spell" size={20} />
+                        <GameIcon name={spell.school} category="spell" size={20} alt="" />
                         {/* Action Cost Pip */}
                         <span
                           className={`absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase ${
@@ -573,7 +573,7 @@ export function ActionHotbar({
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-950/95 border border-purple-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left flex flex-col gap-1.5">
                         <div className="flex items-center justify-between gap-1 border-b border-slate-800 pb-1.5">
                           <span className="font-bold text-slate-100 text-xs flex items-center gap-1.5">
-                            <GameIcon name={spell.school} category="spell" size={14} />
+                            <GameIcon name={spell.school} category="spell" size={14} alt="" />
                             <span>{spell.name}</span>
                           </span>
                           <span className="px-1.5 py-0.2 rounded bg-purple-950 border border-purple-700 text-[10px] font-semibold text-purple-300 shrink-0">
@@ -747,7 +747,7 @@ export function ActionHotbar({
                     }`}
                     title={`${action.name} (${action.actionCost})`}
                   >
-                    <GameIcon name={action.id} category="action" size={20} />
+                    <GameIcon name={action.id} category="action" size={20} alt="" />
                     <span className="absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase bg-sky-600 text-slate-950 shadow">
                       {action.actionCost === 'bonus_action' ? 'BA' : action.actionCost === 'movement' ? 'M' : action.actionCost === 'free' ? 'F' : 'A'}
                     </span>
@@ -756,7 +756,7 @@ export function ActionHotbar({
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-950/95 border border-sky-500/40 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left flex flex-col gap-1">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-1">
                       <span className="font-bold text-sky-300 text-xs flex items-center gap-1.5">
-                        <GameIcon name={action.id} category="action" size={14} />
+                        <GameIcon name={action.id} category="action" size={14} alt="" />
                         <span>{action.name}</span>
                       </span>
                       <span className="text-[10px] text-slate-400 capitalize">{action.actionCost}</span>
@@ -793,7 +793,7 @@ export function ActionHotbar({
                 }`}
                 title="Potion of Healing (2d4+2 HP)"
               >
-                <GameIcon name="potion" category="item" size={20} />
+                <GameIcon name="potion" category="item" size={20} alt="" />
                 <span className="absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase bg-emerald-600 text-slate-950 shadow">
                   A
                 </span>
@@ -825,7 +825,7 @@ export function ActionHotbar({
                 }`}
                 title="Potion of Greater Healing (4d4+4 HP)"
               >
-                <GameIcon name="potion" category="item" size={20} />
+                <GameIcon name="potion" category="item" size={20} alt="" />
                 <span className="absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase bg-emerald-600 text-slate-950 shadow">
                   A
                 </span>

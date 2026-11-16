@@ -109,11 +109,13 @@ flowchart LR
 | **SRD-407** | `[x]` | Build Reaction Interrupt Modal, Animated Dice Tray, and Combat Log with hover formula breakdown tooltips | `@srd5/client` | SRD-309, SRD-406 |
 | **SRD-408** | `[x]` | Build The Arena Mode (PvE Custom Skirmish/Endless Waves + Hot-Seat PvP 1v1 Party Duels on PixiJS canvas with dynamic teamId slots) | `@srd5/client` | SRD-401, SRD-404, SRD-407 |
 | **SRD-409** | `[x]` | Implement Open Game Asset pipeline (Kenney CC0 spritesheet integration, game-icons.net SVG set, 3-tier AssetRegistry with procedural fallback) | `@srd5/client` | SRD-403, SRD-408 |
+| **SRD-410** | `[x]` | Implement Manual Action Targeting Mode (single/multi/AOE) with cursor counter + AOE impact preview | `@srd5/client`, `@srd5/engine` | SRD-408 |
 
 ### Epic 4 Acceptance Criteria Details
 - [x] **SRD-401**: AI unit tests verify Goblins use *Nimble Escape*, Wolves position for *Pack Tactics*, Artillery monsters seek cover and avoid melee, and AoE casters place *Fireball*/*Breath Weapon* templates to maximize enemy hits while avoiding allies using `areHostile()` and `areAllied()` from Spec 06 Section 2.3. Supports multi-way brawls (monsters fighting other hostile monster teams).
 - [x] **SRD-408**: Players can launch Arena Mode in the browser: run PvE skirmishes against AI monsters, survive consecutive waves with breathers, or play hot-seat 1v1 PvP where each player commands their chosen party on the tactical grid using dynamic `teamId` slots (`team_red` vs `team_blue`).
 - [x] **SRD-409**: Load bundled CC0/CC-BY tiles and tokens from sprite atlas with NEAREST scaling; render game-icons.net SVG icons for action buttons, spells, and conditions; and seamlessly fall back to procedural tabletop tokens when no sprite is assigned, ensuring zero broken textures across all SRD monsters.
+- [x] **SRD-410**: Hotbar actions arm a pending target instead of firing immediately (except `self` spells): sword/bow/single-target spells commit on token click with LoS/cover ray; *Bless*-style multi spells pick N distinct allies; *Magic Missile*-style multi spells stack darts on the same target with a `🪄 ×N` cursor counter; *Fireball*-style AOE spells show a grid-snapped circle/cone/line preview with foe/ally hit counts before confirm; `Esc`/right-click cancels; verified at 1280×800 with zero console errors.
 
 ---
 

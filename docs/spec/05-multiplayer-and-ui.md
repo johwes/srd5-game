@@ -219,3 +219,55 @@ To maximize visible map real estate on handhelds (Steam Deck 1280×800) and desk
    - **Combat & Conditions**: Action economy enforcement, Bonus Action spell restriction, Opportunity Attack interrupts, *Shield* reaction turning hits into misses, Concentration save DC math, Temp HP non-stacking, Unconscious & Death Saving Throw edge cases.
 3. **Headless End-to-End Encounter Simulation**:
    - Simulates a 4-hero Level 1 party (Fighter, Wizard, Cleric, Rogue) fighting a Goblin ambush from initiative roll to victory using the Tactical AI, verifying zero invalid state transitions and full JSON serializability at every step.
+
+---
+
+## 6. Manual Action Targeting Mode — SRD-410
+
+Replaces immediate fire-on-hotbar-click with an explicit **arm → pick → confirm** flow (Baldur's Gate 3 style) for weapons and spells in Arena (reused later by Dungeon). `self`-range spells still fire immediately.
+
+### 6.1 `PendingTarget` State Machine (`@srd5/client`)
+
+```ts
+type PendingTarget =
+  | { kind: 'none' }
+  | { kind: 'single'; action: 'attack' | 'spell'; spellId?: string; slotLevel?: number; weaponId?: string;
+      disposition: 'hostile' | 'friendly' | 'any'; rangeFeet: number }
+  | { kind: 'multi'; spellId: string; slotLevel: number; picked: string[];
+      remaining: number; allowDuplicates: boolean; disposition: 'hostile' | 'friendly' | 'any'; rangeFeet: number }
+  | { kind: 'aoe'; spellId: string; slotLevel: number; shape: AoeShape; sizeFeet: number;
+      origin: { x: number; y: number } | null; disposition: 'hostile' | 'friendly' | 'any'; rangeFeet: number };
+```
+
+* Lives in `ArenaCombatView` (extract to `usePendingTarget()` hook so Dungeon exploration/combat can reuse it).
+* Hotbar `onDeclareAttack` / `onCastSpell` **arms** instead of dispatching. Re-clicking the armed slot, `Esc`, or right-click sets `{ kind: 'none' }`.
+* Commit dispatches the existing commands unchanged: `DECLARE_ATTACK {targetId}`, `DECLARE_CAST_SPELL {targetIds, targetCell, directionRad?}`.
+
+### 6.2 Targeting Kinds & Data Mapping
+
+| Kind | Source examples | Rules |
+| :--- | :--- | :--- |
+| `single` | Longsword, Longbow, *Fire Bolt*, *Cure Wounds* | One token click. Validate disposition (`getSpellTargetDisposition()` / hostile team check) + range (`getFootprintDistanceFeet`) + LoS/cover ray. |
+| `multi` distinct | *Bless* (≤3 allies), *Hold Person* upcast | Click N **distinct** living tokens. Click again to unpick. Confirm bar shows `2/3 blessed`. |
+| `multi` stacked | *Magic Missile* (3 darts), *Scorching Ray* | `allowDuplicates: true` — same token clickable N times. Requires `@srd5/engine` change: `resolveSpellTargets` must stop deduping and accept a `picked: string[]` override. |
+| `aoe` | *Fireball* (20-ft sphere), *Burning Hands* (15-ft cone), *Lightning Bolt* (100×5-ft line), *Thunderwave* (15-ft cube) | `onCellClick` sets `origin`; feed `activeAoeTemplate={shape, sizeFeet, cursor:hoveredCell}` into the existing `PathAndAoeLayer.renderAoe()` + engine `rasterizeAoe()`. Cones/lines anchor to caster footprint, default facing away from caster. |
+
+Derive `maxTargets` from `getSpellMaxTargets(spell, slotLevel)`, `rangeFeet` from `spell.targeting` (`touch` = 5 ft), `shape/sizeFeet` from `spell.targeting.areaOfEffect`.
+
+### 6.3 Canvas & Cursor Contract
+
+* Viewport props (already exist, currently unwired in Arena): `targetingMode: 'attack' | 'aoe'`, `activeAoeTemplate`, `targetingRay`, plus new `hoveredCombatantId` tracking.
+* Cursor: `cursor-crosshair` on the canvas container + floating chip following `hoveredCell` (`🪄 ×2`, `⚔️`, `⭕ 3 foes · 1 ally`). OS cursors cannot render live counters, so the chip is the counter.
+* Highlights: valid targets pulse (emerald for friendly, rose for hostile), invalid dim to 40%. Hovering a valid hostile with a ranged/single action shows the existing cover ray (`Hit 65% · Half Cover +2 AC`).
+* AOE preview: grid-snapped template + per-creature rings; hit-count label honors `friendlyFireEnabled` (Explorer greys out allies as immune). Out-of-range origin snaps red and blocks confirm.
+
+### 6.4 Validation & Feedback
+
+* Reuse `resolveSpellTargets()` as a **per-click validator** (not auto-picker): range, disposition via `areHostile()`/`areAllied()`, Bonus-action cantrip rule, slot availability. Surface its `errorFeedback` string in the commit bar + existing `actionFeedback` banner.
+* Commit bar (bottom-center above hotbar, ≥44 px targets for Steam Deck): `[Confirm Fireball (4 hits)] [Cancel]`, plus dart/target pips. Single-target commits on first valid click (no extra confirm); multi/AOE require explicit confirm.
+* Touch spells require adjacency; dead/`isDead` or `currentHp <= 0` tokens are never valid; changing active combatant or ending turn clears `PendingTarget`.
+
+### 6.5 Test Plan
+
+* `vitest`: arming matrix (self fires / single arms / multi counts / AOE needs origin); `allowDuplicates` stacking vs distinct enforcement; `rasterizeAoe` hit-list honors `friendlyFireEnabled`; `Esc`/turn-change clears pending.
+* Playwright at 1280×800: arm Fireball → circle follows mouse → confirm hits N foes; arm Bless → pick 2 allies → counter `×1` → confirm; arm Magic Missile → triple-click one goblin → 3 darts resolve; sword → click goblin commits attack; zero console errors.

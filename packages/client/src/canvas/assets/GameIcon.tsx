@@ -97,7 +97,7 @@ export function GameIcon({
     <img
       src={url}
       alt={resolvedAlt}
-      title={title ?? resolvedAlt}
+      title={title}
       width={size}
       height={size}
       data-testid={`game-icon-${name}`}

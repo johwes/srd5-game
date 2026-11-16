@@ -211,6 +211,12 @@ export interface ResolveSpellTargetsOptions {
   combatants: Record<string, PlayerViewCombatant>;
   selectedCombatantId?: string | null;
   dispositionMatrix?: Record<string, Record<string, 'allied' | 'hostile' | 'neutral'>>;
+  /**
+   * SRD-410 manual targeting override: explicit picks from the targeting UI.
+   * Duplicates are preserved only when `allowDuplicates` is true (e.g. Magic Missile).
+   */
+  pickedTargetIds?: string[];
+  allowDuplicates?: boolean;
 }
 
 export interface ResolvedSpellTargets {
@@ -238,11 +244,75 @@ export function resolveSpellTargets(options: ResolveSpellTargetsOptions): Resolv
     combatants,
     selectedCombatantId,
     dispositionMatrix,
+    pickedTargetIds,
+    allowDuplicates = false,
   } = options;
 
   const disposition = getSpellTargetDisposition(spell);
   const maxTargets = getSpellMaxTargets(spell, slotLevel);
   const rangeFeet = spell.targeting.type === 'touch' ? 5 : spell.targeting.rangeFeet;
+
+  // 0. SRD-410 manual override: validate explicit picks, preserve order/duplicates.
+  if (pickedTargetIds && pickedTargetIds.length > 0) {
+    const seen = new Set<string>();
+    for (const tid of pickedTargetIds) {
+      const target = combatants[tid];
+      if (!target || target.isDead || target.currentHp <= 0) {
+        return {
+          targetIds: [],
+          primaryTarget: null,
+          disposition,
+          maxTargets,
+          rangeFeet,
+          errorFeedback: 'One or more selected targets are no longer conscious.',
+        };
+      }
+      if (!allowDuplicates && seen.has(tid)) {
+        return {
+          targetIds: [],
+          primaryTarget: null,
+          disposition,
+          maxTargets,
+          rangeFeet,
+          errorFeedback: `${spell.name} cannot target the same creature twice.`,
+        };
+      }
+      seen.add(tid);
+      const dist =
+        tid === caster.id
+          ? 0
+          : getFootprintDistanceFeet(caster.position, caster.size, target.position, target.size);
+      if (dist > rangeFeet) {
+        return {
+          targetIds: [],
+          primaryTarget: null,
+          disposition,
+          maxTargets,
+          rangeFeet,
+          errorFeedback: `Target "${target.name}" is out of spell range (${dist}ft > ${rangeFeet}ft).`,
+        };
+      }
+    }
+    const uniqueCount = new Set(pickedTargetIds).size;
+    const effectiveCount = allowDuplicates ? pickedTargetIds.length : uniqueCount;
+    if (effectiveCount > maxTargets) {
+      return {
+        targetIds: [],
+        primaryTarget: null,
+        disposition,
+        maxTargets,
+        rangeFeet,
+        errorFeedback: `Too many targets for ${spell.name}: max ${maxTargets}.`,
+      };
+    }
+    return {
+      targetIds: [...pickedTargetIds],
+      primaryTarget: combatants[pickedTargetIds[0]!] ?? null,
+      disposition,
+      maxTargets,
+      rangeFeet,
+    };
+  }
 
   // 1. Self Spell
   if (disposition === 'self') {

@@ -24,6 +24,15 @@ import { TacticalCombatHud } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
 import { resolveSpellTargets } from '../../utils/combatTargeting.js';
 import {
+  buildPendingTargetForAttack,
+  buildPendingTargetForSpell,
+  canCommitPending,
+  pendingTargetHint,
+  validateTargetPick,
+  type PendingTarget,
+} from '../../utils/pendingTargeting.js';
+import { computeAoeOverlay } from '../../canvas/layers/PathAndAoeLayer.js';
+import {
   applyArenaBreather,
   buildArenaPveEncounter,
   buildArenaPvpEncounter,
@@ -69,6 +78,9 @@ export function ArenaCombatView({
     null,
   );
   const [hoveredCell, setHoveredCell] = useState<GridPoint | null>(null);
+  const [hoveredCombatantId, setHoveredCombatantId] = useState<string | null>(null);
+  // SRD-410 manual targeting: armed action awaiting token/cell picks.
+  const [pendingTarget, setPendingTarget] = useState<PendingTarget>({ kind: 'none' });
 
   // Match progression modals
   const [showBreatherModal, setShowBreatherModal] = useState(false);
@@ -217,6 +229,25 @@ export function ArenaCombatView({
     [transport, showFeedback],
   );
 
+  const cancelPendingTarget = useCallback(() => {
+    setPendingTarget({ kind: 'none' });
+  }, []);
+
+  // SRD-410: Esc cancels armed targeting; clear pending when turn changes.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPendingTarget((prev) => (prev.kind === 'none' ? prev : { kind: 'none' }));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    setPendingTarget({ kind: 'none' });
+  }, [activeCombatantId]);
+
   // AI monster turn execution
   const executeAiMonsterTurn = useCallback(async () => {
     if (!activeCombatant || !activeCombatantId || !isMonsterTurn || isAiThinking) {
@@ -297,9 +328,37 @@ export function ArenaCombatView({
     executeAiMonsterTurn,
   ]);
 
-  // Canvas cell click handler (movement or target selection)
-  const handleCellClick = async (cell: GridPoint) => {
+  // Canvas cell click handler (SRD-410 targeting, else movement)
+  const handleCellClick = async (cell: GridPoint, button?: number) => {
+    if (button === 2) {
+      cancelPendingTarget();
+      return;
+    }
     if (!activeCombatant || !isPlayerControlled || isMonsterTurn) {
+      return;
+    }
+
+    // SRD-410: armed AOE origin selection
+    if (pendingTarget.kind === 'aoe') {
+      if (!activeCombatant) return;
+      const dist = getFootprintDistanceFeet(
+        activeCombatant.position,
+        activeCombatant.size,
+        cell,
+        'small',
+      );
+      if (dist > pendingTarget.rangeFeet) {
+        showFeedback(
+          `AOE origin out of range (${dist}ft > ${pendingTarget.rangeFeet}ft). Pick a closer point!`,
+        );
+        return;
+      }
+      setPendingTarget({ ...pendingTarget, origin: { x: cell.x, y: cell.y } });
+      return;
+    }
+
+    // While single/multi targeting is armed, cell clicks do not move.
+    if (pendingTarget.kind !== 'none') {
       return;
     }
 
@@ -361,6 +420,145 @@ export function ArenaCombatView({
       });
     }
   };
+
+  // SRD-410: token click handler for manual targeting picks.
+  const handleCombatantClickForTarget = useCallback(
+    (combatantId: string) => {
+      if (!activeCombatant || !isPlayerControlled || isMonsterTurn) {
+        setSelectedCombatantId(combatantId);
+        return;
+      }
+      if (pendingTarget.kind === 'none') {
+        setSelectedCombatantId(combatantId);
+        return;
+      }
+      const candidate = viewState.combatants[combatantId];
+      if (!candidate) {
+        setSelectedCombatantId(combatantId);
+        return;
+      }
+      const authState = transport.getAuthoritativeState() as unknown as {
+        combat?: { dispositionMatrix?: Record<string, Record<string, 'allied' | 'hostile' | 'neutral'>> };
+      };
+      const validation = validateTargetPick(
+        pendingTarget,
+        candidate,
+        activeCombatant,
+        viewState.combatants,
+        { dispositionMatrix: authState.combat?.dispositionMatrix },
+      );
+      if (!validation.ok) {
+        showFeedback(validation.error ?? 'Invalid target.');
+        return;
+      }
+      setSelectedCombatantId(combatantId);
+
+      if (pendingTarget.kind === 'single') {
+        if (pendingTarget.action === 'attack') {
+          const weaponId = pendingTarget.weaponId ?? '';
+          const attackProfileId =
+            pendingTarget.attackProfileId ?? pendingTarget.weaponId ?? '';
+          void handleDispatch({
+            type: 'DECLARE_ATTACK',
+            actorId: activeCombatant.id,
+            targetId: combatantId,
+            attackProfileId,
+            weaponInstanceId: weaponId,
+          });
+        } else if (pendingTarget.spellId) {
+          void handleDispatch({
+            type: 'DECLARE_CAST_SPELL',
+            actorId: activeCombatant.id,
+            spellId: pendingTarget.spellId,
+            slotLevel: pendingTarget.slotLevel ?? 0,
+            targetIds: [combatantId],
+            targetCell: candidate.position,
+          });
+        }
+        setPendingTarget({ kind: 'none' });
+        return;
+      }
+
+      if (pendingTarget.kind === 'multi') {
+        setPendingTarget((prev) => {
+          if (prev.kind !== 'multi') return prev;
+          if (prev.picked.includes(combatantId)) {
+            // Toggle off (distinct mode); stacked mode keeps stacking.
+            if (prev.allowDuplicates) {
+              if (prev.picked.length >= prev.maxTargets) {
+                showFeedback(`${prev.label} can target at most ${prev.maxTargets}.`);
+                return prev;
+              }
+              return { ...prev, picked: [...prev.picked, combatantId] };
+            }
+            return { ...prev, picked: prev.picked.filter((id) => id !== combatantId) };
+          }
+          if (prev.picked.length >= prev.maxTargets) {
+            showFeedback(`${prev.label} can target at most ${prev.maxTargets}.`);
+            return prev;
+          }
+          return { ...prev, picked: [...prev.picked, combatantId] };
+        });
+      }
+      // AOE: token clicks only change selection, origin comes from cell clicks.
+    },
+    [activeCombatant, handleDispatch, isMonsterTurn, isPlayerControlled, pendingTarget, showFeedback, transport, viewState.combatants],
+  );
+
+  // SRD-410: commit armed multi picks.
+  const handleCommitMulti = useCallback(() => {
+    if (pendingTarget.kind !== 'multi' || !activeCombatantId || !activeCombatant) return;
+    if (!canCommitPending(pendingTarget)) {
+      showFeedback(`Pick at least 1 target for ${pendingTarget.label}.`);
+      return;
+    }
+    const spell = compendium.getSpell(pendingTarget.spellId);
+    if (!spell) return;
+    const authState = transport.getAuthoritativeState() as unknown as {
+      combat?: { dispositionMatrix?: Record<string, Record<string, 'allied' | 'hostile' | 'neutral'>> };
+    };
+    const targetResult = resolveSpellTargets({
+      spell,
+      slotLevel: pendingTarget.slotLevel,
+      caster: activeCombatant,
+      combatants: viewState.combatants,
+      pickedTargetIds: pendingTarget.picked,
+      allowDuplicates: pendingTarget.allowDuplicates,
+      dispositionMatrix: authState.combat?.dispositionMatrix,
+    });
+    if (targetResult.errorFeedback) {
+      showFeedback(targetResult.errorFeedback);
+      return;
+    }
+    void handleDispatch({
+      type: 'DECLARE_CAST_SPELL',
+      actorId: activeCombatantId,
+      spellId: pendingTarget.spellId,
+      slotLevel: pendingTarget.slotLevel,
+      targetIds: targetResult.targetIds,
+      targetCell: targetResult.primaryTarget
+        ? targetResult.primaryTarget.position
+        : activeCombatant.position,
+    });
+    setPendingTarget({ kind: 'none' });
+  }, [activeCombatant, activeCombatantId, compendium, handleDispatch, pendingTarget, showFeedback, transport, viewState.combatants]);
+
+  // SRD-410: commit armed AOE origin.
+  const handleCommitAoe = useCallback(() => {
+    if (pendingTarget.kind !== 'aoe' || !activeCombatantId || !activeCombatant) return;
+    if (!pendingTarget.origin) {
+      showFeedback(`Pick a point within range for ${pendingTarget.label}.`);
+      return;
+    }
+    void handleDispatch({
+      type: 'DECLARE_CAST_SPELL',
+      actorId: activeCombatantId,
+      spellId: pendingTarget.spellId,
+      slotLevel: pendingTarget.slotLevel,
+      targetCell: pendingTarget.origin,
+    });
+    setPendingTarget({ kind: 'none' });
+  }, [activeCombatant, activeCombatantId, handleDispatch, pendingTarget, showFeedback]);
 
   // Next wave launcher from breather modal
   const handleStartNextWave = (withBreatherRest: boolean) => {
@@ -467,6 +665,54 @@ export function ArenaCombatView({
     }
     setLevelUpCharacter(null);
   };
+
+  // SRD-410 derived targeting overlay state (AOE preview + rays + commit bar).
+  const pendingAoeCursor =
+    pendingTarget.kind === 'aoe' ? (pendingTarget.origin ?? hoveredCell) : null;
+  const pendingAoeOverlay =
+    pendingTarget.kind === 'aoe' && pendingAoeCursor && activeCombatant
+      ? {
+          shape: pendingTarget.shape,
+          cursor: pendingAoeCursor,
+          casterPosition: activeCombatant.position,
+          casterSize: activeCombatant.size,
+          radiusFeet: pendingTarget.shape === 'sphere' || pendingTarget.shape === 'cylinder' ? pendingTarget.sizeFeet : undefined,
+          lengthFeet:
+            pendingTarget.shape === 'cone' || pendingTarget.shape === 'line' ? pendingTarget.sizeFeet : undefined,
+          widthFeet: pendingTarget.widthFeet,
+          sideFeet: pendingTarget.shape === 'cube' ? pendingTarget.sizeFeet : undefined,
+          creatures: Object.values(viewState.combatants),
+        }
+      : null;
+  const pendingAoePreview =
+    pendingAoeOverlay && pendingTarget.kind === 'aoe'
+      ? computeAoeOverlay(pendingAoeOverlay as never)
+      : null;
+  const friendlyFireOff =
+    (transport.getAuthoritativeState() as unknown as { friendlyFireEnabled?: boolean })
+      .friendlyFireEnabled === false;
+  const pendingAoeFoes = (pendingAoePreview?.affectedCreatureIds ?? []).filter((id) => {
+    const c = viewState.combatants[id];
+    return c && (c.teamId ?? c.side) !== activeTeamId && !c.isDead && c.currentHp > 0;
+  });
+  const pendingAoeAllies = (pendingAoePreview?.affectedCreatureIds ?? []).filter((id) => {
+    const c = viewState.combatants[id];
+    return c && (c.teamId ?? c.side) === activeTeamId && !c.isDead && c.currentHp > 0;
+  });
+  const pendingTargetingMode =
+    pendingTarget.kind === 'aoe' ? 'aoe' : pendingTarget.kind === 'none' ? 'none' : 'attack';
+  const pendingSingleRay =
+    pendingTarget.kind === 'single' && hoveredCombatantId && activeCombatant
+      ? (() => {
+          const target = viewState.combatants[hoveredCombatantId];
+          if (!target || target.id === activeCombatant.id) return null;
+          return { attacker: activeCombatant, target, grid: viewState.grid };
+        })()
+      : null;
+  const pendingMultiNames =
+    pendingTarget.kind === 'multi'
+      ? pendingTarget.picked.map((id) => viewState.combatants[id]?.name ?? id)
+      : [];
 
   return (
     <div
@@ -581,83 +827,22 @@ export function ArenaCombatView({
             )}
           </div>
         }
-          onSelectCombatant={(id) => setSelectedCombatantId(id)}
+          onSelectCombatant={(id) => handleCombatantClickForTarget(id)}
           onOpenCharacterSheet={onOpenCharacterSheet}
           onLevelUpCharacter={handleOpenLevelUp}
-          onDeclareAttack={(weapon, opts) => {
+          onDeclareAttack={(weapon) => {
             if (!activeCombatantId || !activeCombatant) return;
-
-            // 1. If player specifically selected a hostile target, check it first
-            const selectedCandidate = selectedCombatantId ? viewState.combatants[selectedCombatantId] : null;
-            const isSelectedHostile = Boolean(
-              selectedCandidate &&
-              (selectedCandidate.teamId ?? selectedCandidate.side) !== activeTeamId &&
-              !selectedCandidate.isDead &&
-              selectedCandidate.currentHp > 0
+            // SRD-410: arm manual targeting; click a token to commit.
+            setPendingTarget(
+              buildPendingTargetForAttack({
+                id: weapon.id,
+                weaponId: weapon.weaponId,
+                name: weapon.name,
+                rangeType: weapon.rangeType,
+                rangeFeet: weapon.rangeFeet,
+                reachFeet: weapon.reachFeet,
+              }),
             );
-
-            // 2. All conscious hostiles
-            const livingHostiles = Object.values(viewState.combatants).filter(
-              (c) =>
-                (c.teamId ?? c.side) !== activeTeamId &&
-                !c.isDead &&
-                c.currentHp > 0
-            );
-
-            if (livingHostiles.length === 0) {
-              showFeedback('No conscious enemies remaining.');
-              return;
-            }
-
-            const reachOrRange = weapon.rangeType === 'ranged'
-              ? (weapon.rangeFeet?.long ?? weapon.rangeFeet?.normal ?? 120)
-              : (weapon.reachFeet ?? 5);
-
-            let target: typeof livingHostiles[0] | null = null;
-
-            if (isSelectedHostile && selectedCandidate) {
-              const dist = getFootprintDistanceFeet(activeCombatant.position, activeCombatant.size, selectedCandidate.position, selectedCandidate.size);
-              if (dist <= reachOrRange) {
-                target = selectedCandidate;
-              } else {
-                // If another hostile IS in reach, auto-target that one; otherwise feedback
-                const inReachEnemy = livingHostiles.find(
-                  (h) => getFootprintDistanceFeet(activeCombatant.position, activeCombatant.size, h.position, h.size) <= reachOrRange
-                );
-                if (inReachEnemy) {
-                  target = inReachEnemy;
-                } else {
-                  showFeedback(`Target "${selectedCandidate.name}" is out of reach (${dist}ft > ${reachOrRange}ft). Move closer to attack!`);
-                  return;
-                }
-              }
-            } else {
-              // Pick closest enemy
-              const sorted = livingHostiles.map((h) => ({
-                enemy: h,
-                dist: getFootprintDistanceFeet(activeCombatant.position, activeCombatant.size, h.position, h.size),
-              })).sort((a, b) => a.dist - b.dist);
-
-              const closest = sorted[0]!;
-              if (closest.dist <= reachOrRange) {
-                target = closest.enemy;
-              } else {
-                showFeedback(`Nearest enemy is out of reach (${closest.dist}ft > ${reachOrRange}ft). Move closer to attack!`);
-                return;
-              }
-            }
-
-            if (target) {
-              void handleDispatch({
-                type: 'DECLARE_ATTACK',
-                actorId: activeCombatantId,
-                targetId: target.id,
-                attackProfileId: weapon.id,
-                weaponInstanceId: weapon.weaponId,
-                isOffHand: opts?.isOffHand,
-                twoHanded: opts?.twoHanded,
-              });
-            }
           }}
           onCastSpell={(spellId, slotLevel) => {
             if (!activeCombatantId || !activeCombatant) return;
@@ -665,30 +850,20 @@ export function ArenaCombatView({
             const spell = compendium.getSpell(spellId);
             if (!spell) return;
 
-            const targetResult = resolveSpellTargets({
-              spell,
-              slotLevel,
-              caster: activeCombatant,
-              combatants: viewState.combatants,
-              selectedCombatantId,
-              dispositionMatrix: (transport.getAuthoritativeState() as any)?.combat?.dispositionMatrix,
-            });
-
-            if (targetResult.errorFeedback) {
-              showFeedback(targetResult.errorFeedback);
+            // SRD-410: arm manual targeting; self spells fire immediately.
+            const pending = buildPendingTargetForSpell(spell, slotLevel);
+            if (!pending || pending.kind === 'none') {
+              void handleDispatch({
+                type: 'DECLARE_CAST_SPELL',
+                actorId: activeCombatantId,
+                spellId,
+                slotLevel,
+                targetIds: [activeCombatant.id],
+                targetCell: activeCombatant.position,
+              });
               return;
             }
-
-            void handleDispatch({
-              type: 'DECLARE_CAST_SPELL',
-              actorId: activeCombatantId,
-              spellId,
-              slotLevel,
-              targetIds: targetResult.targetIds,
-              targetCell: targetResult.primaryTarget
-                ? targetResult.primaryTarget.position
-                : activeCombatant.position,
-            });
+            setPendingTarget(pending);
           }}
           onUseClassFeature={(featureId, optionId) => {
             if (!activeCombatantId) return;
@@ -739,15 +914,82 @@ export function ArenaCombatView({
             selectedCombatantId={selectedCombatantId}
             activeCombatantId={activeCombatantId}
             hoveredCell={hoveredCell}
+            hoveredCombatantId={hoveredCombatantId}
+            targetingMode={pendingTargetingMode}
+            activeAoeTemplate={pendingAoeOverlay as never}
+            targetingRay={pendingSingleRay as never}
             onCellHover={(pt) => setHoveredCell(pt)}
-            onCellClick={(pt) => void handleCellClick(pt)}
-            onCombatantClick={(combatantId) => setSelectedCombatantId(combatantId)}
-            enableHoverPathPreview={true}
+            onCellClick={(pt, button) => void handleCellClick(pt, button)}
+            onCombatantClick={(combatantId) => handleCombatantClickForTarget(combatantId)}
+            onCombatantHover={(combatantId) => setHoveredCombatantId(combatantId)}
+            enableHoverPathPreview={pendingTarget.kind === 'none'}
             enableFogOfWar={false}
             showTokenHpArcs={true}
             showConditionBadges={true}
             showTokenNames={true}
           />
+          {/* SRD-410 manual targeting commit bar */}
+          {pendingTarget.kind !== 'none' && (
+            <div
+              data-testid="targeting-commit-bar"
+              className="pointer-events-auto absolute bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-2 bg-slate-950/95 border border-amber-500/50 rounded-xl shadow-2xl text-xs max-w-[92vw]"
+              onContextMenu={(e) => {
+                e.preventDefault();
+                cancelPendingTarget();
+              }}
+            >
+              <span data-testid="targeting-hint" className="text-slate-200">
+                {pendingTargetHint(pendingTarget)}
+              </span>
+              {pendingTarget.kind === 'multi' && (
+                <span
+                  data-testid="targeting-counter"
+                  className="px-2 py-0.5 rounded-full bg-purple-950 border border-purple-500 text-purple-200 font-mono font-bold"
+                >
+                  🪄 ×{pendingTarget.maxTargets - pendingTarget.picked.length} left
+                </span>
+              )}
+              {pendingTarget.kind === 'aoe' && pendingAoePreview && (
+                <span
+                  data-testid="targeting-aoe-preview"
+                  className="px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 font-mono"
+                >
+                  <span className="text-rose-300">{pendingAoeFoes.length} foe{pendingAoeFoes.length === 1 ? '' : 's'}</span>
+                  <span className="text-slate-500"> · </span>
+                  <span className={friendlyFireOff ? 'text-slate-500 line-through' : 'text-emerald-300'}>
+                    {pendingAoeAllies.length} ally{pendingAoeAllies.length === 1 ? '' : 'ies'}
+                    {friendlyFireOff ? ' (spared)' : ''}
+                  </span>
+                </span>
+              )}
+              {pendingTarget.kind === 'multi' && pendingMultiNames.length > 0 && (
+                <span data-testid="targeting-picked-list" className="text-slate-400 truncate max-w-[30vw]">
+                  {pendingMultiNames.join(', ')}
+                </span>
+              )}
+              {(pendingTarget.kind === 'multi' || pendingTarget.kind === 'aoe') && (
+                <button
+                  type="button"
+                  data-testid="targeting-confirm-btn"
+                  disabled={!canCommitPending(pendingTarget)}
+                  onClick={() =>
+                    pendingTarget.kind === 'multi' ? handleCommitMulti() : handleCommitAoe()
+                  }
+                  className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-bold"
+                >
+                  Confirm
+                </button>
+              )}
+              <button
+                type="button"
+                data-testid="targeting-cancel-btn"
+                onClick={cancelPendingTarget}
+                className="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </TacticalCombatHud>
 
       {/* Breather Rest Modal between Waves */}
