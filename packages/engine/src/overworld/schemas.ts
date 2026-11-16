@@ -204,3 +204,112 @@ export const OverworldGenerationConfigSchema = z.object({
 });
 export type OverworldGenerationConfigInput = z.input<typeof OverworldGenerationConfigSchema>;
 export type OverworldGenerationConfig = z.output<typeof OverworldGenerationConfigSchema>;
+
+// ---------------------------------------------------------------------------
+// Overworld Party Travel loop (SRD-802, Spec 06 Section 4.1 / 4.3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Overland travel pace (5e DMG: Fast 30 mi/day, Normal 24 mi/day, Slow 18 mi/day).
+ * Movement points are an abstract daily budget where a Normal day grants 6
+ * points (~24 miles across open plains). Fast/Slow grant 8/4 points so the
+ * canonical mileages stay integer-friendly and free of floating-point drift.
+ */
+export const TRAVEL_PACES = ['slow', 'normal', 'fast'] as const;
+export const TravelPaceSchema = z.enum(TRAVEL_PACES);
+export type TravelPace = z.infer<typeof TravelPaceSchema>;
+
+export interface TravelPaceProfile {
+  /** Abstract movement points refreshed each dawn. */
+  movementPointsPerDay: number;
+  /** Canonical 5e overland miles covered in one day of this pace. */
+  milesPerDay: number;
+  /** Modifier to Survival (Forage) checks. */
+  foragingModifier: number;
+  /** Modifier to passive Perception / noticing hazards while travelling. */
+  detectionModifier: number;
+}
+
+export const TRAVEL_PACE_PROFILES: Record<TravelPace, TravelPaceProfile> = {
+  slow: { movementPointsPerDay: 4, milesPerDay: 18, foragingModifier: 2, detectionModifier: 2 },
+  normal: { movementPointsPerDay: 6, milesPerDay: 24, foragingModifier: 0, detectionModifier: 0 },
+  fast: { movementPointsPerDay: 8, milesPerDay: 30, foragingModifier: -2, detectionModifier: -5 },
+};
+
+/** Day phases cycled by the travel loop. */
+export const TIME_OF_DAY_PHASES = ['dawn', 'noon', 'dusk', 'night'] as const;
+export const TimeOfDaySchema = z.enum(TIME_OF_DAY_PHASES);
+export type TimeOfDay = z.infer<typeof TimeOfDaySchema>;
+
+/** Deterministic daily weather states (Spec 06 Section 4). */
+export const OVERWORLD_WEATHER_TYPES = [
+  'clear',
+  'cloudy',
+  'rain',
+  'storm',
+  'snow',
+  'fog',
+  'heatwave',
+] as const;
+export const WeatherTypeSchema = z.enum(OVERWORLD_WEATHER_TYPES);
+export type WeatherType = z.infer<typeof WeatherTypeSchema>;
+
+export interface WeatherProfile {
+  label: string;
+  /** Multiplies movement-point cost of each step. */
+  travelMultiplier: number;
+  /** Modifier to Survival (Forage) checks. */
+  foragingModifier: number;
+  /** Modifier to Perception while travelling. */
+  perceptionModifier: number;
+}
+
+export const WEATHER_PROFILES: Record<WeatherType, WeatherProfile> = {
+  clear: { label: 'Clear skies', travelMultiplier: 1, foragingModifier: 0, perceptionModifier: 0 },
+  cloudy: { label: 'Overcast', travelMultiplier: 1, foragingModifier: 0, perceptionModifier: 0 },
+  rain: { label: 'Steady rain', travelMultiplier: 1.25, foragingModifier: -2, perceptionModifier: -2 },
+  storm: { label: 'Thunderstorm', travelMultiplier: 1.5, foragingModifier: -4, perceptionModifier: -5 },
+  snow: { label: 'Snowfall', travelMultiplier: 1.5, foragingModifier: -3, perceptionModifier: -3 },
+  fog: { label: 'Thick fog', travelMultiplier: 1.1, foragingModifier: -2, perceptionModifier: -5 },
+  heatwave: { label: 'Sweltering heat', travelMultiplier: 1.25, foragingModifier: -3, perceptionModifier: 0 },
+};
+
+/**
+ * Runtime state for the Overworld Party Travel loop. The static world map is
+ * held separately (and passed to travel functions), matching the split in
+ * Spec 06 Section 4.1 between `OverworldMapSpec` and `OverworldState`.
+ */
+export const OverworldTravelStateSchema = z.object({
+  worldSeed: z.number().int(),
+  worldName: z.string().min(1),
+  /** 1-indexed day counter; dawn of day 1 is the default start. */
+  currentDay: z.number().int().min(1),
+  timeOfDay: TimeOfDaySchema,
+  weather: WeatherTypeSchema,
+  partyPosition: OverworldCoordSchema,
+  travelPace: TravelPaceSchema,
+  travelPointsRemaining: z.number().min(0),
+  rations: z.number().int().min(0),
+  gold: z.number().int().min(0),
+  milesTraveled: z.number().min(0),
+  foragedRations: z.number().int().min(0),
+  /** Persisted so day rollover knows whether to reroll the weather. */
+  weatherEnabled: z.boolean(),
+  rngState: z.number().int(),
+});
+export type OverworldTravelState = z.infer<typeof OverworldTravelStateSchema>;
+
+export const OverworldTravelConfigSchema = z.object({
+  /** Defaults to the world map seed when omitted. */
+  seed: z.number().int().optional(),
+  /** Defaults to the world's first settlement site (or first land tile). */
+  start: OverworldCoordSchema.optional(),
+  pace: TravelPaceSchema.default('normal'),
+  startingRations: z.number().int().min(0).default(10),
+  startingGold: z.number().int().min(0).default(0),
+  initialWeather: WeatherTypeSchema.optional(),
+  /** When false the weather stays fixed at `initialWeather` (or 'clear'). */
+  weatherEnabled: z.boolean().default(true),
+});
+export type OverworldTravelConfigInput = z.input<typeof OverworldTravelConfigSchema>;
+export type OverworldTravelConfig = z.output<typeof OverworldTravelConfigSchema>;

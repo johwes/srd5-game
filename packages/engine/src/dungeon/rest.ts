@@ -432,6 +432,101 @@ export function resolveShortRest(
 }
 
 /**
+ * Applies the per-combatant Long Rest restoration (Spec 04 Section 4.2 steps
+ * 2.1–2.5): full HP/status reset, spell & Pact Magic slot restoration, all
+ * resource pools reset, partial Hit Dice recovery, and one exhaustion level
+ * removed. Mutates only the supplied combatant — callers must clone state
+ * first. Shared by dungeon rests (SRD-504) and overworld camping (SRD-802).
+ */
+export function restoreCombatantAfterLongRest(hero: Combatant): {
+  hpRecovered: number;
+  hitDiceRecovered: number;
+} {
+  // 2.1 Full HP & Status Reset
+  const diff = hero.maxHp - hero.currentHp;
+  hero.currentHp = hero.maxHp;
+  hero.tempHp = 0;
+  hero.deathSaves = { successes: 0, failures: 0 };
+  hero.isDead = false;
+  hero.isStable = false;
+  hero.reactionAvailable = true;
+  hero.conditions = hero.conditions.filter((c) => c !== 'unconscious');
+
+  if (hero.characterSheet) {
+    hero.characterSheet.currentHp = hero.maxHp;
+    hero.characterSheet.tempHp = 0;
+    hero.characterSheet.deathSaves = { successes: 0, failures: 0 };
+    hero.characterSheet.activeConditions = hero.characterSheet.activeConditions.filter(
+      (c) => c.conditionId !== 'unconscious',
+    );
+  }
+
+  // 2.2 Spell Slots Reset (Standard + Pact Magic)
+  if (hero.spellSlots) {
+    for (const pool of Object.values(hero.spellSlots)) {
+      pool.expended = 0;
+      pool.available = pool.max;
+    }
+  }
+  if (hero.pactMagic) {
+    hero.pactMagic.expendedSlots = 0;
+    hero.pactMagic.availableSlots = hero.pactMagic.maxSlots;
+  }
+  if (hero.characterSheet?.spellcasting) {
+    if (hero.characterSheet.spellcasting.spellSlots) {
+      for (const pool of Object.values(hero.characterSheet.spellcasting.spellSlots)) {
+        pool.expended = 0;
+        pool.available = pool.max;
+      }
+    }
+    if (hero.characterSheet.spellcasting.pactMagic) {
+      hero.characterSheet.spellcasting.pactMagic.expendedSlots = 0;
+      hero.characterSheet.spellcasting.pactMagic.availableSlots =
+        hero.characterSheet.spellcasting.pactMagic.maxSlots;
+    }
+  }
+
+  // 2.3 Resources Reset (short_rest, long_rest, dawn)
+  if (hero.characterSheet?.resources) {
+    for (const pool of Object.values(hero.characterSheet.resources)) {
+      pool.spent = 0;
+      pool.available = pool.max;
+    }
+  }
+
+  // 2.4 Hit Dice Recovery: max(1, floor(totalLevel / 2))
+  const totalLevel = hero.characterSheet?.totalLevel ?? 1;
+  const maxRecoverable = Math.max(1, Math.floor(totalLevel / 2));
+  let remainingToRecover = maxRecoverable;
+
+  if (hero.characterSheet?.hitDicePools) {
+    // Sort pools descending by die size (recover higher die sizes first)
+    const sortedPools = [...hero.characterSheet.hitDicePools].sort(
+      (a, b) => b.dieSize - a.dieSize,
+    );
+    for (const pool of sortedPools) {
+      if (pool.spent > 0 && remainingToRecover > 0) {
+        const recoverCount = Math.min(pool.spent, remainingToRecover);
+        pool.spent -= recoverCount;
+        pool.available = pool.total - pool.spent;
+        remainingToRecover -= recoverCount;
+      }
+    }
+  }
+  const recoveredTotal = maxRecoverable - remainingToRecover;
+
+  // 2.5 Exhaustion Reduction
+  if (hero.exhaustionLevel && hero.exhaustionLevel > 0) {
+    hero.exhaustionLevel -= 1;
+  }
+  if (hero.characterSheet?.exhaustionLevel && hero.characterSheet.exhaustionLevel > 0) {
+    hero.characterSheet.exhaustionLevel = (hero.characterSheet.exhaustionLevel - 1) as 0 | 1 | 2 | 3 | 4 | 5;
+  }
+
+  return { hpRecovered: diff, hitDiceRecovered: recoveredTotal };
+}
+
+/**
  * Executes a Long Rest (8 In-Game Hours) across party members (Spec 04 Section 4.2).
  * 1. Checks for Safe Room or rolls 1d20 Ambush Check (1–4 triggers ambush combat).
  * 2. On success:
@@ -545,88 +640,10 @@ export function resolveLongRest(
   const hitDiceRecovered: Record<string, number> = {};
 
   for (const [heroId, hero] of Object.entries(nextState.party)) {
-    // 2.1 Full HP & Status Reset
-    const diff = hero.maxHp - hero.currentHp;
-    hero.currentHp = hero.maxHp;
-    hero.tempHp = 0;
-    hero.deathSaves = { successes: 0, failures: 0 };
-    hero.isDead = false;
-    hero.isStable = false;
-    hero.reactionAvailable = true;
-    hero.conditions = hero.conditions.filter((c) => c !== 'unconscious');
-
-    if (hero.characterSheet) {
-      hero.characterSheet.currentHp = hero.maxHp;
-      hero.characterSheet.tempHp = 0;
-      hero.characterSheet.deathSaves = { successes: 0, failures: 0 };
-      hero.characterSheet.activeConditions = hero.characterSheet.activeConditions.filter(
-        (c) => c.conditionId !== 'unconscious',
-      );
-    }
-    hpRecovered[heroId] = diff;
-
-    // 2.2 Spell Slots Reset (Standard + Pact Magic)
-    if (hero.spellSlots) {
-      for (const pool of Object.values(hero.spellSlots)) {
-        pool.expended = 0;
-        pool.available = pool.max;
-      }
-    }
-    if (hero.pactMagic) {
-      hero.pactMagic.expendedSlots = 0;
-      hero.pactMagic.availableSlots = hero.pactMagic.maxSlots;
-    }
-    if (hero.characterSheet?.spellcasting) {
-      if (hero.characterSheet.spellcasting.spellSlots) {
-        for (const pool of Object.values(hero.characterSheet.spellcasting.spellSlots)) {
-          pool.expended = 0;
-          pool.available = pool.max;
-        }
-      }
-      if (hero.characterSheet.spellcasting.pactMagic) {
-        hero.characterSheet.spellcasting.pactMagic.expendedSlots = 0;
-        hero.characterSheet.spellcasting.pactMagic.availableSlots =
-          hero.characterSheet.spellcasting.pactMagic.maxSlots;
-      }
-    }
-
-    // 2.3 Resources Reset (short_rest, long_rest, dawn)
-    if (hero.characterSheet?.resources) {
-      for (const pool of Object.values(hero.characterSheet.resources)) {
-        pool.spent = 0;
-        pool.available = pool.max;
-      }
-    }
-
-    // 2.4 Hit Dice Recovery: max(1, floor(totalLevel / 2))
-    const totalLevel = hero.characterSheet?.totalLevel ?? 1;
-    const maxRecoverable = Math.max(1, Math.floor(totalLevel / 2));
-    let remainingToRecover = maxRecoverable;
-
-    if (hero.characterSheet?.hitDicePools) {
-      // Sort pools descending by die size (recover higher die sizes first)
-      const sortedPools = [...hero.characterSheet.hitDicePools].sort(
-        (a, b) => b.dieSize - a.dieSize,
-      );
-      for (const pool of sortedPools) {
-        if (pool.spent > 0 && remainingToRecover > 0) {
-          const recoverCount = Math.min(pool.spent, remainingToRecover);
-          pool.spent -= recoverCount;
-          pool.available = pool.total - pool.spent;
-          remainingToRecover -= recoverCount;
-        }
-      }
-    }
-    const recoveredTotal = maxRecoverable - remainingToRecover;
-    hitDiceRecovered[heroId] = recoveredTotal;
-
-    // 2.5 Exhaustion Reduction
-    if (hero.exhaustionLevel && hero.exhaustionLevel > 0) {
-      hero.exhaustionLevel -= 1;
-    }
-    if (hero.characterSheet?.exhaustionLevel && hero.characterSheet.exhaustionLevel > 0) {
-      hero.characterSheet.exhaustionLevel = (hero.characterSheet.exhaustionLevel - 1) as 0 | 1 | 2 | 3 | 4 | 5;
-    }
+    // 2.1–2.5 Shared per-combatant Long Rest restoration (also used when camping).
+    const restored = restoreCombatantAfterLongRest(hero);
+    hpRecovered[heroId] = restored.hpRecovered;
+    hitDiceRecovered[heroId] = restored.hitDiceRecovered;
 
     // 2.6 Spell Preparation Update
     if (command.preparedSpellUpdates?.[heroId] && hero.characterSheet?.spellcasting) {
