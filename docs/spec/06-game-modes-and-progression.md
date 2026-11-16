@@ -300,6 +300,31 @@ When the party encounters wandering hostiles or steps onto an unresolved wildern
 3. **Return to Overworld**:
    - Upon victory, combat XP, loot, and consumed resources (HP, spell slots) are committed back to the party's persistent state on the overworld map.
 
+### 4.3 Deep Descent fold-in: dungeon POIs and Endless Delve
+
+Standalone Deep Descent is retired as a top-level New Game tile and becomes
+the Realm's dungeon engine plus an Endless Delve quick option. Top-level
+modes are exactly three: Campaign (authored intro), Realm (main game),
+Arena (skirmish lab).
+
+1. **Dungeon POI delves**: `dungeon_entrance` POIs carry `dungeonSeed` and a
+   depth tier. Entering generates a bounded 2–4 floor delve with the SRD-508
+   generator at that tier's biome, running the SRD-509 run loop
+   (`DeepDescentRunState`: supplies, shrines, score) scoped to the POI.
+   Clearing the delve resolves linked quests and returns loot/XP to the
+   overworld party state per §4.2 step 3.
+2. **`monster_lair` POIs** resolve as single-floor clears (one generated
+   floor, boss encounter, no run scoring).
+3. **`ancient_shrine` POIs** reuse shrine blessings/curses without a delve.
+4. **Endless Delve quick option**: the unbounded classic Descent run
+   (tiers 1–13+, scoring, graveyard) remains launchable from the Realm
+   flow, replacing its New Game wizard tile.
+5. **Rules reconciliation**: town inns provide safe free Long Rests;
+   wilderness/delve Long Rests consume 4 rations (1 per living member)
+   with ambush risk on short rations (Exhaustion instead of recovery),
+   consistent with §3.2. Rations are purchasable in towns with party gold.
+   Run scores and graveyard entries persist per delve.
+
 ---
 
 ## 5. Staging Roadmap & Implementation Order
@@ -310,4 +335,4 @@ When the party encounters wandering hostiles or steps onto an unresolved wildern
 | **Stage 2 (Epic 5 Extended)** | **The Deep Descent (NetHack Roguelite)** | `SRD-501`..`SRD-509` | Procedural floor generator, stairs down/up, depth scaling, supply tension, shrines, and high score runs. |
 | **Stage 3 (Epic 6)** | **Title Screen & Campaign Launcher** | `SRD-601`..`SRD-605` | Steam-ready CRPG shell, 4-stage New Game wizard, 4-slot campfire party recruitment, pause menu, and handheld ergonomics (Spec 07). |
 | **Stage 4 (Epic 7)** | **Multiplayer Transport** | `SRD-701`..`SRD-704` | Online remote PvP Arena and co-op dungeon crawling via WebSockets. |
-| **Stage 5 (Epic 8)** | **The Realm (Strategic Overworld)** | `SRD-801`..`SRD-805` | Macro hex world generation, factions, settlements, quest boards, and seamless tactical battle transitions. |
+| **Stage 5 (Epic 8)** | **The Realm (Strategic Overworld)** | `SRD-801`..`SRD-806` | Macro hex world generation, factions, settlements, quest boards, seamless tactical battle transitions, and Deep Descent as the dungeon-delver (§4.3). |

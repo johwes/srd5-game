@@ -139,7 +139,7 @@ flowchart LR
 
 ### Epic 5 Acceptance Criteria Details
 - [x] **SRD-501..507**: A player party can enter Floor 1 of *"The Sunken Crypt of Kaelen"*, explore rooms under fog of war, detect and disarm traps, pick locks, fight multiple monster encounters, take Short and Long Rests, equip and attune discovered SRD magic items, level up from Level 1 to Level 4, and defeat the Floor 3 boss.
-- [x] **SRD-508..509**: Players can embark on an endless **Deep Descent Roguelite Run**: descend through procedurally generated floors, encounter depth-scaled monsters and themed biomes (Catacombs, Sunken Tombs, Magma Caverns, Deep Vaults), manage rations and exhaustion during rests, use Shrines of Fate, and view final run score and graveyard stats on run completion or party death.
+- [x] **SRD-508..509**: Players can embark on an endless **Deep Descent Roguelite Run**: descend through procedurally generated floors, encounter depth-scaled monsters and themed biomes (Catacombs, Sunken Tombs, Magma Caverns, Deep Vaults), manage rations and exhaustion during rests, use Shrines of Fate, and view final run score and graveyard stats on run completion or party death. The generator + run loop are additionally reused as the Realm delve engine per Spec 06 §4.3 / SRD-806 (standalone Descent tile retired in favor of the Endless Delve quick option).
 
 ---
 
@@ -194,9 +194,11 @@ flowchart LR
 | **SRD-803** | `[ ]` | Implement Faction reputation engine (-100 to +100), procedural settlements, shops, and quest boards | `@srd5/engine` | SRD-801 |
 | **SRD-804** | `[ ]` | Implement Seamless Overworld-to-Tactical Grid battle generator (Wilderness encounters and Dungeon POI entries) | `@srd5/engine` | SRD-301, SRD-802 |
 | **SRD-805** | `[ ]` | Build PixiJS Overworld Viewport & Strategic Settlement HUD (World navigation, town services, quest journal) | `@srd5/client` | SRD-402, SRD-803, SRD-804 |
+| **SRD-806** | `[ ]` | Integrate Deep Descent generator + run loop as Realm dungeon-delver (dungeon_entrance POIs, lairs, shrines) and Endless Delve quick option, including New Game wizard tile rework (3 tiles) | `@srd5/engine`, `@srd5/client` | SRD-508, SRD-509, SRD-801, SRD-802 |
 
 ### Epic 8 Acceptance Criteria Details
 - [ ] **SRD-801..805**: Players can generate an expansive procedural world map, travel between towns and factions across biomes, accept bounty and dungeon quests, recruit or buy gear in settlements, and engage wandering enemies or enter dungeon POIs with seamless transition into tactical turn-based combat on the 5-ft grid.
+- [ ] **SRD-806**: Entering a `dungeon_entrance` POI generates a bounded delve with run scoring that resolves back to the overworld; lairs clear as single floors; Endless Delve remains launchable with graveyard persistence; the New Game wizard shows exactly three tiles (Campaign / Realm / Arena).
 
 ---
 
