@@ -256,6 +256,43 @@ describe('SRD-704: Combat Tier B & C Executable Effect DSL Coverage', () => {
       expect(res.events.some((e) => e.type === 'SAVING_THROW_RESOLVED' && e.ability === 'dex')).toBe(true);
     });
 
+    it('places the grease zone exactly where aimed (no diagonal offset)', () => {
+      // Regression test: preview, targeting, and the persistent hazard zone
+      // must share one anchor convention. Caster at (6,12) clicks cell (6,7):
+      // snapped anchor is intersection (7,8) = (35,40)ft, facing north.
+      const spell = compendium.requireSpell('grease');
+      const caster = makeHighLevelCaster('caster');
+      caster.position = { x: 6, y: 12 };
+      const state = buildTestState([caster]);
+      const res = executeSpellCast({
+        state,
+        casterId: caster.id,
+        spell,
+        slotLevel: 1,
+        originCell: { x: 6, y: 7 },
+        skipReactionPrompts: true,
+      });
+
+      const expected = [
+        { x: 6, y: 6 },
+        { x: 7, y: 6 },
+        { x: 6, y: 7 },
+        { x: 7, y: 7 },
+      ];
+      const zoneEvent = res.events.find((e) => e.type === 'HAZARD_ZONE_CREATED');
+      expect(zoneEvent).toBeDefined();
+      if (zoneEvent?.type === 'HAZARD_ZONE_CREATED') {
+        expect(zoneEvent.zoneId).toBe('grease-zone');
+        expect(zoneEvent.cells).toEqual(expect.arrayContaining(expected));
+        expect(zoneEvent.cells).toHaveLength(4);
+      }
+      const zones = Object.values(res.state.hazardZones ?? {});
+      expect(zones).toHaveLength(1);
+      expect(zones[0]!.zoneId).toBe('grease-zone');
+      expect(zones[0]!.cells).toEqual(expect.arrayContaining(expected));
+      expect(zones[0]!.cells).toHaveLength(4);
+    });
+
     it('surfaces an adjudication card from a hazard zone for Confusion (Level 4)', () => {
       const spell = compendium.requireSpell('confusion');
       const caster = makeHighLevelCaster('caster');

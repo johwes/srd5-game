@@ -153,6 +153,62 @@ export function rasterizeLine(
 }
 
 /**
+ * Shared point-targeted AOE geometry (preview overlay, spell execution, and
+ * hazard zone creation MUST agree exactly, or the board shows the effect
+ * somewhere other than where the player aimed).
+ *
+ * Standard 5e "choose an intersection" behavior: the clicked cell snaps to
+ * its nearest grid intersection, and cube facing / cone direction derive
+ * from the caster toward the target when not explicitly given.
+ */
+export interface PointAoeGeometry {
+  /** Snapped anchor intersection, in feet. */
+  anchor: FeetPoint;
+  /** Cube facing derived from caster toward target. */
+  facing: CardinalFacing;
+  /** Cone/line origin on the caster's footprint boundary toward the target. */
+  coneOrigin: FeetPoint;
+  /** Normalized cone/line direction toward the target. */
+  direction: FeetPoint;
+  /** Target cell center, in feet. */
+  targetCenter: FeetPoint;
+}
+
+export function pointAoeGeometry(
+  targetCell: GridPoint,
+  casterPos?: GridPoint,
+  casterSizeCells = 1,
+  defaultFacing: CardinalFacing = 'e',
+): PointAoeGeometry {
+  const targetCenter = cellCenterFeet(targetCell);
+  const anchor = intersectionFeet(
+    Math.round(targetCenter.x / CELL_SIZE_FEET),
+    Math.round(targetCenter.y / CELL_SIZE_FEET),
+  );
+  let facing = defaultFacing;
+  if (casterPos) {
+    const casterCenter = cellCenterFeet(casterPos);
+    const dx = targetCenter.x - casterCenter.x;
+    const dy = targetCenter.y - casterCenter.y;
+    facing = Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 'e' : 'w') : dy >= 0 ? 's' : 'n';
+  }
+  const coneOrigin =
+    casterPos &&
+    Math.hypot(targetCenter.x - cellCenterFeet(casterPos).x, targetCenter.y - cellCenterFeet(casterPos).y) >=
+      1e-4
+      ? footprintBoundaryOrigin(casterPos, casterSizeCells, targetCenter)
+      : targetCenter;
+  let direction = {
+    x: targetCenter.x - coneOrigin.x,
+    y: targetCenter.y - coneOrigin.y,
+  };
+  if (Math.hypot(direction.x, direction.y) < 1e-4) {
+    direction = { x: 1, y: 0 };
+  }
+  return { anchor, facing, coneOrigin, direction, targetCenter };
+}
+
+/**
  * Point on the boundary of a creature footprint (top-left cell + size in cells) where a ray from the
  * footprint center in direction `toward` exits. Used as the origin for cones and lines.
  */

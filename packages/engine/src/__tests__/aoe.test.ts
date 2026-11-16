@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   footprintBoundaryOrigin,
   intersectionFeet,
+  pointAoeGeometry,
   rasterizeAoe,
   rasterizeCone,
   rasterizeCube,
@@ -76,5 +77,30 @@ describe('AOE rasterizers', () => {
     expect(() =>
       rasterizeAoe({ shape: 'cone', origin: o, direction: { x: 0, y: 0 }, lengthFeet: 15 }),
     ).toThrow();
+  });
+
+  it('pointAoeGeometry snaps the clicked cell to its nearest intersection', () => {
+    // Clicking cell (6,7) with a caster south of it: nearest intersection is the
+    // cell's bottom-right corner, facing derives north toward the target.
+    const geo = pointAoeGeometry({ x: 6, y: 7 }, { x: 6, y: 12 });
+    expect(geo.anchor).toEqual({ x: 35, y: 40 });
+    expect(geo.facing).toBe('n');
+    expect(geo.targetCenter).toEqual({ x: 32.5, y: 37.5 });
+  });
+
+  it('pointAoeGeometry derives facing from the dominant caster-to-target axis', () => {
+    expect(pointAoeGeometry({ x: 6, y: 7 }, { x: 0, y: 7 }).facing).toBe('e');
+    expect(pointAoeGeometry({ x: 6, y: 7 }, { x: 12, y: 7 }).facing).toBe('w');
+    expect(pointAoeGeometry({ x: 6, y: 7 }, { x: 6, y: 0 }).facing).toBe('s');
+    expect(pointAoeGeometry({ x: 6, y: 7 }, { x: 6, y: 12 }).facing).toBe('n');
+    expect(pointAoeGeometry({ x: 6, y: 7 }).facing).toBe('e');
+  });
+
+  it('pointAoeGeometry aims cones/lines from the caster boundary toward the target', () => {
+    const geo = pointAoeGeometry({ x: 6, y: 3 }, { x: 6, y: 8 });
+    expect(geo.coneOrigin).toEqual({ x: 32.5, y: 40 });
+    // Raw (non-normalized) direction toward the target, mirroring the preview
+    // overlay construction; the rasterizers normalize internally.
+    expect(geo.direction).toEqual({ x: 0, y: -22.5 });
   });
 });

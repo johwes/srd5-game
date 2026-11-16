@@ -19,6 +19,7 @@ import {
 } from '../dice/evaluator.js';
 import {
   doesFootprintContainCell,
+  getCreatureFootprintWidth,
   getFootprintCells,
   getFootprintDistanceFeet,
 } from '../grid/footprints.js';
@@ -35,6 +36,7 @@ import {
   type AoeShape,
   cellCenterFeet,
   intersectionFeet,
+  pointAoeGeometry,
   rasterizeAoe,
 } from '../grid/aoe.js';
 import {
@@ -595,6 +597,9 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
   // 2. Identify Targets
   const allCombatants = Object.values(state.combatants);
   let resolvedTargetIds: string[] = options.targetIds ? [...options.targetIds] : [];
+  // Rasterized AOE footprint, shared by targeting AND hazard zone creation so
+  // the persistent zone always matches the initial hits (and the preview).
+  let aoeCells: GridPoint[] = [];
 
   if (spell.targeting.type === 'self') {
     resolvedTargetIds = [caster.id];
@@ -661,36 +666,51 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
       }
     }
 
+    // Rasterized footprint shared by targeting AND hazard zone creation, so
+    // the persistent zone always matches the initial hits (and the preview).
+    // (Declared alongside resolvedTargetIds above.)
+
     if (spell.targeting.aoe && centerPoint) {
       const shape = spell.targeting.aoe.shape as AoeShape;
       const sizeFeet = spell.targeting.aoe.sizeFeet;
       const widthFeet = spell.targeting.aoe.widthFeet ?? 5;
 
-      let aoeCells: GridPoint[] = [];
+      // Point-targeted AOEs share one anchor convention with the targeting
+      // preview and hazard zone creation (nearest intersection + caster-
+      // relative facing/direction), so the resolved cells match the aim.
+      // Self emanations keep their legacy caster-anchored behavior.
+      const isPointTargeted = spell.targeting.type === 'point_aoe';
+      const casterSizeCells = getCreatureFootprintWidth(caster.size);
+      const pointGeo = isPointTargeted
+        ? pointAoeGeometry(centerPoint, caster.position, casterSizeCells)
+        : null;
+
       if (shape === 'sphere' || shape === 'cylinder') {
         aoeCells = rasterizeAoe({
           shape: 'sphere',
-          origin: intersectionFeet(centerPoint.x, centerPoint.y),
+          origin: pointGeo ? pointGeo.anchor : intersectionFeet(centerPoint.x, centerPoint.y),
           radiusFeet: sizeFeet,
         });
       } else if (shape === 'cube') {
         aoeCells = rasterizeAoe({
           shape: 'cube',
-          origin: intersectionFeet(centerPoint.x, centerPoint.y),
+          origin: pointGeo ? pointGeo.anchor : intersectionFeet(centerPoint.x, centerPoint.y),
           sideFeet: sizeFeet,
-          facing: options.cardinalFacing ?? 'e',
+          facing: options.cardinalFacing ?? pointGeo?.facing ?? 'e',
         });
       } else if (shape === 'cone') {
-        const dir = options.direction ?? { x: 1, y: 0 };
+        const dir = options.direction ?? pointGeo?.direction ?? { x: 1, y: 0 };
         aoeCells = rasterizeAoe({
           shape: 'cone',
-          origin: cellCenterFeet(centerPoint),
+          origin: options.direction ? cellCenterFeet(centerPoint) : (pointGeo?.coneOrigin ?? cellCenterFeet(centerPoint)),
           direction: dir,
           lengthFeet: sizeFeet,
         });
       } else if (shape === 'line') {
-        const dir = options.direction ?? { x: 1, y: 0 };
-        const originFt = cellCenterFeet(centerPoint);
+        const dir = options.direction ?? pointGeo?.direction ?? { x: 1, y: 0 };
+        const originFt = options.direction
+          ? cellCenterFeet(centerPoint)
+          : (pointGeo?.coneOrigin ?? cellCenterFeet(centerPoint));
         aoeCells = rasterizeAoe({
           shape: 'line',
           origin: originFt,
@@ -1303,6 +1323,9 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
           saveDc: casterCtx.spellSaveDc,
           spellLevel: effectiveSlotLevel,
           triggerImmediatelyOnPlacement: true,
+          // The zone footprint is the spell's own rasterized footprint, so
+          // the persistent visual matches the preview and the initial hits.
+          cells: aoeCells,
         },
       );
       events.push(...createRes.events);

@@ -37,6 +37,12 @@ export interface CreateHazardZoneOptions {
   saveDc?: number | undefined;
   spellLevel?: number | undefined;
   triggerImmediatelyOnPlacement?: boolean | undefined;
+  /**
+   * Pre-rasterized footprint cells. When provided (spell casts pass their own
+   * resolved AOE cells), rasterization is skipped so the persistent zone
+   * matches the targeting preview and initial hits exactly.
+   */
+  cells?: GridPoint[] | undefined;
 }
 
 export interface HazardZoneTransitionResult {
@@ -140,12 +146,14 @@ export function createHazardZone(
 ): HazardZoneTransitionResult {
   const events: CombatEvent[] = [];
   const instanceId = `hazard_${options.zoneId}_${Date.now()}_${hazardZoneCounter++}`;
-  const cells = rasterizeHazardZoneCells(
-    options.shape,
-    options.origin,
-    options.targetPoint,
-    options.sizeFeet,
-  );
+  const cells =
+    options.cells ??
+    rasterizeHazardZoneCells(
+      options.shape,
+      options.origin,
+      options.targetPoint,
+      options.sizeFeet,
+    );
 
   const durationRounds = options.durationRounds ?? 10;
   const requiresConcentration = Boolean(options.requiresConcentration);
