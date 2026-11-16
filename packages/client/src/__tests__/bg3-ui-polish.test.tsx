@@ -10,6 +10,7 @@ import {
   CombatantMedallion,
   InitiativePortraits,
   SelectedEnemyCard,
+  computeIconSize,
 } from '../components/combat/index.js';
 import { ActionTooltipCard } from '../components/combat/ActionTooltipCard.js';
 import { CreatureTokenRenderer } from '../canvas/index.js';
@@ -232,7 +233,7 @@ describe('SRD-608: BG3-Reference UI Polish', () => {
       const handle = screen.getByTestId('hotbar-resize-handle');
       expect(handle.getAttribute('aria-valuemin')).toBe('1');
       expect(handle.getAttribute('aria-valuemax')).toBe('3');
-      // Single-row mode scrolls horizontally without a height cap
+      // Single-row mode scrolls horizontally with hidden scrollbars
       expect(screen.getByTestId('hotbar-panel-attack').className).toContain('flex-nowrap');
       unmount();
 
@@ -245,8 +246,19 @@ describe('SRD-608: BG3-Reference UI Polish', () => {
         />,
       );
       const panel = screen.getByTestId('hotbar-panel-attack');
+      // Multi-row mode wraps with no scrollbars at all
       expect(panel.className).toContain('flex-wrap');
-      expect(panel.style.maxHeight).toBe('174px');
+      expect(panel.className).toContain('overflow-visible');
+    });
+
+    it('scales icons to fit the row budget instead of scrolling', () => {
+      // Fit math: N icons in R rows within W px, gap 8, clamped to [30, 48]
+      expect(computeIconSize(0, 2, 400)).toBe(48);
+      expect(computeIconSize(8, 2, 0)).toBe(48); // unmeasured container falls back to full size
+      expect(computeIconSize(8, 2, 430)).toBe(48); // 4 cols -> 101px, clamped to max
+      expect(computeIconSize(20, 2, 430)).toBe(35); // 10 cols -> 35px each
+      expect(computeIconSize(30, 1, 320)).toBe(30); // extreme density hits the min size
+      expect(computeIconSize(2, 2, 430)).toBe(48);
     });
 
     it('shows weapon-specific icons instead of one generic glyph', () => {

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { EffectStepSpec, SpellData } from '@srd5/data';
 import type { DerivedWeaponAttackProfile } from '@srd5/engine';
 import { GameIcon } from '../../canvas/assets/index.js';
@@ -106,6 +106,27 @@ function weaponIcon(wp: DerivedWeaponAttackProfile): { name: string; category: '
     return { name: 'sword', category: 'item' };
   }
   return { name: 'attack', category: 'action' };
+}
+
+/**
+ * BG3-style fit-to-grid sizing: given N icons, a row budget, and the measured
+ * container width, returns the largest square icon size (clamped to
+ * [minSize, maxSize]) so every icon fits with zero scrolling.
+ */
+export function computeIconSize(
+  itemCount: number,
+  rows: number,
+  containerWidth: number,
+  maxSize = 48,
+  minSize = 30,
+  gap = 8,
+): number {
+  if (itemCount <= 0) return maxSize;
+  if (containerWidth <= 0) return maxSize;
+  const safeRows = Math.max(1, Math.min(3, rows));
+  const cols = Math.max(1, Math.ceil(itemCount / safeRows));
+  const size = Math.floor((containerWidth - (cols - 1) * gap) / cols);
+  return Math.max(minSize, Math.min(maxSize, size));
 }
 
 export const STANDARD_ACTIONS: StandardActionDefinition[] = [  {
@@ -254,19 +275,47 @@ export function ActionHotbar({
   const hasExtraAttacks = (turnBudget?.extraAttacksRemaining ?? 0) > 0;
   const bonusActionSpellCast = Boolean(turnBudget?.bonusActionSpellCast);
 
+  // BG3-style fit-to-grid: measure the tab column once; every panel derives
+  // its icon size from the same width so icons scale instead of scrolling.
+  const [gridWidth, setGridWidth] = useState(0);
+  const gridHostRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = gridHostRef.current;
+    if (!el) return;
+    setGridWidth(el.clientWidth);
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0;
+      setGridWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Per-tab icon sizes so every tab fits its row budget with no scrolling.
+  const attackIconSize = computeIconSize(Math.max(1, attacks.length), rows, gridWidth);
+  const spellIconSize = computeIconSize(Math.max(1, filteredSpells.length), rows, gridWidth);
+  const featureIconSize = computeIconSize(Math.max(1, features.length), rows, gridWidth);
+  const standardIconSize = computeIconSize(STANDARD_ACTIONS.length, rows, gridWidth);
+  const itemIconSize = computeIconSize(2, rows, gridWidth);
+
   const handleHorizontalWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (e.deltaY !== 0 && e.deltaX === 0) {
       e.currentTarget.scrollLeft += e.deltaY;
     }
   };
 
-  // BG3-style resizable icon grid: 1–3 rows, shared by every tab panel.
+  // BG3-style fit-to-grid: rows are a row *budget* shared by every tab panel.
+  // Icons auto-size to fit so scrollbars are never shown. Panels deliberately
+  // use overflow-visible: the computed icon size guarantees fit, and visible
+  // overflow lets hover tooltip cards float above the dock BG3-style.
+  // Single-row mode keeps a hidden horizontal scroller purely as a safety
+  // valve for extreme icon counts.
   const iconGridClassName =
-    rows > 1
-      ? 'flex flex-wrap overflow-y-auto gap-2 pt-0.5 scrollbar-thin items-center content-start'
-      : 'flex flex-nowrap overflow-x-auto gap-2 pb-2 pt-0.5 scrollbar-thin items-center';
-  const iconGridStyle: React.CSSProperties | undefined =
-    rows > 1 ? { maxHeight: rows * 58 } : undefined;
+    'flex gap-2 pt-0.5 items-center ' +
+    (rows > 1
+      ? 'flex-wrap overflow-visible content-start'
+      : 'flex-nowrap overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden');
 
   const persistRows = (nextRows: number) => {
     const clamped = Math.max(1, Math.min(3, nextRows));
@@ -335,8 +384,8 @@ export function ActionHotbar({
           />
         </div>
 
-        {/* Tabs + Slot Grid */}
-        <div className="flex flex-col gap-1.5 min-w-0 min-w-[320px] sm:min-w-[420px]">
+        {/* Tabs + Slot Grid (measured for fit-to-grid icon scaling) */}
+        <div ref={gridHostRef} className="flex flex-col gap-1.5 min-w-0 min-w-[320px] sm:min-w-[420px]">
           <div className="flex items-center gap-1 overflow-x-auto">
             <button
               type="button"
@@ -412,14 +461,13 @@ export function ActionHotbar({
               <span>Items</span>
             </button>
           </div>
-          <div className="overflow-hidden">
+          <div className="min-w-0">
         {/* ATTACK TAB */}
         {activeTab === 'attack' && (
           <div
             data-testid="hotbar-panel-attack"
             onWheel={handleHorizontalWheel}
             className={iconGridClassName}
-            style={iconGridStyle}
           >
             {attacks.length > 0 ? (
               attacks.map((wp) => {
@@ -436,9 +484,10 @@ export function ActionHotbar({
                     <button
                       type="button"
                       data-testid={`attack-btn-${wp.id}`}
+                      style={{ width: attackIconSize, height: attackIconSize }}
                       disabled={!canUse}
                       onClick={() => onDeclareAttack?.(wp, { isOffHand })}
-                      className={`relative w-12 h-12 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                      className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
                         canUse
                           ? 'bg-slate-900 border-slate-700 hover:border-amber-400 hover:bg-slate-800 shadow-md hover:shadow-[0_0_12px_rgba(251,191,36,0.3)] cursor-pointer active:scale-95'
                           : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
@@ -485,6 +534,7 @@ export function ActionHotbar({
                 <button
                   type="button"
                   data-testid="attack-btn-unarmed"
+                  style={{ width: attackIconSize, height: attackIconSize }}
                   disabled={!isPlayerControlled || (!hasAction && !hasExtraAttacks)}
                   onClick={() =>
                     onDeclareAttack?.({
@@ -509,7 +559,7 @@ export function ActionHotbar({
                       actionCost: 'action',
                     })
                   }
-                  className="relative w-12 h-12 rounded-xl flex flex-col items-center justify-center border border-slate-700 bg-slate-900 hover:border-amber-400 hover:bg-slate-800 text-xs shadow-md transition-all cursor-pointer active:scale-95"
+                  className="relative rounded-xl flex flex-col items-center justify-center border border-slate-700 bg-slate-900 hover:border-amber-400 hover:bg-slate-800 text-xs shadow-md transition-all cursor-pointer active:scale-95"
                   title="Unarmed Strike (1+STR)"
                 >
                   <GameIcon name="attack" category="action" size={20} alt="" />
@@ -612,7 +662,6 @@ export function ActionHotbar({
             <div
               onWheel={handleHorizontalWheel}
               className={iconGridClassName}
-            style={iconGridStyle}
             >
               {filteredSpells.length > 0 ? (
                 filteredSpells.map((spell) => {
@@ -663,10 +712,11 @@ export function ActionHotbar({
                       <button
                         type="button"
                         data-testid={`spell-cast-btn-${spell.id}`}
+                        style={{ width: spellIconSize, height: spellIconSize }}
                         aria-label={`Cast ${spell.name}`}
                         disabled={!canCast}
                         onClick={() => onCastSpell?.(spell.id, defaultSlot)}
-                        className={`relative w-12 h-12 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                        className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
                           canCast
                             ? 'bg-slate-900 border-purple-800/80 hover:border-purple-400 hover:bg-purple-950/30 shadow-md hover:shadow-[0_0_12px_rgba(168,85,247,0.4)] cursor-pointer active:scale-95'
                             : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
@@ -775,7 +825,6 @@ export function ActionHotbar({
             data-testid="hotbar-panel-features"
             onWheel={handleHorizontalWheel}
             className={iconGridClassName}
-            style={iconGridStyle}
           >
             {features.length > 0 ? (
               features.map((feat) => {
@@ -790,9 +839,10 @@ export function ActionHotbar({
                     <button
                       type="button"
                       data-testid={`feature-btn-${feat.id}`}
+                      style={{ width: featureIconSize, height: featureIconSize }}
                       disabled={!canUse}
                       onClick={() => onUseClassFeature?.(feat.id)}
-                      className={`relative w-12 h-12 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                      className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
                         canUse
                           ? 'bg-slate-900 border-slate-700 hover:border-amber-400 hover:bg-slate-800 shadow-md hover:shadow-[0_0_12px_rgba(251,191,36,0.3)] cursor-pointer active:scale-95'
                           : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
@@ -847,7 +897,6 @@ export function ActionHotbar({
             data-testid="hotbar-panel-standard"
             onWheel={handleHorizontalWheel}
             className={iconGridClassName}
-            style={iconGridStyle}
           >
             {STANDARD_ACTIONS.map((action) => {
               const requiresAction = action.actionCost === 'action';
@@ -866,9 +915,10 @@ export function ActionHotbar({
                   <button
                     type="button"
                     data-testid={`standard-action-btn-${action.id}`}
+                    style={{ width: standardIconSize, height: standardIconSize }}
                     disabled={!canUse}
                     onClick={() => onStandardAction?.(action.id)}
-                    className={`relative w-12 h-12 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                    className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
                       canUse
                         ? 'bg-slate-900 border-slate-700 hover:border-sky-400 hover:bg-slate-800 shadow-md hover:shadow-[0_0_12px_rgba(56,189,248,0.3)] cursor-pointer active:scale-95'
                         : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
@@ -913,7 +963,6 @@ export function ActionHotbar({
             data-testid="hotbar-panel-items"
             onWheel={handleHorizontalWheel}
             className={iconGridClassName}
-            style={iconGridStyle}
           >
             {/* Standard Potion of Healing */}
             <div
@@ -923,9 +972,10 @@ export function ActionHotbar({
               <button
                 type="button"
                 data-testid="item-use-btn-potion-healing"
+                style={{ width: itemIconSize, height: itemIconSize }}
                 disabled={!isPlayerControlled || !hasAction}
                 onClick={() => onUseItem?.('potion-of-healing')}
-                className={`relative w-12 h-12 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
                   isPlayerControlled && hasAction
                     ? 'bg-slate-900 border-slate-700 hover:border-emerald-400 hover:bg-slate-800 shadow-md hover:shadow-[0_0_12px_rgba(52,211,153,0.3)] cursor-pointer active:scale-95'
                     : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
@@ -959,9 +1009,10 @@ export function ActionHotbar({
               <button
                 type="button"
                 data-testid="item-use-btn-potion-greater-healing"
+                style={{ width: itemIconSize, height: itemIconSize }}
                 disabled={!isPlayerControlled || !hasAction}
                 onClick={() => onUseItem?.('potion-of-greater-healing')}
-                className={`relative w-12 h-12 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
                   isPlayerControlled && hasAction
                     ? 'bg-slate-900 border-slate-700 hover:border-emerald-400 hover:bg-slate-800 shadow-md hover:shadow-[0_0_12px_rgba(52,211,153,0.3)] cursor-pointer active:scale-95'
                     : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'

@@ -5,7 +5,7 @@ export { InitiativePortraits, SelectedEnemyCard } from './InitiativePortraits.js
 export { ActionTooltipCard } from './ActionTooltipCard.js';
 export { CombatantMedallion } from './CombatantMedallion.js';
 export { PartyPortraits } from './PartyPortraits.js';
-export { ActionHotbar, STANDARD_ACTIONS } from './ActionHotbar.js';
+export { ActionHotbar, STANDARD_ACTIONS, computeIconSize } from './ActionHotbar.js';
 export { TacticalCombatHud } from './TacticalCombatHud.js';
 export { ReactionInterruptModal } from './ReactionInterruptModal.js';
 export { AnimatedDiceTray, DieFace } from './AnimatedDiceTray.js';
