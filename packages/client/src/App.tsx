@@ -390,10 +390,10 @@ export function App({
               <button
                 type="button"
                 data-testid="app-nav-arena"
-                aria-pressed={activeView === 'arena'}
+                aria-pressed={(activeView as string) === 'arena'}
                 onClick={() => setActiveView('arena')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  activeView === 'arena'
+                  (activeView as string) === 'arena'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-300 hover:text-white'
                 }`}
@@ -403,10 +403,10 @@ export function App({
               <button
                 type="button"
                 data-testid="app-nav-dungeon"
-                aria-pressed={activeView === 'dungeon' || activeView === 'gameplay'}
+                aria-pressed={(activeView as string) === 'dungeon' || (activeView as string) === 'gameplay'}
                 onClick={() => setActiveView('dungeon')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  activeView === 'dungeon' || activeView === 'gameplay'
+                  (activeView as string) === 'dungeon' || (activeView as string) === 'gameplay'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-300 hover:text-white'
                 }`}
@@ -416,10 +416,10 @@ export function App({
               <button
                 type="button"
                 data-testid="app-nav-roguelite"
-                aria-pressed={activeView === 'roguelite'}
+                aria-pressed={(activeView as string) === 'roguelite'}
                 onClick={() => setActiveView('roguelite')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  activeView === 'roguelite'
+                  (activeView as string) === 'roguelite'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-300 hover:text-white'
                 }`}

@@ -641,7 +641,7 @@ export function DungeonView({
   return (
     <div
       data-testid="dungeon-view-container"
-      className="relative w-full h-[calc(100vh-140px)] min-h-[460px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col"
+      className="fixed inset-0 z-40 w-screen h-screen overflow-hidden bg-slate-950 flex flex-col select-none shadow-2xl"
     >
       {/* Roguelite Top Status HUD */}
       {dungeonMode === 'roguelite' && rogueliteState && (

@@ -227,6 +227,18 @@ async function runPlaytest() {
 
       await page.screenshot({ path: path.join(outputDir, '05-arena-combat-after-turn.png') });
       console.log('✅ Arena Combat executed cleanly.');
+
+      // Return from Arena Combat to Setup and Roster for next game mode
+      const arenaExit = page.locator('[data-testid="arena-exit-button"]');
+      if (await arenaExit.isVisible()) {
+        await arenaExit.click();
+        await page.waitForTimeout(600);
+        const backToRoster = page.locator('[data-testid="arena-back-to-roster-btn"]');
+        if (await backToRoster.isVisible()) {
+          await backToRoster.click();
+          await page.waitForTimeout(600);
+        }
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -234,7 +246,15 @@ async function runPlaytest() {
     // -------------------------------------------------------------------------
     console.log('🏰 Testing Dungeon Delve...');
     const dungeonNav = page.locator('[data-testid="app-nav-dungeon"]');
-    await dungeonNav.click();
+    if (!(await dungeonNav.isVisible())) {
+      // In case we're at title menu, launch dungeon campaign
+      const titleDelve = page.locator('[data-testid="title-menu-delve-btn"]');
+      if (await titleDelve.isVisible()) {
+        await titleDelve.click();
+      }
+    } else {
+      await dungeonNav.click();
+    }
     await page.waitForSelector('[data-testid="dungeon-view-container"]', { timeout: 10000 });
     await page.waitForTimeout(2500); // Allow dungeon procedural generation and Pixi rendering
     await page.screenshot({ path: path.join(outputDir, '06-dungeon-view.png') });
@@ -250,22 +270,52 @@ async function runPlaytest() {
       console.log('✅ Dungeon movement interaction executed.');
     }
 
+    // Exit Dungeon Delve back to Title Menu
+    const dungeonExit = page.locator('[data-testid="hud-exit-delve-btn"]');
+    if (await dungeonExit.isVisible()) {
+      await dungeonExit.click();
+      await page.waitForTimeout(600);
+    }
+
     // -------------------------------------------------------------------------
     // 5. Deep Descent (Roguelite)
     // -------------------------------------------------------------------------
     console.log('💀 Testing Deep Descent (Roguelite)...');
     const rogueliteNav = page.locator('[data-testid="app-nav-roguelite"]');
-    await rogueliteNav.click();
+    if (await rogueliteNav.isVisible()) {
+      await rogueliteNav.click();
+    } else {
+      const titleRoguelite = page.locator('[data-testid="title-menu-roguelite-btn"]');
+      if (await titleRoguelite.isVisible()) {
+        await titleRoguelite.click();
+      }
+    }
     await page.waitForTimeout(2000);
     await page.screenshot({ path: path.join(outputDir, '08-deep-descent.png') });
     console.log('✅ Deep Descent rendered.');
+
+    // Exit Deep Descent back to Title Menu
+    const rogueliteExit = page.locator('[data-testid="hud-exit-delve-btn"]');
+    if (await rogueliteExit.isVisible()) {
+      await rogueliteExit.click();
+      await page.waitForTimeout(600);
+    }
 
     // -------------------------------------------------------------------------
     // 6. Character Builder
     // -------------------------------------------------------------------------
     console.log('🛠️ Testing Character Builder Wizard...');
     const builderNav = page.locator('[data-testid="app-nav-builder"]');
-    await builderNav.click();
+    if (await builderNav.isVisible()) {
+      await builderNav.click();
+    } else {
+      const titleVault = page.locator('[data-testid="title-menu-vault-btn"]');
+      if (await titleVault.isVisible()) {
+        await titleVault.click();
+        await page.waitForTimeout(500);
+        await page.locator('[data-testid="app-nav-builder"]').click();
+      }
+    }
     await page.waitForTimeout(1000);
     await page.screenshot({ path: path.join(outputDir, '09-builder.png') });
     console.log('✅ Character Builder rendered.');

@@ -46,7 +46,7 @@ export function TacticalCombatHud({
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(
     null,
   );
-  const [isPartyCollapsed, setIsPartyCollapsed] = useState(false);
+  const [isPartyCollapsed, setIsPartyCollapsed] = useState(true);
   const [internalShowLog, setInternalShowLog] = useState(showCombatLog);
   const [internalShowDiceTray, setInternalShowDiceTray] = useState(showDiceTray);
   const [inspectedRoll, setInspectedRoll] = useState<DiceRollRecord | null>(null);

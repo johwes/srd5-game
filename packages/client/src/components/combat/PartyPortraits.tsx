@@ -74,29 +74,119 @@ export function PartyPortraits({
                     onSelectPartyMember?.(hero.id);
                   }
                 }}
-                className={`group relative flex flex-col items-center justify-center p-2 rounded-lg border transition-all cursor-pointer ${
+                className={`group relative flex flex-col items-center justify-center p-1.5 rounded-xl border transition-all cursor-pointer ${
                   isActive
-                    ? 'border-amber-400 bg-amber-950/40 ring-2 ring-amber-400/80 shadow-[0_0_10px_rgba(251,191,36,0.5)]'
+                    ? 'border-amber-400 bg-amber-950/40 ring-2 ring-amber-400/90 shadow-[0_0_14px_rgba(251,191,36,0.5)]'
                     : isSelected
-                      ? 'border-white bg-slate-800/80 ring-1 ring-white/60'
-                      : 'border-slate-800 bg-slate-950/70 hover:border-slate-700'
+                      ? 'border-white bg-slate-800/80 ring-2 ring-white/70'
+                      : 'border-slate-800/80 bg-slate-950/80 hover:border-slate-600'
                 }`}
                 title={`${hero.name} (HP: ${hero.currentHp}/${hero.maxHp})`}
               >
-                <div className="w-8 h-8 rounded-full bg-sky-900 border border-sky-600 flex items-center justify-center font-bold text-sky-200 text-xs">
-                  {hero.name.charAt(0)}
-                </div>
-                <div className="w-full h-1 bg-slate-900 rounded-full mt-1.5 overflow-hidden">
+                {/* Portrait Circle Token */}
+                <div className="relative">
                   <div
-                    className={`h-full ${
-                      hpPercent > 50
-                        ? 'bg-emerald-400'
-                        : hpPercent > 25
-                          ? 'bg-amber-400'
-                          : 'bg-rose-500'
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-inner ${
+                      isActive
+                        ? 'bg-amber-900/60 text-amber-200 border-2 border-amber-400'
+                        : isSelected
+                          ? 'bg-sky-950 text-sky-200 border-2 border-sky-400'
+                          : 'bg-slate-900 text-slate-200 border border-slate-700'
+                    }`}
+                  >
+                    {hero.name.charAt(0)}
+                  </div>
+
+                  {/* Reaction Pip */}
+                  {hero.reactionAvailable !== false && (
+                    <div
+                      className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-sky-400 border border-slate-950 shadow"
+                      title="Reaction Ready"
+                    />
+                  )}
+
+                  {/* Level Up Beacon */}
+                  {hero.levelUpAvailable && (
+                    <div
+                      className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 text-slate-950 font-black text-[9px] flex items-center justify-center animate-bounce shadow"
+                      title="Level Up Available!"
+                    >
+                      ⇧
+                    </div>
+                  )}
+                </div>
+
+                {/* Mini HP Meter */}
+                <div className="w-full h-1.5 bg-slate-900 rounded-full mt-1.5 overflow-hidden border border-slate-800/80">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      hero.isDead
+                        ? 'bg-slate-700'
+                        : hpPercent > 50
+                          ? 'bg-emerald-400'
+                          : hpPercent > 25
+                            ? 'bg-amber-400'
+                            : 'bg-rose-500'
                     }`}
                     style={{ width: `${hpPercent}%` }}
                   />
+                </div>
+
+                {/* Floating BG3 Tooltip Card on Hover */}
+                <div className="absolute left-full top-0 ml-2.5 w-60 p-3 bg-slate-950/95 border border-slate-700/80 rounded-xl shadow-2xl backdrop-blur-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 text-left flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-1 border-b border-slate-800 pb-1.5">
+                    <div>
+                      <div className="font-bold text-slate-100 text-xs truncate">
+                        {hero.name}
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {classSummary}
+                      </div>
+                    </div>
+                    {isActive && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black uppercase tracking-wider">
+                        Active
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400 font-semibold text-[11px]">HP:</span>
+                    <span
+                      className={`font-mono font-bold ${
+                        hpPercent > 50
+                          ? 'text-emerald-300'
+                          : hpPercent > 25
+                            ? 'text-amber-300'
+                            : 'text-rose-400'
+                      }`}
+                    >
+                      {hero.currentHp}/{hero.maxHp}
+                      {hero.tempHp > 0 && ` (+${hero.tempHp})`}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-300 border-t border-slate-800/80 pt-1">
+                    <span>🛡️ AC {hero.armorClass}</span>
+                    <span>👟 {hero.speedFeet}ft</span>
+                    <span className={hero.reactionAvailable !== false ? 'text-sky-300' : 'text-slate-500 line-through'}>
+                      {hero.reactionAvailable !== false ? '🔵 React' : '⚪ React'}
+                    </span>
+                  </div>
+
+                  {onOpenCharacterSheet && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenCharacterSheet(hero.id);
+                      }}
+                      className="mt-1 w-full py-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-300 hover:text-amber-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <span>📜</span>
+                      <span>Inspect Sheet (C / I)</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );
