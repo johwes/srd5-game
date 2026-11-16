@@ -141,7 +141,9 @@ describe('TerrainTileRenderer', () => {
     grid.cells[4].terrain = 'rubble';
     grid.cells[5].terrain = 'chasm';
     grid.cells[6].terrain = 'floor_wood';
-    grid.cells[7].difficultTerrain = true;
+    grid.cells[7].terrain = 'floor_sand';
+    grid.cells[8].terrain = 'floor_basalt';
+    grid.cells[9].difficultTerrain = true;
 
     // Render tiles and overlays
     renderer.render({
@@ -164,6 +166,28 @@ describe('TerrainTileRenderer', () => {
       showCoordinates: false,
     });
 
+    renderer.destroy();
+  });
+
+  it('redraws tiles when terrain changes without grid dimension changes', () => {
+    const parent = new Container();
+    const renderer = new TerrainTileRenderer(parent);
+
+    const stoneGrid = createTacticalGrid(14, 14, 'floor_stone');
+    renderer.render({ grid: stoneGrid, cellSize: 48 });
+    const drawSpy = vi.spyOn(renderer, 'drawTiles');
+
+    // Same dimensions, different environment terrain (arena relaunch / floor change)
+    const lavaGrid = createTacticalGrid(14, 14, 'floor_basalt');
+    lavaGrid.cells[0].terrain = 'lava';
+    renderer.render({ grid: lavaGrid, cellSize: 48 });
+    expect(drawSpy).toHaveBeenCalledTimes(1);
+
+    // Identical content re-render stays cached
+    renderer.render({ grid: lavaGrid, cellSize: 48 });
+    expect(drawSpy).toHaveBeenCalledTimes(1);
+
+    drawSpy.mockRestore();
     renderer.destroy();
   });
 });

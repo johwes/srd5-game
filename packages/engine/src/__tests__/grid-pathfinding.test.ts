@@ -80,6 +80,21 @@ describe('SRD-301: 5-ft Grid Model, Creature Footprints, and A* Pathfinding', ()
       expect(isCellDifficultTerrain(getGridCell(grid, 0, 1)!, 'swim')).toBe(false);
       expect(isCellDifficultTerrain(getGridCell(grid, 2, 1)!, 'fly')).toBe(true);
     });
+
+    it('treats decorative arena floors as ordinary walkable ground', () => {
+      const grid = setGridCells(createTacticalGrid(3, 1), [
+        { x: 0, y: 0, terrain: 'floor_sand' },
+        { x: 1, y: 0, terrain: 'floor_basalt' },
+        { x: 2, y: 0, terrain: 'floor_wood' },
+      ]);
+
+      for (const x of [0, 1, 2]) {
+        const cell = getGridCell(grid, x, 0)!;
+        expect(isCellPassable(cell)).toBe(true);
+        expect(isCellPassable(cell, 'fly')).toBe(true);
+        expect(isCellDifficultTerrain(cell)).toBe(false);
+      }
+    });
   });
 
   describe('Creature Footprints (1x1..4x4) & Grid Distances', () => {

@@ -37,6 +37,8 @@ export const TILE_TERRAIN_TYPES = [
   'void',
   'floor_stone',
   'floor_wood',
+  'floor_sand', // Walkable desert floor (no cover, no difficult terrain)
+  'floor_basalt', // Walkable volcanic rock floor (no cover, no difficult terrain)
   'wall_solid',
   'chasm', // Blocks walking, allows flying & Line of Sight
   'water_shallow', // Difficult terrain
@@ -195,6 +197,8 @@ export function isTerrainPassable(
       return movementMode === 'fly';
     case 'floor_stone':
     case 'floor_wood':
+    case 'floor_sand':
+    case 'floor_basalt':
     case 'water_shallow':
     case 'water_deep':
     case 'rubble':

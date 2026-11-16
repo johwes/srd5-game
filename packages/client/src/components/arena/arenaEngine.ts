@@ -35,13 +35,14 @@ export function createArenaGrid(
   height: number,
   environment: ArenaEnvironment,
 ): TacticalGrid {
-  const baseGrid = createTacticalGrid(width, height, 'floor_stone', 'bright');
-
+  // Each environment gets a distinct floor theme so the map reads differently
+  // at a glance (previously every map shared one flat floor_stone look).
   if (environment === 'open_sands') {
-    return baseGrid;
+    return createTacticalGrid(width, height, 'floor_sand', 'bright');
   }
 
   if (environment === 'pillars') {
+    const baseGrid = createTacticalGrid(width, height, 'floor_stone', 'bright');
     // 4 Symmetrical stone pillars with complete Line-of-Sight & Movement blocking
     const px1 = Math.max(2, Math.floor(width / 3));
     const px2 = Math.min(width - 3, width - 1 - px1);
@@ -67,7 +68,8 @@ export function createArenaGrid(
   }
 
   if (environment === 'chasm_bridge') {
-    // Central horizontal chasm split with a 2-cell bridge crossing in the center
+    const baseGrid = createTacticalGrid(width, height, 'floor_basalt', 'bright');
+    // Central horizontal chasm split with a 2-cell wooden bridge deck crossing in the center
     const midY = Math.floor(height / 2);
     const bridgeX1 = Math.floor(width / 2) - 1;
     const bridgeX2 = Math.floor(width / 2);
@@ -82,12 +84,19 @@ export function createArenaGrid(
           blocksMovement: true,
           blocksSight: false,
         });
+      } else {
+        updates.push({
+          x,
+          y: midY,
+          terrain: 'floor_wood',
+        });
       }
     }
     return setGridCells(baseGrid, updates);
   }
 
   if (environment === 'hazards_lava') {
+    const baseGrid = createTacticalGrid(width, height, 'floor_basalt', 'bright');
     // Symmetrical lava hazard pools along the arena perimeter/corners
     const lavaCoords: GridPoint[] = [
       { x: 2, y: 2 },
@@ -110,7 +119,7 @@ export function createArenaGrid(
     return setGridCells(baseGrid, updates);
   }
 
-  return baseGrid;
+  return createTacticalGrid(width, height, 'floor_stone', 'bright');
 }
 
 /**

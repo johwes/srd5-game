@@ -91,6 +91,8 @@ export const KENNEY_SPRITE_FRAMES: Record<string, TileFrame> = {
 export const TERRAIN_SPRITE_MAP: Record<TileTerrainType, string> = {
   floor_stone: 'floor_stone',
   floor_wood: 'floor_wood',
+  floor_sand: 'floor_stone',
+  floor_basalt: 'void',
   wall_solid: 'wall_solid',
   chasm: 'chasm',
   water_shallow: 'water_shallow',

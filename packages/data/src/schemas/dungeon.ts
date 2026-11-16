@@ -38,6 +38,8 @@ export const TILE_TERRAIN_TYPES = [
   'void',
   'floor_stone',
   'floor_wood',
+  'floor_sand',
+  'floor_basalt',
   'wall_solid',
   'chasm',
   'water_shallow',

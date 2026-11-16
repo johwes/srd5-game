@@ -49,6 +49,22 @@ describe('SRD-408: The Arena Mode (PvE Skirmish, Endless Waves & Hot-Seat PvP 1v
       expect(blockingCells.every((c) => c.terrain === 'wall_solid')).toBe(true);
     });
 
+    it('themes each environment with a distinct floor so the map reads differently', () => {
+      expect(
+        createArenaGrid(12, 12, 'open_sands').cells.every(
+          (c) => c.terrain === 'floor_sand',
+        ),
+      ).toBe(true);
+
+      const chasmGrid = createArenaGrid(12, 12, 'chasm_bridge');
+      const chasmBase = chasmGrid.cells.filter((c) => c.terrain === 'floor_basalt');
+      expect(chasmBase.length).toBeGreaterThan(0);
+
+      const lavaGrid = createArenaGrid(12, 12, 'hazards_lava');
+      const lavaBase = lavaGrid.cells.filter((c) => c.terrain === 'floor_basalt');
+      expect(lavaBase.length).toBeGreaterThan(0);
+    });
+
     it('creates chasm_bridge environment with movement blocking chasm and central bridge', () => {
       const width = 12;
       const height = 12;
@@ -62,7 +78,7 @@ describe('SRD-408: The Arena Mode (PvE Skirmish, Endless Waves & Hot-Seat PvP 1v
         expect(cell).toBeDefined();
         if (x === bridgeX1 || x === bridgeX2) {
           expect(Boolean(cell?.blocksMovement)).toBe(false);
-          expect(cell?.terrain).toBe('floor_stone');
+          expect(cell?.terrain).toBe('floor_wood');
         } else {
           expect(cell?.blocksMovement).toBe(true);
           expect(Boolean(cell?.blocksSight)).toBe(false);

@@ -41,6 +41,8 @@ export const TERRAIN_PALETTE_FALLBACK: Record<
   void: { fill: 0x020617 },
   floor_stone: { fill: 0x334155, border: 0x1e293b },
   floor_wood: { fill: 0x78350f, border: 0x451a03 },
+  floor_sand: { fill: 0x9a7d46, border: 0x6e5a30 },
+  floor_basalt: { fill: 0x1c1917, border: 0x44403c },
   wall_solid: { fill: 0x0f172a, border: 0x020617 },
   chasm: { fill: 0x020617, border: 0x334155 },
   water_shallow: { fill: 0x0284c7, border: 0x0369a1 },

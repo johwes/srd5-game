@@ -6,6 +6,8 @@ export const TERRAIN_PALETTE: Record<TileTerrainType, { fill: number; border?: n
   void: { fill: 0x020617 },
   floor_stone: { fill: 0x334155, border: 0x1e293b },
   floor_wood: { fill: 0x78350f, border: 0x451a03 },
+  floor_sand: { fill: 0x9a7d46, border: 0x6e5a30 },
+  floor_basalt: { fill: 0x1c1917, border: 0x44403c },
   wall_solid: { fill: 0x0f172a, border: 0x020617 },
   chasm: { fill: 0x020617, border: 0x334155 },
   water_shallow: { fill: 0x0284c7, border: 0x0369a1 },
@@ -24,9 +26,7 @@ export class TerrainTileRenderer {
   private highlightsGraphics: Graphics;
   private coordsContainer: Container;
 
-  private lastGridWidth = -1;
-  private lastGridHeight = -1;
-  private lastCellSize = -1;
+  private lastGridSignature: string | null = null;
   private lastShowGridLines: boolean | undefined;
   private lastShowCoords: boolean | undefined;
   private lastIgnoreVisibility: boolean | undefined;
@@ -71,17 +71,26 @@ export class TerrainTileRenderer {
       ignoreVisibility = false,
     } = options;
 
-    const gridChanged =
-      this.lastGridWidth !== grid.width ||
-      this.lastGridHeight !== grid.height ||
-      this.lastCellSize !== cellSize ||
-      this.lastIgnoreVisibility !== ignoreVisibility;
+    // Signature covers dimensions AND terrain content: tiles must redraw when
+    // the environment changes even if the grid size stays identical (e.g.
+    // arena relaunch with a different obstacle set, or dungeon floor change).
+    const gridSignature = [
+      grid.width,
+      grid.height,
+      cellSize,
+      ignoreVisibility,
+      grid.cells
+        .map(
+          (c) =>
+            `${c.terrain}${c.difficultTerrain ? 'd' : ''}${c.blocksMovement ? 'm' : ''}${c.blocksSight ? 's' : ''}${'visibility' in c ? (c as { visibility?: string }).visibility?.[0] ?? '' : ''}`,
+        )
+        .join(','),
+    ].join('|');
+
+    const gridChanged = this.lastGridSignature !== gridSignature;
 
     if (gridChanged) {
-      this.lastGridWidth = grid.width;
-      this.lastGridHeight = grid.height;
-      this.lastCellSize = cellSize;
-      this.lastIgnoreVisibility = ignoreVisibility;
+      this.lastGridSignature = gridSignature;
       this.drawTiles(grid, cellSize, ignoreVisibility);
     }
 
@@ -141,18 +150,79 @@ export class TerrainTileRenderer {
           });
         }
 
-        // Distinct styling details by terrain type
+        // Distinct styling details by terrain type.
+        // Pseudo-random offsets derive from cell coords so renders are stable.
+        const hash = Math.abs(x * 7 + y * 13);
         if (terrain === 'wall_solid') {
           // Thick wall bevel
           this.tilesGraphics
             .rect(px + 3, py + 3, cellSize - 6, cellSize - 6)
             .fill(0x020617);
         } else if (terrain === 'floor_wood') {
-          // Horizontal wood plank line
+          // Wood plank seams (bridge decking reads clearly)
           this.tilesGraphics
-            .moveTo(px, py + cellSize / 2)
-            .lineTo(px + cellSize, py + cellSize / 2)
-            .stroke({ color: 0x451a03, width: 1, alpha: 0.4 });
+            .moveTo(px + 2, py + cellSize / 3)
+            .lineTo(px + cellSize - 2, py + cellSize / 3)
+            .stroke({ color: 0x451a03, width: 1.5, alpha: 0.7 });
+          this.tilesGraphics
+            .moveTo(px + 2, py + (2 * cellSize) / 3)
+            .lineTo(px + cellSize - 2, py + (2 * cellSize) / 3)
+            .stroke({ color: 0x451a03, width: 1.5, alpha: 0.7 });
+        } else if (terrain === 'floor_sand') {
+          // Wind-blown sand speckles
+          const dots = [
+            [8 + (hash % 9), 10 + ((hash >> 2) % 9)],
+            [cellSize - 12 - (hash % 7), 8 + ((hash >> 3) % 11)],
+            [10 + ((hash >> 4) % 8), cellSize - 10 - (hash % 6)],
+          ];
+          for (const [dx, dy] of dots) {
+            this.tilesGraphics.rect(px + dx, py + dy, 3, 2).fill(0x6e5a30);
+          }
+        } else if (terrain === 'floor_basalt') {
+          // Cooled volcanic cracks with a faint ember seam
+          this.tilesGraphics
+            .moveTo(px + 5 + (hash % 8), py + 4)
+            .lineTo(px + 9 + (hash % 8), py + cellSize - 4)
+            .stroke({ color: 0x0a0a0a, width: 1.5, alpha: 0.8 });
+          this.tilesGraphics
+            .moveTo(px + 4, py + 8 + ((hash >> 2) % 10))
+            .lineTo(px + cellSize - 4, py + 12 + ((hash >> 2) % 10))
+            .stroke({ color: 0x7f1d1d, width: 1, alpha: 0.55 });
+        } else if (terrain === 'chasm') {
+          // Pit depth: darker core with a rocky rim-light on edges bordering
+          // non-chasm cells, so the rift reads as a hole instead of a shadow.
+          this.tilesGraphics
+            .rect(px + 5, py + 5, cellSize - 10, cellSize - 10)
+            .fill({ color: 0x000000, alpha: 0.65 });
+          const isRim = (nx: number, ny: number) => {
+            const neighbor = cellMap.get(`${nx},${ny}`);
+            return !neighbor || neighbor.terrain !== 'chasm';
+          };
+          const rimColor = 0x94a3b8;
+          if (isRim(x, y - 1)) {
+            this.tilesGraphics
+              .moveTo(px + 1, py + 1.5)
+              .lineTo(px + cellSize - 1, py + 1.5)
+              .stroke({ color: rimColor, width: 2, alpha: 0.9 });
+          }
+          if (isRim(x, y + 1)) {
+            this.tilesGraphics
+              .moveTo(px + 1, py + cellSize - 1.5)
+              .lineTo(px + cellSize - 1, py + cellSize - 1.5)
+              .stroke({ color: rimColor, width: 2, alpha: 0.9 });
+          }
+          if (isRim(x - 1, y)) {
+            this.tilesGraphics
+              .moveTo(px + 1.5, py + 1)
+              .lineTo(px + 1.5, py + cellSize - 1)
+              .stroke({ color: rimColor, width: 2, alpha: 0.9 });
+          }
+          if (isRim(x + 1, y)) {
+            this.tilesGraphics
+              .moveTo(px + cellSize - 1.5, py + 1)
+              .lineTo(px + cellSize - 1.5, py + cellSize - 1)
+              .stroke({ color: rimColor, width: 2, alpha: 0.9 });
+          }
         } else if (terrain === 'water_shallow') {
           // Subtle wave ripple
           this.tilesGraphics
@@ -168,10 +238,18 @@ export class TerrainTileRenderer {
             .rect(px + cellSize - 14, py + cellSize - 14, 5, 5)
             .fill(0x1e293b);
         } else if (terrain === 'lava') {
-          // Inner molten glow
+          // Molten core with bright ember veins and a hot rim
           this.tilesGraphics
             .rect(px + 4, py + 4, cellSize - 8, cellSize - 8)
             .fill(0xf97316);
+          this.tilesGraphics
+            .moveTo(px + 6, py + 8 + (hash % 10))
+            .lineTo(px + cellSize - 6, py + cellSize - 8 - (hash % 10))
+            .stroke({ color: 0xfde047, width: 1.5, alpha: 0.9 });
+          this.tilesGraphics
+            .moveTo(px + 8 + ((hash >> 2) % 10), py + 5)
+            .lineTo(px + cellSize - 8 - ((hash >> 2) % 10), py + cellSize - 5)
+            .stroke({ color: 0xfde047, width: 1, alpha: 0.7 });
         }
 
         // Difficult terrain diagonal hatching
