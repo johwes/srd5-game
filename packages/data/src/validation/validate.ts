@@ -257,6 +257,22 @@ function collectEffectStepFormulas(
       case 'create_hazard_zone':
         collectEffectStepFormulas(step.onEnterOrStartTurn, onFormula);
         break;
+      case 'summon_creature':
+        if (step.statblock.hitPointsFormula) {
+          onFormula(
+            step.statblock.hitPointsFormula,
+            `summon_creature(${step.summonId}).statblock.hitPointsFormula`,
+          );
+        }
+        for (const action of step.statblock.actions ?? []) {
+          collectEffectStepFormulas(action.effects, (f, ctx) =>
+            onFormula(
+              f,
+              `summon_creature(${step.summonId}).statblock.action(${action.id}).${ctx}`,
+            ),
+          );
+        }
+        break;
       case 'manual_adjudication':
         if (step.suggestedRoll) {
           onFormula(step.suggestedRoll, `manual_adjudication(${step.adjudicationId}).suggestedRoll`);

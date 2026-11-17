@@ -25,7 +25,8 @@ export type FormulaVariableName =
   | 'classLevel'
   | 'slotLevel'
   | 'spellMod'
-  | 'spellSaveDC';
+  | 'spellSaveDC'
+  | 'casterMaxHp';
 
 export type FormulaContext = Partial<
   Record<FormulaVariable, number> & Record<FormulaVariableName, number>

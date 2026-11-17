@@ -295,6 +295,7 @@ export const FORMULA_VARIABLES = [
   '@slotLevel',
   '@spellMod',
   '@spellSaveDC',
+  '@casterMaxHp',
 ] as const;
 export type FormulaVariable = (typeof FORMULA_VARIABLES)[number];
 

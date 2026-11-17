@@ -109,6 +109,7 @@ export const SpellEffectStepOverrideSchema: z.ZodType<Partial<EffectStepSpec>> =
         'teleport',
         'create_hazard_zone',
         'spend_resource',
+        'summon_creature',
         'manual_adjudication',
       ])
       .optional(),

@@ -7,6 +7,7 @@ import {
   AoeShapeTypeSchema,
   type ConditionId,
   ConditionIdSchema,
+  CreatureSizeSchema,
   type DamageType,
   DamageTypeSchema,
   FormulaStringSchema,
@@ -345,6 +346,16 @@ export type EffectStepSpec =
       amount: number;
     }
   | {
+      step: 'summon_creature';
+      summonId: string;
+      name: string;
+      durationRounds: number;
+      requiresConcentration: boolean;
+      placement: 'unoccupied_within_range';
+      statblock: SummonStatblockSpec;
+      control: SummonControlMode;
+    }
+  | {
       step: 'manual_adjudication';
       adjudicationId: string;
       title: string;
@@ -430,6 +441,16 @@ export const EffectStepSpecSchema: z.ZodType<EffectStepSpec> = z.lazy(() =>
       amount: z.number().int().positive(),
     }),
     z.object({
+      step: z.literal('summon_creature'),
+      summonId: z.string().min(1),
+      name: z.string().min(1),
+      durationRounds: z.number().int().positive(),
+      requiresConcentration: z.boolean(),
+      placement: z.literal('unoccupied_within_range'),
+      statblock: SummonStatblockSpecSchema,
+      control: SummonControlModeSchema,
+    }),
+    z.object({
       step: z.literal('manual_adjudication'),
       adjudicationId: z.string().min(1),
       title: z.string().min(1),
@@ -458,3 +479,51 @@ export const ActivatedAbilitySpecSchema = z.object({
   effects: z.array(EffectStepSpecSchema).min(1),
 });
 export type ActivatedAbilitySpec = z.infer<typeof ActivatedAbilitySpecSchema>;
+
+/**
+ * How a summoned creature is controlled during its lifetime (Spec 08 §3.1).
+ * - `commanded`: rolls initiative and takes player-controlled turns (Arcane Hand/Sword).
+ * - `autonomous`: resolves via triggers at the caster's turn or on hostile proximity
+ *   (Faithful Hound, Guardian of Faith), never taking its own turn.
+ */
+export const SummonControlModeSchema = z.enum(['commanded', 'autonomous']);
+export type SummonControlMode = z.infer<typeof SummonControlModeSchema>;
+
+/**
+ * Autonomous summon triggers. Radii/distances are required positive integers so that
+ * a malformed overlay (e.g. a zero-radius guardian aura) is rejected by the schema.
+ */
+export const SummonTriggerSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('start_of_caster_turn_attack'),
+    rangeFeet: z.number().int().positive(),
+  }),
+  z.object({
+    kind: z.literal('hostile_enter_radius'),
+    radiusFeet: z.number().int().positive(),
+    perTurnLimit: z.literal(1),
+  }),
+  z.object({
+    kind: z.literal('leash'),
+    maxDistanceFeet: z.number().int().positive(),
+  }),
+]);
+export type SummonTrigger = z.infer<typeof SummonTriggerSchema>;
+
+/**
+ * Rules-accurate statblock for a token spawned by a `summon_creature` effect step.
+ * `armorClass`/`hitPointsFormula` are omitted for unharmable/untargetable summons;
+ * `hitPointsFormula` may reference `@casterMaxHp` (Arcane Hand).
+ */
+export const SummonStatblockSpecSchema = z.object({
+  size: CreatureSizeSchema,
+  armorClass: z.number().int().positive().optional(),
+  hitPointsFormula: FormulaStringSchema.optional(),
+  untargetable: z.boolean().optional(),
+  speedFeet: z.number().int().nonnegative(),
+  abilities: z.record(AbilityIdSchema, z.number().int()).optional(),
+  actions: z.array(ActivatedAbilitySpecSchema).optional(),
+  triggers: z.array(SummonTriggerSchema).optional(),
+  damageCap: z.number().int().positive().optional(),
+});
+export type SummonStatblockSpec = z.infer<typeof SummonStatblockSpecSchema>;
