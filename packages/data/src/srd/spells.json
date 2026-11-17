@@ -190,28 +190,129 @@
     },
     "effects": [
       {
-        "step": "saving_throw",
-        "ability": "dex",
-        "dcFormula": "@spellSaveDC",
-        "onFail": [
-          {
-            "step": "deal_damage",
-            "diceFormula": "4d6",
-            "damageType": "force",
-            "isMagical": true
+        "step": "summon_creature",
+        "summonId": "arcane-hand-token",
+        "name": "Arcane Hand",
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "placement": "unoccupied_within_range",
+        "statblock": {
+          "size": "large",
+          "armorClass": 20,
+          "hitPointsFormula": "@casterMaxHp",
+          "speedFeet": 60,
+          "abilities": {
+            "str": 26,
+            "dex": 10
           },
-          {
-            "step": "forced_movement",
-            "direction": "push_from_actor",
-            "distanceFeet": 5
-          }
-        ]
-      },
-      {
-        "step": "manual_adjudication",
-        "adjudicationId": "arcane-hand-grapple",
-        "title": "Arcane Hand — Grapple / Clenched Fist",
-        "guidance": "The hand can grapple a Large or smaller creature (contested STR (Athletics) vs the target) and restrain it while grappled; you can also use it to interpose for half cover."
+          "actions": [
+            {
+              "id": "clenched-fist",
+              "name": "Clenched Fist",
+              "description": "Melee spell attack, 4d6 force damage.",
+              "actionCost": "action",
+              "targeting": {
+                "type": "single",
+                "rangeFeet": 5
+              },
+              "effects": [
+                {
+                  "step": "attack_roll",
+                  "attackType": "melee_spell",
+                  "onHit": [
+                    {
+                      "step": "deal_damage",
+                      "diceFormula": "4d6",
+                      "damageType": "force",
+                      "isMagical": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "forceful-hand",
+              "name": "Forceful Hand",
+              "description": "The target makes a STR save or is pushed 15 ft away.",
+              "actionCost": "action",
+              "targeting": {
+                "type": "single",
+                "rangeFeet": 5
+              },
+              "effects": [
+                {
+                  "step": "saving_throw",
+                  "ability": "str",
+                  "dcFormula": "@spellSaveDC",
+                  "onFail": [
+                    {
+                      "step": "forced_movement",
+                      "direction": "push_from_actor",
+                      "distanceFeet": 15
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "grasping-hand",
+              "name": "Grasping Hand",
+              "description": "Melee spell attack for 2d6 + spellcasting modifier force damage; restrains on hit.",
+              "actionCost": "action",
+              "targeting": {
+                "type": "single",
+                "rangeFeet": 5
+              },
+              "effects": [
+                {
+                  "step": "attack_roll",
+                  "attackType": "melee_spell",
+                  "onHit": [
+                    {
+                      "step": "deal_damage",
+                      "diceFormula": "2d6 + @spellMod",
+                      "damageType": "force",
+                      "isMagical": true
+                    },
+                    {
+                      "step": "apply_condition",
+                      "conditionId": "restrained",
+                      "durationRounds": 1,
+                      "requiresConcentration": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "interposing-hand",
+              "name": "Interposing Hand",
+              "description": "Grants half cover (+2 AC) to a creature the hand interposes for.",
+              "actionCost": "action",
+              "targeting": {
+                "type": "single",
+                "rangeFeet": 5
+              },
+              "effects": [
+                {
+                  "step": "apply_active_effect",
+                  "effectId": "interposing-hand-cover",
+                  "name": "Interposing Hand (Half Cover)",
+                  "durationRounds": 1,
+                  "requiresConcentration": true,
+                  "modifiers": [
+                    {
+                      "type": "flat_bonus",
+                      "target": "ac",
+                      "value": 2
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "control": "commanded"
       }
     ],
     "description": "You create a Large hand of shimmering, translucent force in an unoccupied space that you can see within range."
@@ -243,28 +344,44 @@
     },
     "effects": [
       {
-        "step": "saving_throw",
-        "ability": "dex",
-        "dcFormula": "@spellSaveDC",
-        "onFail": [
-          {
-            "step": "deal_damage",
-            "diceFormula": "4d8",
-            "damageType": "force",
-            "isMagical": true
-          },
-          {
-            "step": "forced_movement",
-            "direction": "push_from_actor",
-            "distanceFeet": 10
-          }
-        ]
-      },
-      {
-        "step": "manual_adjudication",
-        "adjudicationId": "arcane-sword-guard",
-        "title": "Arcane Sword — Guard / Strike",
-        "guidance": "The sword can guard a space (granting half cover) and strike a creature that enters or starts its turn within 15 feet for 4d8 force damage."
+        "step": "summon_creature",
+        "summonId": "arcane-sword-token",
+        "name": "Arcane Sword",
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "placement": "unoccupied_within_range",
+        "statblock": {
+          "size": "small",
+          "untargetable": true,
+          "speedFeet": 20,
+          "actions": [
+            {
+              "id": "force-blade",
+              "name": "Force Blade",
+              "description": "Melee spell attack, 3d10 force damage.",
+              "actionCost": "action",
+              "targeting": {
+                "type": "single",
+                "rangeFeet": 5
+              },
+              "effects": [
+                {
+                  "step": "attack_roll",
+                  "attackType": "melee_spell",
+                  "onHit": [
+                    {
+                      "step": "deal_damage",
+                      "diceFormula": "3d10",
+                      "damageType": "force",
+                      "isMagical": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "control": "commanded"
       }
     ],
     "description": "You create a sword-shaped plane of force that hovers within range."
@@ -1990,10 +2107,54 @@
     },
     "effects": [
       {
-        "step": "manual_adjudication",
-        "adjudicationId": "faithful-hound-summon",
-        "title": "Faithful Hound — Place the Phantom Watchdog",
-        "guidance": "Conjure an invisible watchdog in an unoccupied space within range. It has AC 19, 4 HP, and alerts you to any creature that comes within 30 feet. It can make one opportunity attack of 4d8 + your spellcasting ability modifier force damage."
+        "step": "summon_creature",
+        "summonId": "faithful-hound-token",
+        "name": "Faithful Hound",
+        "durationRounds": 4800,
+        "requiresConcentration": false,
+        "placement": "unoccupied_within_range",
+        "statblock": {
+          "size": "medium",
+          "untargetable": true,
+          "speedFeet": 40,
+          "actions": [
+            {
+              "id": "bite",
+              "name": "Bite",
+              "description": "Melee spell attack, 4d8 force damage.",
+              "actionCost": "action",
+              "targeting": {
+                "type": "single",
+                "rangeFeet": 5
+              },
+              "effects": [
+                {
+                  "step": "attack_roll",
+                  "attackType": "melee_spell",
+                  "onHit": [
+                    {
+                      "step": "deal_damage",
+                      "diceFormula": "4d8",
+                      "damageType": "force",
+                      "isMagical": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "triggers": [
+            {
+              "kind": "start_of_caster_turn_attack",
+              "rangeFeet": 5
+            },
+            {
+              "kind": "leash",
+              "maxDistanceFeet": 100
+            }
+          ]
+        },
+        "control": "autonomous"
       }
     ],
     "description": "You conjure a phantom watchdog in an unoccupied space that you can see within range."
@@ -2899,10 +3060,54 @@
     },
     "effects": [
       {
-        "step": "manual_adjudication",
-        "adjudicationId": "guardian-of-faith-summon",
-        "title": "Guardian of Faith — Place the Spectral Guardian",
-        "guidance": "A Large spectral guardian occupies an unoccupied space within 30 feet for 1 minute. Hostile creatures that enter or start their turn within 10 feet take 20 radiant damage (DC save for half). It disappears after dealing 60 damage in total."
+        "step": "summon_creature",
+        "summonId": "guardian-of-faith-token",
+        "name": "Guardian of Faith",
+        "durationRounds": 4800,
+        "requiresConcentration": false,
+        "placement": "unoccupied_within_range",
+        "statblock": {
+          "size": "large",
+          "untargetable": true,
+          "speedFeet": 0,
+          "actions": [
+            {
+              "id": "radiant-aura",
+              "name": "Radiant Aura",
+              "description": "DEX save vs the caster spell save DC; 20 radiant damage, half on a success.",
+              "actionCost": "action",
+              "targeting": {
+                "type": "single",
+                "rangeFeet": 10
+              },
+              "effects": [
+                {
+                  "step": "saving_throw",
+                  "ability": "dex",
+                  "dcFormula": "@spellSaveDC",
+                  "onFail": [
+                    {
+                      "step": "deal_damage",
+                      "diceFormula": "20",
+                      "damageType": "radiant",
+                      "halfOnSaveSuccess": true,
+                      "isMagical": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "triggers": [
+            {
+              "kind": "hostile_enter_radius",
+              "radiusFeet": 10,
+              "perTurnLimit": 1
+            }
+          ],
+          "damageCap": 60
+        },
+        "control": "autonomous"
       }
     ],
     "description": "A Large spectral guardian appears and hovers for the duration in an unoccupied space of your choice that you can see within range."

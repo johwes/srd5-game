@@ -1,4 +1,5 @@
 import type { SpellOverlaySpec } from '../ingestion/overlay.js';
+import type { ActivatedAbilitySpec, SummonStatblockSpec } from '../schemas/index.js';
 
 /**
  * A structured "Manual / Adjudicated Resolution" fallback card for spells whose
@@ -24,6 +25,161 @@ function adjudicatedSpell(
     ],
   };
 }
+
+/** A melee spell attack ability used by a commanded summon's action list. */
+function meleeSpellAttack(
+  id: string,
+  name: string,
+  description: string,
+  damageFormula: string,
+): ActivatedAbilitySpec {
+  return {
+    id,
+    name,
+    description,
+    actionCost: 'action',
+    targeting: { type: 'single', rangeFeet: 5 },
+    effects: [
+      {
+        step: 'attack_roll',
+        attackType: 'melee_spell',
+        onHit: [
+          { step: 'deal_damage', diceFormula: damageFormula, damageType: 'force', isMagical: true },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * SRD 5.1 statblocks for the four conjured battlefield entities (Spec 08 §2).
+ * Untargetable conjurations deliberately omit AC/HP; the harmable Arcane Hand
+ * uses AC 20 and HP = the caster's max HP (`@casterMaxHp`).
+ */
+const FAITHFUL_HOUND_STATBLOCK: SummonStatblockSpec = {
+  size: 'medium',
+  untargetable: true,
+  speedFeet: 40,
+  actions: [meleeSpellAttack('bite', 'Bite', 'Melee spell attack, 4d8 force damage.', '4d8')],
+  triggers: [
+    { kind: 'start_of_caster_turn_attack', rangeFeet: 5 },
+    { kind: 'leash', maxDistanceFeet: 100 },
+  ],
+};
+
+const GUARDIAN_OF_FAITH_STATBLOCK: SummonStatblockSpec = {
+  size: 'large',
+  untargetable: true,
+  speedFeet: 0,
+  damageCap: 60,
+  actions: [
+    {
+      id: 'radiant-aura',
+      name: 'Radiant Aura',
+      description: 'DEX save vs the caster spell save DC; 20 radiant damage, half on a success.',
+      actionCost: 'action',
+      targeting: { type: 'single', rangeFeet: 10 },
+      effects: [
+        {
+          step: 'saving_throw',
+          ability: 'dex',
+          dcFormula: '@spellSaveDC',
+          onFail: [
+            {
+              step: 'deal_damage',
+              diceFormula: '20',
+              damageType: 'radiant',
+              halfOnSaveSuccess: true,
+              isMagical: true,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  triggers: [{ kind: 'hostile_enter_radius', radiusFeet: 10, perTurnLimit: 1 }],
+};
+
+const ARCANE_HAND_STATBLOCK: SummonStatblockSpec = {
+  size: 'large',
+  armorClass: 20,
+  hitPointsFormula: '@casterMaxHp',
+  speedFeet: 60,
+  abilities: { str: 26, dex: 10 },
+  actions: [
+    meleeSpellAttack('clenched-fist', 'Clenched Fist', 'Melee spell attack, 4d6 force damage.', '4d6'),
+    {
+      id: 'forceful-hand',
+      name: 'Forceful Hand',
+      description: 'The target makes a STR save or is pushed 15 ft away.',
+      actionCost: 'action',
+      targeting: { type: 'single', rangeFeet: 5 },
+      effects: [
+        {
+          step: 'saving_throw',
+          ability: 'str',
+          dcFormula: '@spellSaveDC',
+          onFail: [{ step: 'forced_movement', direction: 'push_from_actor', distanceFeet: 15 }],
+        },
+      ],
+    },
+    {
+      id: 'grasping-hand',
+      name: 'Grasping Hand',
+      description: 'Melee spell attack for 2d6 + spellcasting modifier force damage; restrains on hit.',
+      actionCost: 'action',
+      targeting: { type: 'single', rangeFeet: 5 },
+      effects: [
+        {
+          step: 'attack_roll',
+          attackType: 'melee_spell',
+          onHit: [
+            {
+              step: 'deal_damage',
+              diceFormula: '2d6 + @spellMod',
+              damageType: 'force',
+              isMagical: true,
+            },
+            {
+              step: 'apply_condition',
+              conditionId: 'restrained',
+              durationRounds: 1,
+              requiresConcentration: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'interposing-hand',
+      name: 'Interposing Hand',
+      description: 'Grants half cover (+2 AC) to a creature the hand interposes for.',
+      actionCost: 'action',
+      targeting: { type: 'single', rangeFeet: 5 },
+      effects: [
+        {
+          step: 'apply_active_effect',
+          effectId: 'interposing-hand-cover',
+          name: 'Interposing Hand (Half Cover)',
+          durationRounds: 1,
+          requiresConcentration: true,
+          modifiers: [{ type: 'flat_bonus', target: 'ac', value: 2 }],
+        },
+      ],
+    },
+  ],
+};
+
+const ARCANE_SWORD_STATBLOCK: SummonStatblockSpec = {
+  size: 'small',
+  untargetable: true,
+  speedFeet: 20,
+  // SRD 5.1 specifies 3d10 force for the melee spell attack (the old 4d8
+  // adjudication card was incorrect — corrected here for SRD-905).
+  actions: [
+    meleeSpellAttack('force-blade', 'Force Blade', 'Melee spell attack, 3d10 force damage.', '3d10'),
+  ],
+};
 
 /**
  * Combat Tier B (Levels 4–5) & Tier C (Levels 6–9) executable Effect DSL
@@ -147,11 +303,20 @@ export const SRD_HIGH_TIER_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlayS
   'dimension-door': {
     effects: [{ step: 'teleport', maxDistanceFeet: 500 }],
   },
-  'faithful-hound': adjudicatedSpell(
-    'faithful-hound-summon',
-    'Faithful Hound — Place the Phantom Watchdog',
-    'Conjure an invisible watchdog in an unoccupied space within range. It has AC 19, 4 HP, and alerts you to any creature that comes within 30 feet. It can make one opportunity attack of 4d8 + your spellcasting ability modifier force damage.',
-  ),
+  'faithful-hound': {
+    effects: [
+      {
+        step: 'summon_creature',
+        summonId: 'faithful-hound-token',
+        name: 'Faithful Hound',
+        durationRounds: 4800, // 8 hours (Tier 1: lives for the encounter)
+        requiresConcentration: false,
+        placement: 'unoccupied_within_range',
+        statblock: FAITHFUL_HOUND_STATBLOCK,
+        control: 'autonomous',
+      },
+    ],
+  },
   'fire-shield': {
     effects: [
       {
@@ -203,11 +368,20 @@ export const SRD_HIGH_TIER_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlayS
       },
     ],
   },
-  'guardian-of-faith': adjudicatedSpell(
-    'guardian-of-faith-summon',
-    'Guardian of Faith — Place the Spectral Guardian',
-    'A Large spectral guardian occupies an unoccupied space within 30 feet for 1 minute. Hostile creatures that enter or start their turn within 10 feet take 20 radiant damage (DC save for half). It disappears after dealing 60 damage in total.',
-  ),
+  'guardian-of-faith': {
+    effects: [
+      {
+        step: 'summon_creature',
+        summonId: 'guardian-of-faith-token',
+        name: 'Guardian of Faith',
+        durationRounds: 4800, // 8 hours (Tier 1: lives for the encounter)
+        requiresConcentration: false,
+        placement: 'unoccupied_within_range',
+        statblock: GUARDIAN_OF_FAITH_STATBLOCK,
+        control: 'autonomous',
+      },
+    ],
+  },
   'ice-storm': {
     effects: [
       {
@@ -332,20 +506,14 @@ export const SRD_HIGH_TIER_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlayS
   'arcane-hand': {
     effects: [
       {
-        step: 'saving_throw',
-        ability: 'dex',
-        dcFormula: '@spellSaveDC',
-        onFail: [
-          { step: 'deal_damage', diceFormula: '4d6', damageType: 'force', isMagical: true },
-          { step: 'forced_movement', direction: 'push_from_actor', distanceFeet: 5 },
-        ],
-      },
-      {
-        step: 'manual_adjudication',
-        adjudicationId: 'arcane-hand-grapple',
-        title: 'Arcane Hand — Grapple / Clenched Fist',
-        guidance:
-          'The hand can grapple a Large or smaller creature (contested STR (Athletics) vs the target) and restrain it while grappled; you can also use it to interpose for half cover.',
+        step: 'summon_creature',
+        summonId: 'arcane-hand-token',
+        name: 'Arcane Hand',
+        durationRounds: 10, // 1 minute
+        requiresConcentration: true,
+        placement: 'unoccupied_within_range',
+        statblock: ARCANE_HAND_STATBLOCK,
+        control: 'commanded',
       },
     ],
   },
@@ -509,20 +677,14 @@ export const SRD_HIGH_TIER_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlayS
   'arcane-sword': {
     effects: [
       {
-        step: 'saving_throw',
-        ability: 'dex',
-        dcFormula: '@spellSaveDC',
-        onFail: [
-          { step: 'deal_damage', diceFormula: '4d8', damageType: 'force', isMagical: true },
-          { step: 'forced_movement', direction: 'push_from_actor', distanceFeet: 10 },
-        ],
-      },
-      {
-        step: 'manual_adjudication',
-        adjudicationId: 'arcane-sword-guard',
-        title: 'Arcane Sword — Guard / Strike',
-        guidance:
-          'The sword can guard a space (granting half cover) and strike a creature that enters or starts its turn within 15 feet for 4d8 force damage.',
+        step: 'summon_creature',
+        summonId: 'arcane-sword-token',
+        name: 'Arcane Sword',
+        durationRounds: 10, // 1 minute
+        requiresConcentration: true,
+        placement: 'unoccupied_within_range',
+        statblock: ARCANE_SWORD_STATBLOCK,
+        control: 'commanded',
       },
     ],
   },
