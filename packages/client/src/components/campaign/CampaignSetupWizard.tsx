@@ -17,6 +17,7 @@ import {
   type DifficultyPresetId,
   type PartySlotAssignment,
   SLOT_ROLE_SUGGESTIONS,
+  WIZARD_MODE_IDS,
 } from './types.js';
 
 export interface CampaignSetupWizardProps {
@@ -368,12 +369,12 @@ export function CampaignSetupWizard({
                 <span>Select Your Adventure Mode</span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-400">
-                Choose between a story-driven handcrafted campaign, a procedurally generated roguelite gauntlet, or an instant combat skirmish arena.
+                Choose between the story-driven handcrafted campaign, the strategic Realm overworld saga (with dungeon delves and the Endless Delve roguelite), or an instant combat skirmish arena.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(Object.keys(CAMPAIGN_MODES) as CampaignModeId[]).map((modeKey) => {
+              {WIZARD_MODE_IDS.map((modeKey) => {
                 const modeMeta = CAMPAIGN_MODES[modeKey];
                 const isSelected = selectedMode === modeKey;
                 return (
@@ -990,7 +991,8 @@ export function CampaignSetupWizard({
                     <>
                       <li>Travel the procedural world between faction settlements</li>
                       <li>Accept bounties and dungeon quests; trade gear and rations</li>
-                      <li>Clear monster lairs and dungeon entrances in tactical combat</li>
+                      <li>Delve bounded dungeon POIs and clear monster lairs for loot &amp; XP</li>
+                      <li>Brave the Endless Delve roguelite for graveyard high scores</li>
                     </>
                   )}
                   {selectedMode === 'arena' && (

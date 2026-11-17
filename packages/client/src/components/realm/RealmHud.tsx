@@ -46,6 +46,7 @@ export interface RealmHudProps {
   onOpenShop: () => void;
   onOpenQuestBoard: () => void;
   onEnterPoi: () => void;
+  onEndlessDelve: () => void;
   onOpenPause: () => void;
   onInspectCharacter?: (characterId: string) => void;
 }
@@ -62,6 +63,7 @@ export function RealmHud({
   onOpenShop,
   onOpenQuestBoard,
   onEnterPoi,
+  onEndlessDelve,
   onOpenPause,
   onInspectCharacter,
 }: RealmHudProps) {
@@ -261,6 +263,15 @@ export function RealmHud({
           >
             🚩 Factions
           </button>
+          <button
+            type="button"
+            data-testid="realm-hud-endless-delve-btn"
+            onClick={onEndlessDelve}
+            className="px-3 py-2 rounded-lg bg-stone-900 border border-stone-600 hover:bg-stone-800 text-xs font-semibold text-stone-200 min-h-[44px]"
+            title="Launch the unbounded Deep Descent roguelite run (graveyard high scores)"
+          >
+            💀 Endless Delve
+          </button>
         </div>
 
         {currentPoi && (
@@ -338,9 +349,10 @@ export function RealmHud({
                   type="button"
                   data-testid="realm-hud-commune-btn"
                   onClick={onEnterPoi}
-                  className="px-3 py-2 rounded-lg bg-cyan-900/40 border border-cyan-600/50 hover:bg-cyan-800/50 text-xs font-semibold text-cyan-200 min-h-[44px]"
+                  disabled={session.usedShrinePoiIds.includes(currentPoi.id)}
+                  className="px-3 py-2 rounded-lg bg-cyan-900/40 border border-cyan-600/50 hover:bg-cyan-800/50 text-xs font-semibold text-cyan-200 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  ✦ Commune
+                  {session.usedShrinePoiIds.includes(currentPoi.id) ? '✦ Blessed ✓' : '✦ Commune'}
                 </button>
               )}
             </div>

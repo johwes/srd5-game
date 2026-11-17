@@ -2,6 +2,16 @@ import type { CharacterBuildState } from '@srd5/data';
 
 export type CampaignModeId = 'campaign_kaelen' | 'deep_descent' | 'realm' | 'arena';
 
+/**
+ * SRD-806 (Spec 06 §4.3): the New Game wizard shows exactly three top-level
+ * tiles — Campaign (authored intro), Realm (main game), Arena (skirmish lab).
+ * The standalone Deep Descent tile is retired; the unbounded run lives on as
+ * the Realm's Endless Delve quick option. `deep_descent` remains a valid launch
+ * mode id for backward compatibility but is no longer offered as a tile.
+ */
+export const WIZARD_MODE_IDS = ['campaign_kaelen', 'realm', 'arena'] as const;
+export type WizardModeId = (typeof WIZARD_MODE_IDS)[number];
+
 export type DifficultyPresetId = 'explorer' | 'standard' | 'tactician' | 'custom';
 
 export type DeathSaveRuleId = 'core_raw' | 'forgiving' | 'hardcore';
@@ -128,12 +138,12 @@ export const CAMPAIGN_MODES: Record<CampaignModeId, CampaignModeMeta> = {
     badge: 'Procedural World · Factions & Trade',
     icon: '🗺️',
     description:
-      'Chart a vast procedural world of forests, mountains, and coasts. Travel between faction settlements, trade gear, accept bounties and dungeon quests, and drop seamlessly into 5-ft tactical battles against wandering warbands and dungeon lairs.',
+      'Chart a vast procedural world of forests, mountains, and coasts. Travel between faction settlements, trade gear, accept bounties and dungeon quests, drop seamlessly into 5-ft tactical battles, and delve bounded dungeons and monster lairs — or brave the unbounded Endless Delve roguelite.',
     features: [
       'Procedural World Map with Biomes, Rivers & Roads',
       'Faction Reputation, Settlement Shops & Quest Boards',
-      'Daily Travel Pace, Foraging, Weather & Camping',
-      'Seamless Overworld-to-Tactical Combat Transitions',
+      'Dungeon POI Delves, Lair Clears & Shrine Blessings',
+      'Endless Delve Roguelite with Graveyard High Scores',
     ],
     levelRange: 'Any Level',
     estimatedTime: 'Open-Ended Saga',

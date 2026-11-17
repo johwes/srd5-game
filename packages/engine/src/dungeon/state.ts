@@ -192,6 +192,7 @@ export function createDungeonGameState(options: CreateDungeonGameOptions): GameS
       y: p.y,
       kind: p.kind,
       state: p.state,
+      shrineType: p.shrineType,
       blocksMovement: p.blocksMovement ?? false,
       blocksSight: p.blocksSight ?? false,
       lockDc: p.lockDc,

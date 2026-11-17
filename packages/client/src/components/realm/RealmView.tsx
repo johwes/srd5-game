@@ -2,18 +2,22 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CharacterBuildState, SrdCompendium } from '@srd5/data';
 import { defaultCompendium } from '@srd5/data';
 import {
+  type DungeonFloorSpec,
   type GameState,
   type GeneratedOverworldBattle,
   type OverworldCoord,
+  type RealmDelveState,
   findOverworldPath,
   getFactionByPoi,
   isSafeRestSite,
 } from '@srd5/engine';
 import { LocalTransport } from '@srd5/transport';
 import { OverworldCanvasViewport } from '../../canvas/index.js';
+import { DungeonView } from '../dungeon/index.js';
 import {
   type DungeonStorageAdapter,
   defaultDungeonStorageAdapter,
+  saveGraveyardEntry,
 } from '../../persistence/index.js';
 import { RealmHud } from './RealmHud.js';
 import { RealmBattleView, type RealmBattleOutcome } from './RealmBattleView.js';
@@ -25,14 +29,17 @@ import {
   type RealmCommand,
   type RealmSessionEvent,
   type RealmSessionState,
+  type ResolveRealmDelveResult,
   createRealmSession,
   describeRealmEvent,
   getCurrentPoi,
+  getPartyList,
   isSettlementPoi,
   loadRealmSession,
   quickSaveRealmSession,
   reduceRealm,
   resolveRealmBattle,
+  resolveRealmDelve,
 } from './realmEngine.js';
 
 /**
@@ -44,7 +51,15 @@ import {
  * combat view and commit results back on victory.
  */
 
-type RealmModalMode = null | 'camp' | 'shop' | 'quests' | 'factions' | 'pause' | 'defeat';
+type RealmModalMode =
+  | null
+  | 'camp'
+  | 'shop'
+  | 'quests'
+  | 'factions'
+  | 'pause'
+  | 'defeat'
+  | 'delve_results';
 
 export interface RealmViewProps {
   partyCharacters?: CharacterBuildState[];
@@ -60,6 +75,12 @@ interface ActiveBattle {
   battle: GeneratedOverworldBattle;
 }
 
+interface ActiveDelve {
+  delve: RealmDelveState;
+  gameState: GameState;
+  floor: DungeonFloorSpec;
+}
+
 export function RealmView({
   partyCharacters = [],
   compendium = defaultCompendium,
@@ -72,6 +93,9 @@ export function RealmView({
     createRealmSession({ partyCharacters, compendium, seed }),
   );
   const [battle, setBattle] = useState<ActiveBattle | null>(null);
+  const [activeDelve, setActiveDelve] = useState<ActiveDelve | null>(null);
+  const [endlessDelve, setEndlessDelve] = useState(false);
+  const [delveResult, setDelveResult] = useState<ResolveRealmDelveResult | null>(null);
   const [modalState, setModalState] = useState<RealmModalMode>(null);
   const [questTab, setQuestTab] = useState<RealmQuestTab>('active');
   const [logEntries, setLogEntries] = useState<string[]>([]);
@@ -82,6 +106,9 @@ export function RealmView({
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionRef = useRef(session);
   sessionRef.current = session;
+  // While a tactical battle / delve overlay is mounted, it owns the Escape key.
+  const overlayActiveRef = useRef(false);
+  overlayActiveRef.current = Boolean(activeDelve || endlessDelve || battle);
 
   const showFeedback = useCallback((msg: string) => {
     setActionFeedback(msg);
@@ -102,6 +129,7 @@ export function RealmView({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      if (overlayActiveRef.current) return;
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -138,9 +166,45 @@ export function RealmView({
           setBattle({ transport, battle: result.battle });
           setModalState(null);
         }
+        if (result.delve && result.delveGameState && result.delveFloor) {
+          setActiveDelve({
+            delve: result.delve,
+            gameState: result.delveGameState,
+            floor: result.delveFloor,
+          });
+          setModalState(null);
+        }
       } catch (err: unknown) {
         console.error('Error dispatching realm command:', err);
         showFeedback(err instanceof Error ? err.message : String(err));
+      }
+    },
+    [appendEvents, compendium, showFeedback],
+  );
+
+  // POI delve commit-back (SRD-806, Spec 06 §4.3): loot/XP/rations return to the
+  // overworld party, the POI clears, linked quests resolve, and the delve's
+  // graveyard entry persists. A wipe surfaces the defeat modal instead.
+  const handleDelveResolved = useCallback(
+    (delve: RealmDelveState, gameState: GameState) => {
+      try {
+        const resolved = resolveRealmDelve(sessionRef.current, delve, gameState, compendium);
+        setSession(resolved.session);
+        appendEvents(resolved.events, resolved.session.travel.currentDay);
+        if (resolved.graveyardEntry) {
+          saveGraveyardEntry(resolved.graveyardEntry);
+        }
+        setActiveDelve(null);
+        if (!resolved.cleared) {
+          setModalState('defeat');
+        } else {
+          setDelveResult(resolved);
+          setModalState('delve_results');
+        }
+      } catch (err: unknown) {
+        console.error('Error resolving realm delve:', err);
+        showFeedback(err instanceof Error ? err.message : String(err));
+        setActiveDelve(null);
       }
     },
     [appendEvents, compendium, showFeedback],
@@ -276,7 +340,35 @@ export function RealmView({
         </div>
       )}
 
-      {battle ? (
+      {activeDelve ? (
+        <DungeonView
+          key={activeDelve.delve.runId}
+          gameMode="realm_delve"
+          partyCharacters={getPartyList(session)
+            .map((c) => c.buildState)
+            .filter((c): c is NonNullable<typeof c> => Boolean(c))}
+          initialGameState={activeDelve.gameState}
+          initialDelveState={activeDelve.delve}
+          initialFloorSpec={activeDelve.floor}
+          compendium={compendium}
+          storageAdapter={storageAdapter}
+          onDelveResolved={handleDelveResolved}
+          onExitToRoster={() => setActiveDelve(null)}
+          onOpenCharacterSheet={onOpenCharacterSheet}
+        />
+      ) : endlessDelve ? (
+        <DungeonView
+          key="realm-endless-delve"
+          gameMode="roguelite"
+          partyCharacters={getPartyList(session)
+            .map((c) => c.buildState)
+            .filter((c): c is NonNullable<typeof c> => Boolean(c))}
+          compendium={compendium}
+          storageAdapter={storageAdapter}
+          onExitToRoster={() => setEndlessDelve(false)}
+          onOpenCharacterSheet={onOpenCharacterSheet}
+        />
+      ) : battle ? (
         <RealmBattleView
           transport={battle.transport}
           battle={battle.battle}
@@ -323,6 +415,7 @@ export function RealmView({
                 dispatchRealm({ type: 'REALM_ENTER_POI', poiId: currentPoi.id });
               }
             }}
+            onEndlessDelve={() => setEndlessDelve(true)}
             onOpenPause={() => setModalState('pause')}
             onInspectCharacter={onOpenCharacterSheet}
           />
@@ -447,6 +540,63 @@ export function RealmView({
               className="w-full px-4 py-2.5 rounded-lg bg-red-950/60 hover:bg-red-900/70 border border-red-800/60 text-sm font-bold text-red-200 min-h-[48px]"
             >
               🚪 Exit to Title
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delve results modal (SRD-806) */}
+      {modalState === 'delve_results' && delveResult && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="realm-delve-results-title"
+          data-testid="realm-delve-results-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+        >
+          <div className="w-full max-w-md rounded-xl border border-amber-500/60 bg-slate-900 shadow-2xl p-6 text-slate-100 space-y-4 text-center">
+            <span className="text-5xl block">{delveResult.cleared ? '🏆' : '☠️'}</span>
+            <h2
+              id="realm-delve-results-title"
+              className="text-2xl font-serif font-extrabold text-amber-400"
+            >
+              {delveResult.cleared ? 'Delve Cleared!' : 'Delve Failed'}
+            </h2>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-2.5">
+                <div className="text-slate-400">XP Earned</div>
+                <div className="text-base font-bold text-sky-300 mt-0.5">
+                  {delveResult.totalXp.toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-2.5">
+                <div className="text-slate-400">Gold Plundered</div>
+                <div className="text-base font-bold text-yellow-300 mt-0.5">
+                  +{delveResult.goldAwarded} gp
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-2.5">
+                <div className="text-slate-400">Run Score</div>
+                <div className="text-base font-bold text-amber-300 mt-0.5">
+                  {delveResult.score.toLocaleString()}
+                </div>
+              </div>
+            </div>
+            {delveResult.completedQuestIds.length > 0 && (
+              <p className="text-xs text-emerald-300 font-semibold">
+                ✓ {delveResult.completedQuestIds.length} quest(s) completed
+              </p>
+            )}
+            <button
+              type="button"
+              data-testid="realm-delve-results-return-btn"
+              onClick={() => {
+                setModalState(null);
+                setDelveResult(null);
+              }}
+              className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-sm font-black min-h-[48px]"
+            >
+              🗺️ Return to the Realm
             </button>
           </div>
         </div>

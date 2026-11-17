@@ -89,10 +89,11 @@ test.describe('SRD-605: Steam-Ready Title Screen & New Game Campaign Setup E2E S
     const wizard = page.getByTestId('campaign-setup-wizard');
     await expect(wizard).toBeVisible();
 
-    // --- STAGE 1: Adventure & Game Mode Selection ---
+    // --- STAGE 1: Adventure & Game Mode Selection (exactly 3 tiles, SRD-806) ---
     await expect(page.getByTestId('wizard-mode-card-campaign_kaelen')).toBeVisible();
-    await expect(page.getByTestId('wizard-mode-card-deep_descent')).toBeVisible();
+    await expect(page.getByTestId('wizard-mode-card-realm')).toBeVisible();
     await expect(page.getByTestId('wizard-mode-card-arena')).toBeVisible();
+    await expect(page.getByTestId('wizard-mode-card-deep_descent')).toHaveCount(0);
 
     // Select Campaign Mode and proceed
     await page.getByTestId('wizard-mode-card-campaign_kaelen').click();
@@ -192,7 +193,7 @@ test.describe('SRD-605: Steam-Ready Title Screen & New Game Campaign Setup E2E S
     expect(consoleErrors).toHaveLength(0);
   });
 
-  test('3. Launch The Deep Descent Roguelite and The Arena Modes', async ({ page }) => {
+  test('3. Launch The Realm (with Endless Delve) and The Arena Modes', async ({ page }) => {
     const consoleErrors: string[] = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
@@ -202,21 +203,29 @@ test.describe('SRD-605: Steam-Ready Title Screen & New Game Campaign Setup E2E S
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
 
-    // 3.1 Deep Descent Mode Launch
+    // 3.1 The Realm Mode Launch (SRD-806: Deep Descent folded into the Realm)
     await page.getByTestId('title-menu-new-game-btn').click();
-    await page.getByTestId('wizard-mode-card-deep_descent').click();
+    await page.getByTestId('wizard-mode-card-realm').click();
     await page.getByTestId('wizard-nav-next').click(); // Difficulty
     await page.getByTestId('wizard-nav-next').click(); // Party
     await page.getByTestId('wizard-nav-next').click(); // Prologue
     await page.getByTestId('wizard-launch-cta').click();
 
-    // Verify Dungeon View container mounted for Deep Descent
+    // Verify the Realm overworld view mounted
+    await expect(page.getByTestId('realm-view-container')).toBeVisible({ timeout: 10000 });
+
+    // The unbounded Endless Delve quick option remains launchable from the Realm.
+    await expect(page.getByTestId('realm-hud-endless-delve-btn')).toBeVisible();
+    await page.getByTestId('realm-hud-endless-delve-btn').click();
     await expect(page.getByTestId('dungeon-view-container')).toBeVisible({ timeout: 10000 });
 
-    // Exit to title via pause menu
+    // Exit the Endless Delve back to the Realm, then to title via the pause menu.
     await page.keyboard.press('Escape');
     await page.getByTestId('pause-menu-exit-btn').click();
     await page.getByTestId('pause-exit-confirm-btn').click();
+    await expect(page.getByTestId('realm-view-container')).toBeVisible({ timeout: 10000 });
+    await page.keyboard.press('Escape');
+    await page.getByTestId('realm-pause-exit-btn').click();
     await expect(page.getByTestId('title-menu-view')).toBeVisible();
 
     // 3.2 The Arena Mode Launch

@@ -6,8 +6,11 @@ import {
   OverworldMapSchema,
   OverworldTravelStateSchema,
   RealmError,
+  completeRealmDelve,
+  generateOverworldBattle,
   getOverworldTile,
   getSettlements,
+  startOverworldBattle,
 } from '@srd5/engine';
 import type { DungeonStorageAdapter } from '../persistence/index.js';
 import {
@@ -22,6 +25,7 @@ import {
   quickSaveRealmSession,
   reduceRealm,
   resolveRealmBattle,
+  resolveRealmDelve,
 } from '../components/realm/realmEngine.js';
 
 /**
@@ -323,28 +327,61 @@ describe('SRD-805: Realm session controller (Spec 06 Section 4)', () => {
     });
   });
 
-  describe('Overworld-to-tactical battle round trip', () => {
-    it('REALM_ENTER_POI generates a tactical battle preserving party HP and resources', () => {
+  describe('POI delves & lair clears (SRD-806)', () => {
+    it('REALM_ENTER_POI on a dungeon_entrance launches a bounded delve preserving party HP', () => {
       const session = bootstrap();
       const dungeon = findPoi(session, 'dungeon_entrance');
       const hero = getPartyList(session)[0]!;
-      const wounded = {
-        ...atPoi(session, dungeon),
+      const base = atPoi(session, dungeon);
+      const wounded: RealmSessionState = {
+        ...base,
         party: {
-          ...atPoi(session, dungeon).party,
+          ...base.party,
           [hero.id]: { ...hero, currentHp: Math.max(1, hero.maxHp - 7) },
         },
       };
       const result = reduceRealm(wounded, { type: 'REALM_ENTER_POI', poiId: dungeon.id });
-      expect(result.battle).toBeDefined();
-      expect(result.battle!.poiId).toBe(dungeon.id);
-      expect(result.battleGameState).toBeDefined();
-      expect(result.battleGameState!.mode).toBe('combat');
-      expect(Object.keys(result.battleGameState!.monsters).length).toBeGreaterThan(0);
-      expect(result.battleGameState!.party[hero.id]!.currentHp).toBe(
+      expect(result.delve).toBeDefined();
+      expect(result.delve!.kind).toBe('bounded_delve');
+      expect(result.delve!.poiId).toBe(dungeon.id);
+      const floors = result.delve!.finalDepth - result.delve!.startDepth + 1;
+      expect(floors).toBeGreaterThanOrEqual(2);
+      expect(floors).toBeLessThanOrEqual(4);
+      expect(result.delveGameState).toBeDefined();
+      expect(result.delveGameState!.mode).toBe('exploration');
+      expect(result.delveFloor).toBeDefined();
+      expect(result.delveGameState!.party[hero.id]!.currentHp).toBe(
         wounded.party[hero.id]!.currentHp,
       );
-      expect(result.events.some((e) => e.type === 'REALM_ENCOUNTER_STARTED')).toBe(true);
+      // Delve supplies carry the overworld rations.
+      expect(result.delve!.suppliesRemaining).toBe(wounded.travel.rations);
+      expect(result.events.some((e) => e.type === 'REALM_DELVE_STARTED')).toBe(true);
+      expect(mathRandomSpy).not.toHaveBeenCalled();
+    });
+
+    it('REALM_ENTER_POI on a monster_lair launches a single-floor clear with no scoring', () => {
+      const session = bootstrap();
+      const lair = findPoi(session, 'monster_lair');
+      const result = reduceRealm(atPoi(session, lair), {
+        type: 'REALM_ENTER_POI',
+        poiId: lair.id,
+      });
+      expect(result.delve!.kind).toBe('lair_clear');
+      expect(result.delve!.finalDepth).toBe(result.delve!.startDepth);
+      expect(result.delve!.score).toBe(0);
+    });
+
+    it('is deterministic for identical seeds', () => {
+      const run = () => {
+        const session = bootstrap(4242);
+        const dungeon = findPoi(session, 'dungeon_entrance');
+        const result = reduceRealm(atPoi(session, dungeon), {
+          type: 'REALM_ENTER_POI',
+          poiId: dungeon.id,
+        });
+        return JSON.stringify(result.delve);
+      };
+      expect(run()).toBe(run());
     });
 
     it('rejects entering an already-cleared POI', () => {
@@ -359,10 +396,9 @@ describe('SRD-805: Realm session controller (Spec 06 Section 4)', () => {
       );
     });
 
-    it('victory commits XP, gold, POI clearance and linked quest completion back to the realm', () => {
+    it('clearing a delve commits gold, rations, POI clearance and linked quests back to the realm', () => {
       const session = bootstrap();
       const dungeon = findPoi(session, 'dungeon_entrance');
-      // Accept a quest targeting this dungeon if one exists.
       const linkedQuest = session.questLog.quests.find((q) => q.targetPoiId === dungeon.id);
       let prepared = atPoi(session, dungeon);
       if (linkedQuest) {
@@ -374,15 +410,20 @@ describe('SRD-805: Realm session controller (Spec 06 Section 4)', () => {
       const goldBefore = prepared.travel.gold;
 
       const entered = reduceRealm(prepared, { type: 'REALM_ENTER_POI', poiId: dungeon.id });
-      const ended = forceVictory(entered.battleGameState!);
-      const resolved = resolveRealmBattle(prepared, ended, entered.battle!, defaultCompendium);
+      // Simulate plundering gold during the delve, then a successful clear.
+      const delve = { ...entered.delve!, goldCollected: 50, totalXp: 300 };
+      const completed = completeRealmDelve(delve, entered.delveGameState!, { cleared: true });
+      const resolved = resolveRealmDelve(prepared, completed, entered.delveGameState!, defaultCompendium);
 
+      expect(resolved.cleared).toBe(true);
       expect(resolved.session.clearedPoiIds).toContain(dungeon.id);
-      expect(resolved.totalXp).toBeGreaterThan(0);
-      expect(resolved.session.travel.gold).toBeGreaterThanOrEqual(goldBefore);
+      expect(resolved.goldAwarded).toBe(50);
+      // Delve plunder (+50) plus any linked quest reward gold.
+      expect(resolved.session.travel.gold).toBeGreaterThanOrEqual(goldBefore + 50);
+      expect(resolved.session.travel.rations).toBe(completed.suppliesRemaining);
       expect(resolved.events.some((e) => e.type === 'REALM_POI_CLEARED')).toBe(true);
-      expect(resolved.events.some((e) => e.type === 'REALM_BATTLE_RESOLVED')).toBe(true);
-      // Party persists with buildState for future progression.
+      expect(resolved.events.some((e) => e.type === 'REALM_DELVE_RESOLVED')).toBe(true);
+      expect(resolved.graveyardEntry).toBeDefined();
       for (const hero of getPartyList(resolved.session)) {
         expect(hero.buildState).toBeDefined();
       }
@@ -394,6 +435,53 @@ describe('SRD-805: Realm session controller (Spec 06 Section 4)', () => {
       }
       // Input session untouched.
       expect(session.clearedPoiIds).toHaveLength(0);
+    });
+
+    it('a wiped delve commits back uncleared and does not mark the POI cleared', () => {
+      const session = bootstrap();
+      const dungeon = findPoi(session, 'dungeon_entrance');
+      const entered = reduceRealm(atPoi(session, dungeon), {
+        type: 'REALM_ENTER_POI',
+        poiId: dungeon.id,
+      });
+      const wiped = structuredClone(entered.delveGameState!);
+      for (const hero of Object.values(wiped.party)) {
+        hero.isDead = true;
+        hero.currentHp = 0;
+      }
+      const completed = completeRealmDelve(entered.delve!, wiped, { cleared: false });
+      const resolved = resolveRealmDelve(atPoi(session, dungeon), completed, wiped, defaultCompendium);
+      expect(resolved.cleared).toBe(false);
+      expect(resolved.session.clearedPoiIds).not.toContain(dungeon.id);
+    });
+
+    it('communing at an ancient shrine applies a blessing once', () => {
+      const session = bootstrap();
+      const shrine = findPoi(session, 'ancient_shrine');
+      const atShrine = atPoi(session, shrine);
+      const result = reduceRealm(atShrine, { type: 'REALM_ENTER_POI', poiId: shrine.id });
+      expect(result.events.some((e) => e.type === 'REALM_SHRINE_ACTIVATED')).toBe(true);
+      expect(result.session.usedShrinePoiIds).toContain(shrine.id);
+      expect(() =>
+        reduceRealm(result.session, { type: 'REALM_ENTER_POI', poiId: shrine.id }),
+      ).toThrow(RealmError);
+    });
+  });
+
+  describe('Wilderness battle commit-back (SRD-804)', () => {
+    it('victory commits XP, gold and POI clearance back to the realm', () => {
+      const session = bootstrap();
+      const party = getPartyList(session);
+      const battle = generateOverworldBattle({ seed: 55, terrain: 'plains', partySize: party.length });
+      const battleSession = startOverworldBattle({ battle, party });
+      const ended = forceVictory(battleSession.gameState);
+      const resolved = resolveRealmBattle(session, ended, battle, defaultCompendium);
+      expect(resolved.totalXp).toBeGreaterThan(0);
+      expect(resolved.session.travel.gold).toBeGreaterThanOrEqual(session.travel.gold);
+      expect(resolved.events.some((e) => e.type === 'REALM_BATTLE_RESOLVED')).toBe(true);
+      for (const hero of getPartyList(resolved.session)) {
+        expect(hero.buildState).toBeDefined();
+      }
     });
   });
 

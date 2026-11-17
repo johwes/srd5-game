@@ -18,13 +18,18 @@ import {
   type GraveyardEntry,
   type GridPoint,
   type InteractiveProp,
+  type RealmDelveState,
   activateShrine,
+  advanceRealmDelveFloor,
   advanceRogueliteFloor,
   calculateGoldFromLoot,
+  canAdvanceRealmDelve,
   checkRogueliteWipe,
+  completeRealmDelve,
   endRogueliteRun,
   findPath,
   getFootprintDistanceFeet,
+  isLairFloorCleared,
   planAiTurn,
   recordRunMonstersSlain,
   resolveRogueliteLongRest,
@@ -60,15 +65,23 @@ import {
 } from '../../persistence/index.js';
 import type { DungeonModalMode } from './types.js';
 
+export type DungeonGameMode = 'campaign' | 'roguelite' | 'realm_delve';
+
 export interface DungeonViewProps {
   partyCharacters?: CharacterBuildState[];
   compendium?: SrdCompendium;
   initialFloorId?: string;
   initialGameState?: GameState;
-  gameMode?: 'campaign' | 'roguelite';
+  gameMode?: DungeonGameMode;
   storageAdapter?: DungeonStorageAdapter;
   onExitToRoster: () => void;
   onOpenCharacterSheet?: (characterId: string) => void;
+  /** SRD-806: scoped POI delve state when gameMode is 'realm_delve'. */
+  initialDelveState?: RealmDelveState;
+  /** SRD-806: generated first-floor spec for the POI delve. */
+  initialFloorSpec?: DungeonFloorSpec;
+  /** SRD-806: called once when the delve concludes (clear, lair clear, or wipe). */
+  onDelveResolved?: (delve: RealmDelveState, gameState: GameState) => void;
 }
 
 export function DungeonView({
@@ -80,9 +93,12 @@ export function DungeonView({
   storageAdapter = defaultDungeonStorageAdapter,
   onExitToRoster,
   onOpenCharacterSheet,
+  initialDelveState,
+  initialFloorSpec,
+  onDelveResolved,
 }: DungeonViewProps) {
   const campaignModule = getSunkenCryptModule();
-  const [dungeonMode, setDungeonMode] = useState<'campaign' | 'roguelite'>(gameMode);
+  const [dungeonMode, setDungeonMode] = useState<DungeonGameMode>(gameMode);
   const [currentFloorId, setCurrentFloorId] = useState<string>(
     initialGameState?.dungeon?.floorId ?? initialFloorId,
   );
@@ -91,6 +107,9 @@ export function DungeonView({
     runState: DeepDescentRunState;
     floor: DungeonFloorSpec;
   } | null>(() => {
+    if (gameMode === 'realm_delve' && initialDelveState && initialFloorSpec) {
+      return { runState: initialDelveState, floor: initialFloorSpec };
+    }
     if (gameMode === 'roguelite') {
       const sess = buildRogueliteSession(partyCharacters, compendium);
       return {
@@ -101,10 +120,37 @@ export function DungeonView({
     return null;
   });
 
+  /** Run-based modes (classic Descent + Realm POI delves) share the run loop. */
+  const isRunMode = dungeonMode === 'roguelite' || dungeonMode === 'realm_delve';
+  /** The scoped POI delve when in realm_delve mode (runState carries delve fields). */
+  const activeDelve =
+    dungeonMode === 'realm_delve' && rogueliteState
+      ? (rogueliteState.runState as RealmDelveState)
+      : null;
+
+  // Guard so a delve conclusion is committed back exactly once.
+  const delveResolvedRef = useRef(false);
+  const onDelveResolvedRef = useRef(onDelveResolved);
+  onDelveResolvedRef.current = onDelveResolved;
+  const resolveDelveOnce = useCallback(
+    (delve: RealmDelveState, gameState: GameState) => {
+      if (delveResolvedRef.current) return;
+      delveResolvedRef.current = true;
+      onDelveResolvedRef.current?.(delve, gameState);
+    },
+    [],
+  );
+
   const floorSpec =
-    dungeonMode === 'roguelite' && rogueliteState
+    isRunMode && rogueliteState
       ? rogueliteState.floor
       : (getCampaignFloor(campaignModule, currentFloorId) ?? campaignModule.floors[0]!);
+
+  // Latest-value refs for the transport subscription closure (avoids staleness).
+  const runStateRef = useRef(rogueliteState);
+  runStateRef.current = rogueliteState;
+  const dungeonModeRef = useRef(dungeonMode);
+  dungeonModeRef.current = dungeonMode;
 
   const [transport, setTransport] = useState<LocalTransport>(() => {
     if (initialGameState) {
@@ -271,16 +317,20 @@ export function DungeonView({
           }
         }
 
-        // Encounter victory in roguelite mode
-        if (ev.type === 'ENCOUNTER_VICTORY' && dungeonMode === 'roguelite') {
+        // Encounter victory in run-based modes (Descent + Realm delves)
+        if (ev.type === 'ENCOUNTER_VICTORY' && isRunMode) {
           setRogueliteState((prev) => {
             if (!prev) return null;
             const updated = recordRunMonstersSlain(
               prev.runState,
               1,
-              ev.xpAwarded ?? 0,
+              ev.totalXp ?? ev.xpAwarded ?? 0,
               calculateGoldFromLoot('lootBundle' in ev ? ev.lootBundle : undefined),
             );
+            // Lairs clear with no run scoring (Spec 06 §4.3).
+            if ((prev.runState as RealmDelveState).kind === 'lair_clear') {
+              updated.score = 0;
+            }
             return { ...prev, runState: updated };
           });
         }
@@ -292,11 +342,14 @@ export function DungeonView({
         setCampaignVictory(true);
       }
 
-      // Check for party wipe in roguelite mode
-      if (dungeonMode === 'roguelite' && rogueliteState && !rogueliteState.runState.isComplete) {
-        if (checkRogueliteWipe(rogueliteState.runState, auth)) {
+      // Check for party wipe / lair clear in run-based modes. Read the latest
+      // run state via ref so the conclusion uses current delve metadata.
+      const currentRun = runStateRef.current;
+      const currentMode = dungeonModeRef.current;
+      if (currentMode === 'roguelite' && currentRun && !currentRun.runState.isComplete) {
+        if (checkRogueliteWipe(currentRun.runState, auth)) {
           const completed = endRogueliteRun(
-            rogueliteState.runState,
+            currentRun.runState,
             auth,
             'Overcome by the Dungeons',
           );
@@ -306,6 +359,17 @@ export function DungeonView({
           }
           setRogueliteState((prev) => (prev ? { ...prev, runState: completed } : null));
           setModalState('graveyard');
+        }
+      } else if (currentMode === 'realm_delve' && currentRun && !currentRun.runState.isComplete) {
+        const delve = currentRun.runState as RealmDelveState;
+        if (checkRogueliteWipe(delve, auth)) {
+          const completed = completeRealmDelve(delve, auth, { cleared: false });
+          setRogueliteState((prev) => (prev ? { ...prev, runState: completed } : null));
+          resolveDelveOnce(completed, auth);
+        } else if (delve.kind === 'lair_clear' && isLairFloorCleared(auth)) {
+          const completed = completeRealmDelve(delve, auth, { cleared: true });
+          setRogueliteState((prev) => (prev ? { ...prev, runState: completed } : null));
+          resolveDelveOnce(completed, auth);
         }
       }
     });
@@ -578,6 +642,31 @@ export function DungeonView({
 
   // Descend stairs handler
   const handleDescendStairs = () => {
+    if (dungeonMode === 'realm_delve') {
+      if (!rogueliteState) return;
+      const delve = rogueliteState.runState as RealmDelveState;
+      const currentAuth = getAuthState();
+      if (canAdvanceRealmDelve(delve)) {
+        const nextSess = advanceRealmDelveFloor(delve, currentAuth, compendium);
+        setRogueliteState({
+          runState: nextSess.delve,
+          floor: nextSess.generatedFloor.floor,
+        });
+        setTransport(
+          new LocalTransport({
+            initialState: nextSess.gameState,
+            defaultPlayerId: 'player-1',
+          }),
+        );
+      } else {
+        // Descending the final floor's stairs clears the bounded delve.
+        const completed = completeRealmDelve(delve, currentAuth, { cleared: true });
+        setRogueliteState((prev) => (prev ? { ...prev, runState: completed } : null));
+        resolveDelveOnce(completed, currentAuth);
+      }
+      return;
+    }
+
     if (dungeonMode === 'roguelite') {
       if (!rogueliteState) return;
       const currentAuth = getAuthState();
@@ -620,7 +709,7 @@ export function DungeonView({
 
   // Shrine activation handler
   const handleActivateShrine = async (propId: string) => {
-    if (dungeonMode === 'roguelite' && rogueliteState) {
+    if (isRunMode && rogueliteState) {
       const currentAuth = getAuthState();
       const shrineRes = activateShrine(
         rogueliteState.runState,
@@ -701,17 +790,19 @@ export function DungeonView({
           compendium={compendium}
           selectedCombatantId={selectedCombatantId}
           title={
-            dungeonMode === 'roguelite'
-              ? `The Deep Descent — Depth ${rogueliteState?.runState.currentDepth ?? 1}`
-              : `${campaignModule.name} — ${floorSpec.name}`
+            dungeonMode === 'realm_delve' && activeDelve
+              ? `${activeDelve.poiName} — Depth ${activeDelve.currentDepth}/${activeDelve.finalDepth}`
+              : dungeonMode === 'roguelite'
+                ? `The Deep Descent — Depth ${rogueliteState?.runState.currentDepth ?? 1}`
+                : `${campaignModule.name} — ${floorSpec.name}`
           }
           subtitle={
-            dungeonMode === 'roguelite' && rogueliteState
+            isRunMode && rogueliteState
               ? `${rogueliteState.floor.name} · Rations: ${rogueliteState.runState.suppliesRemaining}`
               : "Combat Encounter in Progress"
           }
           headerExtras={
-            dungeonMode === 'roguelite' && rogueliteState ? (
+            isRunMode && rogueliteState ? (
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   🍖 {rogueliteState.runState.suppliesRemaining} Rations
@@ -924,8 +1015,8 @@ export function DungeonView({
       ) : (
         /* EXPLORATION MODE */
         <div className="relative w-full h-full flex flex-col overflow-hidden">
-          {/* Roguelite Top Status HUD */}
-          {dungeonMode === 'roguelite' && rogueliteState && (
+          {/* Run-loop Top Status HUD (Descent + Realm delves) */}
+          {isRunMode && rogueliteState && (
             <RogueliteHud
               runState={rogueliteState.runState}
               onOpenRestCamp={() => setModalState('rest_camp')}
@@ -1075,7 +1166,7 @@ export function DungeonView({
           })
         }
         onStartLongRest={(options) => {
-          if (dungeonMode === 'roguelite' && rogueliteState) {
+          if (isRunMode && rogueliteState) {
             const currentAuth = getAuthState();
             const restRes = resolveRogueliteLongRest(
               rogueliteState.runState,
@@ -1094,13 +1185,21 @@ export function DungeonView({
             );
             setTransport(nextTransport);
             setEvents((prev) => [...prev, ...restRes.events]);
-            if (
-              restRes.nextRunState.isComplete &&
-              restRes.nextRunState.graveyardEntry
-            ) {
-              saveGraveyardEntry(restRes.nextRunState.graveyardEntry);
-              setGraveyardEntry(restRes.nextRunState.graveyardEntry);
-              setModalState('graveyard');
+            if (restRes.nextRunState.isComplete) {
+              if (dungeonMode === 'realm_delve') {
+                // Starvation wipe concludes the POI delve and commits back.
+                const completed = completeRealmDelve(
+                  restRes.nextRunState as RealmDelveState,
+                  restRes.nextGameState,
+                  { cleared: false },
+                );
+                setRogueliteState((prev) => (prev ? { ...prev, runState: completed } : null));
+                resolveDelveOnce(completed, restRes.nextGameState);
+              } else if (restRes.nextRunState.graveyardEntry) {
+                saveGraveyardEntry(restRes.nextRunState.graveyardEntry);
+                setGraveyardEntry(restRes.nextRunState.graveyardEntry);
+                setModalState('graveyard');
+              }
             }
             return;
           }

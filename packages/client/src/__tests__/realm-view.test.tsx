@@ -247,6 +247,18 @@ describe('SRD-805: Realm View & Strategic Settlement HUD', () => {
     }
   });
 
+  it('launches the Endless Delve quick option from the Realm HUD (SRD-806)', async () => {
+    renderRealmView();
+    // The unbounded classic Descent run is launchable from the Realm flow.
+    fireEvent.click(screen.getByTestId('realm-hud-endless-delve-btn'));
+    await waitFor(() => {
+      expect(screen.getByTestId('dungeon-view-container')).toBeDefined();
+    });
+    expect(screen.getByTestId('roguelite-hud-bar')).toBeDefined();
+    // The overworld HUD is hidden while the delve overlay is mounted.
+    expect(screen.queryByTestId('realm-hud-top-bar')).toBeNull();
+  });
+
   it('buys and sells gear through the settlement shop modal', () => {
     const session = createRealmSession({ seed: SEED });
     const shopPoi = getSettlements(session.map).find((p) => session.shops[p.id])!;

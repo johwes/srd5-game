@@ -6,6 +6,7 @@ import {
 } from '@srd5/data';
 import {
   type Combatant,
+  type DungeonFloorSpec,
   type GameEvent,
   type GeneratedOverworldBattle,
   type GameState,
@@ -17,12 +18,15 @@ import {
   type OverworldTravelEvent,
   type OverworldTravelState,
   type QuestLog,
+  type RealmDelveKind,
+  type RealmDelveState,
   type RealmEvent,
   type ShopInventory,
   type TravelPace,
   PLAYER_FACTION_ID,
   RealmError,
   acceptQuest,
+  activateOverworldShrine,
   campOverworld,
   completeQuestForParty,
   computeDerivedCharacter,
@@ -32,7 +36,6 @@ import {
   failQuest,
   forageForRations,
   generateOverworldMap,
-  generatePoiBattle,
   generateQuestBoard,
   generateShopInventory,
   generateWildernessBattle,
@@ -49,6 +52,7 @@ import {
   resolveOverworldBattle,
   sellItem,
   startOverworldBattle,
+  startRealmDelve,
   travelAlongPath,
 } from '@srd5/engine';
 import {
@@ -86,6 +90,8 @@ export interface RealmSessionState {
   shops: Record<string, ShopInventory>;
   /** Dungeon entrance / monster lair POIs already cleared by the party. */
   clearedPoiIds: string[];
+  /** Ancient shrine POIs already communed with (one blessing per shrine). */
+  usedShrinePoiIds: string[];
 }
 
 export type RealmSessionEvent =
@@ -100,6 +106,30 @@ export type RealmSessionEvent =
       completedQuestIds: string[];
     }
   | { type: 'REALM_POI_CLEARED'; poiId: string; name: string }
+  | {
+      type: 'REALM_DELVE_STARTED';
+      poiId: string;
+      name: string;
+      kind: RealmDelveKind;
+      floors: number;
+    }
+  | {
+      type: 'REALM_DELVE_RESOLVED';
+      poiId: string;
+      name: string;
+      kind: RealmDelveKind;
+      cleared: boolean;
+      score: number;
+      totalXp: number;
+      goldAwarded: number;
+      completedQuestIds: string[];
+    }
+  | {
+      type: 'REALM_SHRINE_ACTIVATED';
+      poiId: string;
+      shrineType: string;
+      effectDescription: string;
+    }
   | { type: 'REALM_LOG'; message: string };
 
 export interface RealmReduceResult {
@@ -109,6 +139,11 @@ export interface RealmReduceResult {
   battle?: GeneratedOverworldBattle;
   battleGameState?: GameState;
   battleEvents?: GameEvent[];
+  /** Set when the command launched a POI delve; the view swaps to the delver. */
+  delve?: RealmDelveState;
+  delveGameState?: GameState;
+  delveFloor?: DungeonFloorSpec;
+  delveEvents?: GameEvent[];
 }
 
 // ---------------------------------------------------------------------------
@@ -245,6 +280,7 @@ export function createRealmSession(
     questLog: createQuestLog(boardQuests),
     shops,
     clearedPoiIds: [],
+    usedShrinePoiIds: [],
   };
 }
 
@@ -546,10 +582,19 @@ export function reduceRealm(
     case 'REALM_ENTER_POI': {
       const poi = requirePoiAtParty(next, command.poiId);
       if (poi.kind === 'ancient_shrine') {
+        if (next.usedShrinePoiIds.includes(poi.id)) {
+          throw new RealmError(`${poi.name} has already granted its blessing`);
+        }
+        const shrine = activateOverworldShrine(next.map, poi, next.party);
+        next.party = shrine.party;
+        next.usedShrinePoiIds.push(poi.id);
         events.push({
-          type: 'REALM_LOG',
-          message: `The party communes at ${poi.name}. Its blessing awaits a deeper delve.`,
+          type: 'REALM_SHRINE_ACTIVATED',
+          poiId: poi.id,
+          shrineType: shrine.shrineType,
+          effectDescription: shrine.effectDescription,
         });
+        events.push({ type: 'REALM_LOG', message: shrine.effectDescription });
         return { session: next, events };
       }
       if (poi.kind !== 'dungeon_entrance' && poi.kind !== 'monster_lair') {
@@ -558,21 +603,29 @@ export function reduceRealm(
       if (next.clearedPoiIds.includes(poi.id)) {
         throw new RealmError(`${poi.name} has already been cleared`);
       }
-      const battle = generatePoiBattle(
-        next.map,
+      // SRD-806: dungeon entrances launch a bounded delve; lairs a single-floor
+      // clear. Both run the Deep Descent loop scoped to the POI (Spec 06 §4.3).
+      const delveSession = startRealmDelve({
+        map: next.map,
         poi,
-        Math.max(1, getPartyList(next).length),
-        {},
+        party: getPartyList(next),
+        startingRations: next.travel.rations,
         compendium,
-      );
-      const started = startBattleFromSession(next, battle, compendium);
-      events.push({
-        type: 'REALM_ENCOUNTER_STARTED',
-        battleId: battle.battleId,
-        origin: battle.origin,
-        poiId: poi.id,
       });
-      return { session: next, events, ...started };
+      events.push({
+        type: 'REALM_DELVE_STARTED',
+        poiId: poi.id,
+        name: poi.name,
+        kind: delveSession.delve.kind,
+        floors: delveSession.delve.finalDepth - delveSession.delve.startDepth + 1,
+      });
+      return {
+        session: next,
+        events,
+        delve: delveSession.delve,
+        delveGameState: delveSession.gameState,
+        delveFloor: delveSession.generatedFloor.floor,
+      };
     }
 
     default: {
@@ -675,6 +728,100 @@ export function resolveRealmBattle(
 }
 
 // ---------------------------------------------------------------------------
+// Delve resolution (dungeon-delver -> overworld commit-back, SRD-806)
+// ---------------------------------------------------------------------------
+
+export interface ResolveRealmDelveResult {
+  session: RealmSessionState;
+  events: RealmSessionEvent[];
+  totalXp: number;
+  goldAwarded: number;
+  completedQuestIds: string[];
+  cleared: boolean;
+  score: number;
+  graveyardEntry?: RealmDelveState['graveyardEntry'];
+}
+
+/**
+ * Commits a concluded POI delve back into the Realm session (Spec 06 §4.2 step 3
+ * & §4.3): persistent party HP/slots/XP, plundered gold to the overworld purse,
+ * unused rations returned to the travel supplies, POI clearance and linked quest
+ * completion on a clear. The input session is never mutated.
+ */
+export function resolveRealmDelve(
+  session: RealmSessionState,
+  delve: RealmDelveState,
+  delveGameState: GameState,
+  compendium: SrdCompendium = defaultCompendium,
+): ResolveRealmDelveResult {
+  void compendium;
+  const next: RealmSessionState = structuredClone(session);
+  const events: RealmSessionEvent[] = [];
+
+  // Persistent party state (XP was awarded to buildState during encounters).
+  next.party = structuredClone(delveGameState.party);
+  next.travel = {
+    ...next.travel,
+    gold: next.travel.gold + delve.goldCollected,
+    rations: delve.suppliesRemaining,
+  };
+
+  const completedQuestIds: string[] = [];
+  if (delve.cleared) {
+    if (!next.clearedPoiIds.includes(delve.poiId)) {
+      next.clearedPoiIds.push(delve.poiId);
+    }
+    const poi = next.map.pois[delve.poiId];
+    events.push({
+      type: 'REALM_POI_CLEARED',
+      poiId: delve.poiId,
+      name: poi?.name ?? delve.poiName,
+    });
+
+    const linked = next.questLog.quests.filter(
+      (quest) => quest.status === 'active' && quest.targetPoiId === delve.poiId,
+    );
+    for (const quest of linked) {
+      const resolved = completeQuestForParty(
+        next.questLog,
+        next.travel,
+        next.map,
+        quest.id,
+        next.travel.currentDay,
+      );
+      next.questLog = resolved.log;
+      next.travel = resolved.state;
+      next.map = resolved.map;
+      events.push(...resolved.events);
+      completedQuestIds.push(quest.id);
+    }
+  }
+
+  events.push({
+    type: 'REALM_DELVE_RESOLVED',
+    poiId: delve.poiId,
+    name: delve.poiName,
+    kind: delve.kind,
+    cleared: delve.cleared,
+    score: delve.score,
+    totalXp: delve.totalXp,
+    goldAwarded: delve.goldCollected,
+    completedQuestIds,
+  });
+
+  return {
+    session: next,
+    events,
+    totalXp: delve.totalXp,
+    goldAwarded: delve.goldCollected,
+    completedQuestIds,
+    cleared: delve.cleared,
+    score: delve.score,
+    graveyardEntry: delve.graveyardEntry,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Event formatting (travel log feed)
 // ---------------------------------------------------------------------------
 
@@ -732,6 +879,22 @@ export function describeRealmEvent(event: RealmSessionEvent): string {
       }`;
     case 'REALM_POI_CLEARED':
       return `${event.name} is cleared`;
+    case 'REALM_DELVE_STARTED':
+      return event.kind === 'lair_clear'
+        ? `The party assaults ${event.name} — a single-floor lair clear!`
+        : `The party descends into ${event.name} — a ${event.floors}-floor delve!`;
+    case 'REALM_DELVE_RESOLVED':
+      return event.cleared
+        ? `${event.name} cleared! ${event.totalXp} XP, +${event.goldAwarded} gp${
+            event.kind === 'bounded_delve' ? ` · score ${event.score.toLocaleString()}` : ''
+          }${
+            event.completedQuestIds.length > 0
+              ? ` · ${event.completedQuestIds.length} quest(s) completed`
+              : ''
+          }`
+        : `The party was overcome in ${event.name}…`;
+    case 'REALM_SHRINE_ACTIVATED':
+      return event.effectDescription;
     case 'REALM_LOG':
       return event.message;
     default:

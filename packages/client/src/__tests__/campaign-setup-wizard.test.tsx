@@ -101,15 +101,17 @@ describe('SRD-602: CampaignSetupWizard (4-Stage "New Game" Launcher)', () => {
   });
 
   describe('2. Stage 1: Adventure & Game Mode Selection', () => {
-    it('presents all 3 modes with descriptions and features', () => {
+    it('presents exactly 3 mode tiles (Campaign / Realm / Arena) — SRD-806', () => {
       render(<CampaignSetupWizard onLaunch={vi.fn()} />);
 
       expect(screen.getByTestId('wizard-mode-card-campaign_kaelen')).toBeDefined();
-      expect(screen.getByTestId('wizard-mode-card-deep_descent')).toBeDefined();
+      expect(screen.getByTestId('wizard-mode-card-realm')).toBeDefined();
       expect(screen.getByTestId('wizard-mode-card-arena')).toBeDefined();
+      // The standalone Deep Descent tile is retired (Spec 06 §4.3).
+      expect(screen.queryByTestId('wizard-mode-card-deep_descent')).toBeNull();
 
       expect(screen.getByText('The Sunken Crypt of Kaelen')).toBeDefined();
-      expect(screen.getByText('The Deep Descent')).toBeDefined();
+      expect(screen.getByText('The Realm')).toBeDefined();
       expect(screen.getByText('The Arena')).toBeDefined();
     });
 
@@ -117,16 +119,15 @@ describe('SRD-602: CampaignSetupWizard (4-Stage "New Game" Launcher)', () => {
       const onLaunch = vi.fn();
       render(<CampaignSetupWizard onLaunch={onLaunch} />);
 
-      // Select Deep Descent
-      fireEvent.click(screen.getByTestId('wizard-mode-card-deep_descent'));
+      // Select The Realm
+      fireEvent.click(screen.getByTestId('wizard-mode-card-realm'));
 
       // Advance to Stage 4
       fireEvent.click(screen.getByTestId('wizard-step-4'));
 
-      // Check narrative prologue reflects Deep Descent
-      expect(screen.getByText('PROLOGUE: THE ENDLESS YAWNING ABYSS')).toBeDefined();
-      expect(screen.getByText(/Maw of the World/i)).toBeDefined();
-      expect(screen.getByTestId('wizard-launch-cta').textContent).toContain('DESCEND INTO THE DEPTHS');
+      // Check narrative prologue reflects The Realm
+      expect(screen.getByText('PROLOGUE: THE UNCHARTED REALM')).toBeDefined();
+      expect(screen.getByTestId('wizard-launch-cta').textContent).toContain('EXPLORE THE REALM');
 
       // Go back to Stage 1 and select The Arena
       fireEvent.click(screen.getByTestId('wizard-step-1'));
