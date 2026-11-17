@@ -20,6 +20,7 @@ import {
   type PlayerViewProp,
   type PlayerViewState,
 } from './types.js';
+import { getControlledEntityIds, resolvePlayerSlot } from './ownership.js';
 
 export interface ProjectPlayerViewOptions {
   /**
@@ -90,6 +91,8 @@ export function toPlayerViewCombatant(c: Combatant): PlayerViewCombatant {
     tokenSpriteId: c.characterSheet?.tokenSpriteId,
     monsterType: c.monsterData?.type,
     challengeRating: c.monsterData?.challengeRating,
+    isSummon: c.isSummon,
+    summonedByEntityId: c.summonedByEntityId,
   };
 }
 
@@ -190,32 +193,37 @@ export function projectPlayerView(
   const maxVisionRangeFeet = options.maxVisionRangeFeet ?? 120;
   const exploredCells = options.exploredCells ?? state.exploredCells;
 
-  const slot =
-    state.slots.find((s) => s.playerId === playerId) ??
-    state.slots[0] ?? {
-      playerId,
-      displayName: 'Player',
-      controlledCharacterIds: Object.keys(state.party),
-    };
+  const slot = resolvePlayerSlot(state, playerId);
 
-  const controlledIds = new Set(slot.controlledCharacterIds);
+  // Transitive ownership: a controlled caster also grants control of every
+  // summon in its `summonedByEntityId` chain (Spec 08 §4.2 / §5 / SRD-903).
+  const controlledIds = getControlledEntityIds(state, playerId);
 
   // 1. Identify Vision Observers
   const potentialObservers = Object.values(state.combat?.combatants ?? state.party);
+  const directControlledIds = new Set(slot.controlledCharacterIds);
   let observers: Combatant[];
 
   if (controlledIds.size > 0) {
     const controlled = potentialObservers.filter((c) => controlledIds.has(c.id));
     if (controlled.length > 0) {
       if (sharedVision) {
-        const friendlySides = new Set(controlled.map((c) => c.side));
+        // Side/team sharing is derived from the directly assigned characters so
+        // a controlled summon on a foreign side never grants its whole team's
+        // vision. The summon itself is still added as an observer (SRD-903).
+        const visionRoots = potentialObservers.filter((c) =>
+          directControlledIds.has(c.id),
+        );
+        const visionBasis = visionRoots.length > 0 ? visionRoots : controlled;
+        const friendlySides = new Set(visionBasis.map((c) => c.side));
         const friendlyTeams = new Set(
-          controlled.map((c) => c.teamId).filter(Boolean),
+          visionBasis.map((c) => c.teamId).filter(Boolean),
         );
         observers = potentialObservers.filter(
           (c) =>
             friendlySides.has(c.side) ||
-            (c.teamId && friendlyTeams.has(c.teamId)),
+            (c.teamId && friendlyTeams.has(c.teamId)) ||
+            controlledIds.has(c.id),
         );
       } else {
         observers = controlled;

@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import {
+  type Combatant,
+  type CombatState,
+  type GameState,
+  createInitialGameState,
+  createTacticalGrid,
+  createTurnBudget,
+  startCombatEncounter,
+} from '@srd5/engine';
 import { RoomServerError } from '../errors.js';
 import { Room } from '../room.js';
-import { makeSplitState, makeTestState } from './fixtures.js';
+import { makeHero, makeMonster, makeSplitState, makeTestState } from './fixtures.js';
 
 function makeRoom(): Room {
   const room = new Room({
@@ -12,6 +21,64 @@ function makeRoom(): Room {
   });
   room.addMember({ playerId: 'player-1' }, null);
   room.addMember({ playerId: 'player-2' }, null);
+  return room;
+}
+
+/** Authoritative combat state where player p1's hero controls a summoned Hand. */
+function makeSummonCombatState(): GameState {
+  const caster = makeHero('hero-a', 'Valeros', 1, 1);
+  const summon: Combatant = {
+    ...makeHero('hand', 'Arcane Hand', 2, 1),
+    isSummon: true,
+    summonId: 'arcane-hand-token',
+    summonedByEntityId: caster.id,
+    summonControl: 'commanded',
+    summonSourceName: 'Arcane Hand',
+    summonActions: [
+      {
+        id: 'clenched-fist',
+        name: 'Clenched Fist',
+        description: 'A force strike',
+        actionCost: 'action',
+        effects: [{ step: 'grant_temp_hp', amountFormula: '1' }],
+      },
+    ],
+  } as Combatant;
+  const enemy = makeMonster('goblin-1', 'Goblin', 9, 9);
+  const started = startCombatEncounter({
+    encounterId: 'summon-room',
+    combatants: [caster, summon, enemy],
+    rngState: 424242,
+  });
+  const combat: CombatState = {
+    ...started.state,
+    activeCombatantId: summon.id,
+    activeCombatantIndex: started.state.initiativeOrder.findIndex(
+      (e) => e.entityId === summon.id,
+    ),
+    turnBudget: createTurnBudget(summon, false),
+  };
+  const base = createInitialGameState({
+    id: 'summon-room-game',
+    grid: createTacticalGrid(12, 12),
+    party: [caster],
+    monsters: [enemy],
+    slots: [
+      { playerId: 'p1', displayName: 'P1', controlledCharacterIds: [caster.id] },
+      { playerId: 'p2', displayName: 'P2', controlledCharacterIds: [] },
+    ],
+    rngState: 424242,
+  });
+  return { ...base, mode: 'combat', combat, rngState: combat.rngState };
+}
+
+function makeSummonRoom(): Room {
+  const room = new Room({
+    roomId: 'SUMMON01',
+    initialState: makeSummonCombatState(),
+  });
+  room.addMember({ playerId: 'p1' }, null);
+  room.addMember({ playerId: 'p2' }, null);
   return room;
 }
 
@@ -140,6 +207,68 @@ describe('SRD-701: authoritative Room', () => {
     expect(cell('p1', 1, 1)).toBe('remembered');
     expect(cell('p2', 1, 1)).toBe('unexplored');
     expect(cell('p2', 10, 10)).toBe('visible');
+  });
+
+  it('authorizes summon commands through the caster ownership chain (SRD-903)', () => {
+    const room = makeSummonRoom();
+
+    const events = room.dispatch('p1', {
+      type: 'USE_SUMMON_ACTION',
+      actorId: 'hand',
+      actionId: 'clenched-fist',
+    });
+    expect(events.some((e) => e.type === 'ACTION_USED')).toBe(true);
+
+    const other = makeSummonRoom();
+    expect(() =>
+      other.dispatch('p2', {
+        type: 'USE_SUMMON_ACTION',
+        actorId: 'hand',
+        actionId: 'clenched-fist',
+      }),
+    ).toThrowError(RoomServerError);
+    try {
+      other.dispatch('p2', {
+        type: 'USE_SUMMON_ACTION',
+        actorId: 'hand',
+        actionId: 'clenched-fist',
+      });
+    } catch (error) {
+      expect((error as RoomServerError).code).toBe('UNAUTHORIZED');
+    }
+  });
+
+  it('still lets the caster dismiss its own summon (SRD-903 regression)', () => {
+    const room = makeSummonRoom();
+    const events = room.dispatch('p1', {
+      type: 'DISMISS_SUMMON',
+      actorId: 'hero-a',
+      summonId: 'arcane-hand-token',
+    });
+    expect(events.some((e) => e.type === 'SUMMON_EXPIRED')).toBe(true);
+  });
+
+  it('projects summon metadata and routes summon reactions to their owner (SRD-903)', () => {
+    const room = makeSummonRoom();
+
+    const ownerView = room.getView('p1');
+    expect(ownerView.combatants['hand']).toMatchObject({
+      isSummon: true,
+      summonedByEntityId: 'hero-a',
+    });
+    expect(ownerView.combat?.turnBudget).not.toBeNull();
+    expect(room.getView('p2').combat?.turnBudget).toBeNull();
+
+    expect(
+      room.getReactionOwnerPlayerId({
+        promptId: 'reaction-hand',
+        reactorEntityId: 'hand',
+        triggerType: 'attack_roll_hit',
+        triggerDescription: 'Enemy hits the Hand',
+        availableReactions: [],
+        timeoutMs: 30000,
+      }),
+    ).toBe('p1');
   });
 
   it('validates explicit slot assignments and rejects double-booked characters', () => {

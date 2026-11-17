@@ -112,6 +112,10 @@ export interface PlayerViewCombatant {
   tokenSpriteId?: string | undefined;
   monsterType?: string | undefined;
   challengeRating?: number | undefined;
+  /** True for conjured tokens spawned by the summon pipeline (Spec 08 §5 / SRD-903). */
+  isSummon?: boolean | undefined;
+  /** Entity id of the caster who owns this summon's transitive control chain. */
+  summonedByEntityId?: string | undefined;
 }
 
 /**

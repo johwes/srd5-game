@@ -9,6 +9,7 @@ import {
 } from '@srd5/engine';
 import {
   projectPlayerView,
+  resolveEntityChainRoot,
   type PlayerViewState,
   type ProjectPlayerViewOptions,
 } from '@srd5/transport';
@@ -284,7 +285,11 @@ export class Room {
     const slot = this.authoritativeState.slots.find((s) => s.playerId === playerId);
     const controlled = new Set(slot?.controlledCharacterIds ?? []);
     for (const subjectId of commandSubjectIds(command)) {
-      if (!controlled.has(subjectId)) {
+      // A command may act through a summon rather than the caster directly.
+      // Resolve the `summonedByEntityId` chain to the slot-controlled root
+      // before authorizing (Spec 08 §5 / SRD-903).
+      const chainRoot = resolveEntityChainRoot(this.authoritativeState, subjectId);
+      if (!controlled.has(subjectId) && !controlled.has(chainRoot)) {
         throw new RoomServerError(
           'UNAUTHORIZED',
           `Player ${playerId} does not control character ${subjectId}`,
@@ -318,10 +323,12 @@ export class Room {
     return this.authoritativeState.combat?.pendingReactionPrompt ?? null;
   }
 
-  /** Player who controls the creature a reaction prompt asks about. */
+  /** Player who controls the creature a reaction prompt asks about (transitively for summons). */
   public getReactionOwnerPlayerId(prompt: PendingReactionPrompt): string | null {
+    const chainRoot = resolveEntityChainRoot(this.authoritativeState, prompt.reactorEntityId);
     const slot = this.authoritativeState.slots.find((s) =>
-      s.controlledCharacterIds.includes(prompt.reactorEntityId),
+      s.controlledCharacterIds.includes(prompt.reactorEntityId) ||
+      s.controlledCharacterIds.includes(chainRoot),
     );
     return slot?.playerId ?? null;
   }

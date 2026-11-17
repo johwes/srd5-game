@@ -12,5 +12,6 @@ export function getTransportInfo() {
 export * from './types.js';
 export * from './protocol.js';
 export * from './fog.js';
+export * from './ownership.js';
 export * from './local.js';
 export * from './websocket.js';
