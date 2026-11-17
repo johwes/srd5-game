@@ -91,6 +91,9 @@ export function rollInitiativeForCombatants(
 export function isCombatantEligibleForTurn(combatant: Combatant | undefined): boolean {
   if (!combatant) return false;
   if (combatant.isDead) return false;
+  // Autonomous summons (hound, guardian) never take their own turn; they act
+  // exclusively via hooks on the caster's turn or on hostile proximity.
+  if (combatant.isSummon && combatant.summonControl === 'autonomous') return false;
 
   // Monsters at 0 HP die immediately in SRD 5.1
   if (combatant.side === 'monster' && combatant.currentHp <= 0) {

@@ -39,6 +39,11 @@ import {
 } from './hazard-zone.js';
 import { tickConcentration } from './concentration.js';
 import {
+  runSummonTriggersAtTurnStart,
+  tickSummonsForRound,
+  triggerSummonsOnMove,
+} from './summon.js';
+import {
   computeStepCostFeet,
   isFootprintStepDifficultTerrain,
 } from '../grid/pathfinding.js';
@@ -205,6 +210,15 @@ export function startTurn(
   const events = [...accumulatedEvents];
   let currentState = state.rngState;
 
+  // Expire summons whose duration elapsed at this round boundary and reset
+  // per-turn trigger tracking before any turn-start hooks fire (Spec 08 §4.3).
+  const summonTick = tickSummonsForRound(state, state.round);
+  if (summonTick.events.length > 0) {
+    events.push(...summonTick.events);
+    state = summonTick.state;
+    currentState = state.rngState;
+  }
+
   const currentCombatant = state.combatants[combatantId];
   if (!currentCombatant || !isCombatantEligibleForTurn(currentCombatant)) {
     // If not eligible, skip to next turn
@@ -300,6 +314,22 @@ export function startTurn(
         events,
       );
     }
+  }
+
+  // Autonomous summon hooks (hound bark/bite/leash) fire at the caster's turn start.
+  const summonTriggerRes = runSummonTriggersAtTurnStart(intermediateState, combatantId);
+  intermediateState = summonTriggerRes.state;
+  currentState = intermediateState.rngState;
+  events.push(...summonTriggerRes.events);
+  updatedCombatant = intermediateState.combatants[combatantId] ?? updatedCombatant;
+  if (updatedCombatant.isDead) {
+    return endTurn(
+      {
+        ...intermediateState,
+        activeCombatantId: combatantId,
+      },
+      events,
+    );
   }
 
   // Create Turn Budget
@@ -849,6 +879,11 @@ export function executeMoveCombatant(
     const hzMoveRes = triggerHazardZonesOnMove(currentState, actorId, currentPos, step);
     currentState = hzMoveRes.state;
     events.push(...hzMoveRes.events);
+
+    // Trigger autonomous summon auras (guardian of faith) on this step
+    const summonMoveRes = triggerSummonsOnMove(currentState, actorId, currentPos, step);
+    currentState = summonMoveRes.state;
+    events.push(...summonMoveRes.events);
 
     const liveMover = currentState.combatants[actorId];
     if (!liveMover || liveMover.isDead || liveMover.currentHp <= 0) {

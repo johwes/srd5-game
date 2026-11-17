@@ -209,7 +209,7 @@ flowchart LR
 | ID | Status | Title | Package | Depends On |
 | :--- | :---: | :--- | :--- | :--- |
 | **SRD-901** | `[x]` | Define `summon_creature` Effect DSL step, summon statblock schema, and `@casterMaxHp` formula variable | `@srd5/data` | SRD-310 |
-| **SRD-902** | `[ ]` | Implement engine summon pipeline (spawn, initiative, commanded actions, autonomous triggers, expiry/despawn) | `@srd5/engine` | SRD-304, SRD-308, SRD-901 |
+| **SRD-902** | `[x]` | Implement engine summon pipeline (spawn, initiative, commanded actions, autonomous triggers, expiry/despawn) | `@srd5/engine` | SRD-304, SRD-308, SRD-901 |
 | **SRD-903** | `[ ]` | Implement transitive summon ownership and Fog-of-War projection (transport + server) | `@srd5/transport`, `@srd5/server` | SRD-701, SRD-902 |
 | **SRD-904** | `[ ]` | Build client summon presentation (token ring, medallion chip, hotbar switching, targeting exclusion) | `@srd5/client` | SRD-402, SRD-902 |
 | **SRD-905** | `[ ]` | Author executable overlays for Faithful Hound, Guardian of Faith, Arcane Hand, Arcane Sword (+ `3d10` correction) with headless tests | `@srd5/data`, `@srd5/engine` | SRD-902, SRD-903 |

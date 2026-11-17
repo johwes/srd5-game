@@ -55,6 +55,7 @@ import { applyDamage, applyHealing } from './damage.js';
 import { applyConditionToCombatant } from './conditions.js';
 import { breakConcentration } from './concentration.js';
 import { createHazardZone } from './hazard-zone.js';
+import { isSummonTargetable, spawnSummon } from './summon.js';
 import {
   detectCounterspellTrigger,
   spendCombatantReaction,
@@ -609,6 +610,9 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     }
     const target = state.combatants[resolvedTargetIds[0]!];
     if (!target) throw new Error(`Target ${resolvedTargetIds[0]} not found`);
+    if (!isSummonTargetable(target)) {
+      throw new Error(`Target ${target.name} cannot be targeted (untargetable conjuration)`);
+    }
     const dist = getFootprintDistanceFeet(caster.position, caster.size, target.position, target.size);
     if (dist > 5) {
       throw new Error(`Target ${target.name} is out of touch range (${dist} ft away)`);
@@ -619,6 +623,9 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     }
     const target = state.combatants[resolvedTargetIds[0]!];
     if (!target) throw new Error(`Target ${resolvedTargetIds[0]} not found`);
+    if (!isSummonTargetable(target)) {
+      throw new Error(`Target ${target.name} cannot be targeted (untargetable conjuration)`);
+    }
     const dist = getFootprintDistanceFeet(caster.position, caster.size, target.position, target.size);
     if (dist > spell.targeting.rangeFeet) {
       throw new Error(`Target ${target.name} is out of spell range (${dist} ft > ${spell.targeting.rangeFeet} ft)`);
@@ -648,6 +655,9 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     for (const tid of resolvedTargetIds) {
       const target = state.combatants[tid];
       if (!target) throw new Error(`Target ${tid} not found`);
+      if (!isSummonTargetable(target)) {
+        throw new Error(`Target ${target.name} cannot be targeted (untargetable conjuration)`);
+      }
       const dist = getFootprintDistanceFeet(caster.position, caster.size, target.position, target.size);
       if (dist > spell.targeting.rangeFeet) {
         throw new Error(`Target ${target.name} is out of spell range (${dist} ft > ${spell.targeting.rangeFeet} ft)`);
@@ -737,6 +747,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
       const aoeTargetIds: string[] = [];
       for (const combatant of allCombatants) {
         if (combatant.isDead || combatant.currentHp <= 0) continue;
+        if (!isSummonTargetable(combatant)) continue;
         const footCells = getFootprintCells(combatant.position, combatant.size);
         const overlaps = footCells.some((fc) =>
           aoeCells.some((ac) => ac.x === fc.x && ac.y === fc.y),
@@ -765,7 +776,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         // If caller explicitly passed targetIds, also filter out allies when friendly fire is disabled
         resolvedTargetIds = options.targetIds.filter((tid) => {
           const t = state.combatants[tid];
-          return t && areHostile(caster, t, state.dispositionMatrix);
+          return t && isSummonTargetable(t) && areHostile(caster, t, state.dispositionMatrix);
         });
       }
     }
@@ -945,6 +956,8 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     '@spellSaveDC': casterCtx.spellSaveDc,
     '@prof': casterCtx.prof,
     '@slotLevel': effectiveSlotLevel,
+    '@casterMaxHp': nextCaster.maxHp,
+    casterMaxHp: nextCaster.maxHp,
     spellMod: casterCtx.spellMod,
     spellSaveDC: casterCtx.spellSaveDc,
     prof: casterCtx.prof,
@@ -1291,7 +1304,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
   // Iterate over resolved targets
   for (const tid of resolvedTargetIds) {
     const target = combatantsMap[tid];
-    if (target && !target.isDead) {
+    if (target && !target.isDead && isSummonTargetable(target)) {
       executeSteps(scaledEffects, target);
     }
   }
@@ -1335,6 +1348,38 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     }
   }
 
+  // 6.5 Spawn declarative summoned creatures / conjured tokens (Spec 08 §4.1)
+  let nextInitiativeOrder = state.initiativeOrder;
+  for (const step of scaledEffects) {
+    if (step.step === 'summon_creature') {
+      const spawnRes = spawnSummon(
+        {
+          ...state,
+          rngState: currentState,
+          combatants: combatantsMap,
+          hazardZones: currentHazardZones,
+          initiativeOrder: nextInitiativeOrder,
+        },
+        {
+          summonId: step.summonId,
+          name: step.name,
+          statblock: step.statblock,
+          control: step.control,
+          durationRounds: step.durationRounds,
+          requiresConcentration: step.requiresConcentration,
+          casterId: nextCaster.id,
+          sourceName: spell.name,
+          origin: originCell ?? nextCaster.position,
+        },
+      );
+      events.push(...spawnRes.events);
+      combatantsMap = spawnRes.state.combatants;
+      nextInitiativeOrder = spawnRes.state.initiativeOrder;
+      currentState = spawnRes.state.rngState;
+      nextCaster = combatantsMap[nextCaster.id] ?? nextCaster;
+    }
+  }
+
   // 7. Check Victory State
   const outcome = evaluateCombatVictory(combatantsMap);
   if (outcome !== 'in_progress' && outcome !== state.outcome) {
@@ -1350,6 +1395,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     turnBudget: nextBudget,
     combatants: combatantsMap,
     hazardZones: currentHazardZones,
+    initiativeOrder: nextInitiativeOrder,
     outcome,
     rngState: currentState,
   };

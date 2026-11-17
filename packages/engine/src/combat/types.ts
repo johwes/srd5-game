@@ -17,6 +17,9 @@ import {
   AoeShapeTypeSchema,
   type AoeShapeType,
   type EffectStepSpec,
+  type ActivatedAbilitySpec,
+  type SummonControlMode,
+  type SummonTrigger,
 } from '@srd5/data';
 import {
   type DiceRollRecord,
@@ -167,6 +170,21 @@ export const CombatantStateSchema = z.object({
   roomId: z.string().optional(),
   levelUpAvailable: z.boolean().optional(),
   blessings: z.array(z.string()).optional(),
+  // --- Summoned Creature & Conjured Token state (Spec 08) ---
+  isSummon: z.boolean().optional(),
+  summonId: z.string().optional(),
+  summonedByEntityId: z.string().optional(),
+  summonSourceName: z.string().optional(),
+  summonControl: z.enum(['commanded', 'autonomous']).optional(),
+  untargetable: z.boolean().optional(),
+  summonExpiryRound: z.number().int().nonnegative().optional(),
+  summonActions: z.array(z.any()).optional(),
+  summonTriggers: z.array(z.any()).optional(),
+  summonDamageCap: z.number().int().positive().optional(),
+  summonDamageDealt: z.number().int().nonnegative().optional(),
+  summonTriggeredCreaturesThisTurn: z.array(z.string()).optional(),
+  summonDismissible: z.boolean().optional(),
+  summonConcentrationLinked: z.boolean().optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
@@ -174,6 +192,10 @@ export interface Combatant extends CombatantState {
   characterSheet?: DerivedCharacterSheet | undefined;
   monsterData?: MonsterData | undefined;
   buildState?: CharacterBuildState | undefined;
+  // Typed summon metadata (the Zod schema stores these structurally as `any[]`)
+  summonActions?: ActivatedAbilitySpec[] | undefined;
+  summonTriggers?: SummonTrigger[] | undefined;
+  summonControl?: SummonControlMode | undefined;
 }
 
 /**
@@ -567,6 +589,41 @@ export type CombatEvent =
       survivingHeroIds?: string[];
       encounterId?: string;
       lootBundle?: LootBundleSpec;
+    }
+  /** A summoned creature/conjured token was spawned onto the tactical board. */
+  | {
+      type: 'SUMMON_SPAWNED';
+      entityId: string;
+      summonId: string;
+      casterId: string;
+      sourceName: string;
+      control: SummonControlMode;
+      untargetable: boolean;
+      position: GridPoint;
+      expiryRound: number;
+    }
+  /** A summon was removed from play (duration, concentration, dismissal, leash, damage cap or death). */
+  | {
+      type: 'SUMMON_EXPIRED';
+      entityId: string;
+      summonId: string;
+      reason:
+        | 'duration'
+        | 'concentration'
+        | 'dismissed'
+        | 'leash'
+        | 'damage_cap'
+        | 'death';
+      sourceName?: string | undefined;
+    }
+  /** An autonomous summon trigger resolved (e.g. hound bark/bite, guardian aura). */
+  | {
+      type: 'SUMMON_TRIGGERED';
+      entityId: string;
+      summonId: string;
+      trigger: 'bark' | 'bite' | 'hostile_enter_radius' | 'leash';
+      targetEntityId?: string | undefined;
+      detail?: string | undefined;
     }
   /**
    * Tier C fallback: a spell/feature whose full effect cannot be resolved

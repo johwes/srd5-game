@@ -35,6 +35,7 @@ import {
   type TurnBudget,
 } from './types.js';
 import { areAllied, areHostile, type DispositionMatrix } from './allegiance.js';
+import { isSummonTargetable } from './summon.js';
 import {
   isIncapacitated,
   spendAttack,
@@ -578,6 +579,9 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   }
   if (target.isDead) {
     throw new Error(`Target "${target.name}" is already dead`);
+  }
+  if (!isSummonTargetable(target)) {
+    throw new Error(`Target "${target.name}" is an untargetable conjuration`);
   }
   if (attacker.conditions.some((c) => ['incapacitated', 'paralyzed', 'petrified', 'stunned', 'unconscious'].includes(c))) {
     throw new Error(`Attacker "${attacker.name}" is incapacitated and cannot attack`);
@@ -1133,6 +1137,7 @@ export function executeGrapple(options: ExecuteGrappleOptions): GrappleResolutio
   const target = state.combatants[targetId];
   if (!target) throw new Error(`Target "${targetId}" not found`);
   if (target.isDead) throw new Error(`Target "${target.name}" is already dead`);
+  if (!isSummonTargetable(target)) throw new Error(`Target "${target.name}" is an untargetable conjuration`);
   if (attacker.conditions.includes('charmed') && attacker.charmedByEntityId === target.id) {
     throw new Error('A charmed creature cannot attack the charmer');
   }
@@ -1294,6 +1299,7 @@ export function executeShove(options: ExecuteShoveOptions): ShoveResolutionResul
   const target = state.combatants[targetId];
   if (!target) throw new Error(`Target "${targetId}" not found`);
   if (target.isDead) throw new Error(`Target "${target.name}" is already dead`);
+  if (!isSummonTargetable(target)) throw new Error(`Target "${target.name}" is an untargetable conjuration`);
   if (attacker.conditions.includes('charmed') && attacker.charmedByEntityId === target.id) {
     throw new Error('A charmed creature cannot attack the charmer');
   }

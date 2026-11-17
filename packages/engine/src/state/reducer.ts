@@ -23,6 +23,7 @@ import { executeSpellCast } from '../combat/spellcasting.js';
 import { executeActivatedAbility } from '../combat/features.js';
 import { resolveReactionPrompt } from '../combat/reactions.js';
 import { breakConcentration } from '../combat/concentration.js';
+import { dismissSummon, executeSummonAction } from '../combat/summon.js';
 import { applyDamage } from '../combat/damage.js';
 import { rollDamage } from '../dice/evaluator.js';
 import {
@@ -482,6 +483,56 @@ export function reduceGame(
         nextState = combatEndRes.nextState;
         events.push(...combatEndRes.events);
       }
+      break;
+    }
+
+    case 'DISMISS_SUMMON': {
+      if (nextState.mode !== 'combat' || !nextState.combat) {
+        throw new Error('Cannot execute DISMISS_SUMMON outside active combat');
+      }
+
+      const res = dismissSummon(nextState.combat, command.actorId, {
+        summonId: command.summonId,
+        summonEntityId: command.summonEntityId,
+      });
+      nextState.combat = res.state;
+      nextState.rngState = res.state.rngState;
+      for (const [id, c] of Object.entries(res.state.combatants)) {
+        if (c.side === 'party') nextState.party[id] = c;
+        else nextState.monsters[id] = c;
+      }
+      // Remove despawned summons from the party/monster mirrors.
+      const despawnedSummonIds = res.events
+        .filter((e) => e.type === 'SUMMON_EXPIRED')
+        .map((e) => (e.type === 'SUMMON_EXPIRED' ? e.entityId : ''));
+      for (const id of despawnedSummonIds) {
+        delete nextState.party[id];
+        delete nextState.monsters[id];
+      }
+
+      events.push(...res.events);
+      break;
+    }
+
+    case 'USE_SUMMON_ACTION': {
+      if (nextState.mode !== 'combat' || !nextState.combat) {
+        throw new Error('Cannot execute USE_SUMMON_ACTION outside active combat');
+      }
+
+      const res = executeSummonAction(nextState.combat, {
+        summonId: command.actorId,
+        actionId: command.actionId,
+        targetId: command.targetId,
+        targetIds: command.targetIds,
+      });
+      nextState.combat = res.state;
+      nextState.rngState = res.state.rngState;
+      for (const [id, c] of Object.entries(res.state.combatants)) {
+        if (c.side === 'party') nextState.party[id] = c;
+        else nextState.monsters[id] = c;
+      }
+
+      events.push(...res.events);
       break;
     }
 

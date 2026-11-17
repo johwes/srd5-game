@@ -244,6 +244,22 @@ export type GameCommand =
     }
   | { type: 'END_TURN'; actorId: string }
 
+  // Summoned Creature Commands (Spec 08 §4.2)
+  | {
+      type: 'DISMISS_SUMMON';
+      actorId: string;
+      summonId?: string;
+      summonEntityId?: string;
+    }
+  | {
+      type: 'USE_SUMMON_ACTION';
+      actorId: string;
+      actionId: string;
+      targetId?: string;
+      targetIds?: string[];
+      targetCell?: GridPoint;
+    }
+
   // Inventory & Progression Commands
   | {
       type: 'EQUIP_LOADOUT';

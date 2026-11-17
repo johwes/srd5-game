@@ -181,11 +181,41 @@ export function breakConcentration(
     }
   }
 
+  // 3. Despawn concentration-linked summons owned by this caster (Spec 08 §4.3).
+  const nextCombatantsWithoutSummons: Record<string, Combatant> = {};
+  const despawnedSummonIds = new Set<string>();
+  for (const [cid, comb] of Object.entries(nextCombatants)) {
+    if (comb.isSummon && comb.summonedByEntityId === casterId && comb.summonConcentrationLinked) {
+      despawnedSummonIds.add(cid);
+      events.push({
+        type: 'SUMMON_EXPIRED',
+        entityId: cid,
+        summonId: comb.summonId ?? cid,
+        reason: 'concentration',
+        sourceName: comb.summonSourceName,
+      });
+    } else {
+      nextCombatantsWithoutSummons[cid] = comb;
+    }
+  }
+  const nextInitiativeOrder = despawnedSummonIds.size
+    ? state.initiativeOrder.filter((e) => !despawnedSummonIds.has(e.entityId))
+    : state.initiativeOrder;
+  let nextActiveCombatantIndex = state.activeCombatantIndex;
+  if (despawnedSummonIds.size) {
+    const removedBefore = state.initiativeOrder
+      .slice(0, nextActiveCombatantIndex)
+      .filter((e) => despawnedSummonIds.has(e.entityId)).length;
+    nextActiveCombatantIndex = Math.max(0, nextActiveCombatantIndex - removedBefore);
+  }
+
   return {
     state: {
       ...state,
-      combatants: nextCombatants,
+      combatants: nextCombatantsWithoutSummons,
       hazardZones: nextHazardZones,
+      initiativeOrder: nextInitiativeOrder,
+      activeCombatantIndex: nextActiveCombatantIndex,
     },
     events,
   };
