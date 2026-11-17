@@ -22,6 +22,7 @@ import {
 } from './components/roster/index.js';
 import { ArenaView } from './components/arena/index.js';
 import { DungeonView } from './components/dungeon/index.js';
+import { RealmView } from './components/realm/index.js';
 import { TitleMenuView } from './components/title/index.js';
 import {
   CampaignSetupWizard,
@@ -58,6 +59,7 @@ export type AppViewMode =
   | 'arena'
   | 'dungeon'
   | 'roguelite'
+  | 'realm'
   | 'multiplayer_lobby';
 
 export interface AppProps {
@@ -313,6 +315,8 @@ export function App({
               setActiveView('dungeon');
             } else if (config.mode === 'deep_descent') {
               setActiveView('roguelite');
+            } else if (config.mode === 'realm') {
+              setActiveView('realm');
             } else if (config.mode === 'arena') {
               setActiveView('arena');
             }
@@ -466,6 +470,19 @@ export function App({
               >
                 💀 Deep Descent
               </button>
+              <button
+                type="button"
+                data-testid="app-nav-realm"
+                aria-pressed={(activeView as string) === 'realm'}
+                onClick={() => setActiveView('realm')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  (activeView as string) === 'realm'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                🗺️ The Realm
+              </button>
             </div>
 
             <span className="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-amber-300 text-xs font-medium">
@@ -567,6 +584,23 @@ export function App({
             initialGameState={loadedGameState}
             compendium={defaultCompendium}
             gameMode="campaign"
+            storageAdapter={dungeonStorageAdapter}
+            onOpenCharacterSheet={(charId) => {
+              const char =
+                roster.characters.find((c) => c.id === charId) ??
+                getPregenCharacter(charId);
+              if (char) {
+                handleInspectCharacter(char);
+              }
+            }}
+            onExitToRoster={() => setActiveView('title_menu')}
+          />
+        )}
+
+        {activeView === 'realm' && (
+          <RealmView
+            partyCharacters={missionPartyCharacters}
+            compendium={defaultCompendium}
             storageAdapter={dungeonStorageAdapter}
             onOpenCharacterSheet={(charId) => {
               const char =

@@ -916,7 +916,9 @@ export function CampaignSetupWizard({
                     ? 'PROLOGUE: SHADOWS OVER BLACKWOOD'
                     : selectedMode === 'deep_descent'
                       ? 'PROLOGUE: THE ENDLESS YAWNING ABYSS'
-                      : 'PROLOGUE: THE PROVING GROUNDS'}
+                      : selectedMode === 'realm'
+                        ? 'PROLOGUE: THE UNCHARTED REALM'
+                        : 'PROLOGUE: THE PROVING GROUNDS'}
                 </span>
                 <span className="text-xs text-amber-500/70 font-sans">⚔ 5e SRD Narrative</span>
               </div>
@@ -939,6 +941,17 @@ export function CampaignSetupWizard({
                   </p>
                   <p>
                     Countless adventuring companies have plunged into its stygian vaults seeking primordial artifacts and glory; none have returned to tell of the bottom floor. With torches lit and steel drawn, your party stands before the descent, knowing only wit, steel, and divine favor will see you survive.
+                  </p>
+                </div>
+              )}
+
+              {selectedMode === 'realm' && (
+                <div className="space-y-3 text-slate-200 text-xs sm:text-sm leading-relaxed">
+                  <p>
+                    Beyond the last paved road lies an uncharted realm of whispering forests, storm-capped peaks, and river-veined plains. Rival factions raise their banners over scattered settlements, and every quest board carries a price in gold and reputation.
+                  </p>
+                  <p>
+                    Your company sets out from the capital gates with rations packed and steel sharpened. Wandering warbands stalk the wilds, dungeon mouths yawn in the hillsides, and fortune favors the bold — chart the world, earn its trust, and carve your legend across it.
                   </p>
                 </div>
               )}
@@ -971,6 +984,13 @@ export function CampaignSetupWizard({
                       <li>Descend through procedurally generated floor tiers</li>
                       <li>Manage camp supplies, rations, and rest exhaustion</li>
                       <li>Seek out Shrines of Fate and achieve the highest depth run</li>
+                    </>
+                  )}
+                  {selectedMode === 'realm' && (
+                    <>
+                      <li>Travel the procedural world between faction settlements</li>
+                      <li>Accept bounties and dungeon quests; trade gear and rations</li>
+                      <li>Clear monster lairs and dungeon entrances in tactical combat</li>
                     </>
                   )}
                   {selectedMode === 'arena' && (
@@ -1081,7 +1101,9 @@ export function CampaignSetupWizard({
                   ? 'EMBARK INTO THE CRYPT ⚔️'
                   : selectedMode === 'deep_descent'
                     ? 'DESCEND INTO THE DEPTHS 💀'
-                    : 'ENTER THE ARENA 🛡️'}
+                    : selectedMode === 'realm'
+                      ? 'EXPLORE THE REALM 🗺️'
+                      : 'ENTER THE ARENA 🛡️'}
               </span>
             </button>
           )}

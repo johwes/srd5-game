@@ -1,6 +1,6 @@
 import type { CharacterBuildState } from '@srd5/data';
 
-export type CampaignModeId = 'campaign_kaelen' | 'deep_descent' | 'arena';
+export type CampaignModeId = 'campaign_kaelen' | 'deep_descent' | 'realm' | 'arena';
 
 export type DifficultyPresetId = 'explorer' | 'standard' | 'tactician' | 'custom';
 
@@ -120,6 +120,23 @@ export const CAMPAIGN_MODES: Record<CampaignModeId, CampaignModeMeta> = {
     ],
     levelRange: 'Levels 1–20+',
     estimatedTime: 'Endless Run',
+  },
+  realm: {
+    id: 'realm',
+    title: 'The Realm',
+    tagline: 'Strategic Overworld Saga',
+    badge: 'Procedural World · Factions & Trade',
+    icon: '🗺️',
+    description:
+      'Chart a vast procedural world of forests, mountains, and coasts. Travel between faction settlements, trade gear, accept bounties and dungeon quests, and drop seamlessly into 5-ft tactical battles against wandering warbands and dungeon lairs.',
+    features: [
+      'Procedural World Map with Biomes, Rivers & Roads',
+      'Faction Reputation, Settlement Shops & Quest Boards',
+      'Daily Travel Pace, Foraging, Weather & Camping',
+      'Seamless Overworld-to-Tactical Combat Transitions',
+    ],
+    levelRange: 'Any Level',
+    estimatedTime: 'Open-Ended Saga',
   },
   arena: {
     id: 'arena',
