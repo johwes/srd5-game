@@ -132,6 +132,15 @@ export function InitiativeRibbon({
                 } ${colors.text}`}
               >
                 {combatant.isDead ? '💀' : combatant.name.charAt(0)}
+                {combatant.isSummon && (
+                  <span
+                    data-testid="initiative-summon-badge"
+                    title={combatant.summonSourceName ?? 'Summoned creature'}
+                    className="absolute -top-1 -left-1 px-1 rounded-full bg-violet-700 border border-violet-300 text-[8px] font-black text-violet-50 leading-4"
+                  >
+                    ✦S
+                  </span>
+                )}
                 <span className="absolute -bottom-1 -right-1 min-w-[16px] px-0.5 text-center rounded-full bg-slate-950 border border-slate-700 text-[9px] font-mono font-bold text-slate-300 leading-4">
                   {entry.initiative}
                 </span>

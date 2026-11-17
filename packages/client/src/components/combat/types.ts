@@ -18,7 +18,8 @@ export type CombatActionTab =
   | 'spells'
   | 'features'
   | 'standard'
-  | 'items';
+  | 'items'
+  | 'summon';
 
 export type StandardActionType =
   | 'dash'
@@ -87,6 +88,8 @@ export interface ActionHotbarProps {
   onUseClassFeature?: (featureId: string, optionId?: string) => void;
   onStandardAction?: (action: StandardActionType) => void;
   onUseItem?: (itemId: string) => void;
+  onUseSummonAction?: (actionId: string) => void;
+  onDismissSummon?: (summon: PlayerViewCombatant) => void;
   onEndTurn?: () => void;
   onOpenCharacterSheet?: (combatantId: string) => void;
   /** Initial hotbar icon-grid rows (1–3); defaults to persisted AppSettings. */
@@ -172,6 +175,8 @@ export interface TacticalCombatHudProps {
   onUseClassFeature?: (featureId: string, optionId?: string) => void;
   onStandardAction?: (action: StandardActionType) => void;
   onUseItem?: (itemId: string) => void;
+  onUseSummonAction?: (actionId: string) => void;
+  onDismissSummon?: (summon: PlayerViewCombatant) => void;
   onEndTurn?: () => void;
   onToggleMenu?: () => void;
   onResolveReaction?: (

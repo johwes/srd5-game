@@ -116,6 +116,18 @@ export interface PlayerViewCombatant {
   isSummon?: boolean | undefined;
   /** Entity id of the caster who owns this summon's transitive control chain. */
   summonedByEntityId?: string | undefined;
+  /** Stable DSL id of the summon (e.g. `faithful-hound-token`). */
+  summonId?: string | undefined;
+  /** Source spell name, shown on the HUD medallion "Summoned" chip (SRD-904). */
+  summonSourceName?: string | undefined;
+  /** Commanded summons take turns; autonomous ones resolve via triggers. */
+  summonControl?: 'commanded' | 'autonomous' | undefined;
+  /** Untargetable conjurations are skipped by client target picks (SRD-904). */
+  untargetable?: boolean | undefined;
+  /** Autonomous summons that the caster can dismiss as an action. */
+  summonDismissible?: boolean | undefined;
+  /** Lightweight action list for the summon command hotbar (SRD-904). */
+  summonActions?: Array<{ id: string; name: string; description: string }> | undefined;
 }
 
 /**

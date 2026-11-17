@@ -151,6 +151,12 @@ export interface CreatureTokenData {
   challengeRating?: number;
   monsterType?: string;
   classId?: string;
+  /** Conjured token rendered with the violet summon ring and ✦S badge (SRD-904). */
+  isSummon?: boolean;
+  /** Untargetable conjurations render at reduced opacity (SRD-904). */
+  untargetable?: boolean;
+  /** Source spell shown by the HUD when the summon is the active combatant. */
+  summonSourceName?: string;
 }
 
 /**

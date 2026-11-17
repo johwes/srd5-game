@@ -106,6 +106,7 @@ export interface TokenNode {
   initialText: Text;
   conditionsContainer: Container;
   buffsContainer: Container;
+  summonBadgeContainer: Container;
   nameText: Text;
   data: CreatureTokenData;
   targetPos: Point;
@@ -276,6 +277,9 @@ export class CreatureTokenRenderer {
       const buffsContainer = new Container();
       buffsContainer.label = 'BuffsContainer';
 
+      const summonBadgeContainer = new Container();
+      summonBadgeContainer.label = 'SummonBadgeContainer';
+
       const nameText = new Text({
         text: '',
         style: {
@@ -297,6 +301,7 @@ export class CreatureTokenRenderer {
       container.addChild(initialText);
       container.addChild(conditionsContainer);
       container.addChild(buffsContainer);
+      container.addChild(summonBadgeContainer);
       container.addChild(nameText);
 
       this.container.addChild(container);
@@ -311,6 +316,7 @@ export class CreatureTokenRenderer {
         initialText,
         conditionsContainer,
         buffsContainer,
+        summonBadgeContainer,
         nameText,
         data,
         targetPos: { ...data.position },
@@ -379,10 +385,22 @@ export class CreatureTokenRenderer {
     const concentrating =
       data.concentrating === true ||
       (data as unknown as { concentratingOn?: unknown }).concentratingOn != null;
+    // PlayerViewCombatant carries `isSummon` / `untargetable` (SRD-904).
+    const anySummonData = data as unknown as {
+      isSummon?: boolean;
+      untargetable?: boolean;
+    };
+    const isSummon = data.isSummon === true || anySummonData.isSummon === true;
+    const untargetable = data.untargetable === true || anySummonData.untargetable === true;
     this.drawAura(node.auraGraphics, radius, {
       ...opts,
       concentrating,
+      isSummon,
     });
+
+    // Untargetable conjurations are translucent so players can tell at a glance
+    // that they cannot be attacked or selected as spell targets (Spec 08 §6).
+    node.container.alpha = isSummon && untargetable ? 0.6 : 1;
 
     // 2. Base Disc & Frame (with procedural team/allegiance colors)
     this.drawBaseDisc(node.baseDiscGraphics, radius, data, resolvedAsset);
@@ -447,6 +465,15 @@ export class CreatureTokenRenderer {
       node.buffsContainer.visible = false;
     }
 
+    // 6c. Summon badge (violet ✦S pip, reuses the token's pip row)
+    if (isSummon) {
+      this.drawSummonBadge(node.summonBadgeContainer, radius);
+      node.summonBadgeContainer.visible = true;
+    } else {
+      node.summonBadgeContainer.removeChildren().forEach((c) => c.destroy());
+      node.summonBadgeContainer.visible = false;
+    }
+
     // 7. Name Tag
     if (opts.showNameTags) {
       node.nameText.text = data.name;
@@ -465,9 +492,22 @@ export class CreatureTokenRenderer {
   private drawAura(
     g: Graphics,
     radius: number,
-    opts: { isSelected: boolean; isActive: boolean; isHovered: boolean; concentrating?: boolean },
+    opts: {
+      isSelected: boolean;
+      isActive: boolean;
+      isHovered: boolean;
+      concentrating?: boolean;
+      isSummon?: boolean;
+    },
   ): void {
     g.clear();
+
+    if (opts.isSummon) {
+      // Violet conjuration ring, drawn inside the gold turn / cyan selection
+      // rings so it stays legible when a commanded summon's turn comes up.
+      g.circle(0, 0, radius + 2).stroke({ color: 0x7c3aed, width: 2.5, alpha: 0.95 });
+      g.circle(0, 0, radius + 2).stroke({ color: 0xc4b5fd, width: 0.75, alpha: 0.6 });
+    }
 
     if (opts.isActive) {
       // Golden turn pulse ring
@@ -780,6 +820,39 @@ export class CreatureTokenRenderer {
 
       container.addChild(extraPip);
     }
+  }
+
+  /**
+   * Renders the violet `✦S` medallion that marks a token as a summon.
+   * Sits alongside the buff pips without introducing a new scene-graph layer.
+   */
+  private drawSummonBadge(container: Container, radius: number): void {
+    container.removeChildren().forEach((c) => c.destroy());
+
+    const badge = new Container();
+    badge.label = 'SummonBadge';
+
+    const bg = new Graphics();
+    bg.circle(0, 0, 7).fill(0x4c1d95);
+    bg.circle(0, 0, 7).stroke({ color: 0xc4b5fd, width: 1.5 });
+
+    const label = new Text({
+      text: '✦S',
+      style: {
+        fontFamily: 'sans-serif',
+        fontSize: 7,
+        fontWeight: 'bold',
+        fill: 0xf5f3ff,
+        align: 'center',
+      },
+    });
+    label.label = 'SummonBadgeText';
+    label.anchor.set(0.5, 0.5);
+
+    badge.addChild(bg);
+    badge.addChild(label);
+    badge.position.set(-(radius + 6), -(radius * 0.78));
+    container.addChild(badge);
   }
 
   /**

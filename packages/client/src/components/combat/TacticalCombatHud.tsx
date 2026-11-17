@@ -8,6 +8,7 @@ import { InitiativeRibbon } from './InitiativeRibbon.js';
 import { SelectedEnemyCard } from './SelectedEnemyCard.js';
 import { PartyPortraits } from './PartyPortraits.js';
 import { ReactionInterruptModal } from './ReactionInterruptModal.js';
+import { playerControlsViewEntity } from '../../utils/summonPresentation.js';
 import type { TacticalCombatHudProps } from './types.js';
 
 export function TacticalCombatHud({
@@ -35,6 +36,8 @@ export function TacticalCombatHud({
   onUseClassFeature,
   onStandardAction,
   onUseItem,
+  onUseSummonAction,
+  onDismissSummon,
   onEndTurn,
   onToggleMenu,
   onResolveReaction,
@@ -120,17 +123,18 @@ export function TacticalCombatHud({
     ? viewState.combatants[activeCombatantId] ?? null
     : null;
 
-  // Determine if active combatant belongs to current player's party or team
+  // Determine if the active combatant belongs to the current player. SRD-904:
+  // commanded summons are controlled transitively through their caster chain,
+  // so the authority check wins over a host's coarse side-based override.
+  const summonControlled = activeCombatant?.isSummon
+    ? playerControlsViewEntity(activeCombatant, viewState)
+    : null;
   const isPlayerControlled =
-    controlledIsPlayerControlled !== undefined
-      ? controlledIsPlayerControlled
-      : Boolean(
-          activeCombatant &&
-            (activeCombatant.side === 'party' ||
-              Boolean(viewState.party[activeCombatant.id]) ||
-              (activeCombatant.playerId &&
-                activeCombatant.playerId === viewState.playerId)),
-        );
+    summonControlled !== null
+      ? summonControlled
+      : controlledIsPlayerControlled !== undefined
+        ? controlledIsPlayerControlled
+        : playerControlsViewEntity(activeCombatant, viewState);
 
   const pendingReactionPrompt = combat?.pendingReactionPrompt ?? null;
   const reactorEntity = pendingReactionPrompt
@@ -352,6 +356,8 @@ export function TacticalCombatHud({
             onUseClassFeature={onUseClassFeature}
             onStandardAction={onStandardAction}
             onUseItem={onUseItem}
+            onUseSummonAction={onUseSummonAction}
+            onDismissSummon={onDismissSummon}
             onEndTurn={onEndTurn}
             onOpenCharacterSheet={onOpenCharacterSheet}
           />

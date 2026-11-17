@@ -7,6 +7,7 @@ import {
   type SpellTargetDisposition,
 } from './combatTargeting.js';
 import type { AoeShape } from '@srd5/engine';
+import { isUntargetableSummon } from './summonPresentation.js';
 
 /**
  * SRD-410 manual targeting state machine.
@@ -190,6 +191,9 @@ export function validateTargetPick(
 ): { ok: boolean; error?: string } {
   if (candidate.isDead || candidate.currentHp <= 0) {
     return { ok: false, error: `${candidate.name} is down and cannot be targeted.` };
+  }
+  if (isUntargetableSummon(candidate)) {
+    return { ok: false, error: `${candidate.name} cannot be targeted.` };
   }
   const dist = getFootprintDistanceFeet(caster.position, caster.size, candidate.position, candidate.size);
   if (dist > pending.rangeFeet) {

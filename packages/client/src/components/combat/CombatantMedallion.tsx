@@ -1,5 +1,6 @@
 import React from 'react';
 import type { PlayerViewCombatant } from '@srd5/transport';
+import { summonSourceLabel } from '../../utils/summonPresentation.js';
 
 export interface CombatantMedallionProps {
   combatant: PlayerViewCombatant | null;
@@ -87,6 +88,19 @@ export function CombatantMedallion({
           </span>
         )}
       </button>
+
+      {combatant.isSummon && (
+        <span
+          data-testid="medallion-summon-chip"
+          title={`Conjured by ${summonSourceLabel(combatant)}`}
+          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-violet-700/90 border border-violet-300 text-[9px] font-bold text-violet-50 max-w-full truncate"
+        >
+          ✦ Summoned
+          <span className="font-semibold opacity-90 truncate">
+            · {summonSourceLabel(combatant)}
+          </span>
+        </span>
+      )}
 
       <span
         data-testid="hotbar-active-hero-name"

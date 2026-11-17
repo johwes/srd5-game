@@ -5,6 +5,7 @@ import {
 } from '@srd5/data';
 import { type PlayerViewCombatant } from '@srd5/transport';
 import { areAllied, areHostile, getFootprintDistanceFeet } from '@srd5/engine';
+import { isUntargetableSummon } from './summonPresentation.js';
 
 export type SpellTargetDisposition = 'self' | 'friendly' | 'hostile' | 'any';
 
@@ -267,6 +268,16 @@ export function resolveSpellTargets(options: ResolveSpellTargetsOptions): Resolv
           errorFeedback: 'One or more selected targets are no longer conscious.',
         };
       }
+      if (isUntargetableSummon(target)) {
+        return {
+          targetIds: [],
+          primaryTarget: null,
+          disposition,
+          maxTargets,
+          rangeFeet,
+          errorFeedback: `${target.name} cannot be targeted.`,
+        };
+      }
       if (!allowDuplicates && seen.has(tid)) {
         return {
           targetIds: [],
@@ -325,8 +336,9 @@ export function resolveSpellTargets(options: ResolveSpellTargetsOptions): Resolv
     };
   }
 
+  // Untargetable conjurations are never valid spell targets (Spec 08 §4.3).
   const allLivingCombatants = Object.values(combatants).filter(
-    (c) => !c.isDead && c.currentHp > 0,
+    (c) => !c.isDead && c.currentHp > 0 && !isUntargetableSummon(c),
   );
 
   const isAlly = (c: PlayerViewCombatant) =>
@@ -340,8 +352,22 @@ export function resolveSpellTargets(options: ResolveSpellTargetsOptions): Resolv
       (c.teamId ?? c.side) !== (caster.teamId ?? caster.side));
 
   const selectedCandidate = selectedCombatantId ? combatants[selectedCombatantId] ?? null : null;
+  if (isUntargetableSummon(selectedCandidate)) {
+    return {
+      targetIds: [],
+      primaryTarget: null,
+      disposition,
+      maxTargets,
+      rangeFeet,
+      errorFeedback: `${selectedCandidate!.name} cannot be targeted.`,
+    };
+  }
+
   const isSelectedLiving = Boolean(
-    selectedCandidate && !selectedCandidate.isDead && selectedCandidate.currentHp > 0,
+    selectedCandidate &&
+      !selectedCandidate.isDead &&
+      selectedCandidate.currentHp > 0 &&
+      !isUntargetableSummon(selectedCandidate),
   );
 
   // 2. Friendly Spell (e.g. Bless, Cure Wounds, Healing Word, Shield of Faith, Aid)

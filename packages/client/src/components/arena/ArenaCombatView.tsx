@@ -23,6 +23,7 @@ import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { TacticalCombatHud } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
 import { resolveSpellTargets } from '../../utils/combatTargeting.js';
+import { isUntargetableSummon } from '../../utils/summonPresentation.js';
 import {
   buildPendingTargetForAttack,
   buildPendingTargetForSpell,
@@ -723,11 +724,23 @@ export function ArenaCombatView({
       .friendlyFireEnabled === false;
   const pendingAoeFoes = (pendingAoePreview?.affectedCreatureIds ?? []).filter((id) => {
     const c = viewState.combatants[id];
-    return c && (c.teamId ?? c.side) !== activeTeamId && !c.isDead && c.currentHp > 0;
+    return (
+      c &&
+      (c.teamId ?? c.side) !== activeTeamId &&
+      !c.isDead &&
+      c.currentHp > 0 &&
+      !isUntargetableSummon(c)
+    );
   });
   const pendingAoeAllies = (pendingAoePreview?.affectedCreatureIds ?? []).filter((id) => {
     const c = viewState.combatants[id];
-    return c && (c.teamId ?? c.side) === activeTeamId && !c.isDead && c.currentHp > 0;
+    return (
+      c &&
+      (c.teamId ?? c.side) === activeTeamId &&
+      !c.isDead &&
+      c.currentHp > 0 &&
+      !isUntargetableSummon(c)
+    );
   });
   const pendingTargetingMode =
     pendingTarget.kind === 'aoe' ? 'aoe' : pendingTarget.kind === 'none' ? 'none' : 'attack';
@@ -918,6 +931,23 @@ export function ArenaCombatView({
               type: 'USE_ITEM',
               actorId: activeCombatantId,
               itemInstanceId: itemId,
+            });
+          }}
+          onUseSummonAction={(actionId) => {
+            if (!activeCombatantId) return;
+            void handleDispatch({
+              type: 'USE_SUMMON_ACTION',
+              actorId: activeCombatantId,
+              actionId,
+              targetId: selectedCombatantId ?? undefined,
+            });
+          }}
+          onDismissSummon={(summon) => {
+            if (!activeCombatantId) return;
+            void handleDispatch({
+              type: 'DISMISS_SUMMON',
+              actorId: activeCombatantId,
+              summonEntityId: summon.id,
             });
           }}
           onEndTurn={() => {

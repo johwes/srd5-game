@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { EffectStepSpec, SpellData } from '@srd5/data';
 import type { DerivedWeaponAttackProfile } from '@srd5/engine';
+import type { PlayerViewCombatant } from '@srd5/transport';
 import { GameIcon } from '../../canvas/assets/index.js';
 import { formatSpellRange } from '../compendium/formatters.js';
 import {
@@ -8,6 +9,7 @@ import {
   resolveSpellTargets,
 } from '../../utils/combatTargeting.js';
 import { loadAppSettings, saveAppSettings } from '../../persistence/settingsPersistence.js';
+import { summonsOwnedBy, summonSourceLabel } from '../../utils/summonPresentation.js';
 import { TurnBudgetIndicator } from './TurnBudgetIndicator.js';
 import { ActionTooltipCard } from './ActionTooltipCard.js';
 import { CombatantMedallion } from './CombatantMedallion.js';
@@ -208,6 +210,8 @@ export function ActionHotbar({
   onUseClassFeature,
   onStandardAction,
   onUseItem,
+  onUseSummonAction,
+  onDismissSummon,
   onEndTurn,
   onOpenCharacterSheet,
   initialRows,
@@ -257,6 +261,28 @@ export function ActionHotbar({
     : [];
 
   const features = sheet?.activatedAbilities ?? [];
+
+  // SRD-904: the hotbar follows the active combatant. When a commanded summon
+  // takes its turn its own DSL actions are shown; when the caster is active,
+  // dismissible autonomous summons can be released from here.
+  const activeIsSummon = activeCombatant?.isSummon === true;
+  const summonActions = activeIsSummon ? (activeCombatant?.summonActions ?? []) : [];
+  const dismissibleSummons: PlayerViewCombatant[] = activeIsSummon
+    ? activeCombatant?.summonDismissible
+      ? [activeCombatant]
+      : []
+    : activeCombatant
+      ? summonsOwnedBy(activeCombatant.id, combatants ?? {}).filter((s) => s.summonDismissible)
+      : [];
+  const showSummonTab = activeIsSummon || dismissibleSummons.length > 0;
+
+  const activeCombatantId = activeCombatant?.id ?? null;
+  useEffect(() => {
+    // A controlled tab is owned by the parent; only auto-switch our own tab.
+    if (controlledTab !== undefined) return;
+    if (activeIsSummon) setInternalTab('summon');
+    else setInternalTab((prev) => (prev === 'summon' ? 'attack' : prev));
+  }, [activeCombatantId, activeIsSummon, controlledTab]);
 
   // Filtered spells
   const filteredSpells =
@@ -460,6 +486,25 @@ export function ActionHotbar({
               <span>🎒</span>
               <span>Items</span>
             </button>
+            {showSummonTab && (
+              <button
+                type="button"
+                data-testid="hotbar-tab-summon"
+                aria-pressed={activeTab === 'summon'}
+                onClick={() => setTab('summon')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors border ${
+                  activeTab === 'summon'
+                    ? 'bg-violet-500/15 border-violet-500/60 text-violet-300'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                }`}
+              >
+                <span>✦</span>
+                <span>Summon</span>
+                <span className="text-[10px] text-slate-500">
+                  ({summonActions.length + dismissibleSummons.length})
+                </span>
+              </button>
+            )}
           </div>
           <div className="min-w-0">
         {/* ATTACK TAB */}
@@ -949,6 +994,111 @@ export function ActionHotbar({
                                 : 'Action',
                       }}
                       accent="sky"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* SUMMON TAB — SRD-904: commands for the active summon / dismissals */}
+        {activeTab === 'summon' && showSummonTab && (
+          <div
+            data-testid="hotbar-panel-summon"
+            onWheel={handleHorizontalWheel}
+            className={iconGridClassName}
+          >
+            <div
+              data-testid="hotbar-summon-source"
+              className="flex flex-col gap-1 px-2 py-1 rounded-lg bg-violet-950/50 border border-violet-700/50 max-w-[220px]"
+            >
+              <span className="text-[10px] font-black uppercase tracking-wider text-violet-300">
+                ✦ {activeIsSummon ? 'Commanding summon' : 'Active conjurations'}
+              </span>
+              <span className="text-[11px] font-semibold text-violet-100 truncate">
+                {activeIsSummon && activeCombatant
+                  ? summonSourceLabel(activeCombatant)
+                  : `${dismissibleSummons.length} dismissible`}
+              </span>
+            </div>
+
+            {summonActions.map((action) => {
+              const canUse = isPlayerControlled && hasAction;
+              return (
+                <div
+                  key={action.id}
+                  data-testid={`summon-action-card-${action.id}`}
+                  className="relative group shrink-0"
+                >
+                  <button
+                    type="button"
+                    data-testid={`summon-action-btn-${action.id}`}
+                    style={{ width: standardIconSize, height: standardIconSize }}
+                    disabled={!canUse}
+                    onClick={() => onUseSummonAction?.(action.id)}
+                    className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
+                      canUse
+                        ? 'bg-violet-900/60 border-violet-500 hover:border-violet-300 hover:bg-violet-800/70 shadow-md hover:shadow-[0_0_12px_rgba(167,139,250,0.3)] cursor-pointer active:scale-95'
+                        : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
+                    }`}
+                    title={`${action.name} (Action)`}
+                  >
+                    <span className="text-xl leading-none">✦</span>
+                    <span className="absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase bg-violet-600 text-slate-950 shadow">
+                      A
+                    </span>
+                  </button>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                    <ActionTooltipCard
+                      testId={`summon-tooltip-${action.id}`}
+                      icon={<span className="text-base">✦</span>}
+                      name={action.name}
+                      badge="Summon Action"
+                      effectLines={[action.description]}
+                      cost={{ action: 'Action' }}
+                      accent="purple"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+
+            {dismissibleSummons.map((summon) => {
+              const canUse = isPlayerControlled && hasAction;
+              return (
+                <div
+                  key={summon.id}
+                  data-testid={`summon-dismiss-card-${summon.id}`}
+                  className="relative group shrink-0"
+                >
+                  <button
+                    type="button"
+                    data-testid={`summon-dismiss-btn-${summon.id}`}
+                    style={{ width: standardIconSize, height: standardIconSize }}
+                    disabled={!canUse}
+                    onClick={() => onDismissSummon?.(summon)}
+                    className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
+                      canUse
+                        ? 'bg-slate-900 border-slate-700 hover:border-rose-400 hover:bg-slate-800 shadow-md cursor-pointer active:scale-95'
+                        : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
+                    }`}
+                    title={`Dismiss ${summon.name}`}
+                  >
+                    <span className="text-xl leading-none">✕</span>
+                    <span className="absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase bg-rose-600 text-slate-950 shadow">
+                      A
+                    </span>
+                  </button>
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 pointer-events-none z-50">
+                    <ActionTooltipCard
+                      testId={`summon-dismiss-tooltip-${summon.id}`}
+                      icon={<span className="text-base">✕</span>}
+                      name={`Dismiss ${summon.name}`}
+                      badge="Summon"
+                      effectLines={[`End ${summonSourceLabel(summon)} and remove its token.`]}
+                      cost={{ action: 'Action' }}
+                      accent="purple"
                     />
                   </div>
                 </div>

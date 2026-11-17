@@ -6,7 +6,7 @@ import {
   reduceGame,
   setGridCells,
 } from '@srd5/engine';
-import { projectPlayerView } from '../fog.js';
+import { projectPlayerView, toPlayerViewCombatant } from '../fog.js';
 
 function makePartyMember(id: string, name: string, x: number, y: number): Combatant {
   return {
@@ -345,5 +345,39 @@ describe('SRD-311: projectPlayerView Fog-of-War State Filter', () => {
     expect(view.party['hero-1']?.activeEffects).toHaveLength(1);
     expect(view.party['hero-1']?.activeEffects?.[0]?.name).toBe('Bless');
     expect(view.party['hero-1']?.concentratingOn?.sourceId).toBe('bless');
+  });
+
+  it('projects summon presentation metadata for the client (SRD-904)', () => {
+    const summon: Combatant = {
+      ...makePartyMember('hound-token', 'Faithful Hound', 4, 4),
+      isSummon: true,
+      summonId: 'faithful-hound-token',
+      summonedByEntityId: 'hero-1',
+      summonSourceName: 'Faithful Hound',
+      summonControl: 'autonomous',
+      summonDismissible: true,
+      untargetable: true,
+      summonActions: [
+        {
+          id: 'bite',
+          name: 'Bite',
+          description: 'Bite a hostile within 5 ft.',
+          actionCost: 'action',
+          effects: [],
+        },
+      ],
+    };
+
+    const view = toPlayerViewCombatant(summon);
+    expect(view.isSummon).toBe(true);
+    expect(view.summonedByEntityId).toBe('hero-1');
+    expect(view.summonId).toBe('faithful-hound-token');
+    expect(view.summonSourceName).toBe('Faithful Hound');
+    expect(view.summonControl).toBe('autonomous');
+    expect(view.summonDismissible).toBe(true);
+    expect(view.untargetable).toBe(true);
+    expect(view.summonActions).toEqual([
+      { id: 'bite', name: 'Bite', description: 'Bite a hostile within 5 ft.' },
+    ]);
   });
 });

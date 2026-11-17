@@ -17,6 +17,7 @@ import { LocalTransport, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { TacticalCombatHud } from '../combat/index.js';
 import { resolveSpellTargets } from '../../utils/combatTargeting.js';
+import { isUntargetableSummon } from '../../utils/summonPresentation.js';
 
 /**
  * Tactical battle view for Realm encounters (SRD-805, Spec 06 Section 4.2).
@@ -291,11 +292,15 @@ export function RealmBattleView({
             selectedCandidate &&
               selectedCandidate.side !== activeCombatant.side &&
               !selectedCandidate.isDead &&
-              selectedCandidate.currentHp > 0,
+              selectedCandidate.currentHp > 0 &&
+              !isUntargetableSummon(selectedCandidate),
           );
           const livingHostiles = Object.values(viewState.combatants).filter(
             (c) =>
-              c.side !== activeCombatant.side && !c.isDead && c.currentHp > 0,
+              c.side !== activeCombatant.side &&
+              !c.isDead &&
+              c.currentHp > 0 &&
+              !isUntargetableSummon(c),
           );
           if (livingHostiles.length === 0) {
             showFeedback('No conscious enemies remaining.');
@@ -420,6 +425,23 @@ export function RealmBattleView({
             type: 'USE_ITEM',
             actorId: activeCombatantId,
             itemInstanceId: itemId,
+          });
+        }}
+        onUseSummonAction={(actionId) => {
+          if (!activeCombatantId) return;
+          void handleDispatch({
+            type: 'USE_SUMMON_ACTION',
+            actorId: activeCombatantId,
+            actionId,
+            targetId: selectedCombatantId ?? undefined,
+          });
+        }}
+        onDismissSummon={(summon) => {
+          if (!activeCombatantId) return;
+          void handleDispatch({
+            type: 'DISMISS_SUMMON',
+            actorId: activeCombatantId,
+            summonEntityId: summon.id,
           });
         }}
         onEndTurn={() => {

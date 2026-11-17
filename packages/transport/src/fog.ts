@@ -93,6 +93,16 @@ export function toPlayerViewCombatant(c: Combatant): PlayerViewCombatant {
     challengeRating: c.monsterData?.challengeRating,
     isSummon: c.isSummon,
     summonedByEntityId: c.summonedByEntityId,
+    summonId: c.summonId,
+    summonSourceName: c.summonSourceName,
+    summonControl: c.summonControl,
+    untargetable: c.untargetable,
+    summonDismissible: c.summonDismissible,
+    summonActions: c.summonActions?.map((a) => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+    })),
   };
 }
 
