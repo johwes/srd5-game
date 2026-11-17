@@ -418,7 +418,7 @@ export type CombatEvent =
       type: 'ACTION_USED';
       actorId: string;
       actionName: 'dash' | 'disengage' | 'dodge' | 'stand_up' | 'action_surge' | 'custom';
-      cost: 'action' | 'bonus_action' | 'free' | 'movement';
+      cost: 'action' | 'bonus_action' | 'free' | 'movement' | 'reaction' | 'special';
       movementCostFeet?: number;
     }
   | {

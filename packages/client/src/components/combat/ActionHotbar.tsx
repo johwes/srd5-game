@@ -873,7 +873,26 @@ export function ActionHotbar({
           >
             {features.length > 0 ? (
               features.map((feat) => {
-                const canUse = isPlayerControlled && (feat.actionCost === 'bonus_action' ? hasBonusAction : hasAction);
+                const cost = feat.actionCost ?? 'action';
+                const resourcePool =
+                  feat.resourceCost && sheet?.resources
+                    ? sheet.resources[feat.resourceCost.resourceId]
+                    : undefined;
+                const hasResources =
+                  !feat.resourceCost || !resourcePool || resourcePool.available >= feat.resourceCost.amount;
+                // SRD 5.1 economy gating: 'action' needs an action, 'bonus_action'
+                // a bonus action, 'reaction' a reaction. 'free'/'special' cost no
+                // budget (e.g. Action Surge trigger, Divine Smite, Reckless
+                // Attack) so they must stay usable even with 0 actions left.
+                const hasEconomy =
+                  cost === 'bonus_action'
+                    ? hasBonusAction
+                    : cost === 'reaction'
+                      ? Boolean(turnBudget?.reactionAvailable ?? true)
+                      : cost === 'free' || cost === 'special' || cost === 'movement'
+                        ? true
+                        : hasAction;
+                const canUse = isPlayerControlled && hasEconomy && hasResources;
 
                 return (
                   <div
@@ -896,7 +915,17 @@ export function ActionHotbar({
                     >
                       <span className="text-lg">⭐</span>
                       <span className="absolute -top-1 -left-1 px-1 py-0.2 rounded-full text-[9px] font-black uppercase bg-amber-600 text-slate-950 shadow">
-                        {feat.actionCost === 'bonus_action' ? 'BA' : 'A'}
+                        {cost === 'bonus_action'
+                          ? 'BA'
+                          : cost === 'reaction'
+                            ? 'R'
+                            : cost === 'free'
+                              ? 'F'
+                              : cost === 'special'
+                                ? 'S'
+                                : cost === 'movement'
+                                  ? 'M'
+                                  : 'A'}
                       </span>
                     </button>
 
@@ -914,13 +943,17 @@ export function ActionHotbar({
                         }
                         cost={{
                           action:
-                            feat.actionCost === 'bonus_action'
+                            cost === 'bonus_action'
                               ? 'Bonus Action'
-                              : feat.actionCost === 'reaction'
+                              : cost === 'reaction'
                                 ? 'Reaction'
-                                : feat.actionCost === 'free'
+                                : cost === 'free'
                                   ? 'Free'
-                                  : 'Action',
+                                  : cost === 'special'
+                                    ? 'Special'
+                                    : cost === 'movement'
+                                      ? 'Movement'
+                                      : 'Action',
                         }}
                         accent="amber"
                       />

@@ -130,6 +130,7 @@ export const SRD_HIGH_TIER_FEATURE_OVERLAYS: Readonly<Record<string, FeatureOver
     'adjudicate-retaliation',
     'Retaliation — Reactive Attack',
     'When a creature within 5 feet damages you, you can use your reaction to make a melee weapon attack against it.',
+    { actionCost: 'reaction' },
   ),
   'indomitable-might': adjudicatedFeatureAbility(
     'adjudicate-indomitable-might',

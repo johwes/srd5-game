@@ -5,6 +5,7 @@ import { applyConditionToCombatant } from './conditions.js';
 import { applyDamage, applyHealing } from './damage.js';
 import { evaluateCombatVictory } from './state-machine.js';
 import { getTargetSavingThrowBonus } from './spellcasting.js';
+import { applyActionSurge } from './turn-budget.js';
 import type { CombatEvent, CombatState, Combatant } from './types.js';
 
 export interface ExecuteActivatedAbilityOptions {
@@ -67,6 +68,11 @@ export function executeActivatedAbility(options: ExecuteActivatedAbilityOptions)
   let nextActor = { ...actor };
 
   // 2. Action Budget deduction
+  // SRD 5.1: 'action' consumes the main action, 'bonus_action' the bonus
+  // action, 'reaction' the reaction. 'free', 'special', and 'movement'
+  // cost no budget (free = e.g. Action Surge trigger, Indomitable reroll
+  // hook; special = declared as part of another action, e.g. Divine Smite,
+  // Reckless Attack, Stunning Strike).
   let nextBudget = state.turnBudget ? { ...state.turnBudget } : null;
   if (nextBudget && state.activeCombatantId === actorId) {
     if (ability.actionCost === 'action') {
@@ -85,9 +91,14 @@ export function executeActivatedAbility(options: ExecuteActivatedAbilityOptions)
       }
       nextBudget.reactionAvailable = false;
     }
+    // 'free' | 'special' | 'movement' intentionally spend no budget here.
   }
 
   // 3. Resource Cost deduction
+  // Track ids already charged via resourceCost so an embedded
+  // `spend_resource` effect step for the same pool does not double-spend
+  // (e.g. Action Surge declares both resourceCost and a spend_resource step).
+  const resourcesChargedViaCost = new Set<string>();
   if (ability.resourceCost && nextActor.characterSheet?.resources) {
     const resId = ability.resourceCost.resourceId;
     const pool = nextActor.characterSheet.resources[resId];
@@ -97,14 +108,37 @@ export function executeActivatedAbility(options: ExecuteActivatedAbilityOptions)
       }
       pool.available -= ability.resourceCost.amount;
       pool.spent = (pool.spent ?? 0) + ability.resourceCost.amount;
+      resourcesChargedViaCost.add(`${resId}:${ability.resourceCost.amount}`);
     }
   }
 
+  // SRD 5.1 Action Surge: triggering the feature costs no action itself but
+  // grants one additional action on top of the regular action this turn.
+  // This handles the USE_CLASS_FEATURE ('use-action-surge') path; the
+  // USE_STANDARD_ACTION ('action_surge') path grants via executeActionSurge.
+  if (abilityId === 'use-action-surge' || ability.id === 'use-action-surge') {
+    if (nextBudget) {
+      nextBudget = applyActionSurge(nextBudget);
+    }
+  }
+
+  const economyCostForEvent =
+    ability.actionCost === 'bonus_action'
+      ? 'bonus_action'
+      : ability.actionCost === 'reaction'
+        ? 'reaction'
+        : ability.actionCost === 'free'
+          ? 'free'
+          : ability.actionCost === 'special'
+            ? 'special'
+            : ability.actionCost === 'movement'
+              ? 'movement'
+              : 'action';
   events.push({
     type: 'ACTION_USED',
     actorId: actor.id,
     actionName: 'custom',
-    cost: ability.actionCost === 'bonus_action' ? 'bonus_action' : ability.actionCost === 'reaction' ? 'free' : 'action',
+    cost: economyCostForEvent,
   });
 
   // 4. Resolve targets
@@ -208,6 +242,22 @@ export function executeActivatedAbility(options: ExecuteActivatedAbilityOptions)
         });
         const followSteps = passed ? (step.onSuccess ?? []) : step.onFail;
         executeSteps(followSteps, target);
+      } else if (step.step === 'spend_resource') {
+        // Declarative resource spend (e.g. Action Surge's embedded
+        // spend_resource step). Skip when the same pool/amount was already
+        // charged via resourceCost above to avoid double-spending.
+        const chargeKey = `${step.resourceId}:${step.amount}`;
+        if (!resourcesChargedViaCost.has(chargeKey) && nextActor.characterSheet?.resources) {
+          const pool = nextActor.characterSheet.resources[step.resourceId];
+          if (pool) {
+            if (pool.available < step.amount) {
+              throw new Error(`Insufficient resource "${step.resourceId}" for "${actor.name}"`);
+            }
+            pool.available -= step.amount;
+            pool.spent = (pool.spent ?? 0) + step.amount;
+            resourcesChargedViaCost.add(chargeKey);
+          }
+        }
       } else if (step.step === 'manual_adjudication') {
         // Tier C fallback for class features: surface an adjudication card
         // instead of silently skipping an effect the engine cannot automate.

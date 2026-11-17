@@ -327,7 +327,7 @@ export function reduceGame(
       let res: { state: CombatState; events: CombatEvent[] };
       switch (command.action) {
         case 'dash':
-          res = executeDash(nextState.combat, command.actorId);
+          res = executeDash(nextState.combat, command.actorId, command.asBonusAction ?? false);
           break;
         case 'disengage':
           res = executeDisengage(nextState.combat, command.actorId, command.asBonusAction);

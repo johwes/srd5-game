@@ -3050,7 +3050,7 @@
         "id": "adjudicate-retaliation",
         "name": "Retaliation — Reactive Attack",
         "description": "When a creature within 5 feet damages you, you can use your reaction to make a melee weapon attack against it.",
-        "actionCost": "free",
+        "actionCost": "reaction",
         "targeting": {
           "type": "self",
           "rangeFeet": 0
