@@ -479,7 +479,9 @@ export function computeAbilityScoresForPrerequisites(
           scores[ab] += sel.bonuses[ab] ?? 0;
         }
       } else {
-        const feat = compendium.getFeat(sel.featId);
+        const feat =
+          (state as any).customFeats?.find((f: any) => f.id === sel.featId) ??
+          compendium.getFeat(sel.featId);
         if (feat?.abilityBonuses) {
           for (const ab of ABILITY_IDS) {
             scores[ab] += feat.abilityBonuses[ab] ?? 0;
@@ -979,7 +981,14 @@ export function evaluateFeatEligibility(
     state.spellcasting.knownSpellIds.length > 0 ||
     state.spellcasting.preparedSpellIds.length > 0;
 
-  return compendium.feats.map((feat) => {
+  const allFeats = [...compendium.feats];
+  for (const cf of (state as any).customFeats ?? []) {
+    if (!allFeats.some((f) => f.id === cf.id)) {
+      allFeats.push(cf);
+    }
+  }
+
+  return allFeats.map((feat) => {
     const alreadySelected = alreadySelectedFeatIds.has(feat.id);
     const unmetPrerequisites: string[] = [];
 

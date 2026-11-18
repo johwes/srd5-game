@@ -9,6 +9,7 @@ import {
   ConditionIdSchema,
   SkillIdSchema,
 } from './enums.js';
+import { FeatSchema, type FeatData } from './feats.js';
 
 // ============================================================================
 // 1. Character Build State Schemas (`CharacterBuildState`)
@@ -327,9 +328,18 @@ export type CharacterRuntimeState = z.infer<typeof CharacterRuntimeStateSchema>;
  */
 export const CustomBackgroundSpecSchema = z.object({
   name: z.string().min(1),
+  description: z.string().optional(),
   skillProficiencies: z.tuple([SkillIdSchema, SkillIdSchema]),
   toolProficiencies: z.array(z.string().min(1)).max(2),
   languages: z.array(z.string().min(1)).max(2),
+  feature: z
+    .object({
+      name: z.string().min(1),
+      description: z.string().min(1),
+    })
+    .optional(),
+  source: z.literal('homebrew').optional(),
+  humanReviewed: z.boolean().optional(),
 });
 export type CustomBackgroundSpec = z.infer<typeof CustomBackgroundSpecSchema>;
 
@@ -356,12 +366,15 @@ export const CharacterBuildStateSchema = z
     backgroundChoices: z.record(z.string().min(1), z.array(z.string().min(1))),
     customBackground: CustomBackgroundSpecSchema.optional(),
 
-    // 3. Base Ability Scores (before racial bonuses & ASIs)
+    // 3. Custom / Homebrew Feats authored or carried by this character
+    customFeats: z.array(FeatSchema).optional(),
+
+    // 4. Base Ability Scores (before racial bonuses & ASIs)
     abilityMethod: AbilityGenerationMethodSchema,
     baseAbilities: BaseAbilitiesSchema,
     abilityRollSeed: z.number().int().nonnegative().optional(),
 
-    // 4. Class & Level Progression (L1-20 single-class or multiclass)
+    // 5. Class & Level Progression (L1-20 single-class or multiclass)
     classes: z.array(CharacterClassEntrySchema).min(1),
 
     // 5. Inventory, Equipment & Currency

@@ -33,6 +33,7 @@ import {
   containsProductIdentityProperName,
   isProhibitedMonsterId,
   isSrd52OnlyIdentifier,
+  screenHomebrewRecord,
 } from './allowlist.js';
 import { canonicalizeSpellIdentity } from './normalize.js';
 import {
@@ -143,8 +144,11 @@ export function runSrdIngestionPipeline(
   // Verify Subclasses against SRD 5.1 allowlist (or homebrew provenance + PI screen)
   for (const sc of input.subclasses) {
     if (sc.source === 'homebrew') {
-      if (containsProductIdentityProperName(sc.id) || containsProductIdentityProperName(sc.name)) {
-        throw new Error(`Prohibited Product Identity Subclass rejected by ingestion pipeline: "${sc.id}"`);
+      const screenResult = screenHomebrewRecord(sc);
+      if (!screenResult.valid) {
+        throw new Error(
+          `Prohibited Product Identity Subclass rejected by ingestion pipeline: "${sc.id}" (${screenResult.violations.join('; ')})`,
+        );
       }
     } else if (!ALLOWED_SRD_SUBCLASS_IDS.has(sc.id)) {
       throw new Error(`Non-SRD Subclass ID rejected by ingestion pipeline: "${sc.id}"`);
@@ -158,11 +162,18 @@ export function runSrdIngestionPipeline(
   // Verify Backgrounds against SRD 5.1 allowlist (or homebrew provenance + PI screen)
   for (const bg of input.backgrounds) {
     if (bg.source === 'homebrew') {
-      if (containsProductIdentityProperName(bg.id) || containsProductIdentityProperName(bg.name)) {
-        throw new Error(`Prohibited Product Identity Background rejected by ingestion pipeline: "${bg.id}"`);
-      }
-      if (isSrd52OnlyIdentifier(bg.id) || isSrd52OnlyIdentifier(bg.name)) {
-        throw new Error(`SRD 5.2 Background rejected by ingestion pipeline: "${bg.id}"`);
+      const screenResult = screenHomebrewRecord({
+        id: bg.id,
+        name: bg.name,
+        description: bg.description,
+        source: bg.source,
+        humanReviewed: (bg as any).humanReviewed,
+        feature: bg.feature,
+      });
+      if (!screenResult.valid) {
+        throw new Error(
+          `Prohibited Product Identity Background rejected by ingestion pipeline: "${bg.id}" (${screenResult.violations.join('; ')})`,
+        );
       }
     } else if (!ALLOWED_SRD_BACKGROUND_IDS.has(bg.id)) {
       throw new Error(`Non-SRD Background ID rejected by ingestion pipeline: "${bg.id}"`);
@@ -173,11 +184,17 @@ export function runSrdIngestionPipeline(
   // Verify Feats against SRD 5.1 allowlist (or homebrew provenance + PI screen) & apply overlays
   for (const feat of input.feats) {
     if (feat.source === 'homebrew') {
-      if (containsProductIdentityProperName(feat.id) || containsProductIdentityProperName(feat.name)) {
-        throw new Error(`Prohibited Product Identity Feat rejected by ingestion pipeline: "${feat.id}"`);
-      }
-      if (isSrd52OnlyIdentifier(feat.id) || isSrd52OnlyIdentifier(feat.name)) {
-        throw new Error(`SRD 5.2 Feat rejected by ingestion pipeline: "${feat.id}"`);
+      const screenResult = screenHomebrewRecord({
+        id: feat.id,
+        name: feat.name,
+        description: feat.description,
+        source: feat.source,
+        humanReviewed: (feat as any).humanReviewed,
+      });
+      if (!screenResult.valid) {
+        throw new Error(
+          `Prohibited Product Identity Feat rejected by ingestion pipeline: "${feat.id}" (${screenResult.violations.join('; ')})`,
+        );
       }
     } else if (!ALLOWED_SRD_FEAT_IDS.has(feat.id)) {
       throw new Error(`Non-SRD Feat ID rejected by ingestion pipeline: "${feat.id}"`);

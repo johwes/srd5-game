@@ -1,4 +1,7 @@
-import type { NormalizedSrdDataset } from '../ingestion/index.js';
+import {
+  type NormalizedSrdDataset,
+  screenHomebrewRecord,
+} from '../ingestion/index.js';
 import {
   ABILITY_IDS,
   type AbilityId,
@@ -7,6 +10,7 @@ import {
   type AoeShapeType,
   type ArmorCategory,
   type ArmorData,
+  BackgroundSchema,
   type BackgroundData,
   type ChallengeRating,
   type ChoiceSpec,
@@ -20,6 +24,7 @@ import {
   type EffectStepSpec,
   type EquipmentData,
   type EquipmentPackData,
+  FeatSchema,
   type FeatData,
   type FeatureData,
   type GearCategory,
@@ -80,6 +85,11 @@ export const COMPENDIUM_ENTITY_KINDS = [
 export type CompendiumEntityKind = (typeof COMPENDIUM_ENTITY_KINDS)[number];
 
 /**
+ * Origin provenance for SRD content records.
+ */
+export type ContentProvenance = 'srd-5.1' | 'homebrew';
+
+/**
  * Filter criteria for SRD 5.1 Races.
  */
 export interface RaceFilter {
@@ -89,6 +99,7 @@ export interface RaceFilter {
   hasSubraces?: boolean;
   hasDarkvision?: boolean;
   languageId?: string;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -99,6 +110,7 @@ export interface SubraceFilter {
   parentRaceId?: string | readonly string[];
   abilityBonus?: AbilityId | readonly AbilityId[];
   hasDarkvision?: boolean;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -113,6 +125,7 @@ export interface ClassFilter {
   spellcastingAbility?: AbilityId | readonly AbilityId[];
   spellcastingProgression?: SpellcastingProgression | readonly SpellcastingProgression[];
   preparationMode?: SpellPreparationMode | readonly SpellPreparationMode[];
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -121,6 +134,7 @@ export interface ClassFilter {
 export interface SubclassFilter {
   query?: string;
   classId?: string | readonly string[];
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -135,6 +149,7 @@ export interface FeatureFilter {
   maxLevel?: number;
   featureGroup?: string | readonly string[];
   includeSubclassFeatures?: boolean;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -143,6 +158,7 @@ export interface FeatureFilter {
 export interface BackgroundFilter {
   query?: string;
   skillProficiency?: SkillId | readonly SkillId[];
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -151,6 +167,7 @@ export interface BackgroundFilter {
 export interface FeatFilter {
   query?: string;
   hasPrerequisites?: boolean;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -170,6 +187,7 @@ export interface EquipmentFilter {
   maxCostCopper?: number;
   maxWeightLb?: number;
   stealthDisadvantage?: boolean;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -184,6 +202,7 @@ export interface WeaponFilter {
   minCostCopper?: number;
   maxCostCopper?: number;
   maxWeightLb?: number;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -196,6 +215,7 @@ export interface ArmorFilter {
   maxCostCopper?: number;
   maxStrengthRequirement?: number;
   stealthDisadvantage?: boolean;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -207,6 +227,7 @@ export interface MagicItemFilter {
   rarity?: MagicItemRarity | readonly MagicItemRarity[];
   requiresAttunement?: boolean;
   baseEquipmentId?: string;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -230,6 +251,7 @@ export interface SpellFilter {
   verbal?: boolean;
   somatic?: boolean;
   material?: boolean;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -248,6 +270,7 @@ export interface MonsterFilter {
   movementMode?: ('fly' | 'swim' | 'climb' | 'burrow') | readonly ('fly' | 'swim' | 'climb' | 'burrow')[];
   damageImmunity?: DamageType | readonly DamageType[];
   conditionImmunity?: ConditionId | readonly ConditionId[];
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -256,6 +279,7 @@ export interface MonsterFilter {
 export interface CompendiumSearchOptions {
   kinds?: CompendiumEntityKind | readonly CompendiumEntityKind[];
   limit?: number;
+  source?: ContentProvenance | readonly ContentProvenance[];
 }
 
 /**
@@ -295,7 +319,27 @@ interface SearchIndexDocument {
   bodyLower: string;
   subtitle: string;
   kind: CompendiumEntityKind;
+  source: ContentProvenance;
   entity: CompendiumSearchResult['entity'];
+}
+
+/**
+ * Returns the effective content provenance ('srd-5.1' or 'homebrew') for any entity.
+ */
+export function getEntitySource(entity: { source?: string } | undefined): ContentProvenance {
+  return entity?.source === 'homebrew' ? 'homebrew' : 'srd-5.1';
+}
+
+function matchesSourceFilter(
+  entitySource: string | undefined,
+  filterSource: ContentProvenance | readonly ContentProvenance[] | undefined,
+): boolean {
+  if (filterSource === undefined) return true;
+  const effective = entitySource === 'homebrew' ? 'homebrew' : 'srd-5.1';
+  if (Array.isArray(filterSource)) {
+    return filterSource.includes(effective as ContentProvenance);
+  }
+  return effective === filterSource;
 }
 
 function toSet<T>(value: T | readonly T[] | undefined): ReadonlySet<T> | undefined {
@@ -485,6 +529,11 @@ export interface SrdCompendium {
     query: string,
     options?: CompendiumSearchOptions,
   ): readonly CompendiumSearchResult[];
+
+  // Homebrew Registration & Provenance
+  registerHomebrewFeat(feat: FeatData): void;
+  registerHomebrewBackground(bg: BackgroundData): void;
+  getSource(entity: { source?: string } | undefined): ContentProvenance;
 }
 
 /**
@@ -510,8 +559,8 @@ export function createCompendium(
   const classes = dataset.classes;
   const subclasses = dataset.subclasses;
   const features = dataset.features;
-  const backgrounds = dataset.backgrounds;
-  const feats = dataset.feats;
+  const backgrounds: BackgroundData[] = [...dataset.backgrounds];
+  const feats: FeatData[] = [...dataset.feats];
   const equipment = dataset.equipment;
   const magicItems = dataset.magicItems;
   const spells = dataset.spells;
@@ -786,6 +835,7 @@ export function createCompendium(
   ): void => {
     const nameLower = normalizeSearchText(name);
     const nameTokens = nameLower.split(/\s+/).filter(Boolean);
+    const source: ContentProvenance = getEntitySource(entity as any);
     searchDocuments.push({
       id,
       name,
@@ -794,6 +844,7 @@ export function createCompendium(
       bodyLower,
       subtitle,
       kind,
+      source,
       entity,
     });
   };
@@ -1087,6 +1138,7 @@ export function createCompendium(
     const aoeShapeSet = toSet(filter.aoeShape);
 
     return spells.filter((spell) => {
+      if (!matchesSourceFilter(spell.source, filter?.source)) return false;
       if (levelSet && !levelSet.has(spell.level)) return false;
       if (filter.minLevel !== undefined && spell.level < filter.minLevel) return false;
       if (filter.maxLevel !== undefined && spell.level > filter.maxLevel) return false;
@@ -1178,6 +1230,7 @@ export function createCompendium(
     const abilitySet = toSet(filter.abilityBonus);
 
     return races.filter((race) => {
+      if (!matchesSourceFilter((race as any).source, filter.source)) return false;
       if (sizeSet && !sizeSet.has(race.size)) return false;
       if (filter.hasSubraces !== undefined) {
         const hasSub = race.subraceIds.length > 0;
@@ -1209,6 +1262,7 @@ export function createCompendium(
     const abilitySet = toSet(filter.abilityBonus);
 
     return subraces.filter((sub) => {
+      if (!matchesSourceFilter((sub as any).source, filter.source)) return false;
       if (parentSet && !parentSet.has(sub.parentRaceId)) return false;
       if (filter.hasDarkvision !== undefined) {
         const parentDark = raceMap.get(sub.parentRaceId)?.senses.darkvisionFeet ?? 0;
@@ -1238,6 +1292,7 @@ export function createCompendium(
     const prepModeSet = toSet(filter.preparationMode);
 
     return classes.filter((cls) => {
+      if (!matchesSourceFilter((cls as any).source, filter.source)) return false;
       if (hitDieSet && !hitDieSet.has(cls.hitDie)) return false;
       if (primaryAbSet && !cls.primaryAbilities.some((ab) => primaryAbSet.has(ab))) return false;
       if (saveAbSet && !cls.savingThrowProficiencies.some((ab) => saveAbSet.has(ab))) return false;
@@ -1268,6 +1323,7 @@ export function createCompendium(
     const classSet = toSet(filter.classId);
 
     return subclasses.filter((sc) => {
+      if (!matchesSourceFilter(sc.source, filter.source)) return false;
       if (classSet && !classSet.has(sc.classId)) return false;
       if (queryTokens.length > 0) {
         const haystack = subclassSearchText.get(sc.id) ?? '';
@@ -1286,6 +1342,7 @@ export function createCompendium(
     const groupSet = toSet(filter.featureGroup);
 
     return features.filter((feat) => {
+      if (!matchesSourceFilter((feat as any).source, filter.source)) return false;
       if (classSet && !classSet.has(feat.classId)) return false;
       if (subclassSet && (!feat.subclassId || !subclassSet.has(feat.subclassId))) return false;
       if (filter.includeSubclassFeatures === false && feat.subclassId !== undefined) return false;
@@ -1307,6 +1364,7 @@ export function createCompendium(
     const skillSet = toSet(filter.skillProficiency);
 
     return backgrounds.filter((bg) => {
+      if (!matchesSourceFilter(bg.source, filter.source)) return false;
       if (skillSet && !bg.skillProficiencies.some((sk) => skillSet.has(sk))) return false;
       if (queryTokens.length > 0) {
         const haystack = backgroundSearchText.get(bg.id) ?? '';
@@ -1321,6 +1379,7 @@ export function createCompendium(
     const queryTokens = tokenizeQuery(filter.query);
 
     return feats.filter((feat) => {
+      if (!matchesSourceFilter(feat.source, filter.source)) return false;
       if (filter.hasPrerequisites !== undefined) {
         const hasPrereq = feat.prerequisites.length > 0;
         if (hasPrereq !== filter.hasPrerequisites) return false;
@@ -1346,6 +1405,7 @@ export function createCompendium(
     const toolCatSet = toSet(filter.toolCategory);
 
     return equipment.filter((item) => {
+      if (!matchesSourceFilter((item as any).source, filter.source)) return false;
       if (kindSet && !kindSet.has(item.kind)) return false;
       if (filter.minCostCopper !== undefined && item.costCopper < filter.minCostCopper) {
         return false;
@@ -1407,6 +1467,7 @@ export function createCompendium(
       minCostCopper: filter.minCostCopper,
       maxCostCopper: filter.maxCostCopper,
       maxWeightLb: filter.maxWeightLb,
+      source: filter.source,
     }) as readonly WeaponData[];
   }
 
@@ -1416,6 +1477,7 @@ export function createCompendium(
     const catSet = toSet(filter.category);
 
     return armors.filter((armor) => {
+      if (!matchesSourceFilter((armor as any).source, filter.source)) return false;
       if (catSet && !catSet.has(armor.category)) return false;
       if (filter.minBaseAc !== undefined && armor.baseAc < filter.minBaseAc) return false;
       if (filter.maxCostCopper !== undefined && armor.costCopper > filter.maxCostCopper) {
@@ -1448,6 +1510,7 @@ export function createCompendium(
     const raritySet = toSet(filter.rarity);
 
     return magicItems.filter((item) => {
+      if (!matchesSourceFilter(item.source, filter.source)) return false;
       if (catSet && !catSet.has(item.category)) return false;
       if (raritySet && !raritySet.has(item.rarity)) return false;
       if (
@@ -1482,6 +1545,7 @@ export function createCompendium(
     const condImmuneSet = toSet(filter.conditionImmunity);
 
     return monsters.filter((monster) => {
+      if (!matchesSourceFilter(monster.source, filter.source)) return false;
       if (sizeSet && !sizeSet.has(monster.size)) return false;
       if (typeSet && !typeSet.has(monster.type)) return false;
       if (crSet && !crSet.has(monster.challengeRating)) return false;
@@ -1533,6 +1597,7 @@ export function createCompendium(
 
     for (const doc of searchDocuments) {
       if (kindSet && !kindSet.has(doc.kind)) continue;
+      if (!matchesSourceFilter(doc.source, options?.source)) continue;
 
       if (queryTokens.length === 0) {
         results.push({
@@ -1703,7 +1768,68 @@ export function createCompendium(
     filterSpells,
     filterMonsters,
     searchCompendium,
+
+    registerHomebrewFeat,
+    registerHomebrewBackground,
+    getSource: (entity) => getEntitySource(entity),
   };
+
+  function registerHomebrewFeat(feat: FeatData): void {
+    const validated = FeatSchema.parse({ ...feat, source: 'homebrew' });
+    const screenResult = screenHomebrewRecord(validated);
+    if (!screenResult.valid) {
+      throw new Error(
+        `Product Identity screening failed for feat "${validated.name}": ${screenResult.violations.join('; ')}`,
+      );
+    }
+    const idx = feats.findIndex((f) => f.id === validated.id);
+    if (idx >= 0) {
+      feats[idx] = validated;
+    } else {
+      feats.push(validated);
+    }
+    featMap.set(validated.id, validated);
+    const searchTxt = normalizeSearchText(`${validated.id} ${validated.name} ${validated.description}`);
+    featSearchText.set(validated.id, searchTxt);
+    const docIdx = searchDocuments.findIndex((d) => d.kind === 'feat' && d.id === validated.id);
+    if (docIdx >= 0) {
+      searchDocuments.splice(docIdx, 1);
+    }
+    addSearchDoc(validated.id, validated.name, 'feat', 'Feat', searchTxt, validated);
+  }
+
+  function registerHomebrewBackground(bg: BackgroundData): void {
+    const validated = BackgroundSchema.parse({ ...bg, source: 'homebrew' });
+    const screenResult = screenHomebrewRecord({
+      id: validated.id,
+      name: validated.name,
+      description: validated.description,
+      source: validated.source,
+      humanReviewed: validated.humanReviewed,
+      feature: validated.feature,
+    });
+    if (!screenResult.valid) {
+      throw new Error(
+        `Product Identity screening failed for background "${validated.name}": ${screenResult.violations.join('; ')}`,
+      );
+    }
+    const idx = backgrounds.findIndex((b) => b.id === validated.id);
+    if (idx >= 0) {
+      backgrounds[idx] = validated;
+    } else {
+      backgrounds.push(validated);
+    }
+    backgroundMap.set(validated.id, validated);
+    const searchTxt = normalizeSearchText(
+      `${validated.id} ${validated.name} ${validated.description} ${validated.feature.name} ${validated.feature.description}`,
+    );
+    backgroundSearchText.set(validated.id, searchTxt);
+    const docIdx = searchDocuments.findIndex((d) => d.kind === 'background' && d.id === validated.id);
+    if (docIdx >= 0) {
+      searchDocuments.splice(docIdx, 1);
+    }
+    addSearchDoc(validated.id, validated.name, 'background', 'Background', searchTxt, validated);
+  }
 }
 
 /**

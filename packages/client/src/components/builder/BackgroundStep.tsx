@@ -4,6 +4,7 @@ import {
   type SkillId,
   type SrdCompendium,
   defaultCompendium,
+  screenHomebrewRecord,
 } from '@srd5/data';
 import {
   applyDuplicateProficiencyReplacement,
@@ -102,6 +103,66 @@ export function BackgroundStep({
         customBackground: {
           ...prev.customBackground,
           name,
+        },
+      };
+    });
+  };
+
+  const handleCustomDescChange = (description: string) => {
+    onChange((prev) => {
+      if (!prev.customBackground) return prev;
+      return {
+        ...prev,
+        customBackground: {
+          ...prev.customBackground,
+          description,
+        },
+      };
+    });
+  };
+
+  const handleCustomFeatureNameChange = (featureName: string) => {
+    onChange((prev) => {
+      if (!prev.customBackground) return prev;
+      const prevFeature = prev.customBackground.feature ?? { name: '', description: '' };
+      return {
+        ...prev,
+        customBackground: {
+          ...prev.customBackground,
+          feature: {
+            ...prevFeature,
+            name: featureName,
+          },
+        },
+      };
+    });
+  };
+
+  const handleCustomFeatureDescChange = (featureDesc: string) => {
+    onChange((prev) => {
+      if (!prev.customBackground) return prev;
+      const prevFeature = prev.customBackground.feature ?? { name: '', description: '' };
+      return {
+        ...prev,
+        customBackground: {
+          ...prev.customBackground,
+          feature: {
+            ...prevFeature,
+            description: featureDesc,
+          },
+        },
+      };
+    });
+  };
+
+  const handleCustomHumanReview = (humanReviewed: boolean) => {
+    onChange((prev) => {
+      if (!prev.customBackground) return prev;
+      return {
+        ...prev,
+        customBackground: {
+          ...prev.customBackground,
+          humanReviewed,
         },
       };
     });
@@ -386,6 +447,102 @@ export function BackgroundStep({
                   })}
                 </div>
               </div>
+            </div>
+
+            {/* Background Narrative & Feature Authoring */}
+            <div className="rounded-lg bg-slate-950/70 border border-slate-800 p-3.5 space-y-3">
+              <div>
+                <label
+                  htmlFor="builder-custom-bg-desc"
+                  className="block text-xs font-medium text-slate-300 mb-1"
+                >
+                  Background Description
+                </label>
+                <textarea
+                  id="builder-custom-bg-desc"
+                  data-testid="builder-custom-bg-desc"
+                  rows={2}
+                  value={buildState.customBackground.description ?? ''}
+                  onChange={(e) => handleCustomDescChange(e.target.value)}
+                  placeholder="Describe the backstory or lifestyle of this background..."
+                  className="w-full rounded bg-slate-950 border border-slate-700 px-3 py-1.5 text-xs text-slate-100"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="builder-custom-bg-feature-name"
+                    className="block text-xs font-medium text-slate-300 mb-1"
+                  >
+                    Feature Name
+                  </label>
+                  <input
+                    id="builder-custom-bg-feature-name"
+                    data-testid="builder-custom-bg-feature-name"
+                    type="text"
+                    value={buildState.customBackground.feature?.name ?? ''}
+                    onChange={(e) => handleCustomFeatureNameChange(e.target.value)}
+                    placeholder="e.g. Tomb Sense, City Secrets"
+                    className="w-full rounded bg-slate-950 border border-slate-700 px-3 py-1.5 text-xs text-slate-100"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="builder-custom-bg-feature-desc"
+                    className="block text-xs font-medium text-slate-300 mb-1"
+                  >
+                    Feature Description
+                  </label>
+                  <input
+                    id="builder-custom-bg-feature-desc"
+                    data-testid="builder-custom-bg-feature-desc"
+                    type="text"
+                    value={buildState.customBackground.feature?.description ?? ''}
+                    onChange={(e) => handleCustomFeatureDescChange(e.target.value)}
+                    placeholder="Brief description of the background's ribbon feature"
+                    className="w-full rounded bg-slate-950 border border-slate-700 px-3 py-1.5 text-xs text-slate-100"
+                  />
+                </div>
+              </div>
+
+              {/* Product Identity Screening Alert */}
+              {(() => {
+                const screenRes = screenHomebrewRecord({
+                  name: buildState.customBackground.name,
+                  description: buildState.customBackground.description,
+                  feature: buildState.customBackground.feature,
+                  source: 'homebrew',
+                });
+                if (screenRes.valid) return null;
+                return (
+                  <div
+                    data-testid="builder-bg-pi-warning"
+                    className="rounded-lg bg-amber-950/70 border border-amber-600/70 p-3 text-xs text-amber-200"
+                  >
+                    <div className="font-semibold flex items-center gap-1.5">
+                      <span>⚠️</span> Product Identity Warning
+                    </div>
+                    <p className="mt-1 text-[11px] text-amber-300">
+                      {screenRes.violations.join('; ')}
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* Human Review Checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  data-testid="builder-bg-human-review"
+                  checked={Boolean(buildState.customBackground.humanReviewed)}
+                  onChange={(e) => handleCustomHumanReview(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0"
+                />
+                <span className="text-xs text-slate-300">
+                  I confirm this background is original homebrew (not copied or paraphrased from closed official content).
+                </span>
+              </label>
             </div>
           </div>
         )}

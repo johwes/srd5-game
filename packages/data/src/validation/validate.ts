@@ -5,9 +5,12 @@ import {
   ALLOWED_SRD_RACE_IDS,
   ALLOWED_SRD_SUBCLASS_IDS,
   ALLOWED_SRD_SUBRACE_IDS,
+  containsProductIdentityMonster,
   containsProductIdentityProperName,
+  containsProductIdentitySetting,
   isProhibitedMonsterId,
   isSrd52OnlyIdentifier,
+  screenHomebrewRecord,
   type SrdIngestionInput,
 } from '../ingestion/index.js';
 import {
@@ -288,7 +291,10 @@ function collectEffectStepFormulas(
 /**
  * Runs the comprehensive SRD 5.1 validation and referential integrity suite across all 15 collections.
  */
-export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationReport {
+export function validateSrdDataset(
+  dataset: SrdIngestionInput,
+  options?: { requireHumanReview?: boolean },
+): SrdValidationReport {
   const errors: SrdValidationError[] = [];
 
   const addError = (
@@ -808,11 +814,12 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
   }
   for (const sc of dataset.subclasses) {
     if (sc.source === 'homebrew') {
-      if (containsProductIdentityProperName(sc.id) || containsProductIdentityProperName(sc.name)) {
+      const screenResult = screenHomebrewRecord(sc, options);
+      for (const violation of screenResult.violations) {
         addError(
           'allowlist',
           'subclasses',
-          `Subclass "${sc.name}" (${sc.id}) contains prohibited Product Identity proper name`,
+          `Subclass "${sc.name}" (${sc.id}) failed Product Identity gate: ${violation}`,
           sc.id,
         );
       }
@@ -905,19 +912,22 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
   }
   for (const bg of dataset.backgrounds) {
     if (bg.source === 'homebrew') {
-      if (containsProductIdentityProperName(bg.id) || containsProductIdentityProperName(bg.name)) {
+      const screenResult = screenHomebrewRecord(
+        {
+          id: bg.id,
+          name: bg.name,
+          description: bg.description,
+          source: bg.source,
+          humanReviewed: (bg as any).humanReviewed,
+          feature: bg.feature,
+        },
+        options,
+      );
+      for (const violation of screenResult.violations) {
         addError(
           'allowlist',
           'backgrounds',
-          `Background "${bg.name}" (${bg.id}) contains prohibited Product Identity proper name`,
-          bg.id,
-        );
-      }
-      if (isSrd52OnlyIdentifier(bg.id) || isSrd52OnlyIdentifier(bg.name)) {
-        addError(
-          'allowlist',
-          'backgrounds',
-          `SRD 5.2 background "${bg.name}" (${bg.id}) is not allowed`,
+          `Background "${bg.name}" (${bg.id}) failed Product Identity gate: ${violation}`,
           bg.id,
         );
       }
@@ -969,19 +979,21 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
   }
   for (const feat of dataset.feats) {
     if (feat.source === 'homebrew') {
-      if (containsProductIdentityProperName(feat.id) || containsProductIdentityProperName(feat.name)) {
+      const screenResult = screenHomebrewRecord(
+        {
+          id: feat.id,
+          name: feat.name,
+          description: feat.description,
+          source: feat.source,
+          humanReviewed: (feat as any).humanReviewed,
+        },
+        options,
+      );
+      for (const violation of screenResult.violations) {
         addError(
           'allowlist',
           'feats',
-          `Feat "${feat.name}" (${feat.id}) contains prohibited Product Identity proper name`,
-          feat.id,
-        );
-      }
-      if (isSrd52OnlyIdentifier(feat.id) || isSrd52OnlyIdentifier(feat.name)) {
-        addError(
-          'allowlist',
-          'feats',
-          `SRD 5.2 feat "${feat.name}" (${feat.id}) is not allowed`,
+          `Feat "${feat.name}" (${feat.id}) failed Product Identity gate: ${violation}`,
           feat.id,
         );
       }

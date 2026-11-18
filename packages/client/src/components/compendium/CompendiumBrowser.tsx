@@ -120,9 +120,11 @@ export function CompendiumBrowser({
   const [referenceKind, setReferenceKind] = useState<'all' | 'condition' | 'background' | 'feat'>(
     'all',
   );
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'srd-5.1' | 'homebrew'>('all');
 
   const resetAllFilters = () => {
     setSearchQuery('');
+    setSourceFilter('all');
     setRaceSize('all');
     setRaceAbility('all');
     setRaceDarkvisionOnly(false);
@@ -154,6 +156,7 @@ export function CompendiumBrowser({
 
   const items: readonly CompendiumListItem[] = useMemo(() => {
     const trimmedQuery = searchQuery.trim() || undefined;
+    const effSource = sourceFilter === 'all' ? undefined : sourceFilter;
 
     switch (activeTab) {
       case 'races': {
@@ -162,6 +165,7 @@ export function CompendiumBrowser({
           size: raceSize === 'all' ? undefined : raceSize,
           abilityBonus: raceAbility === 'all' ? undefined : raceAbility,
           hasDarkvision: raceDarkvisionOnly ? true : undefined,
+          source: effSource,
         });
         return filtered.map((race) => ({
           id: race.id,
@@ -184,6 +188,7 @@ export function CompendiumBrowser({
             classSpellcasterMode === 'all'
               ? undefined
               : classSpellcasterMode === 'spellcaster',
+          source: effSource,
         });
         return filtered.map((cls) => ({
           id: cls.id,
@@ -202,6 +207,7 @@ export function CompendiumBrowser({
           classId: spellClassId === 'all' ? undefined : spellClassId,
           concentration: spellConcentrationOnly ? true : undefined,
           ritual: spellRitualOnly ? true : undefined,
+          source: effSource,
         });
         return filtered.map((spell) => ({
           id: spell.id,
@@ -218,6 +224,7 @@ export function CompendiumBrowser({
           kind: equipmentKind === 'all' ? undefined : equipmentKind,
           weaponCategory: weaponCategory === 'all' ? undefined : weaponCategory,
           armorCategory: armorCategory === 'all' ? undefined : armorCategory,
+          source: effSource,
         });
         return filtered.map((item) => {
           const detailSummary =
@@ -247,6 +254,7 @@ export function CompendiumBrowser({
             magicItemAttunement === 'all'
               ? undefined
               : magicItemAttunement === 'required',
+          source: effSource,
         });
         return filtered.map((item) => ({
           id: item.id,
@@ -264,6 +272,7 @@ export function CompendiumBrowser({
           size: monsterSize === 'all' ? undefined : monsterSize,
           challengeRating: monsterCr === 'all' ? undefined : monsterCr,
           aiArchetype: monsterArchetype === 'all' ? undefined : monsterArchetype,
+          source: effSource,
         });
         return filtered.map((monster) => ({
           id: monster.id,
@@ -279,7 +288,7 @@ export function CompendiumBrowser({
         const qLower = trimmedQuery?.toLowerCase();
 
         if (referenceKind === 'all' || referenceKind === 'background') {
-          for (const bg of compendium.filterBackgrounds({ query: trimmedQuery })) {
+          for (const bg of compendium.filterBackgrounds({ query: trimmedQuery, source: effSource })) {
             results.push({
               id: `bg:${bg.id}`,
               name: bg.name,
@@ -290,7 +299,7 @@ export function CompendiumBrowser({
           }
         }
         if (referenceKind === 'all' || referenceKind === 'feat') {
-          for (const feat of compendium.filterFeats({ query: trimmedQuery })) {
+          for (const feat of compendium.filterFeats({ query: trimmedQuery, source: effSource })) {
             results.push({
               id: `feat:${feat.id}`,
               name: feat.name,
@@ -300,7 +309,7 @@ export function CompendiumBrowser({
             });
           }
         }
-        if (referenceKind === 'all' || referenceKind === 'condition') {
+        if (effSource !== 'homebrew' && (referenceKind === 'all' || referenceKind === 'condition')) {
           for (const cond of compendium.conditions) {
             if (
               !qLower ||
@@ -324,6 +333,7 @@ export function CompendiumBrowser({
     activeTab,
     compendium,
     searchQuery,
+    sourceFilter,
     raceSize,
     raceAbility,
     raceDarkvisionOnly,
@@ -430,7 +440,18 @@ export function CompendiumBrowser({
               className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400"
             />
           </div>
-          <div className="flex items-center justify-between sm:justify-end gap-3">
+          <div className="flex items-center justify-between sm:justify-end gap-3 flex-wrap">
+            <select
+              aria-label="Filter compendium by source"
+              data-testid="compendium-filter-source"
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value as 'all' | 'srd-5.1' | 'homebrew')}
+              className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200"
+            >
+              <option value="all">All Sources</option>
+              <option value="srd-5.1">SRD 5.1 Only</option>
+              <option value="homebrew">Homebrew Only</option>
+            </select>
             <span
               className="text-xs font-medium text-slate-400"
               data-testid="compendium-result-count"

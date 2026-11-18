@@ -9,6 +9,7 @@ import {
   type SkillId,
   type SrdCompendium,
   createCompendium,
+  screenHomebrewRecord,
 } from '@srd5/data';
 import type {
   CharacterBuildState,
@@ -636,6 +637,20 @@ function validateCustomBackground(
   compendium: SrdCompendium,
 ): string[] {
   const errors: string[] = [];
+
+  const piResult = screenHomebrewRecord({
+    name: customBg.name,
+    description: customBg.description,
+    source: customBg.source,
+    humanReviewed: customBg.humanReviewed,
+    feature: customBg.feature,
+  });
+  if (!piResult.valid) {
+    for (const v of piResult.violations) {
+      errors.push(`Custom background Product Identity violation: ${v}`);
+    }
+  }
+
   const [skillA, skillB] = customBg.skillProficiencies;
   if (!SKILL_ID_SET.has(skillA)) {
     errors.push(`Custom background skill '${skillA}' is not a valid SRD skill.`);

@@ -746,6 +746,15 @@ export function computeDerivedCharacter(
     }
   };
 
+  // Add Background Feature if present
+  if (background?.feature) {
+    addFeatureId(background.feature.id);
+  } else if (state.customBackground?.feature) {
+    addFeatureId(
+      state.customBackground.feature.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    );
+  }
+
   // Resolve Dragonborn Draconic Ancestry if applicable
   const selectedDraconicAncestryKey =
     state.racialChoices['draconic-ancestry']?.[0]?.toLowerCase();
@@ -914,7 +923,9 @@ export function computeDerivedCharacter(
       const asiOrFeat = entry.asiOrFeatByLevel[lvl];
       if (asiOrFeat?.type === 'feat') {
         addFeatId(asiOrFeat.featId);
-        const feat = compendium.getFeat(asiOrFeat.featId);
+        const feat =
+          state.customFeats?.find((f) => f.id === asiOrFeat.featId) ??
+          compendium.getFeat(asiOrFeat.featId);
         if (feat) {
           for (const mod of feat.modifiers) {
             sourcedModifiers.push({
@@ -1108,7 +1119,9 @@ export function computeDerivedCharacter(
             });
           }
         } else {
-          const feat = compendium.getFeat(sel.featId);
+          const feat =
+            state.customFeats?.find((f) => f.id === sel.featId) ??
+            compendium.getFeat(sel.featId);
           const fVal = feat?.abilityBonuses?.[ability] ?? 0;
           if (fVal !== 0 && feat) {
             featBonus += fVal;
