@@ -474,6 +474,7 @@ export function RealmBattleView({
           showConditionBadges={true}
           showTokenNames={true}
           hazardZones={viewState.combat?.hazardZones ?? []}
+          props={viewState.props ?? []}
           events={events}
           className="w-full h-full"
         />

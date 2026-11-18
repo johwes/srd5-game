@@ -361,6 +361,7 @@ export function projectPlayerView(
       blocksMovement: prop.blocksMovement,
       blocksSight: prop.blocksSight,
       shrineType: prop.shrineType,
+      discovered: prop.discovered === true,
     });
   }
 

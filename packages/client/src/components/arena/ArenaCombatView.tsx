@@ -988,6 +988,7 @@ export function ArenaCombatView({
             showConditionBadges={true}
             showTokenNames={true}
             hazardZones={viewState.combat?.hazardZones ?? []}
+            props={viewState.props ?? []}
             events={events}
           />
         </TacticalCombatHud>

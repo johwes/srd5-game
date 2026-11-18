@@ -6,6 +6,7 @@ import { TerrainTileRenderer } from './layers/TerrainTileLayer.js';
 import { CreatureTokenRenderer } from './layers/CreatureTokenLayer.js';
 import { FloatingTextRenderer } from './layers/FloatingTextLayer.js';
 import { HazardZoneRenderer } from './layers/HazardZoneLayer.js';
+import { PropRenderer } from './layers/PropLayer.js';
 import { PathAndAoeRenderer } from './layers/PathAndAoeLayer.js';
 import { LightingAndFogRenderer } from './layers/LightingAndFogLayer.js';
 import { assetRegistry } from './assets/index.js';
@@ -42,6 +43,7 @@ export function TacticalCanvasViewport({
   showTokenFacing = true,
   showTokenNames = true,
   hazardZones = [],
+  props = [],
   pathPreview = null,
   enableHoverPathPreview = true,
   activeAoeTemplate = null,
@@ -106,6 +108,7 @@ export function TacticalCanvasViewport({
   const terrainRendererRef = useRef<TerrainTileRenderer | null>(null);
   const tokenRendererRef = useRef<CreatureTokenRenderer | null>(null);
   const hazardZoneRendererRef = useRef<HazardZoneRenderer | null>(null);
+  const propRendererRef = useRef<PropRenderer | null>(null);
   const floatingTextRendererRef = useRef<FloatingTextRenderer | null>(null);
   const pathAndAoeRendererRef = useRef<PathAndAoeRenderer | null>(null);
   const fogRendererRef = useRef<LightingAndFogRenderer | null>(null);
@@ -231,6 +234,9 @@ export function TacticalCanvasViewport({
         const hazardZoneRenderer = new HazardZoneRenderer(sceneGraph.hazardLayer);
         hazardZoneRendererRef.current = hazardZoneRenderer;
 
+        const propRenderer = new PropRenderer(sceneGraph.propLayer);
+        propRendererRef.current = propRenderer;
+
         const floatingTextRenderer = new FloatingTextRenderer(sceneGraph.floatingTextLayer);
         floatingTextRendererRef.current = floatingTextRenderer;
 
@@ -294,6 +300,10 @@ export function TacticalCanvasViewport({
         if (hazardZoneRendererRef.current) {
           hazardZoneRendererRef.current.destroy();
           hazardZoneRendererRef.current = null;
+        }
+        if (propRendererRef.current) {
+          propRendererRef.current.destroy();
+          propRendererRef.current = null;
         }
         if (terrainRendererRef.current) {
           terrainRendererRef.current.destroy();
@@ -410,6 +420,18 @@ export function TacticalCanvasViewport({
       });
     }
   }, [hazardZones, cellSize, pixiReady]);
+
+  // Update Interactive Prop markers (doors, chests, traps, stairs, shrines).
+  // Props arrive fog-projected from the transport view; the renderer also
+  // skips undiscovered traps/secret doors for direct GameState usage.
+  useEffect(() => {
+    if (propRendererRef.current) {
+      propRendererRef.current.render({
+        props,
+        cellSize,
+      });
+    }
+  }, [props, cellSize, pixiReady, atlasLoaded]);
 
   // Update Interactive Overlays (Path preview, AOE templates, Targeting rays)
   useEffect(() => {

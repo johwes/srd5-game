@@ -1028,6 +1028,7 @@ export function DungeonView({
             showConditionBadges={true}
             showTokenNames={true}
             hazardZones={viewState.combat?.hazardZones ?? []}
+            props={viewState.props ?? []}
             events={events}
             className="w-full h-full"
           />
@@ -1058,6 +1059,7 @@ export function DungeonView({
               showTokenHpArcs={true}
               showConditionBadges={true}
               showTokenNames={true}
+              props={viewState.props ?? []}
               className="w-full h-full"
             />
 

@@ -40,9 +40,10 @@ export const KENNEY_SPRITE_FRAMES: Record<string, TileFrame> = {
   lava: f(9, 3),
   void: f(0, 3),
 
-  // Interactive Props
+  // Interactive Props (verified against tilemap_packed.png: col 9 row 3 is
+  // the dark open archway; cols 10-11 row 3 are closed door panels)
   door_closed: f(10, 3),
-  door_open: f(11, 3),
+  door_open: f(9, 3),
   door_locked: f(10, 3),
   stairs_down: f(2, 6),
   stairs_up: f(3, 6),

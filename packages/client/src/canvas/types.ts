@@ -1,4 +1,4 @@
-import type { Container } from 'pixi.js';
+import type { Container, Texture } from 'pixi.js';
 import type { ConditionId, CreatureSize } from '@srd5/data';
 import type {
   AoeShape,
@@ -14,11 +14,13 @@ import type {
   LightSource,
   PathfindingResult,
   PathStep,
+  PropKind,
+  PropState,
   TacticalGrid,
   TileTerrainType,
   VisionCreature,
 } from '@srd5/engine';
-import type { CellVisibility, GameEvent, PlayerViewCell, PlayerViewCombatant, PlayerViewGrid } from '@srd5/transport';
+import type { CellVisibility, GameEvent, PlayerViewCell, PlayerViewCombatant, PlayerViewGrid, PlayerViewProp } from '@srd5/transport';
 
 /**
  * Standard pixel dimensions for a 5-ft tactical square on the canvas.
@@ -220,6 +222,35 @@ export interface TerrainRenderOptions {
 }
 
 /**
+ * Structural prop input for the PixiJS prop layer. Accepts both authoritative
+ * engine `InteractiveProp` records and fog-projected transport `PlayerViewProp`
+ * records (both share `PropKind` / `PropState`).
+ */
+export interface CanvasPropInput {
+  id: string;
+  x: number;
+  y: number;
+  kind: PropKind;
+  state: PropState;
+  /** Engine-side discovery flag. Fog projection strips undiscovered traps and
+   * secret doors before they reach the view, so this only matters for direct
+   * `GameState` usage. */
+  discovered?: boolean;
+  shrineType?: string;
+}
+
+/**
+ * Options for configuring the interactive-prop layer (doors, chests, traps,
+ * stairs, shrines, levers). Rendered into the scene graph `propLayer`.
+ */
+export interface PropRenderOptions {
+  props: ReadonlyArray<CanvasPropInput | PlayerViewProp>;
+  cellSize: number;
+  /** Texture lookup override (tests / custom atlases). Defaults to the shared AssetRegistry. */
+  getTexture?: (frameKey: string) => Texture | undefined;
+}
+
+/**
  * Options for configuring movement path previews and Opportunity Attack warnings.
  */
 export interface PathPreviewOptions {
@@ -347,6 +378,8 @@ export interface TacticalCanvasViewportProps {
   showTokenNames?: boolean;
   /** Persistent spell hazard zones (Grease, Web, Spike Growth, …) rendered as ground overlays. */
   hazardZones?: readonly HazardZone[];
+  /** Interactive dungeon props (doors, chests, traps, stairs, shrines) rendered into the prop layer. */
+  props?: ReadonlyArray<CanvasPropInput | PlayerViewProp>;
   /** Live combat/dungeon events rendered as floating combat text (MISS, CONCENTRATION BROKEN, …). */
   events?: GameEvent[];
   pathPreview?: PathPreviewOptions | null;
