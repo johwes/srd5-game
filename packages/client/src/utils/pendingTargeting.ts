@@ -82,6 +82,64 @@ export function canCommitPending(p: PendingTarget): boolean {
   return false;
 }
 
+/** Self-emanation AOEs (range 0, e.g. Burning Hands): the origin is the caster. */
+export function isSelfEmanation(p: PendingTarget): boolean {
+  return p.kind === 'aoe' && p.rangeFeet <= 0;
+}
+
+/**
+ * Self cones/lines aim by bearing: any in-reach cell picks the direction,
+ * the origin stays on the caster (matches the engine, which rasterizes
+ * self-cones from the caster along `direction`).
+ */
+export function needsDirectionPick(p: PendingTarget): boolean {
+  return (
+    p.kind === 'aoe' && p.rangeFeet <= 0 && (p.shape === 'cone' || p.shape === 'line')
+  );
+}
+
+/**
+ * Cell-pick budget: the spell's range, or the cone/line length for
+ * self-emanations (direction cursor). Self spheres/cubes need no pick.
+ */
+export function aimRangeFeet(p: PendingTarget): number {
+  if (p.kind !== 'aoe') return 0;
+  if (p.rangeFeet > 0) return p.rangeFeet;
+  return needsDirectionPick(p) ? p.sizeFeet : 0;
+}
+
+export interface AoeCommit {
+  targetCell: { x: number; y: number };
+  /** Bearing for self cones/lines; omitted for point-anchored AOEs. */
+  directionRad?: number;
+}
+
+/**
+ * Resolves the engine payload for a confirmed AOE: point-anchored AOEs use
+ * the picked origin; self-emanations anchor on the caster, with a bearing
+ * for cones/lines. Returns null when nothing committable is armed.
+ */
+export function commitAoeTarget(
+  p: PendingTarget,
+  casterPosition: { x: number; y: number },
+): AoeCommit | null {
+  if (p.kind !== 'aoe' || !canCommitPending(p)) return null;
+  if (isSelfEmanation(p)) {
+    if (needsDirectionPick(p) && p.origin) {
+      return {
+        targetCell: { ...casterPosition },
+        directionRad: Math.atan2(
+          p.origin.y - casterPosition.y,
+          p.origin.x - casterPosition.x,
+        ),
+      };
+    }
+    return { targetCell: { ...casterPosition } };
+  }
+  if (!p.origin) return null;
+  return { targetCell: p.origin };
+}
+
 export function pendingTargetHint(p: PendingTarget): string {
   if (p.kind === 'none') return '';
   if (p.kind === 'single') {

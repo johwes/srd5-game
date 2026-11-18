@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { compendium, requirePregenCharacter } from '@srd5/data';
 import {
   type Combatant,
+  computeDerivedCharacter,
+  createCharacterCombatant,
   createHazardZone,
   createInitialGameState,
+  createMonsterCombatant,
   createTacticalGrid,
+  createTurnBudget,
   reduceGame,
   setGridCells,
 } from '../index.js';
@@ -269,5 +274,57 @@ describe('SRD-311: reduceGame Authoritative Reducer', () => {
     expect(res.nextState.combat!.activeCombatantId).not.toBe(activeId);
     expect(res.events.some((e) => e.type === 'TURN_ENDED')).toBe(true);
     expect(res.events.some((e) => e.type === 'TURN_STARTED')).toBe(true);
+  });
+
+  it('threads directionRad through DECLARE_CAST_SPELL so self-cones aim west', () => {
+    const grid = createTacticalGrid(12, 12);
+    const wizardSheet = computeDerivedCharacter(requirePregenCharacter('pregen-wizard'), compendium);
+    const wizard = createCharacterCombatant(wizardSheet, { x: 5, y: 5 });
+    const goblinData = compendium.requireMonster('goblin');
+    const west = createMonsterCombatant(goblinData, 'goblin-west', { x: 4, y: 5 });
+    const east = createMonsterCombatant(goblinData, 'goblin-east', { x: 6, y: 5 });
+
+    const base = createInitialGameState({
+      grid,
+      party: [wizard],
+      monsters: [west, east],
+      rngState: 424242,
+    });
+    const started = reduceGame(base, {
+      type: 'START_COMBAT',
+      encounterId: 'direction-test',
+      combatants: [wizard, west, east],
+    }).nextState;
+
+    // Force the wizard's turn with a fresh budget (initiative order is random).
+    const order = started.combat!.initiativeOrder;
+    const withWizardActive = {
+      ...started,
+      combat: {
+        ...started.combat!,
+        activeCombatantId: wizard.id,
+        activeCombatantIndex: Math.max(
+          0,
+          order.findIndex((e) => e.entityId === wizard.id),
+        ),
+        turnBudget: createTurnBudget(started.combat!.combatants[wizard.id]!),
+      },
+    };
+
+    // Burning Hands aimed west (Math.PI): west goblin burns, east is untouched.
+    const res = reduceGame(withWizardActive, {
+      type: 'DECLARE_CAST_SPELL',
+      actorId: wizard.id,
+      spellId: 'burning-hands',
+      slotLevel: 1,
+      targetCell: { x: 5, y: 5 },
+      directionRad: Math.PI,
+    });
+
+    expect(
+      res.events.some((e) => e.type === 'SPELL_CAST' && e.spellId === 'burning-hands'),
+    ).toBe(true);
+    expect(res.nextState.combat!.combatants['goblin-west']!.currentHp).toBeLessThan(7);
+    expect(res.nextState.combat!.combatants['goblin-east']!.currentHp).toBe(7);
   });
 });

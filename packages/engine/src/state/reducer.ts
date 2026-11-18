@@ -305,6 +305,12 @@ export function reduceGame(
         targetIds: command.targetIds,
         originCell: command.targetCell,
         grid: nextState.grid,
+        // SRD-410: self-emanation cones/lines aim by direction (e.g. Burning
+        // Hands toward the picked point). Without this every cone resolves east.
+        direction:
+          command.directionRad !== undefined
+            ? { x: Math.cos(command.directionRad), y: Math.sin(command.directionRad) }
+            : undefined,
       });
 
       nextState.combat = res.state;

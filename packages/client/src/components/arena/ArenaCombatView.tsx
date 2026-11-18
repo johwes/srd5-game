@@ -28,7 +28,11 @@ import {
   buildPendingTargetForAttack,
   buildPendingTargetForSpell,
   canCommitPending,
+  commitAoeTarget,
+  isSelfEmanation,
+  needsDirectionPick,
   pendingTargetHint,
+  aimRangeFeet,
   validateTargetPick,
   type PendingTarget,
 } from '../../utils/pendingTargeting.js';
@@ -371,15 +375,21 @@ export function ArenaCombatView({
     // SRD-410: armed AOE origin selection
     if (pendingTarget.kind === 'aoe') {
       if (!activeCombatant) return;
+      // Self spheres/cubes are anchored on the caster — just Confirm.
+      if (isSelfEmanation(pendingTarget) && !needsDirectionPick(pendingTarget)) {
+        showFeedback(`${pendingTarget.label} originates from you — Confirm to cast.`);
+        return;
+      }
       const dist = getFootprintDistanceFeet(
         activeCombatant.position,
         activeCombatant.size,
         cell,
         'small',
       );
-      if (dist > pendingTarget.rangeFeet) {
+      const aimRange = aimRangeFeet(pendingTarget);
+      if (dist > aimRange) {
         showFeedback(
-          `AOE origin out of range (${dist}ft > ${pendingTarget.rangeFeet}ft). Pick a closer point!`,
+          `AOE ${needsDirectionPick(pendingTarget) ? 'direction' : 'origin'} out of range (${dist}ft > ${aimRange}ft). Pick a closer point!`,
         );
         return;
       }
@@ -577,7 +587,8 @@ export function ArenaCombatView({
   // SRD-410: commit armed AOE origin.
   const handleCommitAoe = useCallback(() => {
     if (pendingTarget.kind !== 'aoe' || !activeCombatantId || !activeCombatant) return;
-    if (!pendingTarget.origin) {
+    const commit = commitAoeTarget(pendingTarget, activeCombatant.position);
+    if (!commit) {
       showFeedback(`Pick a point within range for ${pendingTarget.label}.`);
       return;
     }
@@ -586,7 +597,8 @@ export function ArenaCombatView({
       actorId: activeCombatantId,
       spellId: pendingTarget.spellId,
       slotLevel: pendingTarget.slotLevel,
-      targetCell: pendingTarget.origin,
+      targetCell: commit.targetCell,
+      ...(commit.directionRad !== undefined ? { directionRad: commit.directionRad } : {}),
     });
     setPendingTarget({ kind: 'none' });
   }, [activeCombatant, activeCombatantId, handleDispatch, pendingTarget, showFeedback]);
@@ -906,7 +918,17 @@ export function ArenaCombatView({
               });
               return;
             }
-            setPendingTarget(pending);
+            // Self spheres/cubes anchor on the caster — pre-set the origin
+            // so the player only Confirms (cones/lines still pick a bearing).
+            if (
+              pending.kind === 'aoe' &&
+              isSelfEmanation(pending) &&
+              !needsDirectionPick(pending)
+            ) {
+              setPendingTarget({ ...pending, origin: { ...activeCombatant.position } });
+            } else {
+              setPendingTarget(pending);
+            }
           }}
           onUseClassFeature={(featureId, optionId) => {
             if (!activeCombatantId) return;
