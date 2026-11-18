@@ -306,9 +306,12 @@ describe('SRD-508: Procedural DungeonGenerator & Guaranteed BFS Connectivity', (
       const tombsMonsters = [
         'ghoul',
         'giant-spider',
+        'giant-wolf-spider',
+        'shadow',
         'cultist',
         'wight',
         'gelatinous-cube',
+        'specter',
         'cult-fanatic',
       ];
       for (const id of allMonsterIds) {

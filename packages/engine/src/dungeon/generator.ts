@@ -109,8 +109,8 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         primaryFloorTerrain: 'floor_stone',
         wallTerrain: 'wall_solid',
         hazardTerrain: 'rubble',
-        monsters: ['kobold', 'giant-rat', 'goblin', 'skeleton', 'zombie'],
-        bossMonsters: ['goblin-boss', 'bugbear'],
+        monsters: ['kobold', 'giant-rat', 'giant-bat', 'goblin', 'giant-wolf-spider', 'skeleton', 'zombie'],
+        bossMonsters: ['goblin-boss', 'bugbear', 'warhorse-skeleton', 'shadow', 'thug'],
         trapType: {
           damageFormula: '1d6',
           damageType: 'bludgeoning',
@@ -128,8 +128,8 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         primaryFloorTerrain: 'floor_stone',
         wallTerrain: 'wall_solid',
         hazardTerrain: 'water_shallow',
-        monsters: ['ghoul', 'giant-spider', 'cultist'],
-        bossMonsters: ['wight', 'gelatinous-cube', 'cult-fanatic'],
+        monsters: ['ghoul', 'giant-spider', 'giant-wolf-spider', 'shadow', 'cultist'],
+        bossMonsters: ['wight', 'gelatinous-cube', 'specter', 'cult-fanatic'],
         trapType: {
           damageFormula: '1d8',
           damageType: 'poison',
@@ -147,8 +147,8 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         primaryFloorTerrain: 'floor_stone',
         wallTerrain: 'wall_solid',
         hazardTerrain: 'lava',
-        monsters: ['orc', 'bandit'],
-        bossMonsters: ['minotaur', 'ogre', 'harpy'],
+        monsters: ['orc', 'bandit', 'thug'],
+        bossMonsters: ['minotaur', 'ogre', 'berserker', 'harpy'],
         trapType: {
           damageFormula: '2d6',
           damageType: 'fire',

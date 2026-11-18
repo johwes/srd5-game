@@ -154,7 +154,7 @@ export function getBattleTerrainTemplate(
         obstacleDensity: 0.12,
         hazardDensity: 0.18,
         elevationPlateaus: false,
-        monsterPool: ['goblin', 'wolf', 'bandit', 'dire-wolf', 'giant-spider', 'owlbear'],
+        monsterPool: ['goblin', 'wolf', 'bandit', 'giant-wolf-spider', 'scout', 'dire-wolf', 'giant-spider', 'owlbear'],
         bossPool: ['owlbear', 'bugbear', 'harpy'],
       };
     case 'mountains':
@@ -168,8 +168,8 @@ export function getBattleTerrainTemplate(
         obstacleDensity: 0.13,
         hazardDensity: 0.07,
         elevationPlateaus: true,
-        monsterPool: ['kobold', 'orc', 'ogre', 'minotaur', 'hill-giant'],
-        bossPool: ['hill-giant', 'minotaur', 'manticore'],
+        monsterPool: ['kobold', 'orc', 'berserker', 'ogre', 'minotaur', 'hill-giant'],
+        bossPool: ['hill-giant', 'minotaur', 'manticore', 'berserker'],
       };
     case 'swamp':
       return {
@@ -182,8 +182,8 @@ export function getBattleTerrainTemplate(
         obstacleDensity: 0.07,
         hazardDensity: 0.3,
         elevationPlateaus: false,
-        monsterPool: ['giant-rat', 'zombie', 'ghoul', 'giant-spider', 'gelatinous-cube', 'cultist'],
-        bossPool: ['ghoul', 'wight', 'gelatinous-cube'],
+        monsterPool: ['giant-rat', 'giant-bat', 'zombie', 'shadow', 'ghoul', 'giant-spider', 'specter', 'gelatinous-cube', 'cultist'],
+        bossPool: ['ghoul', 'wight', 'specter', 'gelatinous-cube'],
       };
     case 'hills':
       return {
@@ -196,8 +196,8 @@ export function getBattleTerrainTemplate(
         obstacleDensity: 0.1,
         hazardDensity: 0.12,
         elevationPlateaus: true,
-        monsterPool: ['goblin', 'kobold', 'bandit', 'orc', 'minotaur'],
-        bossPool: ['minotaur', 'ogre', 'bugbear'],
+        monsterPool: ['goblin', 'kobold', 'bandit', 'thug', 'orc', 'scout', 'minotaur'],
+        bossPool: ['minotaur', 'ogre', 'bugbear', 'berserker'],
       };
     case 'desert':
       return {
@@ -210,7 +210,7 @@ export function getBattleTerrainTemplate(
         obstacleDensity: 0.06,
         hazardDensity: 0.1,
         elevationPlateaus: false,
-        monsterPool: ['bandit', 'cultist', 'goblin', 'harpy', 'manticore'],
+        monsterPool: ['bandit', 'thug', 'cultist', 'goblin', 'harpy', 'manticore'],
         bossPool: ['manticore', 'harpy', 'ogre'],
       };
     case 'tundra':
@@ -224,8 +224,8 @@ export function getBattleTerrainTemplate(
         obstacleDensity: 0.07,
         hazardDensity: 0.14,
         elevationPlateaus: false,
-        monsterPool: ['wolf', 'dire-wolf', 'goblin', 'ogre', 'wight'],
-        bossPool: ['ogre', 'wight', 'dire-wolf'],
+        monsterPool: ['wolf', 'dire-wolf', 'goblin', 'berserker', 'ogre', 'wight'],
+        bossPool: ['ogre', 'wight', 'dire-wolf', 'berserker'],
       };
     case 'coast':
       return {
@@ -238,8 +238,8 @@ export function getBattleTerrainTemplate(
         obstacleDensity: 0.08,
         hazardDensity: 0.16,
         elevationPlateaus: false,
-        monsterPool: ['bandit', 'skeleton', 'zombie', 'harpy', 'ogre'],
-        bossPool: ['harpy', 'ogre', 'bandit'],
+        monsterPool: ['bandit', 'guard', 'thug', 'spy', 'skeleton', 'zombie', 'harpy', 'ogre'],
+        bossPool: ['harpy', 'ogre', 'bandit', 'noble'],
       };
     case 'ocean':
       return {
@@ -267,8 +267,8 @@ export function getBattleTerrainTemplate(
         obstacleDensity: 0.05,
         hazardDensity: 0.08,
         elevationPlateaus: false,
-        monsterPool: ['goblin', 'bandit', 'wolf', 'orc', 'dire-wolf'],
-        bossPool: ['bugbear', 'orc', 'ogre'],
+        monsterPool: ['goblin', 'bandit', 'guard', 'scout', 'thug', 'wolf', 'orc', 'dire-wolf', 'warhorse-skeleton'],
+        bossPool: ['bugbear', 'orc', 'ogre', 'berserker'],
       };
   }
 }

@@ -155,13 +155,13 @@ export function getMonstersForWave(
   const countFactor = difficultyMultipliers[difficulty] ?? 2;
 
   if (wave === 1) {
-    const pool = ['goblin', 'goblin', 'wolf', 'skeleton', 'kobold'];
+    const pool = ['goblin', 'goblin', 'wolf', 'skeleton', 'kobold', 'giant-wolf-spider', 'giant-bat'];
     return pool.slice(0, Math.min(pool.length, countFactor + 1));
   } else if (wave === 2) {
-    const pool = ['orc', 'orc', 'hobgoblin', 'ghoul', 'goblin'];
+    const pool = ['orc', 'orc', 'hobgoblin', 'ghoul', 'goblin', 'thug', 'scout', 'shadow'];
     return pool.slice(0, Math.min(pool.length, countFactor + 1));
   } else if (wave === 3) {
-    const pool = ['ogre', 'hobgoblin', 'hobgoblin', 'wight'];
+    const pool = ['ogre', 'hobgoblin', 'hobgoblin', 'wight', 'berserker', 'specter'];
     return pool.slice(0, Math.min(pool.length, countFactor));
   } else {
     // High wave boss encounter

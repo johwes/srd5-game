@@ -161,6 +161,7 @@ const MONSTER_NAME_KEYWORD_MAP: Record<string, string> = {
   bandit: 'monster_cultist',
   thug: 'monster_cultist',
   guard: 'hero_fighter',
+  noble: 'hero_paladin',
   knight: 'hero_paladin',
   mage: 'hero_wizard',
   apprentice: 'hero_wizard',
@@ -168,6 +169,9 @@ const MONSTER_NAME_KEYWORD_MAP: Record<string, string> = {
   priest: 'hero_cleric',
   spy: 'hero_rogue',
   thief: 'hero_rogue',
+  scout: 'hero_ranger',
+  shadow: 'monster_ghost',
+  berserker: 'hero_barbarian',
 };
 
 /**

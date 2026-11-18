@@ -65,6 +65,39 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  berserker: {
+    aiArchetype: "brute",
+    traits: {
+      reckless: {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "attack_rolls",
+          },
+        ],
+      },
+    },
+    actions: {
+      greataxe: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 5,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d12 + 3",
+                damageType: "slashing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
   bugbear: {
     aiArchetype: "brute",
     traits: {
@@ -327,6 +360,39 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  "giant-bat": {
+    aiArchetype: "skirmisher",
+    traits: {
+      "keen-hearing": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "skill:perception",
+          },
+        ],
+      },
+    },
+    actions: {
+      bite: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 4,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d6 + 2",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
   "giant-rat": {
     aiArchetype: "skirmisher",
     traits: {
@@ -423,6 +489,47 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
                 step: "apply_condition",
                 conditionId: "restrained",
                 durationRounds: 10,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "giant-wolf-spider": {
+    aiArchetype: "skirmisher",
+    actions: {
+      bite: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 3,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d4 + 1",
+                damageType: "piercing",
+              },
+              {
+                step: "saving_throw",
+                ability: "con",
+                dcFormula: "11",
+                onFail: [
+                  {
+                    step: "deal_damage",
+                    diceFormula: "2d6",
+                    damageType: "poison",
+                  },
+                ],
+                onSuccess: [
+                  {
+                    step: "deal_damage",
+                    diceFormula: "1d6",
+                    damageType: "poison",
+                  },
+                ],
               },
             ],
           },
@@ -545,6 +652,28 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
               {
                 step: "deal_damage",
                 diceFormula: "1d6 + 2",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  guard: {
+    aiArchetype: "brute",
+    actions: {
+      spear: {
+        targeting: { type: "single", rangeFeet: 20, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 3,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d6 + 1",
                 damageType: "piercing",
               },
             ],
@@ -888,6 +1017,53 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  noble: {
+    aiArchetype: "skirmisher",
+    actions: {
+      rapier: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 3,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d8 + 1",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    reactions: [
+      {
+        id: "parry",
+        name: "Parry",
+        description: "The noble adds 2 to its AC against one melee attack that would hit it. To do so, the noble must see the attacker and be wielding a melee weapon.",
+        actionCost: "reaction",
+        targeting: { type: "self", rangeFeet: 0 },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "noble-parry",
+            name: "Parry (+2 AC)",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [
+              {
+                type: "flat_bonus",
+                target: "ac",
+                value: 2,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
   ogre: {
     aiArchetype: "brute",
     actions: {
@@ -1089,6 +1265,84 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  scout: {
+    aiArchetype: "skirmisher",
+    traits: {
+      "keen-hearing-and-sight": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "skill:perception",
+          },
+        ],
+      },
+    },
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [{ actionId: "shortsword", count: 2 }],
+        },
+        effects: [],
+      },
+      shortsword: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 4,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d6 + 2",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+      longbow: {
+        targeting: { type: "single", rangeFeet: 150, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "ranged_weapon",
+            attackBonusOverride: 4,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d8 + 2",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  shadow: {
+    aiArchetype: "skirmisher",
+    actions: {
+      "strength-drain": {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 4,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6 + 2",
+                damageType: "necrotic",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
   skeleton: {
     aiArchetype: "artillery",
     actions: {
@@ -1120,6 +1374,129 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
               {
                 step: "deal_damage",
                 diceFormula: "1d6 + 2",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  specter: {
+    aiArchetype: "skirmisher",
+    actions: {
+      "life-drain": {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_spell",
+            attackBonusOverride: 4,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "3d6",
+                damageType: "necrotic",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  spy: {
+    aiArchetype: "skirmisher",
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [{ actionId: "shortsword", count: 2 }],
+        },
+        effects: [],
+      },
+      shortsword: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 4,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d6 + 2",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+      "hand-crossbow": {
+        targeting: { type: "single", rangeFeet: 30, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "ranged_weapon",
+            attackBonusOverride: 4,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d6 + 2",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  thug: {
+    aiArchetype: "brute",
+    traits: {
+      "pack-tactics": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "attack_rolls",
+          },
+        ],
+      },
+    },
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [{ actionId: "mace", count: 2 }],
+        },
+        effects: [],
+      },
+      mace: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 4,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d6 + 2",
+                damageType: "bludgeoning",
+              },
+            ],
+          },
+        ],
+      },
+      "heavy-crossbow": {
+        targeting: { type: "single", rangeFeet: 100, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "ranged_weapon",
+            attackBonusOverride: 2,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d10",
                 damageType: "piercing",
               },
             ],
@@ -1209,6 +1586,28 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
                 step: "deal_damage",
                 diceFormula: "1d8 + 2",
                 damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "warhorse-skeleton": {
+    aiArchetype: "brute",
+    actions: {
+      hooves: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 6,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6 + 4",
+                damageType: "bludgeoning",
               },
             ],
           },

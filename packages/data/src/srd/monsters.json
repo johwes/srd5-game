@@ -446,6 +446,92 @@
     ]
   },
   {
+    "id": "berserker",
+    "name": "Berserker",
+    "size": "medium",
+    "type": "humanoid",
+    "alignment": "chaotic_neutral",
+    "armorClass": {
+      "value": 13,
+      "type": "armor",
+      "armorIds": [
+        "hide-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 67,
+      "rollFormula": "9d8 + 27"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 16,
+      "dex": 12,
+      "con": 17,
+      "int": 9,
+      "wis": 11,
+      "cha": 9
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 2,
+    "xp": 450,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "reckless",
+        "name": "Reckless",
+        "description": "At the start of its turn, the berserker can gain advantage on all melee weapon attack rolls it makes during that turn, but attack rolls against it have advantage until the start of its next turn.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "greataxe",
+        "name": "Greataxe",
+        "description": "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 9 (1d12 + 3) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 5,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d12 + 3",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
     "id": "bugbear",
     "name": "Bugbear",
     "size": "medium",
@@ -1104,6 +1190,95 @@
     ]
   },
   {
+    "id": "giant-bat",
+    "name": "Giant Bat",
+    "size": "large",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 13,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 22,
+      "rollFormula": "4d10"
+    },
+    "speed": {
+      "walk": 10,
+      "fly": 60
+    },
+    "abilities": {
+      "str": 15,
+      "dex": 16,
+      "con": 11,
+      "int": 2,
+      "wis": 12,
+      "cha": 6
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "blindsightFeet": 60,
+      "passivePerception": 11
+    },
+    "languages": [],
+    "challengeRating": 0.25,
+    "xp": 50,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "echolocation",
+        "name": "Echolocation",
+        "description": "The bat cannot use its blindsight while deafened.",
+        "modifiers": []
+      },
+      {
+        "id": "keen-hearing",
+        "name": "Keen Hearing",
+        "description": "The bat has advantage on Wisdom (Perception) checks that rely on hearing.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "skill:perception"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
     "id": "giant-rat",
     "name": "Giant Rat",
     "size": "small",
@@ -1322,6 +1497,112 @@
         ]
       }
     ]
+  },
+  {
+    "id": "giant-wolf-spider",
+    "name": "Giant Wolf Spider",
+    "size": "medium",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 13,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 11,
+      "rollFormula": "2d8 + 2"
+    },
+    "speed": {
+      "walk": 40,
+      "climb": 40
+    },
+    "abilities": {
+      "str": 12,
+      "dex": 16,
+      "con": 13,
+      "int": 3,
+      "wis": 12,
+      "cha": 4
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 3,
+      "stealth": 7
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "blindsightFeet": 10,
+      "darkvisionFeet": 60,
+      "passivePerception": 13
+    },
+    "languages": [],
+    "challengeRating": 0.25,
+    "xp": 50,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "spider-climb",
+        "name": "Spider Climb",
+        "description": "The spider can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check.",
+        "modifiers": []
+      },
+      {
+        "id": "web-sense",
+        "name": "Web Sense",
+        "description": "While in contact with a web, the spider knows the exact location of any other creature in contact with the same web.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one creature. Hit: 4 (1d4 + 1) piercing damage plus 7 (2d6) poison damage, or half damage on a successful DC 11 Constitution save.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 1",
+                "damageType": "piercing"
+              },
+              {
+                "step": "saving_throw",
+                "ability": "con",
+                "dcFormula": "11",
+                "onFail": [
+                  {
+                    "step": "deal_damage",
+                    "diceFormula": "2d6",
+                    "damageType": "poison"
+                  }
+                ],
+                "onSuccess": [
+                  {
+                    "step": "deal_damage",
+                    "diceFormula": "1d6",
+                    "damageType": "poison"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
   },
   {
     "id": "goblin",
@@ -1595,6 +1876,83 @@
         ]
       }
     ]
+  },
+  {
+    "id": "guard",
+    "name": "Guard",
+    "size": "medium",
+    "type": "humanoid",
+    "alignment": "true_neutral",
+    "armorClass": {
+      "value": 16,
+      "type": "armor",
+      "armorIds": [
+        "chain-shirt",
+        "shield"
+      ],
+      "hasShield": true
+    },
+    "hitPoints": {
+      "average": 11,
+      "rollFormula": "2d8 + 2"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 13,
+      "dex": 12,
+      "con": 12,
+      "int": 10,
+      "wis": 11,
+      "cha": 10
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 2
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 12
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 0.125,
+    "xp": 25,
+    "aiArchetype": "brute",
+    "traits": [],
+    "actions": [
+      {
+        "id": "spear",
+        "name": "Spear",
+        "description": "Melee or Ranged Weapon Attack: +3 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d6 + 1) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 20,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 1",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
   },
   {
     "id": "harpy",
@@ -2687,6 +3045,112 @@
     ]
   },
   {
+    "id": "noble",
+    "name": "Noble",
+    "size": "medium",
+    "type": "humanoid",
+    "alignment": "true_neutral",
+    "armorClass": {
+      "value": 15,
+      "type": "armor",
+      "armorIds": [
+        "breastplate"
+      ]
+    },
+    "hitPoints": {
+      "average": 9,
+      "rollFormula": "2d8"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 11,
+      "dex": 12,
+      "con": 11,
+      "int": 12,
+      "wis": 14,
+      "cha": 16
+    },
+    "savingThrows": {},
+    "skills": {
+      "deception": 5,
+      "insight": 4,
+      "persuasion": 5
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 12
+    },
+    "languages": [
+      "common",
+      "elvish"
+    ],
+    "challengeRating": 0.125,
+    "xp": 25,
+    "aiArchetype": "skirmisher",
+    "traits": [],
+    "actions": [
+      {
+        "id": "rapier",
+        "name": "Rapier",
+        "description": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 5 (1d8 + 1) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 3,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 1",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "reactions": [
+      {
+        "id": "parry",
+        "name": "Parry",
+        "description": "The noble adds 2 to its AC against one melee attack that would hit it. To do so, the noble must see the attacker and be wielding a melee weapon.",
+        "actionCost": "reaction",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "noble-parry",
+            "name": "Parry (+2 AC)",
+            "durationRounds": 1,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "flat_bonus",
+                "target": "ac",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
     "id": "ogre",
     "name": "Ogre",
     "size": "large",
@@ -3173,6 +3637,241 @@
     ]
   },
   {
+    "id": "scout",
+    "name": "Scout",
+    "size": "medium",
+    "type": "humanoid",
+    "alignment": "true_neutral",
+    "armorClass": {
+      "value": 13,
+      "type": "armor",
+      "armorIds": [
+        "leather-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 16,
+      "rollFormula": "3d8 + 3"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 11,
+      "dex": 14,
+      "con": 12,
+      "int": 11,
+      "wis": 13,
+      "cha": 11
+    },
+    "savingThrows": {},
+    "skills": {
+      "nature": 4,
+      "perception": 5,
+      "stealth": 6,
+      "survival": 5
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 15
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 0.5,
+    "xp": 100,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "keen-hearing-and-sight",
+        "name": "Keen Hearing and Sight",
+        "description": "The scout has advantage on Wisdom (Perception) checks that rely on hearing or sight.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "skill:perception"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The scout makes two melee attacks or two ranged attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "shortsword",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "shortsword",
+        "name": "Shortsword",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "longbow",
+        "name": "Longbow",
+        "description": "Ranged Weapon Attack: +4 to hit, ranged 150/600 ft., one target. Hit: 6 (1d8 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 150,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
+    "id": "shadow",
+    "name": "Shadow",
+    "size": "medium",
+    "type": "undead",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 12,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 16,
+      "rollFormula": "3d8 + 3"
+    },
+    "speed": {
+      "walk": 40
+    },
+    "abilities": {
+      "str": 6,
+      "dex": 14,
+      "con": 13,
+      "int": 6,
+      "wis": 10,
+      "cha": 8
+    },
+    "savingThrows": {},
+    "skills": {
+      "stealth": 4
+    },
+    "damageVulnerabilities": [
+      "radiant"
+    ],
+    "damageResistances": [
+      "acid",
+      "cold",
+      "fire",
+      "lightning",
+      "thunder"
+    ],
+    "damageImmunities": [
+      "necrotic",
+      "poison"
+    ],
+    "conditionImmunities": [
+      "exhaustion",
+      "frightened",
+      "grappled",
+      "paralyzed",
+      "petrified",
+      "poisoned",
+      "prone",
+      "restrained"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 10
+    },
+    "languages": [],
+    "challengeRating": 0.5,
+    "xp": 100,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "amorphous",
+        "name": "Amorphous",
+        "description": "The shadow can move through a space as narrow as 1 inch wide without squeezing.",
+        "modifiers": []
+      },
+      {
+        "id": "shadow-stealth",
+        "name": "Shadow Stealth",
+        "description": "While in dim light or darkness, the shadow can take the Hide action as a bonus action.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "strength-drain",
+        "name": "Strength Drain",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 9 (2d6 + 2) necrotic damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 2",
+                "damageType": "necrotic"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
     "id": "skeleton",
     "name": "Skeleton",
     "size": "medium",
@@ -3273,6 +3972,450 @@
         ]
       }
     ]
+  },
+  {
+    "id": "specter",
+    "name": "Specter",
+    "size": "medium",
+    "type": "undead",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 12,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 22,
+      "rollFormula": "5d8"
+    },
+    "speed": {
+      "walk": 0,
+      "fly": 50,
+      "hover": true
+    },
+    "abilities": {
+      "str": 1,
+      "dex": 14,
+      "con": 11,
+      "int": 10,
+      "wis": 10,
+      "cha": 11
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [
+      "acid",
+      "cold",
+      "fire",
+      "lightning",
+      "thunder"
+    ],
+    "damageImmunities": [
+      "necrotic",
+      "poison"
+    ],
+    "conditionImmunities": [
+      "charmed",
+      "exhaustion",
+      "grappled",
+      "paralyzed",
+      "petrified",
+      "poisoned",
+      "prone",
+      "restrained",
+      "unconscious"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 1,
+    "xp": 200,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "incorporeal-movement",
+        "name": "Incorporeal Movement",
+        "description": "The specter can move through other creatures and objects as if they were difficult terrain. It takes 5 (1d10) force damage if it ends its turn inside an object.",
+        "modifiers": []
+      },
+      {
+        "id": "sunlight-sensitivity",
+        "name": "Sunlight Sensitivity",
+        "description": "While in sunlight, the specter has disadvantage on attack rolls, as well as on Wisdom (Perception) checks that rely on sight.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "life-drain",
+        "name": "Life Drain",
+        "description": "Melee Spell Attack: +4 to hit, reach 5 ft., one creature. Hit: 10 (3d6) necrotic damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_spell",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d6",
+                "damageType": "necrotic"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
+    "id": "spy",
+    "name": "Spy",
+    "size": "medium",
+    "type": "humanoid",
+    "alignment": "true_neutral",
+    "armorClass": {
+      "value": 12,
+      "type": "armor",
+      "armorIds": [
+        "leather-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 27,
+      "rollFormula": "6d8"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 10,
+      "dex": 15,
+      "con": 10,
+      "int": 12,
+      "wis": 14,
+      "cha": 16
+    },
+    "savingThrows": {},
+    "skills": {
+      "deception": 5,
+      "insight": 4,
+      "investigation": 5,
+      "perception": 6,
+      "persuasion": 5,
+      "sleight-of-hand": 4,
+      "stealth": 4
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 16
+    },
+    "languages": [
+      "common",
+      "elvish"
+    ],
+    "challengeRating": 1,
+    "xp": 200,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "cunning-action",
+        "name": "Cunning Action",
+        "description": "On each of its turns, the spy can use a bonus action to take the Dash, Disengage, or Hide action.",
+        "modifiers": []
+      },
+      {
+        "id": "sneak-attack",
+        "name": "Sneak Attack",
+        "description": "The spy deals an extra 7 (2d6) damage when it hits a target with a weapon attack and has advantage on the attack roll, or when the target is within 5 feet of an ally of the spy that isn't incapacitated and the spy doesn't have disadvantage on the attack roll.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The spy makes two melee attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "shortsword",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "shortsword",
+        "name": "Shortsword",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hand-crossbow",
+        "name": "Hand Crossbow",
+        "description": "Ranged Weapon Attack: +4 to hit, range 30/120 ft., one target. Hit: 5 (1d6 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
+    "id": "thug",
+    "name": "Thug",
+    "size": "medium",
+    "type": "humanoid",
+    "alignment": "neutral_evil",
+    "armorClass": {
+      "value": 11,
+      "type": "armor",
+      "armorIds": [
+        "leather-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 32,
+      "rollFormula": "5d8 + 10"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 15,
+      "dex": 11,
+      "con": 14,
+      "int": 10,
+      "wis": 10,
+      "cha": 11
+    },
+    "savingThrows": {},
+    "skills": {
+      "intimidation": 2
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 0.5,
+    "xp": 100,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "pack-tactics",
+        "name": "Pack Tactics",
+        "description": "The thug has advantage on an attack roll against a creature if at least one of the thug’s allies is within 5 feet of the creature and the ally isn’t incapacitated.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "attack_rolls"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The thug makes two melee attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "mace",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "mace",
+        "name": "Mace",
+        "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one creature. Hit: 5 (1d6 + 2) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 4,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 2",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "heavy-crossbow",
+        "name": "Heavy Crossbow",
+        "description": "Ranged Weapon Attack: +2 to hit, range 100/400 ft., one target. Hit: 5 (1d10) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 100,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 2,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d10",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
+    "id": "warhorse-skeleton",
+    "name": "Warhorse Skeleton",
+    "size": "large",
+    "type": "undead",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 13,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 22,
+      "rollFormula": "3d10 + 6"
+    },
+    "speed": {
+      "walk": 60
+    },
+    "abilities": {
+      "str": 18,
+      "dex": 12,
+      "con": 15,
+      "int": 6,
+      "wis": 8,
+      "cha": 5
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [
+      "bludgeoning"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [
+      "poison"
+    ],
+    "conditionImmunities": [
+      "exhaustion",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 9
+    },
+    "languages": [],
+    "challengeRating": 0.5,
+    "xp": 100,
+    "aiArchetype": "brute",
+    "traits": [],
+    "actions": [
+      {
+        "id": "hooves",
+        "name": "Hooves",
+        "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 6,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 4",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
   },
   {
     "id": "wight",
