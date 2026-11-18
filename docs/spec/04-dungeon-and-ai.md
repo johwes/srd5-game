@@ -109,6 +109,63 @@ stateDiagram-v2
     - If the party was moving in **Stealth Mode**, each party member's `DEX (Stealth)` check is compared against the monsters' `PassivePerception`. If all monsters fail to notice the party, the monsters gain the `surprised` state for Round 1 (cannot move or take an action on their first turn, and cannot take a reaction until that first turn ends).
     - Conversely, hidden/ambushing monsters compare their Stealth against each hero's `PassivePerception`; only the specific heroes whose Passive Perception is lower than the monsters' Stealth are `surprised`.
 
+### 3.2 Click-to-Inspect Prop Interaction, Listening & Furniture
+
+Replaces the proximity auto-panel with an inspect-then-act loop. Awareness stays
+automatic (a badge marks nearby features on the board and in the HUD), but every
+action runs through a focused interaction card for one prop at a time.
+
+- **Indicator, not panel**: when the party is within interaction reach of a prop
+  (Chebyshev $\le 1.5$ tiles), the prop sprite gains a highlight ring and the HUD
+  shows a compact `hud-adjacent-props-panel` row (`🚪 Door — closed`, `📦 Chest — locked`,
+  …). No action buttons are shown until the player inspects.
+- **Click to inspect**: clicking the prop sprite on the tactical canvas *or* its
+  HUD row opens the interaction card. `Esc`, clicking elsewhere, or resolving an
+  action dismisses it. The card shows kind, state, and only the actions valid for
+  that state: closed door → **Open / Listen / Search**; locked → **Pick Lock /
+  Force Open / Listen**; known trap → **Disarm / Search**; chest → **Open /
+  Search**; lever → **Pull**; shrine → existing shrine flow. Each action previews
+  its check (`DEX + Thieves' Tools vs lockDc`, …) before the player commits.
+- **Listen at door** (new exploration interaction, engine `listenAtDoor()` helper
+  + targeted `CHECK_RESOLVED`): an adjacent hero makes a `WIS (Perception)` check
+  against `prop.listenDc ?? 12`. The hint is derived deterministically from
+  unspawned encounters in rooms adjacent to the prop's room — no new event types:
+  - fail by $\ge 5$: "Stillness. Nothing stirs beyond."
+  - fail: "Faint, undecipherable sounds."
+  - success: presence band + character ("guttural voices", "measured patrol steps").
+  - success by $\ge 5$: approximate numbers ("three or more movers, one heavy").
+  Listening never triggers encounters and costs no resources.
+- **Furniture** (new placeable content): `kind: 'furniture'` with a
+  `furnitureType` tag (`desk`, `throne`, `bookshelf`, `wardrobe`, `altar`,
+  `table`, `crate`, `bed`, `curtains`, …) plus existing fields (`detectionDc`
+  for hidden compartments, `lootTable`, `ac`/`hp` for smashable pieces).
+  - **Search** a furniture piece for hidden compartments/papers (targeted search).
+  - **Read / Use** documents, holy symbols, and levers-in-disguise (flavor text
+    or scripted effects via `manual_adjudication`).
+  - **Hide** within 1 tile of a hide-capable piece (`wardrobe`, `curtains`,
+    `alcove`, `throne` dais): the Hide action is rolled with advantage once.
+  - Renderer draws per-type procedural icons (atlas frames later); the
+    procedural generator sprinkles cosmetic, non-blocking furniture in large
+    rooms (never on doors, stairs, or encounter spawn cells).
+- **Non-goals**: no live in-game map editor or DM placement mode — "placing" a
+  desk or throne means authoring it in module JSON or generator tables. No
+  faction/territory systems (see Realm mode).
+
+```ts
+export interface InteractivePropSpec {
+  // ...existing fields...
+  kind:
+    | 'door' | 'secret_door' | 'chest' | 'trap' | 'lever' | 'shrine'
+    | 'stairs_down' | 'stairs_up'
+    | 'furniture';                       // NEW: placeable set dressing
+  furnitureType?:                        // NEW, required when kind === 'furniture'
+    | 'desk' | 'throne' | 'bookshelf' | 'wardrobe' | 'altar'
+    | 'table' | 'crate' | 'bed' | 'curtains' | 'alcove';
+  hideSpot?: boolean;                   // NEW: Hide action nearby rolls with advantage
+  listenDc?: number;                    // NEW: WIS (Perception) DC to hear beyond (doors)
+}
+```
+
 ---
 
 ## 4. Rests, Recovery & Progression
