@@ -142,13 +142,13 @@ test.describe('SRD-605: Steam-Ready Title Screen & New Game Campaign Setup E2E S
     await page.getByTestId('builder-step-tab-review').click();
     const nameInput = page.getByTestId('builder-character-name-input');
     await expect(nameInput).toBeVisible();
-    await nameInput.fill('Elminster the Wise');
+    await nameInput.fill('Aldus the Wise');
     await page.getByTestId('builder-finalize-btn').click();
 
     // Verified: returned back to CampaignSetupWizard at Stage 3 with custom hero in Slot 2
     await expect(page.getByTestId('campaign-setup-wizard')).toBeVisible();
     const slot2 = page.getByTestId('wizard-party-slot-2');
-    await expect(slot2).toContainText('Elminster the Wise');
+    await expect(slot2).toContainText('Aldus the Wise');
 
     // Advance to Stage 4
     await page.getByTestId('wizard-nav-next').click();
@@ -157,7 +157,7 @@ test.describe('SRD-605: Steam-Ready Title Screen & New Game Campaign Setup E2E S
     await expect(page.getByTestId('wizard-narrative-parchment')).toBeVisible();
     await expect(page.getByText(/Sunken Crypt of Kaelen/i).first()).toBeVisible();
     await expect(page.getByTestId('wizard-summary-card')).toBeVisible();
-    await expect(page.getByTestId('wizard-summary-card')).toContainText('Elminster the Wise');
+    await expect(page.getByTestId('wizard-summary-card')).toContainText('Aldus the Wise');
 
     // Launch Campaign
     const launchCta = page.getByTestId('wizard-launch-cta');
