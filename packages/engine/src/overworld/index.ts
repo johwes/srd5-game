@@ -1,6 +1,7 @@
 export * from './schemas.js';
 export * from './generator.js';
 export * from './travel.js';
+export * from './expeditions.js';
 export * from './realm-error.js';
 export * from './realm-schemas.js';
 export * from './factions.js';

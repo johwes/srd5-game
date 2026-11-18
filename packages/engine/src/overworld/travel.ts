@@ -46,6 +46,7 @@ export const ROAD_TRAVEL_MULTIPLIER = 0.5;
 export const NIGHT_TRAVEL_MULTIPLIER = 1.25;
 /** Foraging occupies a slice of the day's movement budget. */
 export const FORAGE_POINT_COST = 1;
+export const FORCED_MARCH_POINTS = 2;
 
 export class OverworldTravelError extends Error {
   constructor(message: string) {
@@ -91,6 +92,7 @@ export type OverworldTravelEvent =
       rationsConsumed: number;
     }
   | { type: 'STARVATION'; characterId: string; exhaustionLevel: number }
+  | { type: 'FORCED_MARCH'; points: number; spentHitDice: string[]; exhausted: string[] }
   | { type: 'POI_DISCOVERED'; poiId: string; kind: OverworldPOIKind; name: string };
 
 // ---------------------------------------------------------------------------
@@ -133,6 +135,18 @@ export function getTimeOfDayFromProgress(pace: TravelPace, pointsRemaining: numb
   if (elapsed >= 0.5) return 'dusk';
   if (elapsed >= 0.25) return 'noon';
   return 'dawn';
+}
+
+export function getTravelDayBudget(state: OverworldTravelState): number {
+  return getDailyTravelPoints(state.travelPace) +
+    (state.forcedMarchDay === state.currentDay ? FORCED_MARCH_POINTS : 0);
+}
+
+function phaseAfterSpending(state: OverworldTravelState, remaining: number): TimeOfDay {
+  const bonus = getTravelDayBudget(state) - getDailyTravelPoints(state.travelPace);
+  const phase = getTimeOfDayFromProgress(state.travelPace, remaining - bonus);
+  const phases: TimeOfDay[] = ['dawn', 'noon', 'dusk', 'night'];
+  return phases.indexOf(phase) > phases.indexOf(state.timeOfDay) ? phase : state.timeOfDay;
 }
 
 /** Survival (Forage) DC for a terrain type. Impassable ocean can never be foraged. */
@@ -332,7 +346,7 @@ export function stepOverworldTravel(
   }
 
   const remaining = round2(Math.max(0, state.travelPointsRemaining - cost));
-  const nextTime = getTimeOfDayFromProgress(state.travelPace, remaining);
+  const nextTime = phaseAfterSpending(state, remaining);
   const events: OverworldTravelEvent[] = [];
 
   events.push({
@@ -485,7 +499,7 @@ export function forageForRations(
   }
 
   const remaining = round2(Math.max(0, state.travelPointsRemaining - FORAGE_POINT_COST));
-  const nextTime = getTimeOfDayFromProgress(state.travelPace, remaining);
+  const nextTime = phaseAfterSpending(state, remaining);
   const events: OverworldTravelEvent[] = [
     {
       type: 'FORAGE_RESULT',
@@ -527,6 +541,13 @@ export interface CampOptions {
   arcaneRecovery?: Record<string, number[]>;
   /** Treat the campsite as secure (no ambush / starvation), e.g. a guarded grove. */
   forceSafe?: boolean;
+  /** Secure daylight Short Rest without rolling the calendar forward. */
+  early?: boolean;
+}
+
+export function canCampEarly(state: OverworldTravelState): boolean {
+  return (state.timeOfDay === 'dawn' || state.timeOfDay === 'noon') &&
+    state.earlyCampDay !== state.currentDay;
 }
 
 export interface CampResult {
@@ -554,6 +575,9 @@ export function campOverworld(
   party: Record<string, Combatant>,
   options: CampOptions,
 ): CampResult {
+  if (options.early && (options.restType !== 'short' || !canCampEarly(state))) {
+    throw new OverworldTravelError('An early Short Rest is available once per day before dusk');
+  }
   const nextParty: Record<string, Combatant> = structuredClone(party);
   const events: OverworldTravelEvent[] = [];
   let rngState = normalizeSeed(state.rngState);
@@ -561,7 +585,7 @@ export function campOverworld(
   let starved = false;
   let rationsConsumed = 0;
   const hpRecovered: Record<string, number> = {};
-  const safe = isSafeRestSite(map, state.partyPosition) || options.forceSafe === true;
+  const safe = isSafeRestSite(map, state.partyPosition) || options.forceSafe === true || options.early === true;
 
   if (options.restType === 'short') {
     const songDie = getPartySongOfRestDie(nextParty);
@@ -623,6 +647,13 @@ export function campOverworld(
     starved,
     rationsConsumed,
   });
+
+  if (options.early) {
+    return {
+      state: { ...state, earlyCampDay: state.currentDay, rngState },
+      party: nextParty, safe, starved, rationsConsumed, hpRecovered, events,
+    };
+  }
 
   // Roll over to the next dawn: refill the budget and reroll weather.
   const nextDay = state.currentDay + 1;

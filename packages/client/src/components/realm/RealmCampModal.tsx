@@ -12,7 +12,9 @@ export interface RealmCampModalProps {
   onClose: () => void;
   session: RealmSessionState;
   safeSite: boolean;
+  canCampEarly: boolean;
   onCamp: (restType: 'short' | 'long', hitDiceToSpend: Record<string, number>) => void;
+  onCampEarly: (hitDiceToSpend: Record<string, number>) => void;
 }
 
 function getAvailableHitDice(hero: RealmSessionState['party'][string]): number {
@@ -25,7 +27,9 @@ export function RealmCampModal({
   onClose,
   session,
   safeSite,
+  canCampEarly,
   onCamp,
+  onCampEarly,
 }: RealmCampModalProps) {
   const [hitDiceSpend, setHitDiceSpend] = useState<Record<string, number>>({});
 
@@ -138,6 +142,17 @@ export function RealmCampModal({
         </div>
 
         <div className="flex flex-wrap gap-2 pt-1">
+          {canCampEarly && (
+            <button
+              type="button"
+              data-testid="realm-camp-early-rest-btn"
+              onClick={() => onCampEarly(hitDiceSpend)}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-sky-900/50 hover:bg-sky-800/60 border border-sky-600/50 text-sm font-bold text-sky-200 min-h-[48px]"
+              title="Secure daylight Short Rest — safe, heals via Hit Dice, and does not advance the day (once per day, before dusk)"
+            >
+              ☀️ Early Rest (safe, no day advance)
+            </button>
+          )}
           <button
             type="button"
             data-testid="realm-camp-short-rest-btn"

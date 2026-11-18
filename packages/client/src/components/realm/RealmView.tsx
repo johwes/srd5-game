@@ -27,15 +27,20 @@ import { RealmQuestJournalModal, type RealmQuestTab } from './RealmQuestJournalM
 import { RealmShopModal } from './RealmShopModal.js';
 import {
   type RealmCommand,
+  type RealmExpeditionPreview,
   type RealmSessionEvent,
   type RealmSessionState,
   type ResolveRealmDelveResult,
+  canForceMarch,
+  canTakeEarlyCamp,
   createRealmSession,
   describeRealmEvent,
   getCurrentPoi,
   getPartyList,
+  getRealmDayBudget,
   isSettlementPoi,
   loadRealmSession,
+  previewRealmExpedition,
   quickSaveRealmSession,
   reduceRealm,
   resolveRealmBattle,
@@ -270,6 +275,28 @@ export function RealmView({
 
   const currentPoi = getCurrentPoi(session);
   const safeSite = isSafeRestSite(session.map, session.travel.partyPosition);
+  const earlyRestAvailable = canTakeEarlyCamp(session);
+  const forcedMarchAvailable = canForceMarch(session);
+  const dayBudget = getRealmDayBudget(session);
+
+  // Pre-commit expedition estimate for the hovered tile (SRD-807): total
+  // cost, days, rations and arrival phase. Unreachable tiles surface the
+  // routing error instead of a preview.
+  const expeditionPreview: { preview: RealmExpeditionPreview | null; error: string | null } =
+    useMemo(() => {
+      if (!hoveredTile || battle) return { preview: null, error: null };
+      if (
+        hoveredTile.q === session.travel.partyPosition.q &&
+        hoveredTile.r === session.travel.partyPosition.r
+      ) {
+        return { preview: null, error: null };
+      }
+      try {
+        return { preview: previewRealmExpedition(session, hoveredTile), error: null };
+      } catch (err: unknown) {
+        return { preview: null, error: err instanceof Error ? err.message : String(err) };
+      }
+    }, [hoveredTile, session, battle]);
   const shopInventory = currentPoi ? (session.shops[currentPoi.id] ?? null) : null;
   const tradeReputation = currentPoi
     ? (getFactionByPoi(session.map, currentPoi.id)?.relationshipWithParty ?? 0)
@@ -397,8 +424,13 @@ export function RealmView({
             session={session}
             currentPoi={currentPoi}
             logEntries={logEntries}
+            expeditionPreview={expeditionPreview.preview}
+            expeditionPreviewError={expeditionPreview.error}
+            canForceMarch={forcedMarchAvailable}
+            dayBudget={dayBudget}
             onSetPace={(pace) => dispatchRealm({ type: 'REALM_SET_PACE', pace })}
             onForage={() => dispatchRealm({ type: 'REALM_FORAGE' })}
+            onForceMarch={() => dispatchRealm({ type: 'REALM_FORCE_MARCH' })}
             onOpenCamp={() => setModalState('camp')}
             onOpenJournal={() => {
               setQuestTab('active');
@@ -428,9 +460,14 @@ export function RealmView({
         onClose={() => setModalState(null)}
         session={session}
         safeSite={safeSite}
+        canCampEarly={earlyRestAvailable}
         onCamp={(restType, hitDiceToSpend) => {
           setModalState(null);
           dispatchRealm({ type: 'REALM_CAMP', restType, hitDiceToSpend });
+        }}
+        onCampEarly={(hitDiceToSpend) => {
+          setModalState(null);
+          dispatchRealm({ type: 'REALM_CAMP', restType: 'short', hitDiceToSpend, early: true });
         }}
       />
 

@@ -16,12 +16,17 @@ import type { DungeonStorageAdapter } from '../persistence/index.js';
 import {
   DEFAULT_REALM_STARTING_GOLD,
   type RealmSessionState,
+  canForceMarch,
+  canTakeEarlyCamp,
   createRealmSession,
   describeRealmEvent,
   getCurrentPoi,
   getPartyList,
+  getRealmDayBudget,
   isSettlementPoi,
   loadRealmSession,
+  planRealmExpedition,
+  previewRealmExpedition,
   quickSaveRealmSession,
   reduceRealm,
   resolveRealmBattle,
@@ -485,8 +490,99 @@ describe('SRD-805: Realm session controller (Spec 06 Section 4)', () => {
     });
   });
 
-  describe('Event formatting & persistence', () => {
-    it('formats realm events into travel-log lines', () => {
+  describe('Expedition travel (SRD-807)', () => {
+    it('previews total cost, days, rations and arrival phase without consuming RNG', () => {
+      const session = bootstrap();
+      const destination = findLandNeighbor(session);
+      const rngBefore = session.travel.rngState;
+      const preview = previewRealmExpedition(session, destination);
+      expect(preview.path.at(-1)).toEqual(destination);
+      expect(preview.points).toBeGreaterThan(0);
+      expect(preview.days).toBeGreaterThanOrEqual(1);
+      expect(preview.arrivalDay).toBe(session.travel.currentDay + preview.days - 1);
+      expect(session.travel.rngState).toBe(rngBefore);
+      // Second call replays bit-exactly.
+      expect(JSON.stringify(previewRealmExpedition(session, destination))).toBe(
+        JSON.stringify(preview),
+      );
+    });
+
+    it('plans a contiguous route and rejects ocean destinations', () => {
+      const session = bootstrap();
+      const destination = findLandNeighbor(session);
+      const path = planRealmExpedition(session, destination);
+      expect(path.at(-1)).toEqual(destination);
+      const ocean = Object.values(session.map.tiles).find((t) => t.terrain === 'ocean')!;
+      expect(() => previewRealmExpedition(session, { q: ocean.q, r: ocean.r })).toThrow();
+    });
+
+    it('REALM_FORCE_MARCH grants +2 MP once per day at an HD/exhaustion cost', () => {
+      const session = bootstrap();
+      expect(canForceMarch(session)).toBe(true);
+      expect(getRealmDayBudget(session)).toBe(6);
+      const before = session.travel.travelPointsRemaining;
+      const result = reduceRealm(session, { type: 'REALM_FORCE_MARCH' });
+      expect(result.session.travel.travelPointsRemaining).toBe(before + 2);
+      expect(getRealmDayBudget(result.session)).toBe(8);
+      expect(canForceMarch(result.session)).toBe(false);
+      expect(result.events.some((e) => e.type === 'FORCED_MARCH')).toBe(true);
+      expect(describeRealmEvent(result.events.find((e) => e.type === 'FORCED_MARCH')!)).toContain(
+        '+2 MP',
+      );
+      expect(() => reduceRealm(result.session, { type: 'REALM_FORCE_MARCH' })).toThrow();
+    });
+
+    it('early Short Rest heals without advancing the day and is once per day', () => {
+      const session = bootstrap();
+      expect(canTakeEarlyCamp(session)).toBe(true);
+      const hero = getPartyList(session)[0]!;
+      const wounded: RealmSessionState = {
+        ...session,
+        party: {
+          ...session.party,
+          [hero.id]: { ...hero, currentHp: Math.max(1, hero.maxHp - 10) },
+        },
+      };
+      const result = reduceRealm(wounded, {
+        type: 'REALM_CAMP',
+        restType: 'short',
+        hitDiceToSpend: { [hero.id]: 1 },
+        early: true,
+      });
+      expect(result.session.travel.currentDay).toBe(session.travel.currentDay);
+      expect(result.session.travel.timeOfDay).toBe(session.travel.timeOfDay);
+      expect(canTakeEarlyCamp(result.session)).toBe(false);
+      expect(result.events.some((e) => e.type === 'CAMP_REST')).toBe(true);
+      expect(() =>
+        reduceRealm(result.session, { type: 'REALM_CAMP', restType: 'short', early: true }),
+      ).toThrow();
+    });
+
+    it('rejects early Long Rests', () => {
+      const session = bootstrap();
+      expect(() =>
+        reduceRealm(session, { type: 'REALM_CAMP', restType: 'long', early: true }),
+      ).toThrow();
+    });
+
+    it('forced march + early camp replay deterministically', () => {
+      const run = () => {
+        let session = bootstrap(807);
+        const destination = findLandNeighbor(session);
+        const preview = previewRealmExpedition(session, destination);
+        session = reduceRealm(session, { type: 'REALM_FORCE_MARCH' }).session;
+        session = reduceRealm(session, {
+          type: 'REALM_CAMP',
+          restType: 'short',
+          early: true,
+        }).session;
+        return JSON.stringify({ preview, travel: session.travel });
+      };
+      expect(run()).toBe(run());
+    });
+  });
+
+  describe('Event formatting & persistence', () => {    it('formats realm events into travel-log lines', () => {
       expect(describeRealmEvent({ type: 'REALM_LOG', message: 'hello' })).toBe('hello');
       expect(
         describeRealmEvent({

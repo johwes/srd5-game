@@ -3,12 +3,12 @@ import type { OverworldPOI, TravelPace } from '@srd5/engine';
 import {
   TRAVEL_PACE_PROFILES,
   WEATHER_PROFILES,
-  getDailyTravelPoints,
   getFactionByPoi,
   getReputationTierProfile,
   isSafeRestSite,
 } from '@srd5/engine';
 import {
+  type RealmExpeditionPreview,
   type RealmSessionState,
   getPartyList,
   isSettlementPoi,
@@ -38,8 +38,14 @@ export interface RealmHudProps {
   session: RealmSessionState;
   currentPoi: OverworldPOI | null;
   logEntries: string[];
+  /** Pre-commit expedition estimate for the hovered tile (SRD-807). */
+  expeditionPreview: RealmExpeditionPreview | null;
+  expeditionPreviewError: string | null;
+  canForceMarch: boolean;
+  dayBudget: number;
   onSetPace: (pace: TravelPace) => void;
   onForage: () => void;
+  onForceMarch: () => void;
   onOpenCamp: () => void;
   onOpenJournal: () => void;
   onOpenFactions: () => void;
@@ -55,8 +61,13 @@ export function RealmHud({
   session,
   currentPoi,
   logEntries,
+  expeditionPreview,
+  expeditionPreviewError,
+  canForceMarch,
+  dayBudget,
   onSetPace,
   onForage,
+  onForceMarch,
   onOpenCamp,
   onOpenJournal,
   onOpenFactions,
@@ -69,7 +80,7 @@ export function RealmHud({
 }: RealmHudProps) {
   const { travel, map } = session;
   const party = getPartyList(session);
-  const dailyPoints = getDailyTravelPoints(travel.travelPace);
+  const dailyPoints = dayBudget;
   const activeQuestCount = session.questLog.quests.filter((q) => q.status === 'active').length;
   const atSettlement = currentPoi ? isSettlementPoi(currentPoi) : false;
   const safeRest = isSafeRestSite(map, travel.partyPosition);
@@ -205,6 +216,58 @@ export function RealmHud({
           data-testid="realm-hud-travel-log"
           className="pointer-events-auto self-end w-72 max-h-48 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/85 backdrop-blur-md p-2.5 shadow-xl"
         >
+          {(expeditionPreview || expeditionPreviewError) && (
+            <div
+              data-testid="realm-hud-expedition-preview"
+              className="mb-2 rounded-lg border border-sky-500/40 bg-sky-950/60 p-2"
+            >
+              <h3 className="text-[10px] font-bold uppercase tracking-wider text-sky-300 mb-1">
+                🧭 Expedition Preview
+              </h3>
+              {expeditionPreviewError ? (
+                <p
+                  data-testid="realm-hud-expedition-preview-error"
+                  className="text-[11px] text-red-300"
+                >
+                  {expeditionPreviewError}
+                </p>
+              ) : expeditionPreview ? (
+                <dl className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] text-slate-200">
+                  <dt className="text-slate-400">Cost</dt>
+                  <dd
+                    data-testid="realm-hud-expedition-preview-cost"
+                    className="text-right font-mono"
+                  >
+                    {expeditionPreview.points} MP
+                  </dd>
+                  <dt className="text-slate-400">Days</dt>
+                  <dd
+                    data-testid="realm-hud-expedition-preview-days"
+                    className="text-right font-mono"
+                  >
+                    {expeditionPreview.days}
+                  </dd>
+                  <dt className="text-slate-400">Rations</dt>
+                  <dd
+                    data-testid="realm-hud-expedition-preview-rations"
+                    className="text-right font-mono"
+                  >
+                    🍖 {expeditionPreview.rations}
+                  </dd>
+                  <dt className="text-slate-400">Arrival</dt>
+                  <dd
+                    data-testid="realm-hud-expedition-preview-arrival"
+                    className="text-right font-mono"
+                  >
+                    Day {expeditionPreview.arrivalDay} · {expeditionPreview.arrivalPhase}
+                  </dd>
+                </dl>
+              ) : null}
+              <p className="mt-1 text-[10px] text-slate-400 italic">
+                Click the tile to march the first leg (halts at dusk / new POIs — camp to continue).
+              </p>
+            </div>
+          )}
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
             Travel Log
           </h3>
@@ -238,6 +301,16 @@ export function RealmHud({
             title="Spend 1 MP to forage for rations (Survival check)"
           >
             🌿 Forage
+          </button>
+          <button
+            type="button"
+            data-testid="realm-hud-force-march-btn"
+            onClick={onForceMarch}
+            disabled={!canForceMarch}
+            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-orange-300 min-h-[44px] disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Push beyond dusk for +2 MP today — each living hero spends 1 Hit Die or gains Exhaustion (once per day)"
+          >
+            🥾💨 Forced March
           </button>
           <button
             type="button"

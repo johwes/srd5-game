@@ -289,6 +289,8 @@ export const OverworldTravelStateSchema = z.object({
   partyPosition: OverworldCoordSchema,
   travelPace: TravelPaceSchema,
   travelPointsRemaining: z.number().min(0),
+  forcedMarchDay: z.number().int().positive().optional(),
+  earlyCampDay: z.number().int().positive().optional(),
   rations: z.number().int().min(0),
   gold: z.number().int().min(0),
   milesTraveled: z.number().min(0),

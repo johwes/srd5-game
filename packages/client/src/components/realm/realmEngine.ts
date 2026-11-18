@@ -28,12 +28,14 @@ import {
   acceptQuest,
   activateOverworldShrine,
   campOverworld,
+  canCampEarly,
   completeQuestForParty,
   computeDerivedCharacter,
   createCharacterCombatant,
   createOverworldTravelState,
   createQuestLog,
   failQuest,
+  forceExpeditionMarch,
   forageForRations,
   generateOverworldMap,
   generateQuestBoard,
@@ -44,9 +46,12 @@ import {
   getPoiAt,
   getReputationDisposition,
   getSettlements,
+  getTravelDayBudget,
   isSafeRestSite,
   mixBattleSeed,
   nextRandomFloat,
+  planExpedition,
+  previewExpedition,
   populateSettlements,
   purchaseItem,
   resolveOverworldBattle,
@@ -154,10 +159,13 @@ export type RealmCommand =
   | { type: 'REALM_TRAVEL_TO'; destination: OverworldCoord }
   | { type: 'REALM_SET_PACE'; pace: TravelPace }
   | { type: 'REALM_FORAGE' }
+  | { type: 'REALM_FORCE_MARCH' }
   | {
       type: 'REALM_CAMP';
       restType: 'short' | 'long';
       hitDiceToSpend?: Record<string, number>;
+      /** Secure daylight Short Rest that does not advance the day (SRD-807). */
+      early?: boolean;
     }
   | { type: 'REALM_ACCEPT_QUEST'; questId: string }
   | { type: 'REALM_ABANDON_QUEST'; questId: string }
@@ -304,6 +312,58 @@ export function getCurrentPoi(session: RealmSessionState): OverworldPOI | null {
 
 export function isSettlementPoi(poi: OverworldPOI): boolean {
   return poi.kind === 'capital' || poi.kind === 'town' || poi.kind === 'village';
+}
+
+export interface RealmExpeditionPreview {
+  path: OverworldCoord[];
+  points: number;
+  days: number;
+  rations: number;
+  arrivalDay: number;
+  arrivalPhase: OverworldTravelState['timeOfDay'];
+}
+
+/**
+ * Pre-commit expedition estimate (SRD-807): total movement cost, days,
+ * overnight rations, and arrival phase for a distant tile/POI. Pure and
+ * deterministic — never samples or exposes future RNG.
+ */
+export function previewRealmExpedition(
+  session: RealmSessionState,
+  destination: OverworldCoord,
+): RealmExpeditionPreview {
+  return previewExpedition(
+    session.travel,
+    session.map,
+    destination,
+    getLivingParty(session).length,
+  );
+}
+
+/** Planned expedition route (orthogonal tile steps, excluding the start). */
+export function planRealmExpedition(
+  session: RealmSessionState,
+  destination: OverworldCoord,
+): OverworldCoord[] {
+  return planExpedition(session.map, session.travel.partyPosition, destination);
+}
+
+/** Whether a secure daylight Short Rest is available right now (SRD-807). */
+export function canTakeEarlyCamp(session: RealmSessionState): boolean {
+  return canCampEarly(session.travel);
+}
+
+/** Whether the party can force an extra +2 movement points today (SRD-807). */
+export function canForceMarch(session: RealmSessionState): boolean {
+  return (
+    session.travel.forcedMarchDay !== session.travel.currentDay &&
+    getLivingParty(session).length > 0
+  );
+}
+
+/** Today's full movement budget including any forced-march bonus (SRD-807). */
+export function getRealmDayBudget(session: RealmSessionState): number {
+  return getTravelDayBudget(session.travel);
 }
 
 function getPartySurvivalBonus(session: RealmSessionState): number {
@@ -460,17 +520,27 @@ export function reduceRealm(
       return { session: next, events };
     }
 
+    case 'REALM_FORCE_MARCH': {
+      const forced = forceExpeditionMarch(next.travel, next.party);
+      next.travel = forced.state;
+      next.party = forced.party;
+      events.push(forced.event);
+      return { session: next, events };
+    }
+
     case 'REALM_CAMP': {
       const camp = campOverworld(next.travel, next.map, next.party, {
         restType: command.restType,
         hitDiceToSpend: command.hitDiceToSpend,
+        early: command.early,
       });
       next.travel = camp.state;
       next.party = camp.party;
       events.push(...camp.events);
 
-      // Unsafe wilderness Long Rests risk an ambush at dawn.
-      if (command.restType === 'long' && !camp.safe) {
+      // Unsafe wilderness Long Rests risk an ambush at dawn. Early daylight
+      // Short Rests never roll the calendar (or an ambush).
+      if (command.restType === 'long' && !command.early && !camp.safe) {
         const encounter = rollWildernessEncounter(
           next,
           WILDERNESS_CAMP_AMBUSH_CHANCE,
@@ -853,6 +923,12 @@ export function describeRealmEvent(event: RealmSessionEvent): string {
         : 'Short rest — hit dice spent';
     case 'STARVATION':
       return `${event.characterId} gains exhaustion level ${event.exhaustionLevel}`;
+    case 'FORCED_MARCH': {
+      const costs: string[] = [];
+      if (event.spentHitDice.length > 0) costs.push(`HD spent: ${event.spentHitDice.join(', ')}`);
+      if (event.exhausted.length > 0) costs.push(`exhausted: ${event.exhausted.join(', ')}`);
+      return `Forced march (+${event.points} MP)${costs.length > 0 ? ` — ${costs.join('; ')}` : ''}`;
+    }
     case 'POI_DISCOVERED':
       return `Discovered ${event.name} (${event.kind.replace(/_/g, ' ')})`;
     case 'REPUTATION_CHANGED':
