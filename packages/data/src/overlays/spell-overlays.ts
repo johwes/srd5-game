@@ -2086,4 +2086,67 @@ export const SRD_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlaySpec>> = {
       },
     ],
   },
+  "fog-cloud": {
+    targeting: { type: "point_aoe", rangeFeet: 120, aoe: { shape: "sphere", sizeFeet: 20 } },
+    effects: [
+      {
+        step: "create_hazard_zone",
+        zoneId: "fog-cloud-zone",
+        shape: "sphere",
+        sizeFeet: 20,
+        durationRounds: 600,
+        requiresConcentration: true,
+        difficultTerrain: false,
+        obscurement: "heavy",
+        onEnterOrStartTurn: [],
+      },
+    ],
+    higherLevelScaling: {
+      mode: "slot_level",
+      overrides: {
+        "2": { sizeFeet: 40 },
+        "3": { sizeFeet: 60 },
+        "4": { sizeFeet: 80 },
+      },
+    },
+  },
+  "blink": {
+    targeting: { type: "self", rangeFeet: 0 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "blink-active",
+        name: "Blink",
+        durationRounds: 10,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+      {
+        step: "manual_adjudication",
+        adjudicationId: "blink-vanish",
+        title: "Blink — Vanish to Ethereal Plane",
+        guidance:
+          "At the end of each of your turns, roll a d20. On an 11 or higher, you vanish to the Ethereal Plane until the start of your next turn.",
+      },
+    ],
+  },
+  "protection-from-energy": {
+    targeting: { type: "single", rangeFeet: 5, targetFilter: "creature" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "protection-from-energy-buff",
+        name: "Protection from Energy",
+        durationRounds: 600,
+        requiresConcentration: true,
+        modifiers: [
+          {
+            type: "damage_mitigation",
+            mitigation: "resistance",
+            damageTypes: ["fire"],
+          },
+        ],
+      },
+    ],
+  },
 };

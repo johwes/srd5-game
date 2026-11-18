@@ -165,6 +165,45 @@
     "description": "Your spell bolsters your allies with toughness and resolve, increasing up to three creatures’ hit point maximum and current hit points by 5 for the duration."
   },
   {
+    "id": "antimagic-field",
+    "name": "Antimagic Field",
+    "level": 8,
+    "school": "abjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a pinch of powdered iron or iron filings"
+    },
+    "classes": [
+      "cleric",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "self",
+      "rangeFeet": 0
+    },
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "antimagic-sphere",
+        "name": "Antimagic Field (10-ft Sphere)",
+        "durationRounds": 600,
+        "requiresConcentration": true,
+        "modifiers": []
+      }
+    ],
+    "description": "A 10-foot-radius invisible sphere of antimagic surrounds you. Within the sphere, spells can't be cast, summoned creatures disappear, and even magic items become mundane.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "arcane-hand",
     "name": "Arcane Hand",
     "level": 5,
@@ -877,6 +916,50 @@
       "bonusTargetsPerSlotAboveBase": 1
     },
     "description": "You can blind or deafen a foe within range."
+  },
+  {
+    "id": "blink",
+    "name": "Blink",
+    "level": 3,
+    "school": "transmutation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "self",
+      "rangeFeet": 0
+    },
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "blink-active",
+        "name": "Blink",
+        "durationRounds": 10,
+        "requiresConcentration": false,
+        "modifiers": []
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "blink-vanish",
+        "title": "Blink — Vanish to Ethereal Plane",
+        "guidance": "At the end of each of your turns, roll a d20. On an 11 or higher, you vanish to the Ethereal Plane until the start of your next turn."
+      }
+    ],
+    "description": "Roll a d20 at the end of each of your turns for the duration of the spell. On a roll of 11 or higher, you vanish from your current plane of existence into the Ethereal Plane.",
+    "source": "srd-5.1"
   },
   {
     "id": "burning-hands",
@@ -1618,6 +1701,60 @@
     "description": "You touch a creature and grant it a measure of protection from death."
   },
   {
+    "id": "delayed-blast-fireball",
+    "name": "Delayed Blast Fireball",
+    "level": 7,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a tiny ball of bat guano and sulfur"
+    },
+    "classes": [
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 150,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 20
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "12d6",
+            "damageType": "fire",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d6"
+    },
+    "description": "A beam of yellow light flashes from your finger and condenses to linger at a chosen point. When the spell ends, either because your concentration is broken or you decide to end it, the bead blossoms with a roar into an explosion of flame (12d6 fire damage, +1d6 per round it was delayed).",
+    "higherLevelDescription": "When you cast this spell using a spell slot of 8th level or higher, the base damage increases by 1d6 for each slot level above 7th.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "detect-magic",
     "name": "Detect Magic",
     "level": 1,
@@ -1780,6 +1917,60 @@
     "description": "Choose one creature, object, or magical effect within range. Any spell of 3rd level or lower on the target ends."
   },
   {
+    "id": "divine-word",
+    "name": "Divine Word",
+    "level": 7,
+    "school": "evocation",
+    "castingTime": "bonus_action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": false,
+      "material": false
+    },
+    "classes": [
+      "cleric"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 30,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 30
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "cha",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "blinded",
+            "durationRounds": 10
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "deafened",
+            "durationRounds": 10
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "stunned",
+            "durationRounds": 1
+          }
+        ]
+      }
+    ],
+    "description": "You utter a divine word, imbued with the power that shaped creation at the dawn of time. Each creature of your choice within range that can hear you must make a Charisma saving throw or suffer effects based on its current hit points.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "dominate-monster",
     "name": "Dominate Monster",
     "level": 8,
@@ -1912,6 +2103,61 @@
       }
     ],
     "description": "Whispering to the spirits of nature, you create a harmless sensory effect within range."
+  },
+  {
+    "id": "earthquake",
+    "name": "Earthquake",
+    "level": 8,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a pinch of dirt, a piece of rock, and a lump of clay"
+    },
+    "classes": [
+      "cleric",
+      "druid",
+      "sorcerer"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 500,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 100
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "50",
+            "damageType": "bludgeoning",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "prone",
+            "durationRounds": 10
+          }
+        ]
+      }
+    ],
+    "description": "You create a seismic disturbance at a point on the ground that you can see within range. For the duration, an intense tremor rips through the ground in a 100-foot-radius circle centered on that point.",
+    "source": "srd-5.1"
   },
   {
     "id": "eldritch-blast",
@@ -2288,6 +2534,61 @@
     "description": "Choose up to five falling creatures within range. A falling creature’s rate of descent slows to 60 feet per round."
   },
   {
+    "id": "feeblemind",
+    "name": "Feeblemind",
+    "level": 8,
+    "school": "enchantment",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a handful of clay, crystal, glass, or mineral spheres"
+    },
+    "classes": [
+      "bard",
+      "druid",
+      "warlock",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 150,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "int",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "4d6",
+            "damageType": "psychic",
+            "halfOnSaveSuccess": false,
+            "isMagical": true
+          },
+          {
+            "step": "apply_active_effect",
+            "effectId": "feeblemind-debuff",
+            "name": "Feeblemind (INT 1, CHA 1)",
+            "durationRounds": 4800,
+            "requiresConcentration": false,
+            "modifiers": []
+          }
+        ]
+      }
+    ],
+    "description": "You blast the mind of a creature that you can see within range. On a failed Intelligence saving throw, the target takes 4d6 psychic damage and its Intelligence and Charisma scores become 1.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "finger-of-death",
     "name": "Finger of Death",
     "level": 7,
@@ -2448,6 +2749,54 @@
       }
     ],
     "description": "Thin and wispy flames wreathe your body for the duration, shedding bright light in a 10-foot radius."
+  },
+  {
+    "id": "fire-storm",
+    "name": "Fire Storm",
+    "level": 7,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "cleric",
+      "druid",
+      "sorcerer"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 150,
+      "aoe": {
+        "shape": "cube",
+        "sizeFeet": 100
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "7d10",
+            "damageType": "fire",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "description": "A storm made of sheets of roaring flame appears in a location you choose within range. Each creature in the area must make a Dexterity saving throw, taking 7d10 fire damage on a failed save, or half on a success.",
+    "source": "srd-5.1"
   },
   {
     "id": "fireball",
@@ -2625,6 +2974,61 @@
     "description": "A 5-foot-diameter sphere of fire appears in an unoccupied space of your choice within range and lasts for the duration."
   },
   {
+    "id": "flesh-to-stone",
+    "name": "Flesh to Stone",
+    "level": 6,
+    "school": "transmutation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a pinch of lime, water, and earth"
+    },
+    "classes": [
+      "warlock",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 60,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "con",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "apply_condition",
+            "conditionId": "restrained",
+            "durationRounds": 10,
+            "requiresConcentration": true,
+            "repeatSaveAtTurnEnd": {
+              "ability": "con",
+              "dcFormula": "@spellSaveDC"
+            }
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "petrified",
+            "durationRounds": 10,
+            "requiresConcentration": true
+          }
+        ]
+      }
+    ],
+    "description": "You attempt to turn one creature that you can see within range into stone. On a failed Constitution saving throw, it is restrained and begins to turn to stone.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "floating-disk",
     "name": "Floating Disk",
     "level": 1,
@@ -2708,6 +3112,115 @@
       "bonusTargetsPerSlotAboveBase": 1
     },
     "description": "You touch a willing creature. The target gains a flying speed of 60 feet for the duration."
+  },
+  {
+    "id": "fog-cloud",
+    "name": "Fog Cloud",
+    "level": 1,
+    "school": "conjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "druid",
+      "ranger",
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 120,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 20
+      }
+    },
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "fog-cloud-zone",
+        "shape": "sphere",
+        "sizeFeet": 20,
+        "durationRounds": 600,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "obscurement": "heavy",
+        "onEnterOrStartTurn": []
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "overrides": {
+        "2": {
+          "sizeFeet": 40
+        },
+        "3": {
+          "sizeFeet": 60
+        },
+        "4": {
+          "sizeFeet": 80
+        }
+      }
+    },
+    "description": "You create a 20-foot-radius sphere of fog centered on a point within range. The sphere spreads around corners, and its area is heavily obscured.",
+    "higherLevelDescription": "When you cast this spell using a spell slot of 2nd level or higher, the radius of the fog increases by 20 feet for each slot level above 1st.",
+    "source": "srd-5.1"
+  },
+  {
+    "id": "forcecage",
+    "name": "Forcecage",
+    "level": 7,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "ruby dust worth 1,500 gp",
+      "materialCostGold": 1500
+    },
+    "classes": [
+      "bard",
+      "warlock",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 100,
+      "aoe": {
+        "shape": "cube",
+        "sizeFeet": 20
+      }
+    },
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "forcecage-prison",
+        "shape": "cube",
+        "sizeFeet": 20,
+        "durationRounds": 600,
+        "requiresConcentration": false,
+        "difficultTerrain": false,
+        "onEnterOrStartTurn": []
+      }
+    ],
+    "description": "An immobile, invisible, cube-shaped prison composed of magical force springs into existence around an area you choose within range. Creatures trapped inside cannot leave by normal means.",
+    "source": "srd-5.1"
   },
   {
     "id": "foresight",
@@ -2864,6 +3377,49 @@
       }
     ],
     "description": "A frigid globe of cold energy streaks from your fingertips to a point of your choice within range, where it explodes in a 60-foot-radius sphere."
+  },
+  {
+    "id": "gate",
+    "name": "Gate",
+    "level": 9,
+    "school": "conjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a diamond worth at least 5,000 gp",
+      "materialCostGold": 5000
+    },
+    "classes": [
+      "cleric",
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 60,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 10
+      }
+    },
+    "effects": [
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "gate-portal",
+        "title": "Gate — Open Planar Portal",
+        "guidance": "Conjure a 5-to-20-foot diameter circular portal linking an unoccupied space within range to a precise location on a different plane of existence."
+      }
+    ],
+    "description": "You conjure a portal linking an unoccupied space you can see within range to a precise location on a different plane of existence.",
+    "source": "srd-5.1"
   },
   {
     "id": "globe-of-invulnerability",
@@ -3246,6 +3802,49 @@
     "description": "You touch a point and infuse an area around it with holy (or unholy) power."
   },
   {
+    "id": "harm",
+    "name": "Harm",
+    "level": 6,
+    "school": "necromancy",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "cleric"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 60,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "con",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "14d6",
+            "damageType": "necrotic",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "description": "You unleash a virulent disease on a creature within range. It must make a Constitution saving throw, taking 14d6 necrotic damage on a failed save, or half on a success.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "haste",
     "name": "Haste",
     "level": 3,
@@ -3429,6 +4028,65 @@
       "bonusDicePerSlotAboveBase": "1d10"
     },
     "description": "You point your finger, and the creature that damaged you is momentarily surrounded by hellish flames."
+  },
+  {
+    "id": "heroes-feast",
+    "name": "Heroes' Feast",
+    "level": 6,
+    "school": "conjuration",
+    "castingTime": "10_minutes",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a gem-encrusted bowl worth at least 1,000 gp, which the spell consumes",
+      "materialCostGold": 1000,
+      "materialConsumed": true
+    },
+    "classes": [
+      "cleric",
+      "druid"
+    ],
+    "targeting": {
+      "type": "multiple",
+      "rangeFeet": 30,
+      "targetFilter": "creature",
+      "maxTargets": 12
+    },
+    "effects": [
+      {
+        "step": "grant_temp_hp",
+        "amountFormula": "2d10"
+      },
+      {
+        "step": "apply_active_effect",
+        "effectId": "heroes-feast-buff",
+        "name": "Heroes' Feast (Poison/Fear Immune)",
+        "durationRounds": 4800,
+        "requiresConcentration": false,
+        "modifiers": [
+          {
+            "type": "condition_immunity",
+            "conditions": [
+              "poisoned"
+            ]
+          },
+          {
+            "type": "condition_immunity",
+            "conditions": [
+              "frightened"
+            ]
+          }
+        ]
+      }
+    ],
+    "description": "You bring forth a magnificent feast, including magnificent food and drink. Up to twelve creatures who partake gain immunity to poison and being frightened, gain 2d10 temporary hit points, and have advantage on Wisdom saving throws for 24 hours.",
+    "source": "srd-5.1"
   },
   {
     "id": "heroism",
@@ -3642,6 +4300,51 @@
     "description": "Choose a humanoid that you can see within range. The target must succeed on a Wisdom saving throw or be paralyzed for the duration."
   },
   {
+    "id": "holy-aura",
+    "name": "Holy Aura",
+    "level": 8,
+    "school": "abjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a tiny reliquary worth at least 1,000 gp",
+      "materialCostGold": 1000
+    },
+    "classes": [
+      "cleric"
+    ],
+    "targeting": {
+      "type": "self",
+      "rangeFeet": 0
+    },
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "holy-aura-ward",
+        "name": "Holy Aura (Advantage Saves / Disadvantage Attacks)",
+        "durationRounds": 10,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws"
+          }
+        ]
+      }
+    ],
+    "description": "Divine light washes out from you and coalesces in a soft radiance in a 30-foot radius around you. Creatures of your choice in that radius shed dim light in a 5-foot radius and have advantage on all saving throws, and other creatures have disadvantage on attack rolls against them.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "hunters-mark",
     "name": "Hunter's Mark",
     "level": 1,
@@ -3847,6 +4550,54 @@
     "description": "You choose one object that you must touch throughout the casting of the spell to learn its magical properties."
   },
   {
+    "id": "incendiary-cloud",
+    "name": "Incendiary Cloud",
+    "level": 8,
+    "school": "conjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 150,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 20
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "10d8",
+            "damageType": "fire",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "description": "A swirling cloud of smoke shot with white-hot embers appears in a 20-foot-radius sphere centered on a point within range. Each creature in that area must make a Dexterity saving throw, taking 10d8 fire damage on a failed save, or half on a success.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "inflict-wounds",
     "name": "Inflict Wounds",
     "level": 1,
@@ -3889,6 +4640,61 @@
       "bonusDicePerSlotAboveBase": "1d10"
     },
     "description": "Make a melee spell attack against a creature you can reach. On a hit, the target takes 3d10 necrotic damage."
+  },
+  {
+    "id": "insect-plague",
+    "name": "Insect Plague",
+    "level": 5,
+    "school": "conjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 10
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a few grains of sugar, some kernels of grain, and a smear of fat"
+    },
+    "classes": [
+      "cleric",
+      "druid",
+      "sorcerer"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 300,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 20
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "con",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "4d10",
+            "damageType": "piercing",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "1d10"
+    },
+    "description": "A swarming, 20-foot-radius sphere of biting locusts appears at a point within range. A creature that starts its turn there or enters must make a Constitution saving throw, taking 4d10 piercing damage on a fail, or half on a success.",
+    "higherLevelDescription": "When you cast this spell using a spell slot of 6th level or higher, the damage increases by 1d10 for each slot level above 5th.",
+    "source": "srd-5.1"
   },
   {
     "id": "instant-summons",
@@ -4408,6 +5214,40 @@
     "description": "A wave of healing energy washes out from a point of your choice within range, restoring 3d8 + spellcasting ability modifier hit points to up to six creatures."
   },
   {
+    "id": "mass-heal",
+    "name": "Mass Heal",
+    "level": 9,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "cleric"
+    ],
+    "targeting": {
+      "type": "multiple",
+      "rangeFeet": 60,
+      "targetFilter": "creature",
+      "maxTargets": 12
+    },
+    "effects": [
+      {
+        "step": "heal",
+        "diceFormula": "700"
+      }
+    ],
+    "description": "A flood of healing energy flows from you into injured creatures around you. You restore up to 700 hit points, divided as you choose among any number of creatures that you can see within range.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "mass-healing-word",
     "name": "Mass Healing Word",
     "level": 3,
@@ -4444,6 +5284,48 @@
       "bonusDicePerSlotAboveBase": "1d4"
     },
     "description": "As you call out words of restoration, up to six creatures of your choice that you can see within range regain hit points equal to 1d4 + your spellcasting ability modifier."
+  },
+  {
+    "id": "maze",
+    "name": "Maze",
+    "level": 8,
+    "school": "conjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 10
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "wizard"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 60,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "apply_condition",
+        "conditionId": "incapacitated",
+        "durationRounds": 100,
+        "requiresConcentration": true
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "maze-labyrinth",
+        "title": "Maze — Banish to Demiplane",
+        "guidance": "You banish a creature to a labyrinthine demiplane. The target remains there until the spell ends or until it escapes by using an action to make a DC 20 Intelligence check."
+      }
+    ],
+    "description": "You banish a creature that you can see within range into a labyrinthine demiplane. The target remains there for the duration or until it escapes the maze by using an action to make a DC 20 Intelligence check.",
+    "source": "srd-5.1"
   },
   {
     "id": "mending",
@@ -4700,6 +5582,54 @@
     "description": "A veil of shadows and silence radiates from you, masking you and your companions from detection (+10 bonus to Dexterity (Stealth) checks)."
   },
   {
+    "id": "plane-shift",
+    "name": "Plane Shift",
+    "level": 7,
+    "school": "conjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a forked metal rod worth at least 250 gp",
+      "materialCostGold": 250
+    },
+    "classes": [
+      "cleric",
+      "druid",
+      "sorcerer",
+      "warlock",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 5,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "cha",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "plane-shift-banish",
+            "title": "Plane Shift — Transport to Another Plane",
+            "guidance": "You transport yourself and up to eight willing creatures, or banish an unwilling creature that fails a Charisma save, to a different plane of existence."
+          }
+        ]
+      }
+    ],
+    "description": "You and up to eight willing creatures who link hands in a circle are transported to a different plane of existence. Alternatively, make a melee spell attack against an unwilling creature: on a failed Charisma saving throw, it is banished to another plane.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "poison-spray",
     "name": "Poison Spray",
     "level": 0,
@@ -4927,6 +5857,100 @@
     "description": "This spell is a minor magical trick that novice spellcasters use for practice."
   },
   {
+    "id": "prismatic-spray",
+    "name": "Prismatic Spray",
+    "level": 7,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 60,
+      "aoe": {
+        "shape": "cone",
+        "sizeFeet": 60
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "10d6",
+            "damageType": "radiant",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "description": "Eight multicolored rays of light flash from your hand in a 60-foot cone. Each creature in the cone must make a Dexterity saving throw, taking 10d6 damage on a failed save, or half on a success.",
+    "source": "srd-5.1"
+  },
+  {
+    "id": "prismatic-wall",
+    "name": "Prismatic Wall",
+    "level": 9,
+    "school": "abjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 60,
+      "aoe": {
+        "shape": "line",
+        "sizeFeet": 90
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "10d6",
+            "damageType": "radiant",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "description": "A shimmering, multicolored plane of light forms a vertical opaque wall up to 90 feet long and 30 feet high. The wall consists of seven layers, each with a different color and protective property.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "private-sanctum",
     "name": "Private Sanctum",
     "level": 4,
@@ -5017,6 +6041,56 @@
       }
     },
     "description": "A flickering flame appears in your hand and can be hurled at an enemy."
+  },
+  {
+    "id": "protection-from-energy",
+    "name": "Protection from Energy",
+    "level": 3,
+    "school": "abjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "cleric",
+      "druid",
+      "ranger",
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 5,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "protection-from-energy-buff",
+        "name": "Protection from Energy",
+        "durationRounds": 600,
+        "requiresConcentration": true,
+        "modifiers": [
+          {
+            "type": "damage_mitigation",
+            "mitigation": "resistance",
+            "damageTypes": [
+              "fire"
+            ]
+          }
+        ]
+      }
+    ],
+    "description": "For the duration, the willing creature you touch has resistance to one damage type of your choice: acid, cold, fire, lightning, or thunder.",
+    "source": "srd-5.1"
   },
   {
     "id": "protection-from-evil-and-good",
@@ -5182,6 +6256,51 @@
     "description": "A frigid beam of blue-white light streaks toward a creature within range."
   },
   {
+    "id": "regenerate",
+    "name": "Regenerate",
+    "level": 7,
+    "school": "transmutation",
+    "castingTime": "1_minute",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a prayer wheel and holy water"
+    },
+    "classes": [
+      "bard",
+      "cleric",
+      "druid"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 5,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "heal",
+        "diceFormula": "4d8 + 15"
+      },
+      {
+        "step": "apply_active_effect",
+        "effectId": "regenerate-active",
+        "name": "Regenerate (1 HP/round)",
+        "durationRounds": 600,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
+    "description": "You touch a creature and stimulate its natural healing ability. The target regains 4d8 + 15 hit points. For the duration, the target regains 1 hit point at the start of each of its turns, and severed body parts are restored.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "resilient-sphere",
     "name": "Resilient Sphere",
     "level": 4,
@@ -5271,6 +6390,49 @@
       }
     ],
     "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice."
+  },
+  {
+    "id": "resurrection",
+    "name": "Resurrection",
+    "level": 7,
+    "school": "necromancy",
+    "castingTime": "1_hour",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a diamond worth at least 1,000 gp, which the spell consumes",
+      "materialCostGold": 1000,
+      "materialConsumed": true
+    },
+    "classes": [
+      "bard",
+      "cleric"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 5,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "heal",
+        "diceFormula": "1"
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "resurrection-restore",
+        "title": "Resurrection — Return from Death",
+        "guidance": "You touch a dead creature that has been dead for no more than a century. If its soul is free and willing, the target returns to life with all its hit points."
+      }
+    ],
+    "description": "You touch a dead creature that has been dead for no more than a century, that didn't die of old age, and that isn't undead. If its soul is free and willing, the target returns to life with all its hit points.",
+    "source": "srd-5.1"
   },
   {
     "id": "revivify",
@@ -6186,6 +7348,53 @@
     "description": "This spell turns the flesh of a willing creature you touch as hard as stone, granting resistance to nonmagical bludgeoning, piercing, and slashing damage."
   },
   {
+    "id": "storm-of-vengeance",
+    "name": "Storm of Vengeance",
+    "level": 9,
+    "school": "conjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "druid"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 500,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 360
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "con",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "2d6",
+            "damageType": "acid",
+            "halfOnSaveSuccess": false,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "description": "A churning storm cloud forms, centered on a point you can see and spreading to a radius of 360 feet. Lightning flashes, followed by thunder and driving rain of acid (2d6 acid damage on a failed Constitution save).",
+    "source": "srd-5.1"
+  },
+  {
     "id": "suggestion",
     "name": "Suggestion",
     "level": 2,
@@ -6231,6 +7440,169 @@
     "description": "You suggest a course of activity (limited to a sentence or two) and magically influence a creature you can see within range."
   },
   {
+    "id": "sunbeam",
+    "name": "Sunbeam",
+    "level": 6,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a magnifying glass"
+    },
+    "classes": [
+      "druid",
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 60,
+      "aoe": {
+        "shape": "line",
+        "sizeFeet": 60
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "con",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "6d8",
+            "damageType": "radiant",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "blinded",
+            "durationRounds": 1,
+            "requiresConcentration": true
+          }
+        ]
+      }
+    ],
+    "description": "A beam of brilliant light flashes out from your hand in a 60-foot line that is 5 feet wide. Each creature in the line must make a Constitution saving throw, taking 6d8 radiant damage and being blinded on a fail, or half damage on a success.",
+    "source": "srd-5.1"
+  },
+  {
+    "id": "sunburst",
+    "name": "Sunburst",
+    "level": 8,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "fire and a piece of sunstone"
+    },
+    "classes": [
+      "druid",
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 150,
+      "aoe": {
+        "shape": "sphere",
+        "sizeFeet": 60
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "con",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "12d6",
+            "damageType": "radiant",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "blinded",
+            "durationRounds": 10,
+            "repeatSaveAtTurnEnd": {
+              "ability": "con",
+              "dcFormula": "@spellSaveDC"
+            }
+          }
+        ]
+      }
+    ],
+    "description": "Brilliant sunlight flashes in a 60-foot radius sphere centered on a point within range. Each creature in that light must make a Constitution saving throw, taking 12d6 radiant damage and being blinded for 1 minute on a failed save, or half damage on a success.",
+    "source": "srd-5.1"
+  },
+  {
+    "id": "telekinesis",
+    "name": "Telekinesis",
+    "level": 5,
+    "school": "transmutation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 10
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": false
+    },
+    "classes": [
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 60,
+      "targetFilter": "object_or_creature"
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "str",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "forced_movement",
+            "direction": "push_from_actor",
+            "distanceFeet": 30
+          },
+          {
+            "step": "apply_condition",
+            "conditionId": "restrained",
+            "durationRounds": 10,
+            "requiresConcentration": true
+          }
+        ]
+      }
+    ],
+    "description": "You gain the ability to move or manipulate creatures or objects by thought. A creature must succeed on a Strength check against your spell save DC or be restrained.",
+    "source": "srd-5.1"
+  },
+  {
     "id": "telepathic-bond",
     "name": "Telepathic Bond",
     "level": 5,
@@ -6264,6 +7636,48 @@
       }
     ],
     "description": "You forge a telepathic link among up to eight willing creatures of your choice within range."
+  },
+  {
+    "id": "teleport",
+    "name": "Teleport",
+    "level": 7,
+    "school": "conjuration",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "instantaneous"
+    },
+    "components": {
+      "verbal": true,
+      "somatic": false,
+      "material": false
+    },
+    "classes": [
+      "bard",
+      "sorcerer",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "multiple",
+      "rangeFeet": 10,
+      "targetFilter": "creature",
+      "maxTargets": 9
+    },
+    "effects": [
+      {
+        "step": "teleport",
+        "maxDistanceFeet": 50000
+      },
+      {
+        "step": "manual_adjudication",
+        "adjudicationId": "teleport-destination",
+        "title": "Teleport — Destination Roll",
+        "guidance": "Instantly teleports you and up to eight willing creatures to a designated destination. Familiarity determines the accuracy roll on the d100 table."
+      }
+    ],
+    "description": "This spell instantly transports you and up to eight willing creatures of your choice that you can see within range, or a single object that you can see within range, to a destination you select.",
+    "source": "srd-5.1"
   },
   {
     "id": "thaumaturgy",
@@ -6512,6 +7926,51 @@
     "description": "You touch a creature that has been dead for no longer than 200 years and that died for any reason except old age."
   },
   {
+    "id": "true-seeing",
+    "name": "True Seeing",
+    "level": 6,
+    "school": "divination",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "an ointment for the eyes worth at least 25 gp",
+      "materialCostGold": 25,
+      "materialConsumed": true
+    },
+    "classes": [
+      "bard",
+      "cleric",
+      "sorcerer",
+      "warlock",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "single",
+      "rangeFeet": 5,
+      "targetFilter": "creature"
+    },
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "true-seeing-buff",
+        "name": "True Seeing (Truesight 120 ft)",
+        "durationRounds": 600,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
+    "description": "This spell gives the willing creature you touch the ability to see things as they actually are out to a range of 120 feet (truesight).",
+    "source": "srd-5.1"
+  },
+  {
     "id": "true-strike",
     "name": "True Strike",
     "level": 0,
@@ -6689,6 +8148,103 @@
       }
     ],
     "description": "You create a wall of fire on a solid surface within range."
+  },
+  {
+    "id": "wall-of-force",
+    "name": "Wall of Force",
+    "level": 5,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 10
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a pinch of powder made by crushing a clear gemstone"
+    },
+    "classes": [
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 120,
+      "aoe": {
+        "shape": "line",
+        "sizeFeet": 100
+      }
+    },
+    "effects": [
+      {
+        "step": "create_hazard_zone",
+        "zoneId": "wall-of-force-barrier",
+        "shape": "line",
+        "sizeFeet": 100,
+        "durationRounds": 100,
+        "requiresConcentration": true,
+        "difficultTerrain": false,
+        "onEnterOrStartTurn": []
+      }
+    ],
+    "description": "An invisible wall of force springs into existence at a point you choose within range. The wall cannot be dispelled by dispel magic and is impervious to all damage.",
+    "source": "srd-5.1"
+  },
+  {
+    "id": "wall-of-ice",
+    "name": "Wall of Ice",
+    "level": 6,
+    "school": "evocation",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": true,
+    "duration": {
+      "type": "minutes",
+      "amount": 10
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a small piece of quartz"
+    },
+    "classes": [
+      "wizard"
+    ],
+    "targeting": {
+      "type": "point_aoe",
+      "rangeFeet": 120,
+      "aoe": {
+        "shape": "line",
+        "sizeFeet": 100
+      }
+    },
+    "effects": [
+      {
+        "step": "saving_throw",
+        "ability": "dex",
+        "dcFormula": "@spellSaveDC",
+        "onFail": [
+          {
+            "step": "deal_damage",
+            "diceFormula": "10d6",
+            "damageType": "cold",
+            "halfOnSaveSuccess": true,
+            "isMagical": true
+          }
+        ]
+      }
+    ],
+    "higherLevelScaling": {
+      "mode": "slot_level",
+      "bonusDicePerSlotAboveBase": "2d6"
+    },
+    "description": "You create a wall of ice on a solid surface within range. Creatures in the wall's area must make a Dexterity saving throw, taking 10d6 cold damage on a failed save, or half on a success.",
+    "higherLevelDescription": "When you cast this spell using a spell slot of 7th level or higher, the damage increases by 2d6 for each slot level above 6th.",
+    "source": "srd-5.1"
   },
   {
     "id": "web",

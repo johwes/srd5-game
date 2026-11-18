@@ -770,6 +770,457 @@ export const SRD_HIGH_TIER_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlayS
     'Wish can duplicate any spell of level 8 or lower (no costly component), or produce an effect beyond normal spellcasting. If used for anything other than duplicating a spell, there is a 33% chance of never being able to cast Wish again and the stress may incapacitate you.',
   ),
 
+  // ---------------------------------- SRD-1004: Expanded L5–L9 SRD 5.1 Spell Overlays
+  disintegrate: {
+    targeting: { type: 'single', rangeFeet: 60, targetFilter: 'object_or_creature' },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          {
+            step: 'deal_damage',
+            diceFormula: '10d6 + 40',
+            damageType: 'force',
+            isMagical: true,
+          },
+        ],
+      },
+    ],
+    higherLevelScaling: { mode: 'slot_level', bonusDicePerSlotAboveBase: '3d6' },
+  },
+  'meteor-swarm': {
+    targeting: { type: 'point_aoe', rangeFeet: 500, aoe: { shape: 'sphere', sizeFeet: 40 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          {
+            step: 'deal_damage',
+            diceFormula: '20d6',
+            damageType: 'fire',
+            halfOnSaveSuccess: true,
+            isMagical: true,
+          },
+          {
+            step: 'deal_damage',
+            diceFormula: '20d6',
+            damageType: 'bludgeoning',
+            halfOnSaveSuccess: true,
+            isMagical: true,
+          },
+        ],
+      },
+    ],
+  },
+  'wall-of-force': {
+    targeting: { type: 'point_aoe', rangeFeet: 120, aoe: { shape: 'line', sizeFeet: 100 } },
+    effects: [
+      {
+        step: 'create_hazard_zone',
+        zoneId: 'wall-of-force-barrier',
+        shape: 'line',
+        sizeFeet: 100,
+        durationRounds: 100,
+        requiresConcentration: true,
+        difficultTerrain: false,
+        onEnterOrStartTurn: [],
+      },
+    ],
+  },
+  telekinesis: {
+    targeting: { type: 'single', rangeFeet: 60, targetFilter: 'object_or_creature' },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'str',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'forced_movement', direction: 'push_from_actor', distanceFeet: 30 },
+          { step: 'apply_condition', conditionId: 'restrained', durationRounds: 10, requiresConcentration: true },
+        ],
+      },
+    ],
+  },
+  'insect-plague': {
+    targeting: { type: 'point_aoe', rangeFeet: 300, aoe: { shape: 'sphere', sizeFeet: 20 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'con',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '4d10', damageType: 'piercing', halfOnSaveSuccess: true, isMagical: true },
+        ],
+      },
+    ],
+    higherLevelScaling: { mode: 'slot_level', bonusDicePerSlotAboveBase: '1d10' },
+  },
+  harm: {
+    targeting: { type: 'single', rangeFeet: 60, targetFilter: 'creature' },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'con',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '14d6', damageType: 'necrotic', halfOnSaveSuccess: true, isMagical: true },
+        ],
+      },
+    ],
+  },
+  sunbeam: {
+    targeting: { type: 'point_aoe', rangeFeet: 60, aoe: { shape: 'line', sizeFeet: 60 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'con',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '6d8', damageType: 'radiant', halfOnSaveSuccess: true, isMagical: true },
+          { step: 'apply_condition', conditionId: 'blinded', durationRounds: 1, requiresConcentration: true },
+        ],
+      },
+    ],
+  },
+  'flesh-to-stone': {
+    targeting: { type: 'single', rangeFeet: 60, targetFilter: 'creature' },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'con',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          {
+            step: 'apply_condition',
+            conditionId: 'restrained',
+            durationRounds: 10,
+            requiresConcentration: true,
+            repeatSaveAtTurnEnd: { ability: 'con', dcFormula: '@spellSaveDC' },
+          },
+          { step: 'apply_condition', conditionId: 'petrified', durationRounds: 10, requiresConcentration: true },
+        ],
+      },
+    ],
+  },
+  'heroes-feast': {
+    targeting: { type: 'multiple', rangeFeet: 30, targetFilter: 'creature', maxTargets: 12 },
+    effects: [
+      { step: 'grant_temp_hp', amountFormula: '2d10' },
+      {
+        step: 'apply_active_effect',
+        effectId: 'heroes-feast-buff',
+        name: "Heroes' Feast (Poison/Fear Immune)",
+        durationRounds: 4800,
+        requiresConcentration: false,
+        modifiers: [
+          { type: 'condition_immunity', conditions: ['poisoned'] },
+          { type: 'condition_immunity', conditions: ['frightened'] },
+        ],
+      },
+    ],
+  },
+  'true-seeing': {
+    targeting: { type: 'single', rangeFeet: 5, targetFilter: 'creature' },
+    effects: [
+      {
+        step: 'apply_active_effect',
+        effectId: 'true-seeing-buff',
+        name: 'True Seeing (Truesight 120 ft)',
+        durationRounds: 600,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  'wall-of-ice': {
+    targeting: { type: 'point_aoe', rangeFeet: 120, aoe: { shape: 'line', sizeFeet: 100 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '10d6', damageType: 'cold', halfOnSaveSuccess: true, isMagical: true },
+        ],
+      },
+    ],
+    higherLevelScaling: { mode: 'slot_level', bonusDicePerSlotAboveBase: '2d6' },
+  },
+  'fire-storm': {
+    targeting: { type: 'point_aoe', rangeFeet: 150, aoe: { shape: 'cube', sizeFeet: 100 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '7d10', damageType: 'fire', halfOnSaveSuccess: true, isMagical: true },
+        ],
+      },
+    ],
+  },
+  'delayed-blast-fireball': {
+    targeting: { type: 'point_aoe', rangeFeet: 150, aoe: { shape: 'sphere', sizeFeet: 20 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '12d6', damageType: 'fire', halfOnSaveSuccess: true, isMagical: true },
+        ],
+      },
+    ],
+    higherLevelScaling: { mode: 'slot_level', bonusDicePerSlotAboveBase: '1d6' },
+  },
+  'prismatic-spray': {
+    targeting: { type: 'point_aoe', rangeFeet: 60, aoe: { shape: 'cone', sizeFeet: 60 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '10d6', damageType: 'radiant', halfOnSaveSuccess: true, isMagical: true },
+        ],
+      },
+    ],
+  },
+  'plane-shift': {
+    targeting: { type: 'single', rangeFeet: 5, targetFilter: 'creature' },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'cha',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          {
+            step: 'manual_adjudication',
+            adjudicationId: 'plane-shift-banish',
+            title: 'Plane Shift — Transport to Another Plane',
+            guidance:
+              'You transport yourself and up to eight willing creatures, or banish an unwilling creature that fails a Charisma save, to a different plane of existence.',
+          },
+        ],
+      },
+    ],
+  },
+  teleport: {
+    targeting: { type: 'multiple', rangeFeet: 10, targetFilter: 'creature', maxTargets: 9 },
+    effects: [
+      { step: 'teleport', maxDistanceFeet: 50000 },
+      {
+        step: 'manual_adjudication',
+        adjudicationId: 'teleport-destination',
+        title: 'Teleport — Destination Roll',
+        guidance:
+          'Instantly teleports you and up to eight willing creatures to a designated destination. Familiarity determines the accuracy roll on the d100 table.',
+      },
+    ],
+  },
+  regenerate: {
+    targeting: { type: 'single', rangeFeet: 5, targetFilter: 'creature' },
+    effects: [
+      { step: 'heal', diceFormula: '4d8 + 15' },
+      {
+        step: 'apply_active_effect',
+        effectId: 'regenerate-active',
+        name: 'Regenerate (1 HP/round)',
+        durationRounds: 600,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  resurrection: {
+    targeting: { type: 'single', rangeFeet: 5, targetFilter: 'creature' },
+    effects: [
+      { step: 'heal', diceFormula: '1' },
+      {
+        step: 'manual_adjudication',
+        adjudicationId: 'resurrection-restore',
+        title: 'Resurrection — Return from Death',
+        guidance:
+          'You touch a dead creature that has been dead for no more than a century. If its soul is free and willing, the target returns to life with all its hit points.',
+      },
+    ],
+  },
+  forcecage: {
+    targeting: { type: 'point_aoe', rangeFeet: 100, aoe: { shape: 'cube', sizeFeet: 20 } },
+    effects: [
+      {
+        step: 'create_hazard_zone',
+        zoneId: 'forcecage-prison',
+        shape: 'cube',
+        sizeFeet: 20,
+        durationRounds: 600,
+        requiresConcentration: false,
+        difficultTerrain: false,
+        onEnterOrStartTurn: [],
+      },
+    ],
+  },
+  'divine-word': {
+    targeting: { type: 'point_aoe', rangeFeet: 30, aoe: { shape: 'sphere', sizeFeet: 30 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'cha',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'apply_condition', conditionId: 'blinded', durationRounds: 10 },
+          { step: 'apply_condition', conditionId: 'deafened', durationRounds: 10 },
+          { step: 'apply_condition', conditionId: 'stunned', durationRounds: 1 },
+        ],
+      },
+    ],
+  },
+  sunburst: {
+    targeting: { type: 'point_aoe', rangeFeet: 150, aoe: { shape: 'sphere', sizeFeet: 60 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'con',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '12d6', damageType: 'radiant', halfOnSaveSuccess: true, isMagical: true },
+          {
+            step: 'apply_condition',
+            conditionId: 'blinded',
+            durationRounds: 10,
+            repeatSaveAtTurnEnd: { ability: 'con', dcFormula: '@spellSaveDC' },
+          },
+        ],
+      },
+    ],
+  },
+  earthquake: {
+    targeting: { type: 'point_aoe', rangeFeet: 500, aoe: { shape: 'sphere', sizeFeet: 100 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '50', damageType: 'bludgeoning', halfOnSaveSuccess: true, isMagical: true },
+          { step: 'apply_condition', conditionId: 'prone', durationRounds: 10 },
+        ],
+      },
+    ],
+  },
+  'holy-aura': {
+    targeting: { type: 'self', rangeFeet: 0 },
+    effects: [
+      {
+        step: 'apply_active_effect',
+        effectId: 'holy-aura-ward',
+        name: 'Holy Aura (Advantage Saves / Disadvantage Attacks)',
+        durationRounds: 10,
+        requiresConcentration: true,
+        modifiers: [{ type: 'roll_mode', mode: 'advantage', target: 'all_saving_throws' }],
+      },
+    ],
+  },
+  'antimagic-field': {
+    targeting: { type: 'self', rangeFeet: 0 },
+    effects: [
+      {
+        step: 'apply_active_effect',
+        effectId: 'antimagic-sphere',
+        name: 'Antimagic Field (10-ft Sphere)',
+        durationRounds: 600,
+        requiresConcentration: true,
+        modifiers: [],
+      },
+    ],
+  },
+  maze: {
+    targeting: { type: 'single', rangeFeet: 60, targetFilter: 'creature' },
+    effects: [
+      { step: 'apply_condition', conditionId: 'incapacitated', durationRounds: 100, requiresConcentration: true },
+      {
+        step: 'manual_adjudication',
+        adjudicationId: 'maze-labyrinth',
+        title: 'Maze — Banish to Demiplane',
+        guidance:
+          'You banish a creature to a labyrinthine demiplane. The target remains there until the spell ends or until it escapes by using an action to make a DC 20 Intelligence check.',
+      },
+    ],
+  },
+  feeblemind: {
+    targeting: { type: 'single', rangeFeet: 150, targetFilter: 'creature' },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'int',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '4d6', damageType: 'psychic', halfOnSaveSuccess: false, isMagical: true },
+          {
+            step: 'apply_active_effect',
+            effectId: 'feeblemind-debuff',
+            name: 'Feeblemind (INT 1, CHA 1)',
+            durationRounds: 4800,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    ],
+  },
+  'incendiary-cloud': {
+    targeting: { type: 'point_aoe', rangeFeet: 150, aoe: { shape: 'sphere', sizeFeet: 20 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '10d8', damageType: 'fire', halfOnSaveSuccess: true, isMagical: true },
+        ],
+      },
+    ],
+  },
+  'mass-heal': {
+    targeting: { type: 'multiple', rangeFeet: 60, targetFilter: 'creature', maxTargets: 12 },
+    effects: [{ step: 'heal', diceFormula: '700' }],
+  },
+  gate: adjudicatedSpell(
+    'gate-portal',
+    'Gate — Open Planar Portal',
+    'Conjure a 5-to-20-foot diameter circular portal linking an unoccupied space within range to a precise location on a different plane of existence.',
+  ),
+  'prismatic-wall': {
+    targeting: { type: 'point_aoe', rangeFeet: 60, aoe: { shape: 'line', sizeFeet: 90 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'dex',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '10d6', damageType: 'radiant', halfOnSaveSuccess: true, isMagical: true },
+        ],
+      },
+    ],
+  },
+  'storm-of-vengeance': {
+    targeting: { type: 'point_aoe', rangeFeet: 500, aoe: { shape: 'sphere', sizeFeet: 360 } },
+    effects: [
+      {
+        step: 'saving_throw',
+        ability: 'con',
+        dcFormula: '@spellSaveDC',
+        onFail: [
+          { step: 'deal_damage', diceFormula: '2d6', damageType: 'acid', halfOnSaveSuccess: false, isMagical: true },
+        ],
+      },
+    ],
+  },
+
   // ---------------------------------- Upcasting for already-automated spells
   'chain-lightning': { higherLevelScaling: { mode: 'slot_level', bonusDicePerSlotAboveBase: '1d8' } },
   'cone-of-cold': { higherLevelScaling: { mode: 'slot_level', bonusDicePerSlotAboveBase: '1d8' } },
