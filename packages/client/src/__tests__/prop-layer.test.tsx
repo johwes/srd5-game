@@ -18,6 +18,7 @@ function makeProp(
   y: number,
   state: PropState = 'closed',
   discovered?: boolean,
+  furnitureType?: string,
 ): CanvasPropInput {
   return {
     id,
@@ -26,6 +27,7 @@ function makeProp(
     kind,
     state,
     ...(discovered === undefined ? {} : { discovered }),
+    ...(furnitureType === undefined ? {} : { furnitureType }),
   };
 }
 
@@ -61,6 +63,11 @@ describe('SRD-502: PixiJS Interactive Prop Layer (doors, chests, traps, stairs)'
       expect(resolvePropFrameKey('secret_door', 'closed')).toBe('door_closed');
       expect(resolvePropFrameKey('lever', 'closed')).toBeNull();
     });
+
+    it('resolves furniture kinds to procedural-only rendering', () => {
+      expect(resolvePropFrameKey('furniture', 'closed')).toBeNull();
+      expect(resolvePropFrameKey('furniture', 'open')).toBeNull();
+    });
   });
 
   describe('atlas frame regression (tilemap_packed.png)', () => {
@@ -86,6 +93,9 @@ describe('SRD-502: PixiJS Interactive Prop Layer (doors, chests, traps, stairs)'
         makeProp('stairs-2', 'stairs_up', 2, 2, 'open'),
         makeProp('shrine-1', 'shrine', 5, 5, 'open'),
         makeProp('lever-1', 'lever', 3, 3, 'closed'),
+        makeProp('desk-1', 'furniture', 7, 6, 'closed', undefined, 'desk'),
+        makeProp('throne-1', 'furniture', 15, 14, 'closed', undefined, 'throne'),
+        makeProp('wardrobe-1', 'furniture', 2, 4, 'closed', undefined, 'wardrobe'),
       ];
       renderer.render({ props, cellSize: 48 });
 

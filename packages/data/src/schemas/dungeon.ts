@@ -62,6 +62,7 @@ export const PROP_KINDS = [
   'shrine',
   'stairs_down',
   'stairs_up',
+  'furniture',
 ] as const;
 export const PropKindSchema = z.enum(PROP_KINDS);
 export type PropKind = z.infer<typeof PropKindSchema>;
@@ -104,6 +105,25 @@ export const DungeonCellSpecSchema = z.object({
 export type DungeonCellSpec = z.infer<typeof DungeonCellSpecSchema>;
 
 /**
+ * Placeable furniture types for dungeon dressing (Spec 04 §3.2 / SRD-512).
+ * Wardrobes, curtains and alcoves double as hiding spots.
+ */
+export const FURNITURE_TYPES = [
+  'desk',
+  'throne',
+  'bookshelf',
+  'wardrobe',
+  'altar',
+  'table',
+  'crate',
+  'bed',
+  'curtains',
+  'alcove',
+] as const;
+export const FurnitureTypeSchema = z.enum(FURNITURE_TYPES);
+export type FurnitureType = z.infer<typeof FurnitureTypeSchema>;
+
+/**
  * Interactive prop specification (doors, chests, traps, etc.) (Spec 04 Section 2).
  */
 export const InteractivePropSpecSchema = z.object({
@@ -117,7 +137,9 @@ export const InteractivePropSpecSchema = z.object({
   lockDc: z.number().int().positive().optional(),
   detectionDc: z.number().int().positive().optional(),
   disarmDc: z.number().int().positive().optional(),
-  trapEffect: z.array(EffectStepSpecSchema).optional(),
+  listenDc: z.number().int().positive().optional(),
+  furnitureType: FurnitureTypeSchema.optional(),
+  hideSpot: z.boolean().optional(),
   trapDamageFormula: z.string().optional(),
   trapDamageType: DamageTypeSchema.optional(),
   trapSaveDc: z.number().int().positive().optional(),
@@ -125,7 +147,6 @@ export const InteractivePropSpecSchema = z.object({
   trapHalfDamageOnSave: z.boolean().optional(),
   lootTable: LootBundleSpecSchema.optional(),
   discovered: z.boolean().optional(),
-  listenDc: z.number().int().positive().optional(),
   ac: z.number().int().positive().optional(),
   hp: z.number().int().positive().optional(),
   targetFloorId: z.string().optional(),

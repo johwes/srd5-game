@@ -3,6 +3,7 @@ import {
   type Combatant,
   type DungeonFloorSpec,
   createDungeonGameState,
+  determineSurprise,
   reduceGame,
   triggerDungeonEncounter,
   checkDungeonEncounterTriggers,
@@ -420,5 +421,68 @@ describe('SRD-503: Exploration-to-Combat transition and Stealth/Surprise checks'
         true,
       );
     });
+  });
+});
+
+describe('SRD-512: Furniture Hide Spots Grant Stealth Advantage', () => {
+  it('rolls Stealth with advantage for heroes adjacent to hide furniture', () => {
+    const hero = makeHero('hero-hidden', 'Rogue', 5, 5, { stealthModifier: 4 });
+    const monster = {
+      ...makeHero('orc-1', 'Orc', 9, 9, { passivePerception: 10 }),
+      side: 'monster' as const,
+    };
+    const combatants = [hero, monster];
+
+    const hidden = determineSurprise({
+      combatants,
+      rngState: 4242,
+      partyStealth: { partyInStealth: true },
+      hideoutPositions: [{ x: 5, y: 6 }],
+    });
+    const hiddenRoll = hidden.events.find(
+      (e) => e.type === 'DICE_ROLLED' && (e as { actorId?: string }).actorId === 'hero-hidden',
+    ) as { mode?: string } | undefined;
+    expect(hiddenRoll?.mode).toBe('advantage');
+
+    const exposed = determineSurprise({
+      combatants,
+      rngState: 4242,
+      partyStealth: { partyInStealth: true },
+    });
+    const exposedRoll = exposed.events.find(
+      (e) => e.type === 'DICE_ROLLED' && (e as { actorId?: string }).actorId === 'hero-hidden',
+    ) as { mode?: string } | undefined;
+    expect(exposedRoll?.mode).toBe('normal');
+  });
+
+  it('threads hideout furniture from the dungeon floor into the ambush roll', () => {
+    const floor = createTestFloorSpec({ doorState: 'open' });
+    floor.props.push({
+      id: 'wardrobe_entry',
+      x: 1,
+      y: 2,
+      kind: 'furniture',
+      furnitureType: 'wardrobe',
+      hideSpot: true,
+      state: 'closed',
+      blocksMovement: false,
+      blocksSight: false,
+    });
+    const party = [makeHero('hero-lead', 'Fighter', 2, 5), makeHero('hero-2', 'Cleric', 1, 5)];
+    const initial = createDungeonGameState({
+      floor,
+      party,
+      marchingOrder: ['hero-lead', 'hero-2'],
+      leadExplorerId: 'hero-lead',
+      partyInStealth: true,
+    });
+
+    // Wardrobe at (1, 2) is adjacent to the lead hero's spawn at (2, 2).
+    const res = triggerDungeonEncounter(initial, 'enc_guardians', {});
+    expect(res.nextState.mode).toBe('combat');
+    const leadRoll = res.events.find(
+      (e) => e.type === 'DICE_ROLLED' && (e as { actorId?: string }).actorId === 'hero-lead',
+    );
+    expect((leadRoll as unknown as { mode?: string } | undefined)?.mode).toBe('advantage');
   });
 });

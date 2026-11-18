@@ -30,6 +30,9 @@ export function resolvePropFrameKey(kind: PropKind, state: PropState): string | 
       return 'stairs_up';
     case 'shrine':
       return 'shrine';
+    case 'furniture':
+      // Procedural per-type glyphs (no single atlas tile covers all kinds).
+      return null;
     case 'lever':
     default:
       return null;
@@ -108,7 +111,7 @@ export class PropRenderer {
         if (prop.kind === 'secret_door') sprite.alpha = 0.6;
         node.addChild(sprite);
       } else {
-        const fallback = this.drawProceduralIcon(prop.kind, prop.state, cellSize);
+        const fallback = this.drawProceduralIcon(prop.kind, prop.state, cellSize, prop.furnitureType);
         if (prop.kind === 'secret_door') fallback.alpha = 0.6;
         node.addChild(fallback);
       }
@@ -126,7 +129,12 @@ export class PropRenderer {
    * Procedural Tier-3 vector icon. Guaranteed visible with no atlas loaded
    * (headless tests, CDN failure) and the fallback while textures stream in.
    */
-  public drawProceduralIcon(kind: PropKind, state: PropState, cellSize: number): Graphics {
+  public drawProceduralIcon(
+    kind: PropKind,
+    state: PropState,
+    cellSize: number,
+    furnitureType?: string,
+  ): Graphics {
     const g = new Graphics();
     g.label = `PropIcon:${kind}:${state}`;
     const h = cellSize / 2;
@@ -231,6 +239,70 @@ export class PropRenderer {
           .lineTo(8, -12)
           .stroke({ color: 0x94a3b8, width: 3 });
         g.circle(9, -13, 3.5).fill(0xef4444);
+        break;
+      }
+      case 'furniture': {
+        // SRD-512 per-type glyphs, sized to the 5-ft cell.
+        switch (furnitureType) {
+          case 'throne': {
+            g.rect(-11, -14, 22, 28).fill(0x713f12);
+            g.rect(-11, -14, 22, 6).fill(0xfbbf24);
+            g.rect(-7, -4, 14, 10).fill(0x7c2d12);
+            g.circle(0, 2, 2.5).fill(0xfde68a);
+            break;
+          }
+          case 'bookshelf': {
+            g.rect(-14, -12, 28, 26).fill(0x57300f);
+            for (const sy of [-6, 1, 8]) {
+              g.rect(-12, sy, 24, 2).fill(0x2b1a08);
+              g.rect(-12, sy - 4, 5, 4).fill(0xb45309);
+              g.rect(-5, sy - 4, 5, 4).fill(0x0369a1);
+              g.rect(2, sy - 4, 8, 4).fill(0x15803d);
+            }
+            break;
+          }
+          case 'wardrobe':
+          case 'curtains':
+          case 'alcove': {
+            // Hide-capable cover: wardrobe body + concealment chevrons.
+            g.rect(-12, -14, 24, 28).fill(0x3f2d1e);
+            g.moveTo(-12, 0).lineTo(12, 0).stroke({ color: 0x1c0f08, width: 2 });
+            g.moveTo(-6, -14).lineTo(-6, 14).stroke({ color: 0x1c0f08, width: 2 });
+            g.moveTo(6, -14).lineTo(6, 14).stroke({ color: 0x1c0f08, width: 2 });
+            g.circle(-6, 0, 1.6).fill(0xd6d3d1);
+            g.circle(6, 0, 1.6).fill(0xd6d3d1);
+            break;
+          }
+          case 'altar': {
+            g.rect(-13, 2, 26, 12).fill(0x44403c);
+            g.rect(-13, 2, 26, 3).fill(0xa8a29e);
+            g.rect(-2, -10, 4, 10).fill(0xf5f5f4);
+            g.circle(0, -12, 3).fill({ color: 0xfbbf24, alpha: 0.9 });
+            break;
+          }
+          case 'bed': {
+            g.rect(-14, -8, 28, 18).fill(0x78350f);
+            g.rect(-14, -8, 9, 18).fill(0xe7e5e4);
+            g.rect(-14, -8, 28, 18).stroke({ color: 0x451a03, width: 2 });
+            break;
+          }
+          case 'crate': {
+            g.rect(-11, -11, 22, 22).fill(0x8a5a2b);
+            g.rect(-11, -11, 22, 22).stroke({ color: 0x451a03, width: 2 });
+            g.moveTo(-11, -11).lineTo(11, 11).stroke({ color: 0x451a03, width: 2 });
+            g.moveTo(11, -11).lineTo(-11, 11).stroke({ color: 0x451a03, width: 2 });
+            break;
+          }
+          case 'desk':
+          case 'table':
+          default: {
+            g.rect(-14, -6, 28, 6).fill(0x8a5a2b);
+            g.rect(-12, 0, 3, 12).fill(0x57300f);
+            g.rect(9, 0, 3, 12).fill(0x57300f);
+            g.rect(-14, -6, 28, 6).stroke({ color: 0x451a03, width: 1.5 });
+            break;
+          }
+        }
         break;
       }
       default: {

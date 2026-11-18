@@ -135,18 +135,19 @@ action runs through a focused interaction card for one prop at a time.
   - success: presence band + character ("guttural voices", "measured patrol steps").
   - success by $\ge 5$: approximate numbers ("three or more movers, one heavy").
   Listening never triggers encounters and costs no resources.
-- **Furniture** (new placeable content): `kind: 'furniture'` with a
-  `furnitureType` tag (`desk`, `throne`, `bookshelf`, `wardrobe`, `altar`,
-  `table`, `crate`, `bed`, `curtains`, …) plus existing fields (`detectionDc`
-  for hidden compartments, `lootTable`, `ac`/`hp` for smashable pieces).
-  - **Search** a furniture piece for hidden compartments/papers (targeted search).
-  - **Read / Use** documents, holy symbols, and levers-in-disguise (flavor text
-    or scripted effects via `manual_adjudication`).
-  - **Hide** within 1 tile of a hide-capable piece (`wardrobe`, `curtains`,
-    `alcove`, `throne` dais): the Hide action is rolled with advantage once.
-  - Renderer draws per-type procedural icons (atlas frames later); the
-    procedural generator sprinkles cosmetic, non-blocking furniture in large
-    rooms (never on doors, stairs, or encounter spawn cells).
+- **Furniture** (placeable dressing): `furniture` kind with a `furnitureType`
+  tag (`desk`, `throne`, `bookshelf`, `wardrobe`, `altar`, `table`, `crate`,
+  `bed`, `curtains`, `alcove`) plus existing fields (`detectionDc` for hidden
+  compartments, `lootTable`, `ac`/`hp` for smashable pieces).
+  - **Search** rummages the piece (shared open path: trapped check, then
+    `lootTable` if any); **Inspect Closely** runs active search vs
+    `detectionDc` for hidden compartments.
+  - **Hide** behind/inside `hideSpot` furniture (`wardrobe`, `curtains`,
+    `alcove`, `crate`, `bed`): adjacent heroes roll Stealth with advantage
+    when surprise is determined.
+  - Renderer draws per-type procedural icons; the procedural generator
+    sprinkles 1–2 non-blocking pieces in large rooms (never on doors, stairs,
+    chests, traps, spawns, or encounter cells).
 - **Non-goals**: no live in-game map editor or DM placement mode — "placing" a
   desk or throne means authoring it in module JSON or generator tables. No
   faction/territory systems (see Realm mode).

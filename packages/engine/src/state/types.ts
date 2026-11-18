@@ -52,6 +52,7 @@ export const PROP_KINDS = [
   'shrine',
   'stairs_down',
   'stairs_up',
+  'furniture',
 ] as const;
 export const PropKindSchema = z.enum(PROP_KINDS);
 export type PropKind = z.infer<typeof PropKindSchema>;
@@ -80,6 +81,10 @@ export interface InteractiveProp {
   disarmDc?: number;
   /** SRD-510 §3.2: WIS (Perception) DC to hear through (doors). */
   listenDc?: number;
+  /** SRD-512: furniture subtype (desk, throne, …). Only for kind 'furniture'. */
+  furnitureType?: string;
+  /** SRD-512: hiding behind/inside grants advantage on Stealth checks. */
+  hideSpot?: boolean;
   discovered?: boolean;
   ac?: number;
   hp?: number;

@@ -196,6 +196,7 @@ export function triggerDungeonEncounter(
     partyStealth,
     monsterAmbush,
     explicitSurprisedEntityIds: options?.explicitSurprisedEntityIds,
+    props: state.props,
   });
 
   const nextParty: Record<string, Combatant> = {};

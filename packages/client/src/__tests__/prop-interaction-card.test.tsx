@@ -8,6 +8,8 @@ import {
   getDefaultDungeonPartyCharacters,
 } from '../components/dungeon/dungeonEngine.js';
 
+import { PropInteractionCard } from '../components/dungeon/PropInteractionCard.js';
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -90,6 +92,29 @@ describe('SRD-510 click-to-inspect prop interaction', () => {
     expect(result.textContent!.length).toBeGreaterThan(0);
     // Listening is silent: the door stays closed and no combat starts.
     expect(screen.queryByTestId('tactical-combat-hud')).toBeNull();
+  });
+
+  it('shows the hide-spot hint for concealing furniture', () => {
+    HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(null);
+    render(
+      <PropInteractionCard
+        prop={{
+          id: 'wardrobe-a',
+          x: 1,
+          y: 1,
+          kind: 'furniture',
+          state: 'closed',
+          blocksMovement: false,
+          blocksSight: false,
+          furnitureType: 'wardrobe',
+          hideSpot: true,
+        }}
+        options={[{ interaction: 'open', label: 'Search' }]}
+        onInteract={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    expect(screen.getByText(/Hiding spot/i)).toBeDefined();
   });
 
   it('closes the card on Esc and on explicit close', () => {

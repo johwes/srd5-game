@@ -237,6 +237,7 @@ export interface CanvasPropInput {
    * `GameState` usage. */
   discovered?: boolean;
   shrineType?: string;
+  furnitureType?: string;
 }
 
 /**

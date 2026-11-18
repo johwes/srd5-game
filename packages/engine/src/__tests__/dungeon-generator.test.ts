@@ -381,3 +381,56 @@ describe('SRD-508: Procedural DungeonGenerator & Guaranteed BFS Connectivity', (
     });
   });
 });
+
+describe('SRD-512: Furniture Dressing Sprinkle', () => {
+  it('places non-blocking furniture only in large non-entrance rooms, clear of gameplay cells', () => {
+    const generated = generateDungeonFloor({
+      depth: 2,
+      seed: 424242,
+      width: 36,
+      height: 36,
+      targetRoomCount: 6,
+    });
+
+    const furniture = generated.floor.props.filter((p) => p.kind === 'furniture');
+    expect(furniture.length).toBeGreaterThan(0);
+
+    const occupied = new Set<string>();
+    for (const p of generated.floor.props) {
+      if (p.kind !== 'furniture') occupied.add(`${p.x},${p.y}`);
+    }
+    const spawnCells = new Set(generated.floor.partySpawnCells.map((c) => `${c.x},${c.y}`));
+    const encounterCells = new Set(
+      generated.floor.encounters.flatMap((e) => e.monsters.map((m) => `${m.spawnX},${m.spawnY}`)),
+    );
+    const cellByKey = new Map(generated.floor.cells.map((c) => [`${c.x},${c.y}`, c]));
+
+    for (const f of furniture) {
+      const key = `${f.x},${f.y}`;
+      // Never blocking, never on gameplay-critical cells
+      expect(f.blocksMovement).toBe(false);
+      expect(f.blocksSight).toBe(false);
+      expect(occupied.has(key)).toBe(false);
+      expect(encounterCells.has(key)).toBe(false);
+      expect(spawnCells.has(key)).toBe(false);
+      expect(cellByKey.get(key)?.terrain).toBe('floor_stone');
+      expect(cellByKey.get(key)?.roomId).toBeDefined();
+    }
+    // No furniture crowding the party spawn (keeps spawn sightlines clean).
+    for (const f of furniture) {
+      const nearSpawn = generated.floor.partySpawnCells.some(
+        (s) => Math.max(Math.abs(s.x - f.x), Math.abs(s.y - f.y)) <= 2,
+      );
+      expect(nearSpawn).toBe(false);
+    }
+  });
+
+  it('keeps furniture placement deterministic per seed', () => {
+    const config = { depth: 3, seed: 777001, width: 36, height: 36, targetRoomCount: 6 };
+    const a = generateDungeonFloor(config);
+    const b = generateDungeonFloor(config);
+    expect(JSON.stringify(a.floor.props.filter((p) => p.kind === 'furniture'))).toBe(
+      JSON.stringify(b.floor.props.filter((p) => p.kind === 'furniture')),
+    );
+  });
+});

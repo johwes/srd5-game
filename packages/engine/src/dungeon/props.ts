@@ -153,6 +153,8 @@ export function getAvailablePropInteractions(
     | 'state'
     | 'lockDc'
     | 'listenDc'
+    | 'furnitureType'
+    | 'hideSpot'
     | 'detectionDc'
     | 'disarmDc'
     | 'trapDamageFormula'
@@ -280,6 +282,47 @@ export function getAvailablePropInteractions(
               : `DC ${disarmDc}`,
         });
         options.push({ interaction: 'search', label: 'Search' });
+      }
+      return options;
+    }
+    case 'furniture': {
+      // SRD-512: placeable dressing. Locked drawers behave like locked chests;
+      // searching rifles contents (generic open path grants lootTable if any);
+      // inspecting finds hidden compartments (active search).
+      if (prop.state === 'locked') {
+        const lockDc = prop.lockDc ?? 15;
+        options.push({
+          interaction: 'pick_lock',
+          label: 'Pick Lock',
+          checkHint:
+            toolsBonus !== undefined ? `DEX (Thieves' Tools) ${signed(toolsBonus)} vs DC ${lockDc}` : `DC ${lockDc}`,
+          ...(riskHint ? { riskHint } : {}),
+        });
+        options.push({
+          interaction: 'force_open',
+          label: 'Force Open',
+          checkHint:
+            athleticsBonus !== undefined
+              ? `STR (Athletics) ${signed(athleticsBonus)} vs DC ${lockDc + 2}`
+              : `DC ${lockDc + 2} (loud!)`,
+          ...(riskHint ? { riskHint } : {}),
+        });
+      } else if (prop.state === 'closed') {
+        options.push({
+          interaction: 'open',
+          label: 'Search',
+          ...(riskHint ? { riskHint } : {}),
+        });
+      }
+      if (prop.state !== 'open') {
+        options.push({
+          interaction: 'search',
+          label: 'Inspect Closely',
+          checkHint:
+            searchBonus !== undefined
+              ? `Perception/Investigation ${signed(searchBonus)} vs DC ${prop.detectionDc ?? 10}`
+              : undefined,
+        });
       }
       return options;
     }

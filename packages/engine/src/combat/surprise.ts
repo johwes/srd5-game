@@ -17,6 +17,11 @@ export interface DetermineSurpriseOptions {
   partyStealth?: PartyStealthInput;
   monsterAmbush?: MonsterAmbushInput;
   explicitSurprisedEntityIds?: string[];
+  /**
+   * SRD-512: furniture hide-spot positions. A hero within 1 tile (Chebyshev)
+   * of one rolls Stealth with advantage.
+   */
+  hideoutPositions?: ReadonlyArray<{ x: number; y: number }>;
 }
 
 export interface DetermineSurpriseResult {
@@ -57,8 +62,15 @@ export function determineSurprise(options: DetermineSurpriseOptions): DetermineS
       if (typeof partyStealth.partyStealthRolls?.[hero.id] === 'number') {
         partyRolls[hero.id] = partyStealth.partyStealthRolls[hero.id]!;
       } else {
+        // SRD-512: a hero within 1 tile (Chebyshev) of furniture marked as a
+        // hide spot rolls Stealth with advantage.
+        const hasHideCover = (options.hideoutPositions ?? []).some(
+          (h) => Math.max(Math.abs(h.x - hero.position.x), Math.abs(h.y - hero.position.y)) <= 1,
+        );
+        const mode = hasHideCover ? 'advantage' : 'normal';
         const d20Res = rollD20(currentState, {
           modifier: hero.stealthModifier,
+          mode,
         });
         currentState = d20Res.nextState;
         partyRolls[hero.id] = d20Res.total;
@@ -72,7 +84,7 @@ export function determineSurprise(options: DetermineSurpriseOptions): DetermineS
           kept: d20Res.record.kept,
           modifier: d20Res.record.modifier,
           total: d20Res.total,
-          mode: 'normal',
+          mode,
         });
       }
     }

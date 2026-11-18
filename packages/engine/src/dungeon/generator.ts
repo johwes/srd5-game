@@ -38,6 +38,7 @@ export const ProceduralFloorConfigSchema = z.object({
   trapDensity: z.number().min(0).max(1).default(0.4),
   shrineProbability: z.number().min(0).max(1).default(0.35),
   chestProbability: z.number().min(0).max(1).default(0.5),
+  furnitureDensity: z.number().min(0).max(1).default(0.65),
   doorProbability: z.number().min(0).max(1).default(0.8),
   lockedStairsDoor: z.boolean().optional(),
 });
@@ -1049,6 +1050,51 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
         blocksSight: false,
       });
       propOccupied.add(key);
+    }
+  }
+
+  // 9b. Furniture dressing (SRD-512): placeable set dressing with interaction
+  // support. Only in large rooms (never the entrance), never blocking, never
+  // on stairs/doors/chests/traps (propOccupied) — later encounter spawns also
+  // avoid these cells, so connectivity guarantees are unaffected.
+  const FURNITURE_TABLE = [
+    'table', 'table', 'crate', 'crate', 'desk', 'bookshelf',
+    'bed', 'wardrobe', 'altar', 'throne', 'curtains', 'alcove',
+  ] as const;
+  const HIDE_SPOT_TYPES = new Set(['wardrobe', 'crate', 'curtains', 'alcove', 'bed']);
+  let furnitureCount = 0;
+  for (let i = 1; i < internalRooms.length; i++) {
+    const room = internalRooms[i];
+    const area = room.bounds.width * room.bounds.height;
+    if (area < 40) continue;
+    if (nextFloat() >= (config.furnitureDensity ?? 0.65)) continue;
+    // One statement piece, occasionally a second.
+    const pieces = 1 + (nextFloat() < 0.4 ? 1 : 0);
+    for (let f = 0; f < pieces; f++) {
+      let spot: GridPoint | undefined;
+      for (let attempt = 0; attempt < 10 && !spot; attempt++) {
+        const cx = room.bounds.x + 1 + Math.floor(nextFloat() * Math.max(1, room.bounds.width - 2));
+        const cy = room.bounds.y + 1 + Math.floor(nextFloat() * Math.max(1, room.bounds.height - 2));
+        if (!propOccupied.has(`${cx},${cy}`)) {
+          spot = { x: cx, y: cy };
+        }
+      }
+      if (!spot) continue;
+      const furnitureType = FURNITURE_TABLE[Math.floor(nextFloat() * FURNITURE_TABLE.length)];
+      const withCompartment = (furnitureType === 'desk' || furnitureType === 'bookshelf') && nextFloat() < 0.5;
+      props.push({
+        id: `furniture_${config.depth}_${++furnitureCount}`,
+        x: spot.x,
+        y: spot.y,
+        kind: 'furniture',
+        furnitureType,
+        state: 'closed',
+        blocksMovement: false,
+        blocksSight: false,
+        ...(withCompartment ? { detectionDc: 10 + Math.floor(nextFloat() * 6) } : {}),
+        ...(HIDE_SPOT_TYPES.has(furnitureType) ? { hideSpot: true } : {}),
+      });
+      propOccupied.add(`${spot.x},${spot.y}`);
     }
   }
 

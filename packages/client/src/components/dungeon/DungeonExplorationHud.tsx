@@ -223,6 +223,7 @@ export function DungeonExplorationHud({
                       {kind === 'stairs_up' && '🪜'}
                       {kind === 'lever' && '🕹️'}
                       {kind === 'shrine' && '✨'}
+                      {kind === 'furniture' && '🪑'}
                     </span>
                     <span className="min-w-0">
                       <span className="block text-xs font-bold text-slate-200 capitalize truncate">

@@ -82,6 +82,12 @@ export function PropInteractionCard({ prop, options, onInteract, onClose, onUseS
         </div>
       )}
 
+      {prop.hideSpot === true && (
+        <div className="rounded-lg bg-emerald-950/50 border border-emerald-800/60 px-2.5 py-1.5 text-[11px] text-emerald-200">
+          🌿 Hiding spot — Stealth checks gain advantage while adjacent.
+        </div>
+      )}
+
       {options.length === 0 ? (
         <div className="text-xs text-slate-500 italic">Nothing to do here.</div>
       ) : (

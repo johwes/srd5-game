@@ -177,6 +177,7 @@ export function reduceGame(
         combatants: combatantsList,
         rngState: command.rngState ?? nextState.rngState,
         dispositionMatrix: command.dispositionMatrix,
+        props: nextState.props,
       });
 
       nextState.mode = 'combat';

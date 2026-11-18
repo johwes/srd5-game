@@ -199,6 +199,8 @@ export function createDungeonGameState(options: CreateDungeonGameOptions): GameS
       detectionDc: p.detectionDc,
       disarmDc: p.disarmDc,
       listenDc: p.listenDc,
+      furnitureType: p.furnitureType,
+      hideSpot: p.hideSpot,
       discovered: p.discovered ?? (p.detectionDc === undefined),
       ac: p.ac,
       hp: p.hp,

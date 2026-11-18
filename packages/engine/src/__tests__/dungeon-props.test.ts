@@ -1111,3 +1111,38 @@ describe('SRD-502: Interactive Props Engine', () => {
   });
 });
 
+
+describe('SRD-512: Furniture Props', () => {
+  const rogue = () =>
+    makePartyMember({
+      id: 'sneak',
+      name: 'Sneak',
+      tools: ['thieves_tools'],
+      skills: {
+        perception: { totalBonus: 5 },
+        investigation: { totalBonus: 3 },
+        athletics: { totalBonus: 2 },
+      },
+    });
+
+  it('offers Search (+ inspect) on furniture and lockpicking on locked drawers', () => {
+    const desk = getAvailablePropInteractions(
+      { id: 'desk', kind: 'furniture', state: 'closed', furnitureType: 'desk', detectionDc: 12 },
+      rogue(),
+    );
+    expect(desk.map((o) => o.interaction)).toEqual(['open', 'search']);
+    expect(desk[0]!.label).toBe('Search');
+    const locked = getAvailablePropInteractions(
+      { id: 'drawer', kind: 'furniture', state: 'locked', furnitureType: 'desk', lockDc: 13 },
+      rogue(),
+    );
+    expect(locked.map((o) => o.interaction)).toEqual(['pick_lock', 'force_open', 'search']);
+    expect(locked[0]!.checkHint).toContain('DC 13');
+  });
+
+  it('offers nothing actionable on destroyed furniture', () => {
+    expect(
+      getAvailablePropInteractions({ id: 'rubble', kind: 'furniture', state: 'destroyed' }, rogue()),
+    ).toEqual([]);
+  });
+});

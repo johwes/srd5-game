@@ -63,6 +63,8 @@ export interface StartCombatEncounterOptions {
   monsterAmbush?: MonsterAmbushInput;
   explicitSurprisedEntityIds?: string[];
   dispositionMatrix?: DispositionMatrix;
+  /** SRD-512: dungeon props; hideSpot furniture grants Stealth advantage. */
+  props?: ReadonlyArray<{ x: number; y: number; hideSpot?: boolean }>;
 }
 
 export interface CombatTransitionResult {
@@ -137,6 +139,9 @@ export function startCombatEncounter(
     partyStealth,
     monsterAmbush,
     explicitSurprisedEntityIds,
+    hideoutPositions: (options.props ?? [])
+      .filter((p) => p.hideSpot === true)
+      .map((p) => ({ x: p.x, y: p.y })),
   });
   currentState = surpriseRes.nextRngState;
   events.push(...surpriseRes.events);

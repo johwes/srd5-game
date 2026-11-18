@@ -81,6 +81,8 @@ export interface PlayerViewProp {
   blocksMovement: boolean;
   blocksSight: boolean;
   shrineType?: string;
+  /** SRD-512: furniture subtype (desk, throne, …) for canvas icons. */
+  furnitureType?: string;
   /** Engine discovery flag, projected so the canvas can hide undiscovered
    * traps and secret doors without re-deriving fog. */
   discovered?: boolean;
