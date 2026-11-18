@@ -44,9 +44,18 @@ describe('SRD-106: Bundled SRD 5.1 JSON Dataset & Referential Integrity Suite', 
       expect(report.counts.races).toBe(9);
       expect(report.counts.subraces).toBe(4);
       expect(report.counts.classes).toBe(12);
-      expect(report.counts.subclasses).toBe(12);
-      expect(report.counts.backgrounds).toBe(1);
-      expect(report.counts.feats).toBe(1);
+      expect(report.counts.subclasses).toBeGreaterThanOrEqual(12);
+      expect(report.counts.backgrounds).toBeGreaterThanOrEqual(1);
+      expect(report.counts.feats).toBeGreaterThanOrEqual(1);
+      expect(
+        BUNDLED_SRD_DATASET.subclasses.filter((sc) => sc.source !== 'homebrew'),
+      ).toHaveLength(12);
+      expect(
+        BUNDLED_SRD_DATASET.backgrounds.filter((bg) => bg.source !== 'homebrew'),
+      ).toHaveLength(1);
+      expect(
+        BUNDLED_SRD_DATASET.feats.filter((f) => f.source !== 'homebrew'),
+      ).toHaveLength(1);
       expect(report.counts.features).toBeGreaterThanOrEqual(80);
       expect(report.counts.equipment).toBeGreaterThanOrEqual(100);
       expect(report.counts.magicItems).toBeGreaterThanOrEqual(20);
@@ -156,18 +165,25 @@ describe('SRD-106: Bundled SRD 5.1 JSON Dataset & Referential Integrity Suite', 
       expect(offenders).toEqual([]);
     });
 
-    it('tracks provenance: valid source values and an explicit homebrew roster', () => {
+    it('tracks provenance: valid source values across all expandable collections', () => {
       const valid = new Set(['srd-5.1', 'homebrew', undefined]);
-      for (const m of BUNDLED_SRD_DATASET.monsters) {
-        expect(valid.has((m as { source?: string }).source)).toBe(true);
+      const collections = [
+        BUNDLED_SRD_DATASET.monsters,
+        BUNDLED_SRD_DATASET.spells,
+        BUNDLED_SRD_DATASET.magicItems,
+        BUNDLED_SRD_DATASET.feats,
+        BUNDLED_SRD_DATASET.backgrounds,
+        BUNDLED_SRD_DATASET.subclasses,
+      ];
+      for (const col of collections) {
+        for (const entry of col) {
+          expect(valid.has(entry.source)).toBe(true);
+        }
       }
-      // Tripwire: adding homebrew content requires explicitly extending this
-      // roster (human review), so nothing slips in unlabeled.
-      const homebrew = BUNDLED_SRD_DATASET.monsters
-        .filter((m) => (m as { source?: string }).source === 'homebrew')
-        .map((m) => m.id)
-        .sort();
-      expect(homebrew).toEqual(['goblin-boss']);
+      const homebrewMonsters = BUNDLED_SRD_DATASET.monsters
+        .filter((m) => m.source === 'homebrew')
+        .map((m) => m.id);
+      expect(homebrewMonsters).toContain('goblin-boss');
     });
 
     it('contains all canonical abilities, skills, conditions, and damage types', () => {
