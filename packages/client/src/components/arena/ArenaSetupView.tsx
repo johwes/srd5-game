@@ -115,6 +115,8 @@ export function ArenaSetupView({
       name:
         mode === 'pvp_duel'
           ? `${teamAName} vs ${teamBName}`
+          : mode === 'boss_rush'
+          ? 'The Arena — Boss Rush Gauntlet'
           : mode === 'endless_waves'
           ? 'The Arena — Endless Waves'
           : 'The Arena — Custom Skirmish',
@@ -127,9 +129,9 @@ export function ArenaSetupView({
         mode !== 'pvp_duel'
           ? {
               difficultyTier,
-              waveCount: mode === 'endless_waves' ? 0 : 1,
-              restFrequencyWaves,
-              selectedMonsterIds,
+              waveCount: mode === 'endless_waves' ? 0 : mode === 'boss_rush' ? 7 : 1,
+              restFrequencyWaves: mode === 'boss_rush' ? 1 : restFrequencyWaves,
+              selectedMonsterIds: mode === 'boss_rush' ? [] : selectedMonsterIds,
             }
           : undefined,
       pvpSettings:
@@ -187,7 +189,7 @@ export function ArenaSetupView({
       </div>
 
       {/* Mode Selector Tabs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <button
           type="button"
           data-testid="arena-mode-skirmish"
@@ -213,6 +215,34 @@ export function ArenaSetupView({
           <h3 className="font-bold text-sm text-slate-100">Custom Skirmish</h3>
           <p className="text-xs text-slate-400 mt-1">
             Instant tactical encounter against selected monster packs or difficulty tiers.
+          </p>
+        </button>
+
+        <button
+          type="button"
+          data-testid="arena-mode-boss-rush"
+          onClick={() => setMode('boss_rush')}
+          className={`p-4 rounded-xl border text-left transition-all ${
+            mode === 'boss_rush'
+              ? 'border-amber-500 bg-amber-500/10 ring-1 ring-amber-500'
+              : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-lg">👑</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${
+                mode === 'boss_rush'
+                  ? 'bg-amber-500 text-slate-950'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              Remix Boss Rush
+            </span>
+          </div>
+          <h3 className="font-bold text-sm text-slate-100">Boss Rush Gauntlet</h3>
+          <p className="text-xs text-slate-400 mt-1">
+            7 escalating CR boss encounters with short-rest breathers, culminating in the Adult Red Dragon.
           </p>
         </button>
 
@@ -550,6 +580,8 @@ export function ArenaSetupView({
           <span>
             {mode === 'pvp_duel'
               ? 'Launch 1v1 Party Duel'
+              : mode === 'boss_rush'
+              ? 'Enter Boss Rush Gauntlet'
               : mode === 'endless_waves'
               ? 'Begin Endless Wave Gauntlet'
               : 'Enter Arena Skirmish'}

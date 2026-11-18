@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { SRD_LEGAL_ATTRIBUTION, SRD_VERSION } from '@srd5/data';
+import { getDailyDescentDateString, getDailyDescentSeed } from '@srd5/engine';
 import { getTransportInfo } from '@srd5/transport';
 import {
   type DungeonSaveSlotData,
   defaultDungeonStorageAdapter,
   getLatestDungeonSaveSlot,
+  hasAttemptedDailyDescent,
   loadAppSettings,
   loadDungeonSaveSlots,
   resetAppSettings,
@@ -24,6 +26,7 @@ export function TitleMenuView({
   onOpenCompendium,
   onOpenArena,
   onOpenMultiplayer,
+  onDailyDescent,
   storageAdapter = defaultDungeonStorageAdapter,
   activeSave: initialActiveSave,
   settings: initialSettings,
@@ -39,6 +42,18 @@ export function TitleMenuView({
   const [appSettings, setAppSettings] = useState<AppSettings>(() =>
     initialSettings ? { ...initialSettings } : loadAppSettings(),
   );
+
+  const dailyDateStr = getDailyDescentDateString();
+  const dailySeed = getDailyDescentSeed();
+  const [hasAttemptedDaily, setHasAttemptedDaily] = useState(false);
+
+  useEffect(() => {
+    try {
+      setHasAttemptedDaily(hasAttemptedDailyDescent(dailyDateStr));
+    } catch {
+      // Ignore
+    }
+  }, [dailyDateStr]);
 
   const transportInfo = getTransportInfo();
 
@@ -254,6 +269,33 @@ export function TitleMenuView({
             <p className="text-xs text-slate-400 mt-0.5">
               Assemble a party and embark into the Sunken Crypt of Kaelen
             </p>
+          </button>
+
+          {/* DAILY DESCENT BUTTON */}
+          <button
+            type="button"
+            data-testid="title-menu-daily-descent-btn"
+            onClick={onDailyDescent ?? onNewGame}
+            className="w-full min-h-[50px] rounded-xl px-6 py-2.5 border border-indigo-700/60 bg-gradient-to-r from-indigo-950/80 via-slate-900 to-indigo-950/80 hover:border-indigo-400 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] text-slate-100 transition-all duration-200 flex items-center justify-between text-left focus:ring-2 focus:ring-indigo-400 focus:outline-none cursor-pointer"
+          >
+            <div>
+              <span className="text-sm sm:text-base font-semibold tracking-wide flex items-center gap-2 text-indigo-300">
+                <span>📅</span>
+                <span>Daily Descent</span>
+              </span>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Seed #{dailySeed.toString(16).toUpperCase()} &middot; {dailyDateStr} &middot; {hasAttemptedDaily ? 'Attempted Today' : 'Ready for Today’s Run'}
+              </p>
+            </div>
+            <span
+              className={`text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                hasAttemptedDaily
+                  ? 'border-slate-700 bg-slate-800 text-slate-400'
+                  : 'border-indigo-500/60 bg-indigo-950/60 text-indigo-300'
+              }`}
+            >
+              {hasAttemptedDaily ? 'Completed' : '1 Attempt'}
+            </span>
           </button>
 
           {/* MULTIPLAYER LOBBY BUTTON */}

@@ -166,8 +166,14 @@ export function ArenaCombatView({
       );
 
       if (outcome.status === 'wave_cleared') {
-        setMatchOutcome(outcome);
-        setShowBreatherModal(true);
+        const totalBossWaves = config.pveSettings?.waveCount ?? 7;
+        if (config.mode === 'boss_rush' && currentWave >= totalBossWaves) {
+          setMatchOutcome({ status: 'victory' });
+          setShowMatchEndModal(true);
+        } else {
+          setMatchOutcome(outcome);
+          setShowBreatherModal(true);
+        }
       } else if (
         outcome.status === 'victory' ||
         outcome.status === 'defeat' ||
@@ -581,6 +587,8 @@ export function ArenaCombatView({
             ? activeTeamId === 'team_red'
               ? `${config.pvpSettings?.teamA.teamName} (Player 1)`
               : `${config.pvpSettings?.teamB.teamName} (Player 2)`
+            : config.mode === 'boss_rush'
+            ? `Boss Rush Wave ${currentWave} / ${config.pveSettings?.waveCount ?? 7} · Score ${score}`
             : config.mode === 'endless_waves'
             ? `Endless Wave ${currentWave} · Score ${score}`
             : `Skirmish · Tier: ${config.pveSettings?.difficultyTier ?? 'medium'}`
@@ -593,6 +601,8 @@ export function ArenaCombatView({
             <span className="text-xs px-2 py-0.5 rounded-full font-bold uppercase bg-slate-800 text-slate-300 border border-slate-700">
               {config.mode === 'pvp_duel'
                 ? '1v1 PvP Duel'
+                : config.mode === 'boss_rush'
+                ? `Boss Wave ${currentWave}/${config.pveSettings?.waveCount ?? 7}`
                 : config.mode === 'endless_waves'
                 ? `Wave ${currentWave}`
                 : 'Custom Skirmish'}

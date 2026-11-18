@@ -97,6 +97,7 @@ export function App({
   const [multiplayerCharacterIds, setMultiplayerCharacterIds] = useState<string[] | null>(
     null,
   );
+  const [isDailyDescentActive, setIsDailyDescentActive] = useState<boolean>(false);
 
   const transportInfo = getTransportInfo();
 
@@ -245,6 +246,11 @@ export function App({
           onOpenCompendium={() => setActiveView('compendium')}
           onOpenArena={() => setActiveView('arena')}
           onOpenMultiplayer={() => setActiveView('multiplayer_lobby')}
+          onDailyDescent={() => {
+            setIsDailyDescentActive(true);
+            setLoadedGameState(undefined);
+            setActiveView('roguelite');
+          }}
         />
 
         {activeSheetCharacter && (
@@ -621,6 +627,7 @@ export function App({
             compendium={defaultCompendium}
             gameMode="roguelite"
             storageAdapter={dungeonStorageAdapter}
+            isDaily={isDailyDescentActive}
             onOpenCharacterSheet={(charId) => {
               const char =
                 roster.characters.find((c) => c.id === charId) ??
@@ -629,7 +636,10 @@ export function App({
                 handleInspectCharacter(char);
               }
             }}
-            onExitToRoster={() => setActiveView('title_menu')}
+            onExitToRoster={() => {
+              setIsDailyDescentActive(false);
+              setActiveView('title_menu');
+            }}
           />
         )}
       </div>

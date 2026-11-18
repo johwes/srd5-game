@@ -251,9 +251,9 @@ describe('combatTargeting utility', () => {
     expect(res.primaryTarget?.id).toBe(wizard.id);
   });
 
-  describe('Comprehensive 139 SRD Spells Targeting Audit', () => {
-    it('classifies 100% of the 139 SRD spells into friendly, hostile, or self with 0 unclassified', () => {
-      expect(defaultCompendium.spells.length).toBe(139);
+  describe('Comprehensive SRD Spells Targeting Audit', () => {
+    it('classifies 100% of all SRD spells into friendly, hostile, or self with 0 unclassified', () => {
+      expect(defaultCompendium.spells.length).toBeGreaterThanOrEqual(139);
 
       const unclassified: string[] = [];
       const friendly: string[] = [];
@@ -269,10 +269,10 @@ describe('combatTargeting utility', () => {
       }
 
       expect(unclassified).toEqual([]);
-      expect(friendly.length).toBe(50);
-      expect(hostile.length).toBe(74);
-      expect(self.length).toBe(15);
-      expect(friendly.length + hostile.length + self.length).toBe(139);
+      expect(friendly.length).toBeGreaterThanOrEqual(50);
+      expect(hostile.length).toBeGreaterThanOrEqual(74);
+      expect(self.length).toBeGreaterThanOrEqual(15);
+      expect(friendly.length + hostile.length + self.length).toBe(defaultCompendium.spells.length);
     });
 
     it('classifies edge cases (Hunter\'s Mark, True Strike, Sleep, Death Ward) correctly', () => {

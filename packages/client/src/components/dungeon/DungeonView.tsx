@@ -83,6 +83,10 @@ export interface DungeonViewProps {
   initialFloorSpec?: DungeonFloorSpec;
   /** SRD-806: called once when the delve concludes (clear, lair clear, or wipe). */
   onDelveResolved?: (delve: RealmDelveState, gameState: GameState) => void;
+  /** SRD-1005: Daily Descent run options */
+  isDaily?: boolean;
+  dailyDate?: string;
+  seed?: number;
 }
 
 export function DungeonView({
@@ -97,6 +101,9 @@ export function DungeonView({
   initialDelveState,
   initialFloorSpec,
   onDelveResolved,
+  isDaily,
+  dailyDate,
+  seed,
 }: DungeonViewProps) {
   const campaignModule = getSunkenCryptModule();
   const [dungeonMode, setDungeonMode] = useState<DungeonGameMode>(gameMode);
@@ -112,7 +119,10 @@ export function DungeonView({
       return { runState: initialDelveState, floor: initialFloorSpec };
     }
     if (gameMode === 'roguelite') {
-      const sess = buildRogueliteSession(partyCharacters, compendium);
+      const sess = buildRogueliteSession(partyCharacters, compendium, seed, {
+        isDaily,
+        dailyDate,
+      });
       return {
         runState: sess.session.runState,
         floor: sess.session.generatedFloor.floor,
@@ -161,7 +171,10 @@ export function DungeonView({
       });
     }
     if (gameMode === 'roguelite') {
-      const sess = buildRogueliteSession(partyCharacters, compendium);
+      const sess = buildRogueliteSession(partyCharacters, compendium, seed, {
+        isDaily,
+        dailyDate,
+      });
       return sess.transport;
     }
     return buildDungeonSession(floorSpec, partyCharacters, compendium).transport;
@@ -826,7 +839,10 @@ export function DungeonView({
 
   // Start new roguelite descent from Graveyard
   const handleStartNewDescent = () => {
-    const sess = buildRogueliteSession(partyCharacters, compendium);
+    const sess = buildRogueliteSession(partyCharacters, compendium, seed, {
+      isDaily,
+      dailyDate,
+    });
     setRogueliteState({
       runState: sess.session.runState,
       floor: sess.session.generatedFloor.floor,

@@ -29,6 +29,8 @@ const KNOWN_HOSTILE_SPELLS = new Set([
   'entangle',
   'faithful-hound',
   'flaming-sphere',
+  'fog-cloud',
+  'forcecage',
   'freezing-sphere',
   'grease',
   'guardian-of-faith',
@@ -50,8 +52,10 @@ const KNOWN_HOSTILE_SPELLS = new Set([
 
 const KNOWN_FRIENDLY_SPELLS = new Set([
   'death-ward',
+  'gate',
   'greater-restoration',
   'raise-dead',
+  'teleport',
   'true-resurrection',
   'telepathic-bond',
   'hallow',

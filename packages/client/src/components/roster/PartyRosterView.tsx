@@ -4,7 +4,7 @@ import {
   type SrdCompendium,
   defaultCompendium,
 } from '@srd5/data';
-import { MAX_CHARACTER_LEVEL, computeDerivedCharacter } from '@srd5/engine';
+import { MAX_CHARACTER_LEVEL, computeDerivedCharacter, generateDraftParty } from '@srd5/engine';
 import {
   MAX_PARTY_SIZE,
   MIN_PARTY_SIZE,
@@ -233,6 +233,27 @@ export function PartyRosterView({
             className="px-3 py-2 rounded-lg border border-slate-700 bg-slate-950 text-xs font-semibold text-slate-200 hover:border-amber-500/60"
           >
             Export Roster (.srd5.json)
+          </button>
+          <button
+            type="button"
+            data-testid="roster-draft-party-btn"
+            onClick={() => {
+              const drafted = generateDraftParty({ seed: Date.now() });
+              const nextRoster: PersistedRosterData = {
+                ...roster,
+                activePartyIds: drafted.map((h) => h.id),
+                characters: [
+                  ...roster.characters.filter((c) => !drafted.some((d) => d.id === c.id)),
+                  ...drafted,
+                ],
+              };
+              onUpdateRoster(nextRoster);
+              setStatusBanner('Drafted 4 randomized heroes with seeded 4d6kh3 ability rolls into the active party.');
+              setErrorBanner(null);
+            }}
+            className="px-3 py-2 rounded-lg border border-purple-800/60 bg-purple-950/40 text-xs font-semibold text-purple-200 hover:bg-purple-900/60"
+          >
+            🎲 Draft Party
           </button>
           <button
             type="button"

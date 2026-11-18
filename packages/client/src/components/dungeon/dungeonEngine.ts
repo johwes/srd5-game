@@ -14,6 +14,7 @@ import {
   type RogueliteRunSession,
   computeDerivedCharacter,
   createCharacterCombatant,
+  createDailyDescentRun,
   createDungeonGameState,
   startRogueliteRun,
   advanceRogueliteFloor,
@@ -187,16 +188,24 @@ export function buildRogueliteSession(
   partyCharacters: CharacterBuildState[] = [],
   compendium: SrdCompendium = defaultCompendium,
   seed?: number,
+  options?: { isDaily?: boolean; dailyDate?: string },
 ): {
   transport: LocalTransport;
   initialState: GameState;
   session: RogueliteRunSession;
 } {
-  const session = startRogueliteRun({
-    partyCharacters,
-    compendium,
-    seed: seed ?? 1337,
-  });
+  const session = options?.isDaily
+    ? createDailyDescentRun({
+        partyCharacters,
+        compendium,
+        seed,
+        date: options.dailyDate,
+      })
+    : startRogueliteRun({
+        partyCharacters,
+        compendium,
+        seed: seed ?? 1337,
+      });
 
   const transport = new LocalTransport({
     initialState: session.gameState,

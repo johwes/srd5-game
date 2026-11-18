@@ -3,7 +3,7 @@ import type { CharacterBuildState, CreatureType } from '@srd5/data';
 /**
  * Supported Arena game sub-modes (Spec 06 Section 2).
  */
-export type ArenaSubMode = 'custom_skirmish' | 'endless_waves' | 'pvp_duel';
+export type ArenaSubMode = 'custom_skirmish' | 'endless_waves' | 'pvp_duel' | 'boss_rush';
 
 /**
  * Arena map environment terrain hazards and obstacles (Spec 06 Section 2.1).

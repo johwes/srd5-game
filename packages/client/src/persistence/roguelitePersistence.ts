@@ -1,4 +1,10 @@
-import { type GraveyardEntry } from '@srd5/engine';
+import {
+  type GraveyardEntry,
+  getDailyDescentDateString,
+  getDailyDescentLeaderboard as engineGetDailyDescentLeaderboard,
+  getDailyDescentScoreRank as engineGetDailyDescentScoreRank,
+  isDailyDescentAttempted,
+} from '@srd5/engine';
 
 export const ROGUELITE_GRAVEYARD_STORAGE_KEY = 'srd5_roguelite_graveyard_v1';
 
@@ -84,4 +90,34 @@ export function clearGraveyardEntries(storage?: Storage): void {
     }
   }
   inMemoryGraveyard = [];
+}
+
+/**
+ * Checks if the Daily Descent run for a given date has already been completed or attempted.
+ */
+export function hasAttemptedDailyDescent(
+  dateOrDateString: Date | string = new Date(),
+  storage?: Storage,
+): boolean {
+  const entries = loadGraveyardEntries(storage);
+  return isDailyDescentAttempted(dateOrDateString, entries);
+}
+
+/**
+ * Returns the Daily Descent leaderboard entries sorted descending by score.
+ */
+export function getDailyDescentLeaderboard(storage?: Storage): GraveyardEntry[] {
+  const entries = loadGraveyardEntries(storage);
+  return engineGetDailyDescentLeaderboard(entries);
+}
+
+/**
+ * Calculates rank and percentile for a given score against historical daily runs.
+ */
+export function getDailyDescentScoreRank(
+  score: number,
+  storage?: Storage,
+): { rank: number; totalDailyRuns: number; percentile: number } {
+  const entries = loadGraveyardEntries(storage);
+  return engineGetDailyDescentScoreRank(score, entries);
 }

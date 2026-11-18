@@ -3,6 +3,7 @@ import {
   type CharacterBuildState,
   getPregenCharacter,
 } from '@srd5/data';
+import { generateDraftParty } from '@srd5/engine';
 import { parseSrd5JsonImport } from '../../persistence/index.js';
 import { CampfirePartySlotCard } from './CampfirePartySlotCard.js';
 import { VaultSelectionModal } from './VaultSelectionModal.js';
@@ -143,6 +144,21 @@ export function CampaignSetupWizard({
       { ...prev[3]!, character: getPregenCharacter('pregen-cleric') ?? null },
     ]);
     setImportStatus(null);
+  };
+
+  // Draft party of 4 random heroes using seeded 4d6kh3 ability rolls
+  const handleDraftParty = () => {
+    const drafted = generateDraftParty({ seed: Date.now() });
+    setSlotAssignments((prev) => [
+      { ...prev[0]!, character: drafted[0] ?? null },
+      { ...prev[1]!, character: drafted[1] ?? null },
+      { ...prev[2]!, character: drafted[2] ?? null },
+      { ...prev[3]!, character: drafted[3] ?? null },
+    ]);
+    setImportStatus({
+      type: 'success',
+      message: 'Drafted 4 randomized heroes with 4d6kh3 ability rolls, distinct classes, and starter gear!',
+    });
   };
 
   // Clear all slots
@@ -726,6 +742,15 @@ export function CampaignSetupWizard({
                   className="min-h-[44px] px-3.5 py-1.5 rounded-lg border border-amber-900/60 bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-amber-300 transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none self-start sm:self-auto"
                 >
                   ⚡ Quick-Pick All 4 Pregens
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="wizard-draft-party-btn"
+                  onClick={handleDraftParty}
+                  className="min-h-[44px] px-3.5 py-1.5 rounded-lg border border-purple-800/60 bg-purple-950/40 hover:bg-purple-900/60 text-xs font-semibold text-purple-200 transition-colors focus:ring-2 focus:ring-purple-400 focus:outline-none self-start sm:self-auto"
+                >
+                  🎲 Draft Party (Roll 4 Heroes)
                 </button>
 
                 <button

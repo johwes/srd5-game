@@ -15,6 +15,7 @@ import {
   createInitialGameState,
   createMonsterCombatant,
   createTacticalGrid,
+  getBossRushMonstersForWave,
   reduceGame,
   setGridCells,
 } from '@srd5/engine';
@@ -213,12 +214,15 @@ export function buildArenaPveEncounter(
   });
 
   // 2. Select & Position Monsters along top edge
-  const monsterIds = getMonstersForWave(
-    compendium,
-    waveNumber,
-    config.pveSettings?.difficultyTier ?? 'medium',
-    config.pveSettings?.selectedMonsterIds,
-  );
+  const monsterIds =
+    config.mode === 'boss_rush'
+      ? getBossRushMonstersForWave(waveNumber, compendium)
+      : getMonstersForWave(
+          compendium,
+          waveNumber,
+          config.pveSettings?.difficultyTier ?? 'medium',
+          config.pveSettings?.selectedMonsterIds,
+        );
 
   const monsterY = 1;
   const monsterStartX = Math.max(
@@ -433,11 +437,14 @@ export function spawnNextWave(
   compendium: SrdCompendium = defaultCompendium,
   rngSeed = 42,
 ): GameState {
-  const monsterIds = getMonstersForWave(
-    compendium,
-    waveNumber,
-    config.pveSettings?.difficultyTier ?? 'medium',
-  );
+  const monsterIds =
+    config.mode === 'boss_rush'
+      ? getBossRushMonstersForWave(waveNumber, compendium)
+      : getMonstersForWave(
+          compendium,
+          waveNumber,
+          config.pveSettings?.difficultyTier ?? 'medium',
+        );
 
   const monsterY = 1;
   const monsterStartX = Math.max(
@@ -543,7 +550,7 @@ export function evaluateArenaOutcome(
   }
 
   if (monstersLiving.length === 0 && partyLiving.length > 0) {
-    if (mode === 'endless_waves') {
+    if (mode === 'endless_waves' || mode === 'boss_rush') {
       return { status: 'wave_cleared' };
     }
     return { status: 'victory' };

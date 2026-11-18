@@ -47,6 +47,9 @@ export interface GraveyardEntry {
   totalPartyCount: number;
   partyNames: string[];
   turnsTaken: number;
+  isDaily?: boolean;
+  dailyDate?: string;
+  mode?: string;
 }
 
 /**
@@ -71,6 +74,9 @@ export interface DeepDescentRunState {
   isComplete: boolean;
   deathCause?: string;
   graveyardEntry?: GraveyardEntry;
+  isDaily?: boolean;
+  dailyDate?: string;
+  mode?: string;
 }
 
 export interface RogueliteScoreFactors {
@@ -130,6 +136,9 @@ export interface CreateRogueliteRunOptions {
   partyCharacters?: CharacterBuildState[];
   startingRations?: number;
   compendium?: SrdCompendium;
+  isDaily?: boolean;
+  dailyDate?: string;
+  mode?: string;
 }
 
 export interface RogueliteRunSession {
@@ -209,6 +218,9 @@ export function startRogueliteRun(options: CreateRogueliteRunOptions = {}): Rogu
       turnsTaken: 0,
     }),
     isComplete: false,
+    ...(options.isDaily !== undefined ? { isDaily: options.isDaily } : {}),
+    ...(options.dailyDate ? { dailyDate: options.dailyDate } : {}),
+    ...(options.mode ? { mode: options.mode } : {}),
   };
 
   return { runState, gameState, generatedFloor };
@@ -649,6 +661,9 @@ export function endRogueliteRun(
     totalPartyCount: partyList.length,
     partyNames: partyList.map((c) => c.name),
     turnsTaken: nextRunState.turnsTaken,
+    ...(nextRunState.isDaily !== undefined ? { isDaily: nextRunState.isDaily } : {}),
+    ...(nextRunState.dailyDate ? { dailyDate: nextRunState.dailyDate } : {}),
+    ...(nextRunState.mode ? { mode: nextRunState.mode } : {}),
   };
 
   nextRunState.graveyardEntry = graveyardEntry;
