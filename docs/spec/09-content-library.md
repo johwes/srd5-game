@@ -15,9 +15,16 @@ The dataset's licensing gates decide the expansion surface — not taste:
 Consequences:
 - **Verbatim SRD datasets stay frozen where allowlisted.** Races, classes,
   subclasses, backgrounds, and feats beyond the allowlists are not added as
-  "SRD content". Build variety on the SRD side comes from multiclassing, ASI
-  choices, equipment, magic items, party composition (1–4 heroes), and
-  difficulty presets — all already shipped.
+  "SRD content". The single-example entries (one feat, one background, one
+  subclass per class) are structural templates by design — they show creators
+  the shape to build their own, not a catalog to complete. Build variety on
+  the SRD side comes from multiclassing, ASI choices, equipment, magic items,
+  party composition (1–4 heroes), and difficulty presets — all already shipped.
+- **Never copy or closely paraphrase closed official content.** Non-SRD
+  subclasses, feats, backgrounds, monsters, and spells from official books
+  must not be reproduced or thinly reworded. Homebrew means original design
+  on shared mechanics; the PI screen plus human review in every authoring
+  ticket enforce this.
 - **Original homebrew is allowed on a separate, labeled track** (Spec §7).
   Game mechanics are not protected expression; new feats, backgrounds,
   subclasses, monsters, and spells written in original words, using SRD
@@ -133,6 +140,8 @@ Rules for the homebrew track:
   setting references) plus a human review flag in the authoring ticket. No
   beholders, mind flayers, named spells (`Bigby's`, `Mordenkainen's`, …),
   settings, or copied PHB wording — mechanics only, original expression.
+  Closed official content must never be copied **or closely paraphrased**;
+  when in doubt, redesign the mechanic rather than reword it.
 - **Same quality bar as SRD content.** Homebrew statblocks follow the §3
   checklist (executable overlays, AI archetype, headless tests); homebrew
   spells follow §4; homebrew feats/backgrounds ship with formulae tooltips and
@@ -145,6 +154,7 @@ Rules for the homebrew track:
 
 - No new *verbatim-SRD* feats, backgrounds, subclasses, or races beyond the
   allowlists (see §7 for the homebrew path instead).
+- No SRD 5.2 material of any kind (rules coherence; see §1).
 - No new binary art assets (see §2).
 - No handcrafted campaign modules in this epic (Kaelen stays the tutorial;
   handcrafted arcs belong with quest content, not the library).
