@@ -9,28 +9,12 @@ import {
   type GeneratedOverworldBattle,
   type GridPoint,
   findPath,
-  getFootprintDistanceFeet,
   planAiTurn,
   truncatePathToBudget,
 } from '@srd5/engine';
 import { LocalTransport, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
-import { computeAoeOverlay } from '../../canvas/layers/PathAndAoeLayer.js';
-import {
-  buildPendingTargetForAttack,
-  buildPendingTargetForSpell,
-  canCommitPending,
-  commitAoeTarget,
-  isSelfEmanation,
-  needsDirectionPick,
-  pendingTargetHint,
-  aimRangeFeet,
-  validateTargetPick,
-  type PendingTarget,
-} from '../../utils/pendingTargeting.js';
-import { TacticalCombatHud } from '../combat/index.js';
-import { resolveSpellTargets } from '../../utils/combatTargeting.js';
-import { isUntargetableSummon } from '../../utils/summonPresentation.js';
+import { TacticalCombatHud, TargetingCommitBar, useManualTargeting } from '../combat/index.js';
 
 /**
  * Tactical battle view for Realm encounters (SRD-805, Spec 06 Section 4.2).
@@ -70,13 +54,6 @@ export function RealmBattleView({
   const [rollHistory, setRollHistory] = useState<DiceRollRecord[]>([]);
   const [hoveredCell, setHoveredCell] = useState<GridPoint | null>(null);
   const [selectedCombatantId, setSelectedCombatantId] = useState<string | null>(null);
-  // SRD-410 manual targeting: hotbar action awaiting token/cell picks.
-  // Replaces the old nearest-enemy auto-pick.
-  const [pendingTarget, setPendingTarget] = useState<PendingTarget>({ kind: 'none' });
-  const cancelPendingTarget = useCallback(() => {
-    setPendingTarget({ kind: 'none' });
-  }, []);
-  const pendingAttackOptsRef = useRef<{ isOffHand?: boolean; twoHanded?: boolean } | null>(null);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [isAiThinking, setIsAiThinking] = useState(false);
 
@@ -180,21 +157,40 @@ export function RealmBattleView({
     Boolean(activeCombatant && activeCombatant.side === 'monster');
   const hasPendingReaction = Boolean(viewState.combat?.pendingReactionPrompt);
 
-  // SRD-410: clear armed targeting when the turn changes; Esc cancels it.
-  useEffect(() => {
-    setPendingTarget({ kind: 'none' });
-    pendingAttackOptsRef.current = null;
-  }, [activeCombatantId]);
+  // SRD-410 shared manual targeting (armed pending target, token pick
+  // commits, AOE origin/bearing preview, commit bar).
+  const manualTargeting = useManualTargeting({
+    combatants: viewState.combatants,
+    activeCombatant,
+    activeCombatantId,
+    isMonsterTurn,
+    hoveredCell,
+    compendium,
+    showFeedback,
+    dispatch: (command) => {
+      void handleDispatch(command);
+    },
+    getCombatContext: () => {
+      const auth = transport.getAuthoritativeState();
+      return {
+        dispositionMatrix: auth.combat?.dispositionMatrix,
+        friendlyFireEnabled: (auth as unknown as { friendlyFireEnabled?: boolean }).friendlyFireEnabled,
+      };
+    },
+    onInspectCombatant: (id) => setSelectedCombatantId(id),
+  });
 
+  // SRD-410: Esc cancels armed targeting (turn-change reset lives in the hook).
+  const { cancelPendingTarget: cancelArmedTarget } = manualTargeting;
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setPendingTarget((prev) => (prev.kind === 'none' ? prev : { kind: 'none' }));
+        cancelArmedTarget();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [cancelArmedTarget]);
 
   // AI monster turn execution (mirrors the dungeon combat loop).
   const executeAiMonsterTurn = useCallback(async () => {
@@ -238,223 +234,13 @@ export function RealmBattleView({
     };
   }, [isMonsterTurn, isAiThinking, hasPendingReaction, executeAiMonsterTurn]);
 
-  // SRD-410: token click handler for manual targeting picks. Targeting
-  // clicks commit the armed action and must NOT change selection.
-  const handleCombatantClickForTarget = useCallback(
-    (combatantId: string) => {
-      if (!activeCombatant || isMonsterTurn) {
-        setSelectedCombatantId(combatantId);
-        return;
-      }
-      if (pendingTarget.kind === 'none') {
-        setSelectedCombatantId(combatantId);
-        return;
-      }
-      const candidate = viewState.combatants[combatantId];
-      if (!candidate) return;
-      const auth = transport.getAuthoritativeState();
-      const validation = validateTargetPick(
-        pendingTarget,
-        candidate,
-        activeCombatant,
-        viewState.combatants,
-        { dispositionMatrix: auth.combat?.dispositionMatrix },
-      );
-      if (!validation.ok) {
-        showFeedback(validation.error ?? 'Invalid target.');
-        return;
-      }
-      if (pendingTarget.kind === 'single') {
-        if (pendingTarget.action === 'attack') {
-          const attackOpts = pendingAttackOptsRef.current ?? {};
-          pendingAttackOptsRef.current = null;
-          void handleDispatch({
-            type: 'DECLARE_ATTACK',
-            actorId: activeCombatant.id,
-            targetId: combatantId,
-            attackProfileId: pendingTarget.attackProfileId ?? pendingTarget.weaponId ?? '',
-            weaponInstanceId: pendingTarget.weaponId,
-            ...(attackOpts.isOffHand ? { isOffHand: attackOpts.isOffHand } : {}),
-            ...(attackOpts.twoHanded ? { twoHanded: attackOpts.twoHanded } : {}),
-          });
-        } else if (pendingTarget.spellId) {
-          void handleDispatch({
-            type: 'DECLARE_CAST_SPELL',
-            actorId: activeCombatant.id,
-            spellId: pendingTarget.spellId,
-            slotLevel: pendingTarget.slotLevel ?? 0,
-            targetIds: [combatantId],
-            targetCell: candidate.position,
-          });
-        }
-        setPendingTarget({ kind: 'none' });
-        return;
-      }
-      if (pendingTarget.kind === 'multi') {
-        const picked = pendingTarget.picked;
-        if (picked.includes(combatantId)) {
-          if (pendingTarget.allowDuplicates) {
-            if (picked.length >= pendingTarget.maxTargets) {
-              showFeedback(`${pendingTarget.label} can target at most ${pendingTarget.maxTargets}.`);
-              return;
-            }
-            setPendingTarget({ ...pendingTarget, picked: [...picked, combatantId] });
-          } else {
-            setPendingTarget({ ...pendingTarget, picked: picked.filter((id) => id !== combatantId) });
-          }
-        } else {
-          if (picked.length >= pendingTarget.maxTargets) {
-            showFeedback(`${pendingTarget.label} can target at most ${pendingTarget.maxTargets}.`);
-            return;
-          }
-          setPendingTarget({ ...pendingTarget, picked: [...picked, combatantId] });
-        }
-      }
-    },
-    [activeCombatant, isMonsterTurn, pendingTarget, viewState.combatants, transport, handleDispatch, showFeedback],
-  );
-
-  const handleCommitMulti = useCallback(() => {
-    if (pendingTarget.kind !== 'multi' || !activeCombatantId || !activeCombatant) return;
-    if (!canCommitPending(pendingTarget)) {
-      showFeedback(`Pick at least 1 target for ${pendingTarget.label}.`);
-      return;
-    }
-    const spell = compendium.getSpell(pendingTarget.spellId);
-    if (!spell) return;
-    const auth = transport.getAuthoritativeState();
-    const targetResult = resolveSpellTargets({
-      spell,
-      slotLevel: pendingTarget.slotLevel,
-      caster: activeCombatant,
-      combatants: viewState.combatants,
-      pickedTargetIds: pendingTarget.picked,
-      allowDuplicates: pendingTarget.allowDuplicates,
-      dispositionMatrix: auth.combat?.dispositionMatrix,
-    });
-    if (targetResult.errorFeedback) {
-      showFeedback(targetResult.errorFeedback);
-      return;
-    }
-    void handleDispatch({
-      type: 'DECLARE_CAST_SPELL',
-      actorId: activeCombatantId,
-      spellId: pendingTarget.spellId,
-      slotLevel: pendingTarget.slotLevel,
-      targetIds: targetResult.targetIds,
-      targetCell: targetResult.primaryTarget
-        ? targetResult.primaryTarget.position
-        : activeCombatant.position,
-    });
-    setPendingTarget({ kind: 'none' });
-  }, [pendingTarget, activeCombatantId, activeCombatant, compendium, transport, viewState.combatants, handleDispatch, showFeedback]);
-
-  const handleCommitAoe = useCallback(() => {
-    if (pendingTarget.kind !== 'aoe' || !activeCombatantId || !activeCombatant) return;
-    const commit = commitAoeTarget(pendingTarget, activeCombatant.position);
-    if (!commit) {
-      showFeedback(`Pick a point within range for ${pendingTarget.label}.`);
-      return;
-    }
-    void handleDispatch({
-      type: 'DECLARE_CAST_SPELL',
-      actorId: activeCombatantId,
-      spellId: pendingTarget.spellId,
-      slotLevel: pendingTarget.slotLevel,
-      targetCell: commit.targetCell,
-      ...(commit.directionRad !== undefined ? { directionRad: commit.directionRad } : {}),
-    });
-    setPendingTarget({ kind: 'none' });
-  }, [pendingTarget, activeCombatantId, activeCombatant, handleDispatch, showFeedback]);
-
-  // SRD-410 derived targeting overlay state (AOE preview + commit bar).
-  const activeTeamId = activeCombatant?.teamId ?? activeCombatant?.side ?? 'party';
-  const pendingAoeCursor =
-    pendingTarget.kind === 'aoe' ? (pendingTarget.origin ?? hoveredCell) : null;
-  const pendingAoeOverlay =
-    pendingTarget.kind === 'aoe' && pendingAoeCursor && activeCombatant
-      ? {
-          shape: pendingTarget.shape,
-          cursor: pendingAoeCursor,
-          casterPosition: activeCombatant.position,
-          casterSize: activeCombatant.size,
-          radiusFeet: pendingTarget.shape === 'sphere' || pendingTarget.shape === 'cylinder' ? pendingTarget.sizeFeet : undefined,
-          lengthFeet:
-            pendingTarget.shape === 'cone' || pendingTarget.shape === 'line' ? pendingTarget.sizeFeet : undefined,
-          widthFeet: pendingTarget.widthFeet,
-          sideFeet: pendingTarget.shape === 'cube' ? pendingTarget.sizeFeet : undefined,
-          creatures: Object.values(viewState.combatants),
-        }
-      : null;
-  const pendingAoePreview =
-    pendingAoeOverlay && pendingTarget.kind === 'aoe'
-      ? computeAoeOverlay(pendingAoeOverlay as never)
-      : null;
-  const friendlyFireOff =
-    (transport.getAuthoritativeState() as unknown as { friendlyFireEnabled?: boolean }).friendlyFireEnabled === false;
-  const pendingAoeFoes = (pendingAoePreview?.affectedCreatureIds ?? []).filter((id) => {
-    const c = viewState.combatants[id];
-    return (
-      c &&
-      (c.teamId ?? c.side) !== activeTeamId &&
-      !c.isDead &&
-      c.currentHp > 0 &&
-      !isUntargetableSummon(c)
-    );
-  });
-  const pendingAoeAllies = (pendingAoePreview?.affectedCreatureIds ?? []).filter((id) => {
-    const c = viewState.combatants[id];
-    return (
-      c &&
-      (c.teamId ?? c.side) === activeTeamId &&
-      !c.isDead &&
-      c.currentHp > 0 &&
-      !isUntargetableSummon(c)
-    );
-  });
-  const pendingTargetingMode =
-    pendingTarget.kind === 'aoe' ? 'aoe' : pendingTarget.kind === 'none' ? 'none' : 'attack';
-  const pendingMultiNames =
-    pendingTarget.kind === 'multi'
-      ? pendingTarget.picked.map((id) => viewState.combatants[id]?.name ?? id)
-      : [];
-
-  // Combat movement on cell click.
+  // Combat movement on cell click. SRD-410 manual targeting consumes the
+  // click while an action is armed (right-click cancels).
   const handleCellClick = async (cell: GridPoint, button?: number) => {
-    if (button === 2) {
-      cancelPendingTarget();
-      return;
-    }
     if (viewState.mode !== 'combat' || !activeCombatant || activeCombatant.side === 'monster') {
       return;
     }
-    // SRD-410 manual targeting: armed AOE origin selection first; while a
-    // single/multi pick is armed, cell clicks never move.
-    if (pendingTarget.kind === 'aoe') {
-      // Self spheres/cubes are anchored on the caster — just Confirm.
-      if (isSelfEmanation(pendingTarget) && !needsDirectionPick(pendingTarget)) {
-        showFeedback(`${pendingTarget.label} originates from you — Confirm to cast.`);
-        return;
-      }
-      const dist = getFootprintDistanceFeet(
-        activeCombatant.position,
-        activeCombatant.size,
-        cell,
-        'small',
-      );
-      const aimRange = aimRangeFeet(pendingTarget);
-      if (dist > aimRange) {
-        showFeedback(
-          `AOE ${needsDirectionPick(pendingTarget) ? 'direction' : 'origin'} out of range (${dist}ft > ${aimRange}ft). Pick a closer point!`,
-        );
-        return;
-      }
-      setPendingTarget({ ...pendingTarget, origin: { x: cell.x, y: cell.y } });
-      return;
-    }
-    if (pendingTarget.kind !== 'none') {
-      return;
-    }
+    if (manualTargeting.handleCombatCellClick(cell, button)) return;
     const startPt = activeCombatant.position;
     if (startPt.x === cell.x && startPt.y === cell.y) return;
 
@@ -529,55 +315,10 @@ export function RealmBattleView({
         activeRoll={activeRoll}
         rollHistory={rollHistory}
         isPlayerControlled={!isMonsterTurn}
-        onSelectCombatant={handleCombatantClickForTarget}
+        onSelectCombatant={manualTargeting.handleCombatantClick}
         onOpenCharacterSheet={onOpenCharacterSheet}
-        onDeclareAttack={(weapon, opts) => {
-          if (!activeCombatantId || !activeCombatant) return;
-          // SRD-410: arm manual targeting; click a token to commit.
-          pendingAttackOptsRef.current = {
-            ...(opts?.isOffHand ? { isOffHand: opts.isOffHand } : {}),
-            ...(opts?.twoHanded ? { twoHanded: opts.twoHanded } : {}),
-          };
-          setPendingTarget(
-            buildPendingTargetForAttack({
-              id: weapon.id,
-              weaponId: weapon.weaponId,
-              name: weapon.name,
-              rangeType: weapon.rangeType,
-              rangeFeet: weapon.rangeFeet,
-              reachFeet: weapon.reachFeet,
-            }),
-          );
-        }}
-        onCastSpell={(spellId, slotLevel) => {
-          if (!activeCombatantId || !activeCombatant) return;
-          const spell = compendium.getSpell(spellId);
-          if (!spell) return;
-          // SRD-410: arm manual targeting; self spells fire immediately.
-          const pending = buildPendingTargetForSpell(spell, slotLevel);
-          if (!pending || pending.kind === 'none') {
-            void handleDispatch({
-              type: 'DECLARE_CAST_SPELL',
-              actorId: activeCombatantId,
-              spellId,
-              slotLevel,
-              targetIds: [activeCombatant.id],
-              targetCell: activeCombatant.position,
-            });
-            return;
-          }
-          // Self spheres/cubes anchor on the caster — pre-set the origin
-          // so the player only Confirms (cones/lines still pick a bearing).
-          if (
-            pending.kind === 'aoe' &&
-            isSelfEmanation(pending) &&
-            !needsDirectionPick(pending)
-          ) {
-            setPendingTarget({ ...pending, origin: { ...activeCombatant.position } });
-          } else {
-            setPendingTarget(pending);
-          }
-        }}
+        onDeclareAttack={(weapon, opts) => manualTargeting.armAttack(weapon, opts)}
+        onCastSpell={(spellId, slotLevel) => manualTargeting.armSpell(spellId, slotLevel)}
         onUseClassFeature={(featureId, optionId) => {
           if (!activeCombatantId) return;
           void handleDispatch({
@@ -643,10 +384,10 @@ export function RealmBattleView({
           hoveredCell={hoveredCell}
           onCellHover={setHoveredCell}
           onCellClick={handleCellClick}
-          onCombatantClick={handleCombatantClickForTarget}
-          targetingMode={pendingTargetingMode}
-          activeAoeTemplate={pendingAoeOverlay as never}
-          enableHoverPathPreview={pendingTarget.kind === 'none'}
+          onCombatantClick={manualTargeting.handleCombatantClick}
+          targetingMode={manualTargeting.pendingTargetingMode}
+          activeAoeTemplate={manualTargeting.pendingAoeOverlay as never}
+          enableHoverPathPreview={manualTargeting.pendingTarget.kind === 'none'}
           enableFogOfWar={true}
           showTokenHpArcs={true}
           showConditionBadges={true}
@@ -660,67 +401,16 @@ export function RealmBattleView({
 
       {/* SRD-410 manual targeting commit bar — sibling of the HUD so it
           stacks above the docked hotbar instead of behind it. */}
-      {pendingTarget.kind !== 'none' && (
-        <div
-          data-testid="targeting-commit-bar"
-          className="absolute bottom-56 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-2 bg-slate-950/95 border border-amber-500/50 rounded-xl shadow-2xl text-xs max-w-[92vw]"
-          onContextMenu={(e) => {
-            e.preventDefault();
-            cancelPendingTarget();
-          }}
-        >
-          <span data-testid="targeting-hint" className="text-slate-200">
-            {pendingTargetHint(pendingTarget)}
-          </span>
-          {pendingTarget.kind === 'multi' && (
-            <span
-              data-testid="targeting-counter"
-              className="px-2 py-0.5 rounded-full bg-purple-950 border border-purple-500 text-purple-200 font-mono font-bold shrink-0"
-            >
-              🪄 ×{pendingTarget.maxTargets - pendingTarget.picked.length} left
-            </span>
-          )}
-          {pendingTarget.kind === 'aoe' && pendingAoePreview && (
-            <span
-              data-testid="targeting-aoe-preview"
-              className="px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 font-mono shrink-0"
-            >
-              <span className="text-rose-300">{pendingAoeFoes.length} foe{pendingAoeFoes.length === 1 ? '' : 's'}</span>
-              <span className="text-slate-500"> · </span>
-              <span className={friendlyFireOff ? 'text-slate-500 line-through' : 'text-emerald-300'}>
-                {pendingAoeAllies.length} ally{pendingAoeAllies.length === 1 ? '' : 'ies'}
-                {friendlyFireOff ? ' (spared)' : ''}
-              </span>
-            </span>
-          )}
-          {pendingTarget.kind === 'multi' && pendingMultiNames.length > 0 && (
-            <span data-testid="targeting-picked-list" className="text-slate-400 truncate max-w-[30vw]">
-              {pendingMultiNames.join(', ')}
-            </span>
-          )}
-          {(pendingTarget.kind === 'multi' || pendingTarget.kind === 'aoe') && (
-            <button
-              type="button"
-              data-testid="targeting-confirm-btn"
-              disabled={!canCommitPending(pendingTarget)}
-              onClick={() =>
-                pendingTarget.kind === 'multi' ? handleCommitMulti() : handleCommitAoe()
-              }
-              className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-bold shrink-0"
-            >
-              Confirm
-            </button>
-          )}
-          <button
-            type="button"
-            data-testid="targeting-cancel-btn"
-            onClick={cancelPendingTarget}
-            className="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold shrink-0"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
+      <TargetingCommitBar
+        pendingTarget={manualTargeting.pendingTarget}
+        pendingAoeFoes={manualTargeting.pendingAoeFoes}
+        pendingAoeAllies={manualTargeting.pendingAoeAllies}
+        pendingMultiNames={manualTargeting.pendingMultiNames}
+        friendlyFireOff={manualTargeting.friendlyFireOff}
+        onConfirmMulti={manualTargeting.handleCommitMulti}
+        onConfirmAoe={manualTargeting.handleCommitAoe}
+        onCancel={manualTargeting.cancelPendingTarget}
+      />
     </div>
   );
 }
