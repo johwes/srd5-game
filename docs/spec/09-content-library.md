@@ -13,9 +13,21 @@ The dataset's licensing gates decide the expansion surface — not taste:
 | Magic items (26), Equipment (175) | Schema + cross-refs | Partial | **Yes, opportunistically** |
 
 Consequences:
-- **No new feats, backgrounds, subclasses, or races.** Ever, under SRD 5.1 scope.
-  Build variety comes from multiclassing, ASI choices, equipment, magic items,
-  party composition (1–4 heroes), and difficulty presets — all already shipped.
+- **Verbatim SRD datasets stay frozen where allowlisted.** Races, classes,
+  subclasses, backgrounds, and feats beyond the allowlists are not added as
+  "SRD content". Build variety on the SRD side comes from multiclassing, ASI
+  choices, equipment, magic items, party composition (1–4 heroes), and
+  difficulty presets — all already shipped.
+- **Original homebrew is allowed on a separate, labeled track** (Spec §7).
+  Game mechanics are not protected expression; new feats, backgrounds,
+  subclasses, monsters, and spells written in original words, using SRD
+  mechanics, with no Product Identity, are compliant under CC-BY-4.0 (with the
+  statutory attribution the repo already carries). Homebrew records carry
+  `source: "homebrew"` provenance so purists can filter to SRD-only.
+- **SRD 5.1 scope only — no 5.2 mixing.** Although both documents are
+  CC-BY-4.0, SRD 5.2 (2024 rules) mechanics differ from this engine's 5.1 base
+  (revised classes, weapon masteries, background feats). Pulling 5.2 content
+  would fork the ruleset; stay on 5.1 + original homebrew.
 - **Monster and spell roster growth is the highest replay-value work in the
   repo**: every generator (dungeon, Descent, Realm, arena pools), every biome
   table, and the tactical AI consume statblocks generically, so each new entry
@@ -103,10 +115,36 @@ New ways to play the existing library, each a small client+engine ticket:
 
 ---
 
-## 6. Explicit Non-Goals
+## 7. Original Homebrew Track (SRD-Compatible Creation)
 
-- No new feats, backgrounds, subclasses, races, or player options of any kind
-  (allowlist-closed; would breach SRD scope).
+Verbatim SRD datasets stay frozen at their allowlists (§1). Separately,
+**original** feats, backgrounds, subclasses, monsters, spells, and magic items
+may be authored against SRD mechanics: mechanics are not protected expression,
+so new content written in original words, with zero Product Identity, is
+compliant under the repo's existing CC-BY-4.0 attribution.
+
+Rules for the homebrew track:
+- **Provenance is mandatory.** Every homebrew record carries
+  `source: "homebrew"` (vs `"srd-5.1"`), set at authoring time. The compendium
+  exposes the filter so purists and automated checks can select SRD-only sets;
+  the integrity suite asserts every record has a valid source.
+- **Product Identity screening is a gate, not a guideline.** New text is
+  checked against the existing blocklists (PI monsters, proper names,
+  setting references) plus a human review flag in the authoring ticket. No
+  beholders, mind flayers, named spells (`Bigby's`, `Mordenkainen's`, …),
+  settings, or copied PHB wording — mechanics only, original expression.
+- **Same quality bar as SRD content.** Homebrew statblocks follow the §3
+  checklist (executable overlays, AI archetype, headless tests); homebrew
+  spells follow §4; homebrew feats/backgrounds ship with formulae tooltips and
+  builder integration tests like any other option.
+- **No 5.2 mechanics.** Homebrew builds on the 5.1 base only.
+
+---
+
+## 8. Explicit Non-Goals
+
+- No new *verbatim-SRD* feats, backgrounds, subclasses, or races beyond the
+  allowlists (see §7 for the homebrew path instead).
 - No new binary art assets (see §2).
 - No handcrafted campaign modules in this epic (Kaelen stays the tutorial;
   handcrafted arcs belong with quest content, not the library).
