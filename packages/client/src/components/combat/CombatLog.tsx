@@ -56,6 +56,36 @@ export function CombatLog({
     return combatants[id]?.name ?? id;
   };
 
+  const prettifyId = (id?: string) => (id ?? 'unknown').replace(/[-_]/g, ' ');
+
+  const signed = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+
+  const costLabel = (cost: string) =>
+    cost === 'bonus_action'
+      ? 'Bonus action'
+      : cost === 'reaction'
+        ? 'Reaction'
+        : cost === 'free'
+          ? 'Free'
+          : cost === 'movement'
+            ? 'Movement'
+            : cost === 'special'
+              ? 'Special'
+              : 'Action';
+
+  const actionNameLabel = (actionName: string) =>
+    actionName === 'dash'
+      ? 'Dashes'
+      : actionName === 'disengage'
+        ? 'Disengages'
+        : actionName === 'dodge'
+          ? 'Dodges'
+          : actionName === 'stand_up'
+            ? 'Stands up'
+            : actionName === 'action_surge'
+              ? 'Action Surge'
+              : 'Uses ability';
+
   // Convert raw GameEvent[] into rich UI log entries
   const formatEvents = (rawEvents: GameEvent[]): FormattedLogEntry[] => {
     return rawEvents.map((event, idx) => {
@@ -367,17 +397,21 @@ export function CombatLog({
         }
 
         case 'ENCOUNTER_VICTORY': {
-          const isPartyVictory = event.outcome !== 'party_defeat';
-          const outcomeLabel = event.outcome
-            ? event.outcome.replace('_', ' ').toUpperCase()
-            : 'PARTY VICTORY';
+          const hasXp = 'xpAwarded' in event && typeof event.xpAwarded === 'number';
+          const outcome = event.outcome ?? (hasXp ? 'party_victory' : 'party_victory');
+          const isPartyVictory = outcome !== 'party_defeat' && outcome !== 'monsters_victory';
+          const outcomeLabel = String(outcome).replace('_', ' ').toUpperCase();
+          const xpSummary =
+            hasXp && typeof event.totalXp === 'number'
+              ? ` +${event.xpAwarded} XP (total ${event.totalXp})`
+              : '';
           return {
             id: entryId,
             timestamp: timeStr,
             type: event.type,
             category: 'system',
             title: `Combat Ended`,
-            summary: `Victory Outcome: ${outcomeLabel}${event.round ? ` (Round ${event.round})` : ''}`,
+            summary: `Victory Outcome: ${outcomeLabel}${event.round ? ` (Round ${event.round})` : ''}${xpSummary}`,
             badge: {
               label: isPartyVictory ? 'VICTORY' : 'DEFEAT',
               color: isPartyVictory
@@ -422,6 +456,673 @@ export function CombatLog({
                 `Roll Mode: ${event.mode.toUpperCase()}`,
               ],
             },
+            rawEvent: event,
+          };
+        }
+
+        case 'ENTITY_MOVED': {
+          const mover = getCombatantName(event.entityId);
+          const feet = Math.max(0, event.path.length - 1) * 5;
+          const modeLabel =
+            event.mode === 'teleport'
+              ? 'teleports'
+              : event.mode === 'dash'
+                ? 'dashing'
+                : event.mode === 'forced'
+                  ? 'forced movement'
+                  : 'on foot';
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${mover} moves`,
+            summary: `${feet} ft ${modeLabel}`,
+            rawEvent: event,
+          };
+        }
+
+        case 'ACTION_USED': {
+          const actor = getCombatantName(event.actorId);
+          const label = actionNameLabel(event.actionName);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${actor}: ${label}`,
+            summary:
+              `${costLabel(event.cost)}${event.movementCostFeet ? ` (${event.movementCostFeet} ft)` : ''}` +
+              (event.actionName === 'custom' ? '' : ` — ${event.actionName.replace(/_/g, ' ')}`),
+            rawEvent: event,
+          };
+        }
+
+        case 'COMBAT_STARTED': {
+          const order = event.initiativeOrder
+            .map((e) => `${getCombatantName(e.entityId)} (${e.initiative})`)
+            .join(', ');
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: 'Combat started',
+            summary: `${event.initiativeOrder.length} combatants roll initiative`,
+            badge: {
+              label: 'COMBAT',
+              color: 'bg-red-500/20 text-red-300 border-red-500/40 font-bold',
+            },
+            breakdown: {
+              title: 'Initiative Order',
+              details: [`Initiative: ${order || 'No combatants'}`],
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'TURN_ENDED': {
+          const creature = getCombatantName(event.entityId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `End turn: ${creature}`,
+            summary: `Round ${event.round} turn ended`,
+            rawEvent: event,
+          };
+        }
+
+        case 'SURPRISE_DETERMINED': {
+          const names = event.surprisedEntityIds.map(getCombatantName).join(', ');
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: 'Surprise determined',
+            summary: names ? `Surprised: ${names}` : 'No one is surprised',
+            rawEvent: event,
+          };
+        }
+
+        case 'SURPRISE_ENDED': {
+          const creature = getCombatantName(event.entityId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${creature} recovers`,
+            summary: 'No longer surprised',
+            rawEvent: event,
+          };
+        }
+
+        case 'GRAPPLE_RESOLVED': {
+          const attacker = getCombatantName(event.attackerId);
+          const target = getCombatantName(event.targetId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'attacks',
+            title: `${attacker} grapples ${target}`,
+            summary: `Athletics ${event.attackerAthleticsTotal} vs ${event.targetSkillUsed} ${event.targetContestTotal}`,
+            badge: {
+              label: event.success ? 'GRAPPLED' : 'RESISTED',
+              color: event.success
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                : 'bg-slate-700/50 text-slate-400 border-slate-600/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'SHOVE_RESOLVED': {
+          const attacker = getCombatantName(event.attackerId);
+          const target = getCombatantName(event.targetId);
+          const kind = event.shoveType === 'knock_prone' ? 'knocks prone' : 'pushes away';
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'attacks',
+            title: `${attacker} ${kind} ${target}`,
+            summary: `Athletics ${event.attackerAthleticsTotal} vs ${event.targetSkillUsed} ${event.targetContestTotal}`,
+            badge: {
+              label: event.success ? 'SHOVED' : 'RESISTED',
+              color: event.success
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                : 'bg-slate-700/50 text-slate-400 border-slate-600/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'TEMP_HP_APPLIED': {
+          const target = getCombatantName(event.targetId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'damage',
+            title: `${target} gains temporary HP`,
+            summary: `+${event.amount} temp HP (${event.tempHpBefore} → ${event.tempHpAfter})${event.sourceName ? ` from ${event.sourceName}` : ''}`,
+            badge: {
+              label: `+${event.amount} TEMP`,
+              color: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'CREATURE_DIED': {
+          const creature = getCombatantName(event.entityId);
+          const reason =
+            event.reason === 'instant_death'
+              ? 'Instant death'
+              : event.reason === 'death_save_failures'
+                ? 'Failed death saves'
+                : 'Fell to 0 HP';
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'damage',
+            title: `${creature} dies`,
+            summary: reason,
+            badge: {
+              label: 'DIED',
+              color: 'bg-rose-600 text-white font-bold',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'HEAL_APPLIED': {
+          const target = getCombatantName(event.targetId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${target} regains HP`,
+            summary: `+${event.amount} HP (${event.hpBefore} → ${event.hpAfter})${event.sourceName ? ` from ${event.sourceName}` : ''}${event.revivedFromZero ? ' — revived!' : ''}`,
+            badge: {
+              label: `+${event.amount} HP`,
+              color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'CONCENTRATION_STARTED': {
+          const caster = getCombatantName(event.entityId);
+          const targets = event.targetEntityIds.map(getCombatantName).join(', ');
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `${caster} concentrates on ${event.spellName}`,
+            summary: targets ? `Targets: ${targets}` : 'Concentration started',
+            rawEvent: event,
+          };
+        }
+
+        case 'CONCENTRATION_ENDED': {
+          const caster = getCombatantName(event.entityId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `Concentration ends: ${event.spellId ?? 'spell'}`,
+            summary: `${caster} — ${event.reason.replace(/_/g, ' ')}`,
+            rawEvent: event,
+          };
+        }
+
+        case 'HAZARD_ZONE_CREATED': {
+          const caster = getCombatantName(event.casterId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `${caster} creates ${event.sourceName}`,
+            summary: `${event.shape} ${event.sizeFeet} ft, ${event.durationRounds} rounds${event.difficultTerrain ? ', difficult terrain' : ''}`,
+            badge: {
+              label: 'HAZARD',
+              color: 'bg-orange-500/20 text-orange-300 border-orange-500/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'HAZARD_ZONE_REMOVED': {
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `Hazard ends: ${prettifyId(event.zoneId)}`,
+            summary: event.reason.replace(/_/g, ' '),
+            rawEvent: event,
+          };
+        }
+
+        case 'HAZARD_ZONE_TRIGGERED': {
+          const creature = getCombatantName(event.entityId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `${creature} triggers ${prettifyId(event.zoneId)}`,
+            summary: event.trigger === 'enter' ? 'Entered the zone' : 'Started turn in the zone',
+            rawEvent: event,
+          };
+        }
+
+        case 'EXHAUSTION_CHANGED': {
+          const creature = getCombatantName(event.entityId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'conditions',
+            title: `${creature} exhaustion ${event.oldLevel} → ${event.newLevel}`,
+            summary: `Exhaustion level ${event.newLevel}`,
+            badge: {
+              label: `EXHAUSTION ${event.newLevel}`,
+              color: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'SUMMON_SPAWNED': {
+          const caster = getCombatantName(event.casterId);
+          const summoned = getCombatantName(event.entityId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `${caster} summons ${event.sourceName}`,
+            summary: `${summoned} — ${event.control === 'commanded' ? 'commanded' : 'autonomous'}${event.untargetable ? ', untargetable' : ''}`,
+            badge: {
+              label: 'SUMMON',
+              color: 'bg-violet-500/20 text-violet-300 border-violet-500/40 font-bold',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'SUMMON_EXPIRED': {
+          const summoned = getCombatantName(event.entityId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `${event.sourceName ?? summoned} departs`,
+            summary: event.reason.replace(/_/g, ' '),
+            rawEvent: event,
+          };
+        }
+
+        case 'SUMMON_TRIGGERED': {
+          const summoned = getCombatantName(event.entityId);
+          const target = event.targetEntityId ? getCombatantName(event.targetEntityId) : null;
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `${summoned}: ${event.trigger.replace(/_/g, ' ')}`,
+            summary: [event.detail, target ? `Target: ${target}` : null].filter(Boolean).join(' — ') || event.trigger,
+            rawEvent: event,
+          };
+        }
+
+        case 'MANUAL_ADJUDICATION_REQUIRED': {
+          const actor = getCombatantName(event.actorId);
+          const target = event.targetId ? getCombatantName(event.targetId) : null;
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${event.title} (${actor})`,
+            summary: [event.guidance, event.suggestedRoll ? `Suggested roll: ${event.suggestedRoll}` : null, target ? `Target: ${target}` : null]
+              .filter(Boolean)
+              .join(' — '),
+            badge: {
+              label: 'RULING',
+              color: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'PROP_STATE_CHANGED': {
+          const actor = event.actorId ? getCombatantName(event.actorId) : null;
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${prettifyId(event.propId)}: ${event.nextState}`,
+            summary: `Changed from ${event.prevState} to ${event.nextState}${actor ? ` by ${actor}` : ''}`,
+            rawEvent: event,
+          };
+        }
+
+        case 'SECRET_DISCOVERED': {
+          const finder = getCombatantName(event.finderId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `Secret ${event.kind.replace(/_/g, ' ')} found`,
+            summary: `${prettifyId(event.propId)} discovered by ${finder}`,
+            badge: {
+              label: 'SECRET',
+              color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'TRAP_TRIGGERED': {
+          const target = getCombatantName(event.targetId);
+          const parts: string[] = [];
+          if (event.damage !== undefined) {
+            parts.push(`${event.damage}${event.damageType ? ` ${event.damageType}` : ''} damage`);
+          }
+          if (event.saveMade !== undefined || event.saveSuccess !== undefined) {
+            parts.push(event.saveSuccess ? 'Save succeeded' : 'Save failed');
+          }
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'damage',
+            title: `Trap triggered: ${prettifyId(event.propId)} hits ${target}`,
+            summary: parts.join(' — ') || 'Triggered',
+            badge: {
+              label: 'TRAP',
+              color: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'CHECK_RESOLVED': {
+          const actor = getCombatantName(event.actorId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'saves',
+            title: `${actor} ${event.checkType.replace(/_/g, ' ')} check`,
+            summary: `d20 ${event.roll}${signed(event.modifier)} = ${event.total}${event.dc !== undefined ? ` vs DC ${event.dc}` : ''} → ${event.success ? 'SUCCESS' : 'FAIL'}`,
+            badge: {
+              label: event.success ? 'SUCCESS' : 'FAIL',
+              color: event.success
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                : 'bg-red-500/20 text-red-300 border-red-500/40',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'LOOT_ACQUIRED': {
+          const actor = getCombatantName(event.actorId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${actor} claims loot`,
+            summary: `From ${prettifyId(event.propId)}`,
+            rawEvent: event,
+          };
+        }
+
+        case 'ROOM_DISCOVERED': {
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `Discovered: ${event.roomName ?? prettifyId(event.roomId)}`,
+            summary: 'New area revealed',
+            rawEvent: event,
+          };
+        }
+
+        case 'ROOM_ENTERED': {
+          const actor = getCombatantName(event.actorId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${actor} enters ${prettifyId(event.roomId)}`,
+            summary: event.prevRoomId ? `From ${prettifyId(event.prevRoomId)}` : 'Entered area',
+            rawEvent: event,
+          };
+        }
+
+        case 'MARCHING_ORDER_CHANGED': {
+          const lead = getCombatantName(event.leadExplorerId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: 'Marching order changed',
+            summary: `${event.formation.replace(/_/g, ' ')}, lead: ${lead}`,
+            rawEvent: event,
+          };
+        }
+
+        case 'MOVEMENT_HALTED': {
+          const actor = getCombatantName(event.actorId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${actor} halted`,
+            summary: event.reason.replace(/_/g, ' '),
+            rawEvent: event,
+          };
+        }
+
+        case 'PARTY_STEALTH_CHANGED': {
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: event.inStealth ? 'Party hides' : 'Party breaks stealth',
+            summary: event.inStealth ? 'Traveling in stealth' : 'Traveling openly',
+            rawEvent: event,
+          };
+        }
+
+        case 'ENCOUNTER_TRIGGERED': {
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `Encounter: ${event.monsterIds.length} hostile(s) in ${prettifyId(event.roomId)}`,
+            summary: [
+              event.isSurprisedParty ? 'Party surprised' : null,
+              event.isSurprisedMonsters ? 'Monsters surprised' : null,
+            ]
+              .filter(Boolean)
+              .join(', ') || 'No surprise',
+            badge: {
+              label: 'ENCOUNTER',
+              color: 'bg-red-500/20 text-red-300 border-red-500/40 font-bold',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'ROOM_CLEARED': {
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${event.roomName ?? prettifyId(event.roomId)} cleared`,
+            summary: 'Area cleared',
+            rawEvent: event,
+          };
+        }
+
+        case 'REST_COMPLETED': {
+          const recovered = Object.keys(event.hpRecovered ?? {}).length;
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${event.restType === 'short' ? 'Short' : 'Long'} rest completed`,
+            summary: `${recovered} hero(es) recovered HP`,
+            rawEvent: event,
+          };
+        }
+
+        case 'REST_INTERRUPTED': {
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${event.restType === 'short' ? 'Short' : 'Long'} rest interrupted`,
+            summary: event.reason.replace(/_/g, ' '),
+            rawEvent: event,
+          };
+        }
+
+        case 'PREPARED_SPELLS_UPDATED': {
+          const hero = getCombatantName(event.characterId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'spells',
+            title: `${hero} prepares spells`,
+            summary: `${event.preparedSpellIds.length} spell(s) prepared`,
+            rawEvent: event,
+          };
+        }
+
+        case 'MODE_CHANGED': {
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `Mode: ${event.fromMode} → ${event.toMode}`,
+            summary: `Game mode changed to ${event.toMode}`,
+            rawEvent: event,
+          };
+        }
+
+        case 'LEVEL_UP_UNLOCKED': {
+          const hero = getCombatantName(event.characterId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${hero} can level up`,
+            summary: `Level ${event.currentLevel} → ${event.eligibleLevel} available`,
+            badge: {
+              label: 'LEVEL UP',
+              color: 'bg-amber-500 text-slate-950 font-bold',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'LEVEL_UP_APPLIED': {
+          const hero = getCombatantName(event.characterId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${hero} reaches level ${event.newLevel}`,
+            summary: `+${event.hpIncrease} max HP`,
+            badge: {
+              label: 'LEVEL UP',
+              color: 'bg-amber-500 text-slate-950 font-bold',
+            },
+            rawEvent: event,
+          };
+        }
+
+        case 'ATTUNEMENT_CHANGED': {
+          const hero = getCombatantName(event.characterId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${hero} changes attunement`,
+            summary: `${event.attunedItemInstanceIds.length} item(s) attuned`,
+            rawEvent: event,
+          };
+        }
+
+        case 'INVENTORY_UPDATED': {
+          const hero = getCombatantName(event.characterId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${hero} inventory updated`,
+            summary: `${event.inventory.length} item(s) held`,
+            rawEvent: event,
+          };
+        }
+
+        case 'SHRINE_ACTIVATED': {
+          const actor = getCombatantName(event.actorId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${actor} activates ${prettifyId(event.shrineType)} shrine`,
+            summary: event.effectDescription,
+            rawEvent: event,
+          };
+        }
+
+        case 'ROGUELITE_STARVATION': {
+          const hero = getCombatantName(event.actorId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'conditions',
+            title: `${hero} starves`,
+            summary: `${event.rationsShort} ration(s) short, exhaustion ${event.exhaustionLevel}`,
             rawEvent: event,
           };
         }
