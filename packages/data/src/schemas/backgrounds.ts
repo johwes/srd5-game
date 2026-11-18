@@ -51,5 +51,6 @@ export const BackgroundSchema = z.object({
   feature: BackgroundFeatureSchema,
   suggestedCharacteristics: BackgroundCharacteristicsSchema.optional(),
   description: z.string().min(1),
+  source: z.enum(['srd-5.1', 'homebrew']).optional(),
 });
 export type BackgroundData = z.infer<typeof BackgroundSchema>;

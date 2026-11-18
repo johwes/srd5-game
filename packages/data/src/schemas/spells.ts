@@ -159,5 +159,6 @@ export const SpellSchema = z.object({
   higherLevelScaling: SpellHigherLevelScalingSchema.optional(),
   description: z.string().min(1),
   higherLevelDescription: z.string().min(1).optional(),
+  source: z.enum(['srd-5.1', 'homebrew']).optional(),
 });
 export type SpellData = z.infer<typeof SpellSchema>;

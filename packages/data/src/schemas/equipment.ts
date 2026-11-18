@@ -242,5 +242,6 @@ export const MagicItemSchema = z.object({
   modifiers: z.array(ModifierSpecSchema),
   activatedAbilities: z.array(ActivatedAbilitySpecSchema).optional(),
   description: z.string().min(1),
+  source: z.enum(['srd-5.1', 'homebrew']).optional(),
 });
 export type MagicItemData = z.infer<typeof MagicItemSchema>;

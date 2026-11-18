@@ -14,11 +14,23 @@ means matching the SRD PDFs, not the whole game.
 
 | Dataset | Gate | Status | Expandable? |
 | :--- | :--- | :--- | :--- |
-| Races (9), Classes (12), Subclasses (12) | Closed allowlist | Complete | **No** |
-| Backgrounds (`acolyte`), Feats (`grappler`) | Closed allowlist | Complete | **No** |
-| Monsters (30 bundled) | Prohibited-PI blocklist only | Partial | **Yes** |
-| Spells (139 bundled, L0–L9) | PI rename map | Partial | **Yes, after audit** |
-| Magic items (26), Equipment (175) | Schema + cross-refs | Partial | **Yes, opportunistically** |
+| Races (9), Classes (12), Subclasses (12) | Closed allowlist (`srd-5.1`); homebrew track open for subclasses | Complete (SRD) | **Homebrew only** |
+| Backgrounds (`acolyte`), Feats (`grappler`) | Closed allowlist (`srd-5.1`); homebrew track open | Complete (SRD) | **Homebrew only** |
+| Monsters (29 SRD 5.1 + 1 homebrew bundled) | Prohibited-PI + SRD 5.2 blocklists | Partial | **Yes (both tracks)** |
+| Spells (139 SRD 5.1 bundled, L0–L9) | PI rename map + SRD 5.2 blocklist | Partial | **Yes, after audit** |
+| Magic items (26), Equipment (175) | Schema + cross-refs + SRD 5.2 blocklist | Partial | **Yes, opportunistically** |
+
+Baseline PDF audit (verified against `SRD_CC_v5.1.pdf` and `SRD_CC_v5.2.1.pdf`):
+- 139/139 bundled spells and 26/26 magic items are verified SRD 5.1 content.
+- 29/30 bundled monsters are verified in the SRD 5.1 PDF. The remaining entry,
+  `goblin-boss`, is absent from the SRD 5.1 PDF (where "boss" never appears)
+  and differs mechanically from SRD 5.2's Fey Goblin Boss (ours is a Small
+  Humanoid with DEX 14, scimitar multiattack, and javelin); it is classified as
+  `source: "homebrew"` — the repo's first canonical homebrew record.
+- `SRD_52_ADDED_IDENTIFIERS` and `isSrd52OnlyIdentifier()` in `@srd5/data`
+  enforce at both ingestion (`runSrdIngestionPipeline`) and validation
+  (`validateSrdDataset`) time that no SRD 5.2-added monster, spell, magic item,
+  feat, or background can enter on the SRD 5.1 track.
 
 Consequences:
 - **Verbatim SRD datasets stay frozen where allowlisted.** Races, classes,

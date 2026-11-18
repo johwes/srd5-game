@@ -1455,6 +1455,7 @@
   {
     "id": "goblin-boss",
     "name": "Goblin Boss",
+    "source": "homebrew",
     "size": "small",
     "type": "humanoid",
     "subtype": "goblinoid",

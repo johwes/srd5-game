@@ -145,6 +145,7 @@ export const SubclassSchema = z.object({
   description: z.string().min(1),
   levels: z.array(SubclassLevelProgressionSchema).min(1),
   spells: z.array(SubclassSpellGrantSchema).optional(),
+  source: z.enum(['srd-5.1', 'homebrew']).optional(),
 });
 export type SubclassData = z.infer<typeof SubclassSchema>;
 

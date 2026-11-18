@@ -7,6 +7,7 @@ import {
   ALLOWED_SRD_SUBRACE_IDS,
   containsProductIdentityProperName,
   isProhibitedMonsterId,
+  isSrd52OnlyIdentifier,
   type SrdIngestionInput,
 } from '../ingestion/index.js';
 import {
@@ -806,7 +807,16 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
     }
   }
   for (const sc of dataset.subclasses) {
-    if (!ALLOWED_SRD_SUBCLASS_IDS.has(sc.id)) {
+    if (sc.source === 'homebrew') {
+      if (containsProductIdentityProperName(sc.id) || containsProductIdentityProperName(sc.name)) {
+        addError(
+          'allowlist',
+          'subclasses',
+          `Subclass "${sc.name}" (${sc.id}) contains prohibited Product Identity proper name`,
+          sc.id,
+        );
+      }
+    } else if (!ALLOWED_SRD_SUBCLASS_IDS.has(sc.id)) {
       addError(
         'allowlist',
         'subclasses',
@@ -894,7 +904,24 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
     }
   }
   for (const bg of dataset.backgrounds) {
-    if (!ALLOWED_SRD_BACKGROUND_IDS.has(bg.id)) {
+    if (bg.source === 'homebrew') {
+      if (containsProductIdentityProperName(bg.id) || containsProductIdentityProperName(bg.name)) {
+        addError(
+          'allowlist',
+          'backgrounds',
+          `Background "${bg.name}" (${bg.id}) contains prohibited Product Identity proper name`,
+          bg.id,
+        );
+      }
+      if (isSrd52OnlyIdentifier(bg.id) || isSrd52OnlyIdentifier(bg.name)) {
+        addError(
+          'allowlist',
+          'backgrounds',
+          `SRD 5.2 background "${bg.name}" (${bg.id}) is not allowed`,
+          bg.id,
+        );
+      }
+    } else if (!ALLOWED_SRD_BACKGROUND_IDS.has(bg.id)) {
       addError(
         'allowlist',
         'backgrounds',
@@ -941,7 +968,24 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
     }
   }
   for (const feat of dataset.feats) {
-    if (!ALLOWED_SRD_FEAT_IDS.has(feat.id)) {
+    if (feat.source === 'homebrew') {
+      if (containsProductIdentityProperName(feat.id) || containsProductIdentityProperName(feat.name)) {
+        addError(
+          'allowlist',
+          'feats',
+          `Feat "${feat.name}" (${feat.id}) contains prohibited Product Identity proper name`,
+          feat.id,
+        );
+      }
+      if (isSrd52OnlyIdentifier(feat.id) || isSrd52OnlyIdentifier(feat.name)) {
+        addError(
+          'allowlist',
+          'feats',
+          `SRD 5.2 feat "${feat.name}" (${feat.id}) is not allowed`,
+          feat.id,
+        );
+      }
+    } else if (!ALLOWED_SRD_FEAT_IDS.has(feat.id)) {
       addError('allowlist', 'feats', `Non-SRD feat ID "${feat.id}" is not allowed`, feat.id);
     }
     for (const prereq of feat.prerequisites) {
@@ -1005,6 +1049,17 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
         mi.id,
       );
     }
+    if (
+      mi.source !== 'homebrew' &&
+      (isSrd52OnlyIdentifier(mi.id) || isSrd52OnlyIdentifier(mi.name))
+    ) {
+      addError(
+        'allowlist',
+        'magic-items',
+        `Magic item "${mi.name}" (${mi.id}) is an SRD 5.2 addition and not allowed on the SRD 5.1 track`,
+        mi.id,
+      );
+    }
     if (mi.baseEquipmentId && !equipmentMap.has(mi.baseEquipmentId)) {
       addError(
         'cross_reference',
@@ -1039,6 +1094,17 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
         'allowlist',
         'spells',
         `Spell "${spell.name}" (${spell.id}) contains prohibited Product Identity proper name`,
+        spell.id,
+      );
+    }
+    if (
+      spell.source !== 'homebrew' &&
+      (isSrd52OnlyIdentifier(spell.id) || isSrd52OnlyIdentifier(spell.name))
+    ) {
+      addError(
+        'allowlist',
+        'spells',
+        `Spell "${spell.name}" (${spell.id}) is an SRD 5.2 addition and not allowed on the SRD 5.1 track`,
         spell.id,
       );
     }
@@ -1138,6 +1204,17 @@ export function validateSrdDataset(dataset: SrdIngestionInput): SrdValidationRep
         'allowlist',
         'monsters',
         `Monster "${monster.name}" (${monster.id}) is prohibited Product Identity outside SRD 5.1`,
+        monster.id,
+      );
+    }
+    if (
+      monster.source !== 'homebrew' &&
+      (isSrd52OnlyIdentifier(monster.id) || isSrd52OnlyIdentifier(monster.name))
+    ) {
+      addError(
+        'allowlist',
+        'monsters',
+        `Monster "${monster.name}" (${monster.id}) is an SRD 5.2 addition and must carry source: "homebrew" if original`,
         monster.id,
       );
     }

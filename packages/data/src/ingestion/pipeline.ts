@@ -30,7 +30,9 @@ import {
   ALLOWED_SRD_RACE_IDS,
   ALLOWED_SRD_SUBCLASS_IDS,
   ALLOWED_SRD_SUBRACE_IDS,
+  containsProductIdentityProperName,
   isProhibitedMonsterId,
+  isSrd52OnlyIdentifier,
 } from './allowlist.js';
 import { canonicalizeSpellIdentity } from './normalize.js';
 import {
@@ -138,9 +140,13 @@ export function runSrdIngestionPipeline(
   }
   const classes = sortById(input.classes.map((c) => ClassSchema.parse(c)));
 
-  // Verify Subclasses against SRD 5.1 allowlist
+  // Verify Subclasses against SRD 5.1 allowlist (or homebrew provenance + PI screen)
   for (const sc of input.subclasses) {
-    if (!ALLOWED_SRD_SUBCLASS_IDS.has(sc.id)) {
+    if (sc.source === 'homebrew') {
+      if (containsProductIdentityProperName(sc.id) || containsProductIdentityProperName(sc.name)) {
+        throw new Error(`Prohibited Product Identity Subclass rejected by ingestion pipeline: "${sc.id}"`);
+      }
+    } else if (!ALLOWED_SRD_SUBCLASS_IDS.has(sc.id)) {
       throw new Error(`Non-SRD Subclass ID rejected by ingestion pipeline: "${sc.id}"`);
     }
   }
@@ -149,31 +155,56 @@ export function runSrdIngestionPipeline(
   // Apply Feature overlays
   const features = sortById(applyFeatureOverlays(input.features, overlays.features ?? {}));
 
-  // Verify Backgrounds against SRD 5.1 allowlist
+  // Verify Backgrounds against SRD 5.1 allowlist (or homebrew provenance + PI screen)
   for (const bg of input.backgrounds) {
-    if (!ALLOWED_SRD_BACKGROUND_IDS.has(bg.id)) {
+    if (bg.source === 'homebrew') {
+      if (containsProductIdentityProperName(bg.id) || containsProductIdentityProperName(bg.name)) {
+        throw new Error(`Prohibited Product Identity Background rejected by ingestion pipeline: "${bg.id}"`);
+      }
+      if (isSrd52OnlyIdentifier(bg.id) || isSrd52OnlyIdentifier(bg.name)) {
+        throw new Error(`SRD 5.2 Background rejected by ingestion pipeline: "${bg.id}"`);
+      }
+    } else if (!ALLOWED_SRD_BACKGROUND_IDS.has(bg.id)) {
       throw new Error(`Non-SRD Background ID rejected by ingestion pipeline: "${bg.id}"`);
     }
   }
   const backgrounds = sortById(input.backgrounds.map((bg) => BackgroundSchema.parse(bg)));
 
-  // Verify Feats against SRD 5.1 allowlist & apply overlays
+  // Verify Feats against SRD 5.1 allowlist (or homebrew provenance + PI screen) & apply overlays
   for (const feat of input.feats) {
-    if (!ALLOWED_SRD_FEAT_IDS.has(feat.id)) {
+    if (feat.source === 'homebrew') {
+      if (containsProductIdentityProperName(feat.id) || containsProductIdentityProperName(feat.name)) {
+        throw new Error(`Prohibited Product Identity Feat rejected by ingestion pipeline: "${feat.id}"`);
+      }
+      if (isSrd52OnlyIdentifier(feat.id) || isSrd52OnlyIdentifier(feat.name)) {
+        throw new Error(`SRD 5.2 Feat rejected by ingestion pipeline: "${feat.id}"`);
+      }
+    } else if (!ALLOWED_SRD_FEAT_IDS.has(feat.id)) {
       throw new Error(`Non-SRD Feat ID rejected by ingestion pipeline: "${feat.id}"`);
     }
   }
   const feats = sortById(applyFeatOverlays(input.feats, overlays.feats ?? {}));
 
-  // Apply Equipment & Magic Item overlays
+  // Apply Equipment & Magic Item overlays (rejecting SRD 5.2-only magic items on the SRD 5.1 track)
   const equipment = sortById(applyEquipmentOverlays(input.equipment, overlays.gear ?? {}));
+  for (const mi of input.magicItems) {
+    if (mi.source !== 'homebrew' && (isSrd52OnlyIdentifier(mi.id) || isSrd52OnlyIdentifier(mi.name))) {
+      throw new Error(`SRD 5.2 Magic Item rejected on SRD 5.1 track: "${mi.name}" (${mi.id})`);
+    }
+  }
   const magicItems = sortById(
     applyMagicItemOverlays(input.magicItems, overlays.magicItems ?? {}),
   );
 
-  // Canonicalize Spells (converting PHB wizard names to SRD open-content names and rejecting Product Identity)
+  // Canonicalize Spells (converting PHB wizard names to SRD open-content names and rejecting Product Identity / SRD 5.2)
   const canonicalSpells: SpellData[] = input.spells.map((spell) => {
     const identity = canonicalizeSpellIdentity(spell.id, spell.name);
+    if (
+      spell.source !== 'homebrew' &&
+      (isSrd52OnlyIdentifier(identity.id) || isSrd52OnlyIdentifier(identity.name))
+    ) {
+      throw new Error(`SRD 5.2 Spell rejected on SRD 5.1 track: "${identity.name}" (${identity.id})`);
+    }
     return {
       ...spell,
       id: identity.id,
@@ -182,11 +213,19 @@ export function runSrdIngestionPipeline(
   });
   const spells = sortById(applySpellOverlays(canonicalSpells, overlays.spells ?? {}));
 
-  // Verify Monsters against Product Identity blocklist & apply overlays
+  // Verify Monsters against Product Identity blocklist & SRD 5.2 gate, then apply overlays
   for (const monster of input.monsters) {
     if (isProhibitedMonsterId(monster.id) || isProhibitedMonsterId(monster.name)) {
       throw new Error(
         `Prohibited Product Identity Monster rejected by ingestion pipeline: "${monster.name}" (${monster.id})`,
+      );
+    }
+    if (
+      monster.source !== 'homebrew' &&
+      (isSrd52OnlyIdentifier(monster.id) || isSrd52OnlyIdentifier(monster.name))
+    ) {
+      throw new Error(
+        `SRD 5.2 Monster rejected on SRD 5.1 track (set source: "homebrew" if original): "${monster.name}" (${monster.id})`,
       );
     }
   }

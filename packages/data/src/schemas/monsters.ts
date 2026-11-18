@@ -249,5 +249,11 @@ export const MonsterSchema = z.object({
   reactions: z.array(MonsterActionSpecSchema).optional(),
   legendaryActions: MonsterLegendaryActionsSchema.optional(),
   description: z.string().min(1).optional(),
+  /**
+   * Provenance: 'srd-5.1' records are verbatim SRD content; 'homebrew' records
+   * are original creations using SRD mechanics (Spec 09 §7). Absent means
+   * 'srd-5.1' (all records predating the field were audited as SRD).
+   */
+  source: z.enum(['srd-5.1', 'homebrew']).optional(),
 });
 export type MonsterData = z.infer<typeof MonsterSchema>;

@@ -40,5 +40,6 @@ export const FeatSchema = z.object({
   choices: z.array(ChoiceSpecSchema).optional(),
   modifiers: z.array(ModifierSpecSchema),
   activatedAbilities: z.array(ActivatedAbilitySpecSchema).optional(),
+  source: z.enum(['srd-5.1', 'homebrew']).optional(),
 });
 export type FeatData = z.infer<typeof FeatSchema>;

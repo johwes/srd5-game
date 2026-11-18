@@ -158,3 +158,100 @@ export function containsProductIdentityProperName(text: string): boolean {
     return pattern.test(lower);
   });
 }
+
+/**
+ * Identifiers added in SRD 5.2 (per the official SRD 5.2 FAQ difference tables)
+ * that are absent from SRD 5.1. Because this engine targets the 5.1 ruleset,
+ * records with `source !== 'homebrew'` must never use these identifiers.
+ */
+export const SRD_52_ADDED_IDENTIFIERS = [
+  // Monsters added in 5.2
+  'allosaurus',
+  'ankylosaurus',
+  'archelon',
+  'bugbear-stalker',
+  'goblin-boss',
+  'goblin-minion',
+  'guard-captain',
+  'hippopotamus',
+  'hobgoblin-captain',
+  'pirate',
+  'pirate-captain',
+  'pteranodon',
+  'pteradon',
+  'sphinx-of-wonder',
+  'swarm-of-crawling-claws',
+  'tough-boss',
+  'troll-limb',
+  'vampire-familiar',
+  // Spells added in 5.2
+  'aura-of-life',
+  'charm-monster',
+  'chromatic-orb',
+  'dissonant-whispers',
+  'divine-smite',
+  'dragons-breath',
+  'elementalism',
+  'ensnaring-strike',
+  'hex',
+  'ice-knife',
+  'mind-spike',
+  'phantasmal-force',
+  'power-word-heal',
+  'ray-of-sickness',
+  'searing-smite',
+  'sorcerous-burst',
+  'starry-wisp',
+  'summon-dragon',
+  'tsunami',
+  'vitriolic-sphere',
+  // Magic items added or renamed in 5.2
+  'bead-of-nourishment',
+  'cloak-of-invisibility',
+  'elixir-of-health',
+  'energy-bow',
+  'gloves-of-thievery',
+  'hat-of-many-spells',
+  'potion-of-invulnerability',
+  'potion-of-longevity',
+  'potion-of-vitality',
+  'quarterstaff-of-the-acrobat',
+  'rod-of-resurrection',
+  'sending-stones',
+  'sentinel-shield',
+  'shield-of-the-cavalier',
+  'thunderous-greatclub',
+  'mysterious-deck',
+  'dragon-orb',
+  // Feats and backgrounds added in 5.2
+  'alert',
+  'magic-initiate',
+  'savage-attacker',
+  'ability-score-improvement',
+  'archery',
+  'great-weapon-fighting',
+  'two-weapon-fighting',
+  'boon-of-combat-prowess',
+  'boon-of-dimensional-travel',
+  'boon-of-fate',
+  'boon-of-irresistible-offense',
+  'boon-of-irresistable-offense',
+  'boon-of-the-night-spirit',
+  'boon-of-spell-recall',
+  'boon-of-truesight',
+  'criminal',
+  'sage',
+  'soldier',
+] as const;
+
+const SRD_52_ADDED_NORMALIZED_SET: ReadonlySet<string> = new Set(
+  SRD_52_ADDED_IDENTIFIERS.map((s) => s.replace(/[^a-z]/g, '')),
+);
+
+/**
+ * Checks whether an ID or name matches an SRD 5.2-only addition.
+ */
+export function isSrd52OnlyIdentifier(idOrName: string): boolean {
+  const norm = idOrName.toLowerCase().replace(/[^a-z]/g, '');
+  return SRD_52_ADDED_NORMALIZED_SET.has(norm);
+}
