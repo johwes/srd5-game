@@ -24,6 +24,8 @@ flowchart LR
     E3 --> E9["Epic 9: Summoned Creatures &\nConjured Tokens"]
     E4 --> E9
     E7 --> E9
+    E1 --> E10["Epic 10: Content Library\nExpansion & Remix Modes"]
+    E3 --> E10
 ```
 
 ---
@@ -228,3 +230,21 @@ flowchart LR
 
 ### Epic 9 Acceptance Criteria Details
 - [x] **SRD-901..905**: Casting *Faithful Hound*, *Guardian of Faith*, *Arcane Hand*, or *Arcane Sword* spawns a rules-accurate token (correct team, AC/HP, initiative, concentration linkage) instead of an adjudication card. Commanded summons take player-controlled turns; the hound auto-bites at its caster's turn start; the guardian triggers saves vs 20 radiant and despawns after dealing 60; ownership and fog behave in co-op/PvP; and the canvas shows summon rings, buffs, and labels with zero console errors at 1280×800.
+
+---
+
+## Epic 10: Content Library Expansion & Remix Modes
+**Spec Reference**: [09-content-library.md](file:///home/jwesterl/ai/srd5-game/docs/spec/09-content-library.md), [01-srd-data-schema.md](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [03-combat-and-rules-engine.md](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md)
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-1001** | `[ ]` | Author monster wave 1 (CR 0–2 staples: beasts, goblinoids, undead, NPCs; Tier-0 sprite reuse) with biome table wiring and headless tests | `@srd5/data`, `@srd5/engine` | SRD-310, SRD-106 |
+| **SRD-1002** | `[ ]` | Author monster wave 2 (CR 3–7 bruisers/controllers; Tier-1 atlas mappings for new NPC frames) with biome table wiring and headless tests | `@srd5/data`, `@srd5/engine`, `@srd5/client` | SRD-1001, SRD-401 |
+| **SRD-1003** | `[ ]` | Author monster wave 3 (CR 8+ bosses and lair threats) with biome/Delve boss tables and headless tests | `@srd5/data`, `@srd5/engine` | SRD-1002 |
+| **SRD-1004** | `[ ]` | Audit and complete SRD 5.1 spell coverage (L0–L9 gaps with Tier-A executable overlays and headless tests) | `@srd5/data`, `@srd5/engine` | SRD-310, SRD-106 |
+| **SRD-1005** | `[ ]` | Build remix modes: Daily Descent seed, Draft Party generator, and Boss Rush gauntlet | `@srd5/engine`, `@srd5/client` | SRD-408, SRD-508, SRD-509 |
+
+### Epic 10 Acceptance Criteria Details
+- [ ] **SRD-1001..1003**: Each wave starts with an audit (bundled set vs SRD 5.1 text, roster proposed before authoring); every monster ships statblock + executable trait/attack overlays + AI archetype tag + biome/pool wiring + deterministic headless combat test; every monster resolves to Tier-0/Tier-1 art or is named on the ticket's Tier-2 list; the Product Identity blocklist and integrity suite stay green with zero new binary assets.
+- [ ] **SRD-1004**: Coverage audit first; every added spell has slots/scaling/concentration/save-or-attack handling with headless tests; no new spell-school icons (game-icons.net set already covers all 8 schools).
+- [ ] **SRD-1005**: Daily seed (one shared seed/day, one attempt, graveyard-persisted best), draft mode (seeded random party into Descent/Delve), and boss rush (CR-escalating gauntlet with breathers reusing arena wave + delve scoring plumbing); all verified headless plus a 1280x800 smoke pass.
