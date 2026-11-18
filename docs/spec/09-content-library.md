@@ -2,7 +2,15 @@
 
 ## 1. Scope Rule: What May Grow and What May Not
 
-The dataset's licensing gates decide the expansion surface — not taste:
+The dataset's licensing gates decide the expansion surface — not taste.
+Authoritative backing (official SRD FAQ, dndbeyond.com/srd): the SRD ships a
+single background and a single feat *on purpose* — "The goal of the SRD is to
+allow users to create new content, not to replicate the text of the whole
+game. We encourage players, DMs, and publishers to come up with their own
+backgrounds and feats." Missing spells/monsters follow stated criteria (3E
+SRD lineage, 5e equivalents, vital-to-function), e.g. *Delay Poison* is
+absent because *Protection from Poison* covers it — so "complete coverage"
+means matching the SRD PDFs, not the whole game.
 
 | Dataset | Gate | Status | Expandable? |
 | :--- | :--- | :--- | :--- |
@@ -154,7 +162,11 @@ Rules for the homebrew track:
 
 - No new *verbatim-SRD* feats, backgrounds, subclasses, or races beyond the
   allowlists (see §7 for the homebrew path instead).
-- No SRD 5.2 material of any kind (rules coherence; see §1).
+- No SRD 5.2 material of any kind (rules coherence; see §1). This is a
+  conscious refusal, not an oversight: SRD 5.2 adds 15 feats, 3 backgrounds,
+  20 spells, and 17 monsters under the same CC-BY-4.0 license (per the
+  official SRD FAQ), and mixing versions is explicitly permitted — but 5.2
+  mechanics belong to the 5.5e ruleset and would fork this engine's 5.1 base.
 - No new binary art assets (see §2).
 - No handcrafted campaign modules in this epic (Kaelen stays the tutorial;
   handcrafted arcs belong with quest content, not the library).
