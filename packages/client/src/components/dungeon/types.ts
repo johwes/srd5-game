@@ -105,10 +105,8 @@ export interface DungeonExplorationHudProps {
   onPerformSearch: () => void;
   onSelectLeadExplorer: (characterId: string) => void;
   onInspectCharacter?: (characterId: string) => void;
-  onInteractProp: (
-    propId: string,
-    interaction: 'open' | 'close' | 'pick_lock' | 'disarm_trap' | 'force_open' | 'search' | 'attack',
-  ) => void;
+  /** SRD-510: inspect a nearby prop (opens the interaction card). */
+  onInspectProp?: (propId: string) => void;
   onDescendStairs?: () => void;
   onAscendStairs?: () => void;
   onExitDelve: () => void;

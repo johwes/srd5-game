@@ -18,6 +18,7 @@ import {
   type GraveyardEntry,
   type GridPoint,
   type InteractiveProp,
+  type PropInteractionKind,
   type RealmDelveState,
   activateShrine,
   advanceRealmDelveFloor,
@@ -28,6 +29,7 @@ import {
   completeRealmDelve,
   endRogueliteRun,
   findPath,
+  getAvailablePropInteractions,
   isLairFloorCleared,
   planAiTurn,
   recordRunMonstersSlain,
@@ -39,6 +41,7 @@ import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { TacticalCombatHud, TargetingCommitBar, useManualTargeting } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
 import { DungeonExplorationHud } from './DungeonExplorationHud.js';
+import { PropInteractionCard } from './PropInteractionCard.js';
 import { LootInventoryModal } from './LootInventoryModal.js';
 import { MarchingOrderModal } from './MarchingOrderModal.js';
 import { RestCampModal } from './RestCampModal.js';
@@ -192,6 +195,9 @@ export function DungeonView({
   } | null>(null);
   const [activeShrine, setActiveShrine] =
     useState<InteractiveProp | PlayerViewProp | null>(null);
+  // SRD-510 click-to-inspect: prop id whose interaction card is open.
+  // Visibility is derived (card shows only while the prop is adjacent).
+  const [inspectedPropId, setInspectedPropId] = useState<string | null>(null);
   // Latest manual-targeting API for the Escape handler below (the hook
   // itself is instantiated after the active combatant is resolved).
   const manualTargetingRef = useRef<{
@@ -228,6 +234,13 @@ export function DungeonView({
           mt.cancel();
           return;
         }
+        // An inspected prop card takes precedence over the pause menu.
+        if (inspectedPropId !== null) {
+          e.preventDefault();
+          e.stopPropagation();
+          setInspectedPropId(null);
+          return;
+        }
         const target = e.target as HTMLElement | null;
         if (
           target &&
@@ -254,7 +267,7 @@ export function DungeonView({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [inspectedPropId]);
 
   // AI automation for combat
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -550,42 +563,60 @@ export function DungeonView({
     ? getAdjacentProps(leadCombatant.position, viewState.props)
     : [];
 
+  // SRD-510 inspected prop: full authoritative record for check previews,
+  // visible only while it stays adjacent (auto-dismisses when walking away).
+  const inspectedProp = inspectedPropId
+    ? (getAuthState().props.find((p) => p.id === inspectedPropId) ?? null)
+    : null;
+  const inspectedPropAdjacent =
+    inspectedProp !== null && adjacentProps.some((p) => p.id === inspectedProp.id);
+  const visibleInspectedProp = inspectedPropAdjacent ? inspectedProp : null;
+  const inspectedPropOptions = visibleInspectedProp
+    ? getAvailablePropInteractions(visibleInspectedProp, leadCombatant ?? undefined)
+    : [];
+
+  const handleCardInteract = useCallback(
+    (propId: string, interaction: PropInteractionKind) => {
+      const target = getAuthState().props.find((p) => p.id === propId);
+      if (target?.kind === 'shrine' && interaction === 'open') {
+        setActiveShrine(target);
+        setModalState('shrine');
+        setInspectedPropId(null);
+        return;
+      }
+      void handleDispatch({
+        type: 'INTERACT_PROP',
+        actorId: leadExplorerId,
+        propId,
+        interaction,
+      });
+      // Keep the card open on state-changing actions so the player sees the
+      // result (it auto-dismisses when walking away). Close on explicit close.
+      if (interaction === 'close') {
+        setInspectedPropId(null);
+      }
+    },
+    [getAuthState, handleDispatch, leadExplorerId],
+  );
+
   // Cell click handling. SRD-410 manual targeting consumes combat clicks
   // while an action is armed (right-click cancels).
   const handleCellClick = async (cell: GridPoint, button?: number) => {
     if (viewState.mode === 'exploration') {
       if (!leadCombatant) return;
 
-      // Check if clicking directly on an adjacent interactive prop
+      // Check if clicking directly on an adjacent interactive prop:
+      // SRD-510 opens the interaction card instead of acting immediately.
       const clickedProp = adjacentProps.find(
         (p) => p.x === cell.x && p.y === cell.y,
       );
       if (clickedProp) {
-        if (clickedProp.kind === 'door') {
-          await handleDispatch({
-            type: 'INTERACT_PROP',
-            actorId: leadExplorerId,
-            propId: clickedProp.id,
-            interaction: clickedProp.state === 'open' ? 'close' : 'open',
-          });
+        if (clickedProp.kind === 'chest' && clickedProp.state === 'open') {
+          setModalState('loot_inventory');
           return;
         }
-        if (clickedProp.kind === 'shrine') {
-          setActiveShrine(clickedProp);
-          setModalState('shrine');
-          return;
-        }
-        if (clickedProp.kind === 'chest') {
-          if (clickedProp.state === 'open') {
-            setModalState('loot_inventory');
-            return;
-          }
-          await handleDispatch({
-            type: 'INTERACT_PROP',
-            actorId: leadExplorerId,
-            propId: clickedProp.id,
-            interaction: 'open',
-          });
+        if (clickedProp.kind !== 'stairs_down' && clickedProp.kind !== 'stairs_up') {
+          setInspectedPropId(clickedProp.id);
           return;
         }
       }
@@ -1003,6 +1034,10 @@ export function DungeonView({
               inStealth={authState.partyInStealth ?? false}
               formation={marchingConfig.formation}
               adjacentProps={adjacentProps}
+              selectedProp={visibleInspectedProp}
+              onInspectProp={(id) =>
+                setInspectedPropId((prev) => (prev === id ? null : id))
+              }
               hasUnclaimedLoot={Boolean(activeLoot)}
               onToggleStealth={() =>
                 handleDispatch({
@@ -1028,20 +1063,6 @@ export function DungeonView({
                 })
               }
               onInspectCharacter={onOpenCharacterSheet}
-              onInteractProp={(propId, interaction) => {
-                const p = adjacentProps.find((pr) => pr.id === propId);
-                if (p && p.kind === 'shrine') {
-                  setActiveShrine(p);
-                  setModalState('shrine');
-                  return;
-                }
-                handleDispatch({
-                  type: 'INTERACT_PROP',
-                  actorId: leadExplorerId,
-                  propId,
-                  interaction,
-                });
-              }}
               onDescendStairs={
                 adjacentProps.some((p) => p.kind === 'stairs_down')
                   ? handleDescendStairs
@@ -1054,6 +1075,26 @@ export function DungeonView({
               }
               onExitDelve={onExitToRoster}
             />
+
+            {/* SRD-510 inspected prop interaction card */}
+            {visibleInspectedProp && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-3 pointer-events-none">
+                <PropInteractionCard
+                  prop={visibleInspectedProp}
+                  options={inspectedPropOptions}
+                  onInteract={handleCardInteract}
+                  onClose={() => setInspectedPropId(null)}
+                  onUseShrine={(propId) => {
+                    const target = getAuthState().props.find((p) => p.id === propId);
+                    if (target) {
+                      setActiveShrine(target);
+                      setModalState('shrine');
+                      setInspectedPropId(null);
+                    }
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

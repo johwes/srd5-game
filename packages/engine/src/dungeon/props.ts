@@ -112,8 +112,182 @@ export function getActorCheckBonus(
 }
 
 /**
- * Triggers a trap effect (damage roll, optional saving throw, HP deduction).
+ * A single interactable option for the click-to-inspect prop card
+ * (Spec 04 §3.2). Mirrors the gating in `resolvePropInteraction` so the UI
+ * only offers actions the engine will accept.
  */
+export type PropInteractionKind =
+  | 'open'
+  | 'close'
+  | 'pick_lock'
+  | 'disarm_trap'
+  | 'force_open'
+  | 'search'
+  | 'attack';
+
+export interface PropInteractionOption {
+  interaction: PropInteractionKind;
+  label: string;
+  /** Human-readable check preview, e.g. "DEX +3 vs DC 15". */
+  checkHint?: string;
+  /** Heads-up shown alongside the action, e.g. a suspected trap. */
+  riskHint?: string;
+}
+
+function signed(n: number): string {
+  return n >= 0 ? `+${n}` : `${n}`;
+}
+
+/**
+ * Lists the interaction options for one prop and actor, gated by prop kind
+ * and state. Returns an empty list for props the party cannot meaningfully
+ * act on (undiscovered secrets, destroyed husks, disarmed traps, stairs,
+ * which keep their dedicated HUD flows).
+ */
+export function getAvailablePropInteractions(
+  prop: Pick<
+    InteractiveProp,
+    | 'id'
+    | 'kind'
+    | 'state'
+    | 'lockDc'
+    | 'detectionDc'
+    | 'disarmDc'
+    | 'trapDamageFormula'
+    | 'discovered'
+  >,
+  actor?: Pick<Combatant, 'id'> & Partial<Combatant>,
+): PropInteractionOption[] {
+  if (prop.kind === 'secret_door' && !prop.discovered) return [];
+  if (prop.state === 'destroyed') return [];
+  if (prop.kind === 'stairs_down' || prop.kind === 'stairs_up') return [];
+  if ((prop.kind === 'trap' || prop.kind === 'secret_door') && prop.discovered === false) return [];
+
+  const options: PropInteractionOption[] = [];
+  const trapped =
+    prop.trapDamageFormula !== undefined &&
+    prop.state !== 'disarmed' &&
+    prop.state !== 'triggered';
+  const riskHint = trapped ? 'May be trapped — consider disarming or searching first.' : undefined;
+
+  const toolsBonus = actor ? getActorCheckBonus(actor as Combatant, 'thieves_tools') : undefined;
+  const athleticsBonus = actor ? getActorCheckBonus(actor as Combatant, 'athletics') : undefined;
+  const searchBonus = actor
+    ? Math.max(
+        getActorCheckBonus(actor as Combatant, 'perception'),
+        getActorCheckBonus(actor as Combatant, 'investigation'),
+      )
+    : undefined;
+
+  switch (prop.kind) {
+    case 'door':
+    case 'secret_door': {
+      if (prop.state === 'locked') {
+        const lockDc = prop.lockDc ?? 15;
+        options.push({
+          interaction: 'pick_lock',
+          label: 'Pick Lock',
+          checkHint:
+            toolsBonus !== undefined ? `DEX (Thieves' Tools) ${signed(toolsBonus)} vs DC ${lockDc}` : `DC ${lockDc}`,
+          ...(riskHint ? { riskHint } : {}),
+        });
+        options.push({
+          interaction: 'force_open',
+          label: 'Force Open',
+          checkHint:
+            athleticsBonus !== undefined
+              ? `STR (Athletics) ${signed(athleticsBonus)} vs DC ${lockDc + 2}`
+              : `DC ${lockDc + 2} (loud!)`,
+          ...(riskHint ? { riskHint } : {}),
+        });
+      } else if (prop.state === 'closed') {
+        options.push({
+          interaction: 'open',
+          label: 'Open',
+          ...(riskHint ? { riskHint } : {}),
+        });
+      } else if (prop.state === 'open') {
+        options.push({ interaction: 'close', label: 'Close' });
+      }
+      options.push({
+        interaction: 'search',
+        label: 'Search',
+        checkHint:
+          searchBonus !== undefined
+            ? `Perception/Investigation ${signed(searchBonus)} vs DC ${prop.detectionDc ?? 10}`
+            : undefined,
+      });
+      return options;
+    }
+    case 'chest': {
+      if (prop.state === 'locked') {
+        const lockDc = prop.lockDc ?? 15;
+        options.push({
+          interaction: 'pick_lock',
+          label: 'Pick Lock',
+          checkHint:
+            toolsBonus !== undefined ? `DEX (Thieves' Tools) ${signed(toolsBonus)} vs DC ${lockDc}` : `DC ${lockDc}`,
+          ...(riskHint ? { riskHint } : {}),
+        });
+        options.push({
+          interaction: 'force_open',
+          label: 'Force Open',
+          checkHint:
+            athleticsBonus !== undefined
+              ? `STR (Athletics) ${signed(athleticsBonus)} vs DC ${lockDc + 2}`
+              : `DC ${lockDc + 2} (loud!)`,
+          ...(riskHint ? { riskHint } : {}),
+        });
+      } else if (prop.state === 'closed') {
+        options.push({
+          interaction: 'open',
+          label: 'Open',
+          ...(riskHint ? { riskHint } : {}),
+        });
+      }
+      if (prop.state !== 'open') {
+        options.push({
+          interaction: 'search',
+          label: 'Search',
+          checkHint:
+            searchBonus !== undefined
+              ? `Perception/Investigation ${signed(searchBonus)} vs DC ${prop.detectionDc ?? 10}`
+              : undefined,
+        });
+      }
+      return options;
+    }
+    case 'trap': {
+      if (prop.discovered && prop.state !== 'disarmed' && prop.state !== 'triggered') {
+        const disarmDc = prop.disarmDc ?? 15;
+        options.push({
+          interaction: 'disarm_trap',
+          label: 'Disarm Trap',
+          checkHint:
+            toolsBonus !== undefined
+              ? `DEX (Thieves' Tools) ${signed(toolsBonus)} vs DC ${disarmDc} (fail by 5+ triggers it)`
+              : `DC ${disarmDc}`,
+        });
+        options.push({ interaction: 'search', label: 'Search' });
+      }
+      return options;
+    }
+    case 'lever': {
+      options.push({
+        interaction: 'open',
+        label: prop.state === 'open' ? 'Reset Lever' : 'Pull Lever',
+      });
+      return options;
+    }
+    case 'shrine': {
+      // Shrines resolve through the dedicated shrine modal, not INTERACT_PROP.
+      options.push({ interaction: 'open', label: 'Use Shrine' });
+      return options;
+    }
+    default:
+      return options;
+  }
+}
 export function triggerTrapEffect(options: {
   trap: InteractiveProp;
   target: Combatant;

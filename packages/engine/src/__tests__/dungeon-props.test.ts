@@ -8,6 +8,7 @@ import {
 import {
   checkPassivePerceptionForProps,
   getActorCheckBonus,
+  getAvailablePropInteractions,
   isAdjacent,
   resolveActiveSearch,
   resolvePropInteraction,
@@ -814,6 +815,85 @@ describe('SRD-502: Interactive Props Engine', () => {
         expect.objectContaining({ type: 'LOOT_ACQUIRED' }),
       );
       expect(openRes.nextState.party['greedy'].currentHp).toBeLessThan(20);
+    });
+  });
+
+  describe('7. SRD-510: Click-to-Inspect Action Options', () => {
+    const rogue = () =>
+      makePartyMember({
+        id: 'sneak',
+        name: 'Sneak',
+        tools: ['thieves_tools'],
+        skills: {
+          perception: { totalBonus: 5 },
+          investigation: { totalBonus: 3 },
+          athletics: { totalBonus: 2 },
+        },
+      });
+
+    it('offers Open + Search for a closed door, Close for an open door', () => {
+      const closed = getAvailablePropInteractions(
+        { id: 'd', kind: 'door', state: 'closed' },
+        rogue(),
+      );
+      expect(closed.map((o) => o.interaction)).toEqual(['open', 'search']);
+      const open = getAvailablePropInteractions(
+        { id: 'd', kind: 'door', state: 'open' },
+        rogue(),
+      );
+      expect(open.map((o) => o.interaction)).toEqual(['close', 'search']);
+    });
+
+    it('offers Pick Lock / Force Open with DC hints for locked doors and chests', () => {
+      const opts = getAvailablePropInteractions(
+        { id: 'd', kind: 'door', state: 'locked', lockDc: 15 },
+        rogue(),
+      );
+      const kinds = opts.map((o) => o.interaction);
+      expect(kinds).toEqual(['pick_lock', 'force_open', 'search']);
+      expect(opts[0]).toMatchObject({ label: 'Pick Lock' });
+      expect(opts[0]!.checkHint).toContain('DC 15');
+      expect(opts[1]!.checkHint).toContain('DC 17');
+    });
+
+    it('warns about trapped chests and offers disarm for found traps', () => {
+      const chest = getAvailablePropInteractions(
+        { id: 'c', kind: 'chest', state: 'closed', trapDamageFormula: '2d6' },
+        rogue(),
+      );
+      expect(chest.some((o) => o.riskHint !== undefined)).toBe(true);
+      const trap = getAvailablePropInteractions(
+        { id: 't', kind: 'trap', state: 'closed', disarmDc: 12, discovered: true },
+        rogue(),
+      );
+      expect(trap.map((o) => o.interaction)).toEqual(['disarm_trap', 'search']);
+      expect(trap[0]!.checkHint).toContain('DC 12');
+    });
+
+    it('hides actions for undiscovered secrets, destroyed husks, and stairs', () => {
+      const hero = rogue();
+      expect(
+        getAvailablePropInteractions({ id: 's', kind: 'secret_door', state: 'closed' }, hero),
+      ).toEqual([]);
+      expect(
+        getAvailablePropInteractions({ id: 't', kind: 'trap', state: 'closed' }, hero),
+      ).toEqual([]);
+      expect(
+        getAvailablePropInteractions({ id: 'd', kind: 'door', state: 'destroyed' }, hero),
+      ).toEqual([]);
+      expect(
+        getAvailablePropInteractions({ id: 'st', kind: 'stairs_down', state: 'open' }, hero),
+      ).toEqual([]);
+    });
+
+    it('offers Use Shrine for shrines and Pull for levers', () => {
+      const hero = rogue();
+      expect(
+        getAvailablePropInteractions({ id: 'sh', kind: 'shrine', state: 'open' }, hero).map((o) => o.interaction),
+      ).toEqual(['open']);
+      expect(
+        getAvailablePropInteractions({ id: 'lv', kind: 'lever', state: 'closed' }, hero)[0]?.label,
+      ).toBe('Pull Lever');
     });
   });
 });

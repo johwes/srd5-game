@@ -431,7 +431,7 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
       const onOpenSave = vi.fn();
       const onSearch = vi.fn();
       const onSelectLead = vi.fn();
-      const onInteractProp = vi.fn();
+      const onInspectProp = vi.fn();
       const onDescendStairs = vi.fn();
       const onExit = vi.fn();
 
@@ -474,7 +474,7 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
           onOpenSaveLoad={onOpenSave}
           onPerformSearch={onSearch}
           onSelectLeadExplorer={onSelectLead}
-          onInteractProp={onInteractProp}
+          onInspectProp={onInspectProp}
           onDescendStairs={onDescendStairs}
           onExitDelve={onExit}
         />,
@@ -515,10 +515,11 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
       fireEvent.click(saveBtn);
       expect(onOpenSave).toHaveBeenCalledTimes(1);
 
-      // Prop controls
-      const openDoorBtn = screen.getByTestId('prop-open-btn-door_courtyard');
-      fireEvent.click(openDoorBtn);
-      expect(onInteractProp).toHaveBeenCalledWith('door_courtyard', 'open');
+      // Adjacent props render as inspect indicators (no auto action buttons)
+      expect(screen.getByTestId('adjacent-prop-row-door_courtyard')).toBeDefined();
+      const inspectBtn = screen.getByTestId('inspect-prop-btn-door_courtyard');
+      fireEvent.click(inspectBtn);
+      expect(onInspectProp).toHaveBeenCalledWith('door_courtyard');
 
       const descendBtn = screen.getByTestId('prop-descend-stairs-btn');
       fireEvent.click(descendBtn);
@@ -564,7 +565,6 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
           onPerformSearch={vi.fn()}
           onSelectLeadExplorer={vi.fn()}
           onInspectCharacter={onInspect}
-          onInteractProp={vi.fn()}
           onExitDelve={vi.fn()}
         />,
       );

@@ -22,7 +22,7 @@ export function DungeonExplorationHud({
   onPerformSearch,
   onSelectLeadExplorer,
   onInspectCharacter,
-  onInteractProp,
+  onInspectProp,
   onDescendStairs,
   onAscendStairs,
   onExitDelve,
@@ -174,35 +174,48 @@ export function DungeonExplorationHud({
         </div>
       </header>
 
-      {/* Middle Contextual Prop Interaction Strip */}
+      {/* Middle Contextual Prop Indicator Strip (SRD-510: click to inspect) */}
       {adjacentProps.length > 0 && (
         <div
           data-testid="hud-adjacent-props-panel"
-          className="pointer-events-auto self-center max-w-xl w-full rounded-xl border border-amber-500/50 bg-slate-950/95 backdrop-blur-md p-3.5 shadow-2xl space-y-2.5 animate-in slide-in-from-bottom-3 duration-150"
+          className="pointer-events-auto self-center max-w-xl w-full rounded-xl border border-slate-700 bg-slate-950/90 backdrop-blur-md p-3 shadow-xl space-y-2"
         >
           <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-1.5">
-            <span className="font-bold text-amber-300 flex items-center gap-1.5">
-              <span>📍</span> Adjacent Interactive Feature
+            <span className="font-bold text-slate-300 flex items-center gap-1.5">
+              <span>📍</span> Nearby Features
             </span>
-            <span className="text-slate-400 text-[11px]">
-              Chebyshev reach $\le 1.5$ tiles
+            <span className="text-slate-500 text-[11px]">
+              Select one to inspect &middot; Chebyshev reach &le; 1.5 tiles
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {adjacentProps.map((prop) => {
               const kind = prop.kind;
               const state = prop.state;
+              const isSelected = selectedProp?.id === prop.id;
+              const isStairs = kind === 'stairs_down' || kind === 'stairs_up';
 
               return (
                 <div
                   key={prop.id}
                   data-testid={`adjacent-prop-row-${prop.id}`}
-                  className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800"
+                  className={`flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg border transition-colors ${
+                    isSelected
+                      ? 'bg-amber-950/40 border-amber-500/60'
+                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-600'
+                  }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">
-                      {kind === 'door' && (state === 'open' ? '🚪' : '🚪')}
+                  <button
+                    type="button"
+                    data-testid={`inspect-prop-btn-${prop.id}`}
+                    onClick={() => onInspectProp?.(prop.id)}
+                    aria-pressed={isSelected}
+                    title={isStairs ? undefined : 'Inspect this feature'}
+                    className="flex items-center gap-2 min-w-0 flex-1 text-left rounded-md px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-amber-500/60"
+                  >
+                    <span className="text-base shrink-0" aria-hidden>
+                      {kind === 'door' && '🚪'}
                       {kind === 'secret_door' && '🤫'}
                       {kind === 'chest' && '📦'}
                       {kind === 'trap' && '⚠️'}
@@ -211,12 +224,12 @@ export function DungeonExplorationHud({
                       {kind === 'lever' && '🕹️'}
                       {kind === 'shrine' && '✨'}
                     </span>
-                    <div>
-                      <div className="text-xs font-bold text-slate-200 capitalize">
+                    <span className="min-w-0">
+                      <span className="block text-xs font-bold text-slate-200 capitalize truncate">
                         {prop.id.replace(/[-_]/g, ' ')}
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        Type: <span className="text-slate-300">{kind}</span> &middot; State:{' '}
+                      </span>
+                      <span className="block text-[10px] text-slate-400">
+                        {kind.replace(/_/g, ' ')} &middot;{' '}
                         <span
                           className={`font-semibold ${
                             state === 'open'
@@ -230,78 +243,13 @@ export function DungeonExplorationHud({
                         >
                           {state}
                         </span>
-                      </div>
-                    </div>
-                  </div>
+                        {!isStairs && <span className="text-slate-500"> &middot; click to inspect</span>}
+                      </span>
+                    </span>
+                  </button>
 
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {/* Door Controls */}
-                    {kind === 'door' && state === 'closed' && (
-                      <>
-                        <button
-                          type="button"
-                          data-testid={`prop-open-btn-${prop.id}`}
-                          onClick={() => onInteractProp(prop.id, 'open')}
-                          className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
-                        >
-                          Open Door
-                        </button>
-                        <button
-                          type="button"
-                          data-testid={`prop-force-btn-${prop.id}`}
-                          onClick={() => onInteractProp(prop.id, 'force_open')}
-                          className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
-                        >
-                          Force
-                        </button>
-                      </>
-                    )}
-
-                    {kind === 'door' && state === 'open' && (
-                      <button
-                        type="button"
-                        data-testid={`prop-close-btn-${prop.id}`}
-                        onClick={() => onInteractProp(prop.id, 'close')}
-                        className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
-                      >
-                        Close Door
-                      </button>
-                    )}
-
-                    {/* Locked Door or Chest Controls */}
-                    {state === 'locked' && (
-                      <>
-                        <button
-                          type="button"
-                          data-testid={`prop-pick-lock-btn-${prop.id}`}
-                          onClick={() => onInteractProp(prop.id, 'pick_lock')}
-                          className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
-                        >
-                          Pick Lock
-                        </button>
-                        <button
-                          type="button"
-                          data-testid={`prop-force-open-btn-${prop.id}`}
-                          onClick={() => onInteractProp(prop.id, 'force_open')}
-                          className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
-                        >
-                          Force Open
-                        </button>
-                      </>
-                    )}
-
-                    {/* Unlocked Chest Controls */}
-                    {kind === 'chest' && state === 'closed' && (
-                      <button
-                        type="button"
-                        data-testid={`prop-open-chest-btn-${prop.id}`}
-                        onClick={() => onInteractProp(prop.id, 'open')}
-                        className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
-                      >
-                        Open Chest
-                      </button>
-                    )}
-
+                    {/* Open chest inventory shortcut (explicit user action) */}
                     {kind === 'chest' && state === 'open' && (
                       <button
                         type="button"
@@ -310,18 +258,6 @@ export function DungeonExplorationHud({
                         className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors"
                       >
                         Loot Chest
-                      </button>
-                    )}
-
-                    {/* Trap Controls */}
-                    {kind === 'trap' && state !== 'disarmed' && (
-                      <button
-                        type="button"
-                        data-testid={`prop-disarm-trap-btn-${prop.id}`}
-                        onClick={() => onInteractProp(prop.id, 'disarm_trap')}
-                        className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
-                      >
-                        Disarm Trap
                       </button>
                     )}
 
