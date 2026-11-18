@@ -167,7 +167,11 @@ export function triggerDungeonEncounter(
   }
 
   const nextMonsters = { ...state.monsters, ...spawnedMonsters };
-  const combatantsList = [...Object.values(state.party), ...Object.values(nextMonsters)];
+  // Only living party members (including unconscious heroes who must roll
+  // death saves) plus the freshly spawned encounter group enter initiative.
+  // Corpses from prior encounters stay in state.monsters as battlefield
+  // remains but must never re-enter a new fight's turn order.
+  const combatantsList = [...Object.values(state.party), ...Object.values(spawnedMonsters)];
 
   const partyStealth = state.partyInStealth
     ? {
@@ -200,7 +204,9 @@ export function triggerDungeonEncounter(
   });
 
   const nextParty: Record<string, Combatant> = {};
-  const finalMonsters: Record<string, Combatant> = {};
+  // Preserve prior-encounter corpses in state.monsters (battlefield remains)
+  // while syncing the current fight's participants from the transition.
+  const finalMonsters: Record<string, Combatant> = { ...state.monsters };
   for (const [id, c] of Object.entries(transition.state.combatants)) {
     if (c.side === 'party') {
       nextParty[id] = c;

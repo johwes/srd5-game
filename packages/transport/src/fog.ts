@@ -313,10 +313,20 @@ export function projectPlayerView(
     : [...Object.values(state.party), ...Object.values(state.monsters)];
 
   const visibleMonsterIds = new Set<string>();
+  const activeCombatantId = state.combat?.activeCombatantId ?? null;
 
   for (const c of allCombatants) {
     if (c.side === 'party' || controlledIds.has(c.id)) {
       combatantsView[c.id] = toPlayerViewCombatant(c);
+      continue;
+    }
+
+    // The active combatant must always be projected (even when outside
+    // current vision) so the HUD never shows "No combatant active" and the
+    // monster-turn AI gate keeps firing during fogged encounters.
+    if (activeCombatantId !== null && c.id === activeCombatantId) {
+      combatantsView[c.id] = toPlayerViewCombatant(c);
+      visibleMonsterIds.add(c.id);
       continue;
     }
 
@@ -369,7 +379,6 @@ export function projectPlayerView(
   // 6. Filter Combat State
   let combatView: PlayerViewCombatState | null = null;
   if (state.combat) {
-    const activeCombatantId = state.combat.activeCombatantId;
     const isMyTurn = activeCombatantId ? controlledIds.has(activeCombatantId) : false;
 
     const pendingPrompt = state.combat.pendingReactionPrompt;

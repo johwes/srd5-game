@@ -381,3 +381,43 @@ describe('SRD-311: projectPlayerView Fog-of-War State Filter', () => {
     ]);
   });
 });
+
+describe('Active combatant fog exception (second-fight hard-lock fix)', () => {
+  it('always projects the active combatant even when outside player vision', () => {
+    let grid = createTacticalGrid(10, 10);
+    grid = setGridCells(
+      grid,
+      Array.from({ length: 10 }, (_, y) => ({
+        x: 5,
+        y,
+        terrain: 'wall_solid' as const,
+        blocksSight: true,
+        blocksMovement: true,
+      })),
+    );
+
+    const hero = makePartyMember('hero-1', 'Hero', 2, 5);
+    const hiddenGoblin = makeMonster('goblin-hidden', 'Goblin Behind Wall', 7, 5);
+
+    const state = createInitialGameState({
+      grid,
+      party: [hero],
+      monsters: [hiddenGoblin],
+    });
+
+    const started = reduceGame(state, {
+      type: 'START_COMBAT',
+      encounterId: 'enc-test',
+      combatants: [hero, hiddenGoblin],
+    });
+    expect(started.nextState.combat).not.toBeNull();
+    const activeId = started.nextState.combat!.activeCombatantId!;
+    // Force the hidden goblin to be the active combatant to simulate the
+    // reported lock (fogged monster holding the turn).
+    started.nextState.combat!.activeCombatantId = 'goblin-hidden';
+
+    const view = projectPlayerView(started.nextState, 'player-1');
+    expect(view.combat!.activeCombatantId).toBe('goblin-hidden');
+    expect(view.combatants['goblin-hidden']).toBeDefined();
+  });
+});

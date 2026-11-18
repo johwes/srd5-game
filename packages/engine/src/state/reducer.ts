@@ -168,9 +168,14 @@ export function reduceGame(
 
   switch (command.type) {
     case 'START_COMBAT': {
+      // Default roster excludes pre-dead monsters (prior-encounter corpses);
+      // startCombatEncounter applies the same eligibility filter defensively.
       const combatantsList =
         command.combatants ??
-        [...Object.values(nextState.party), ...Object.values(nextState.monsters)];
+        [
+          ...Object.values(nextState.party),
+          ...Object.values(nextState.monsters).filter((m) => !m.isDead && m.currentHp > 0),
+        ];
 
       const transition = startCombatEncounter({
         encounterId: command.encounterId ?? `encounter-${Date.now()}`,

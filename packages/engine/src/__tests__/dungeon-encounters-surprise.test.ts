@@ -486,3 +486,56 @@ describe('SRD-512: Furniture Hide Spots Grant Stealth Advantage', () => {
     expect((leadRoll as unknown as { mode?: string } | undefined)?.mode).toBe('advantage');
   });
 });
+
+describe('Second-fight regression: prior-encounter corpses never re-enter initiative', () => {
+  function createTwoEncounterFloor(): DungeonFloorSpec {
+    const base = createTestFloorSpec({ doorState: 'open' });
+    return {
+      ...base,
+      encounters: [
+        {
+          id: 'enc_bandits',
+          roomId: 'room_entry',
+          triggered: false,
+          monsters: [{ monsterId: 'bandit', spawnX: 2, spawnY: 4 }],
+        },
+        {
+          id: 'enc_kobolds',
+          roomId: 'room_guard',
+          triggered: false,
+          monsters: [{ monsterId: 'kobold', spawnX: 8, spawnY: 5 }],
+        },
+      ],
+    };
+  }
+
+  it('excludes dead first-fight monsters from the second fight initiative', () => {
+    const floor = createTwoEncounterFloor();
+    const party = [makeHero('hero-1', 'Fighter', 2, 2)];
+    const initial = createDungeonGameState({ floor, party });
+
+    // Fight 1: trigger, kill bandits, return to exploration.
+    const fight1 = triggerDungeonEncounter(initial, 'enc_bandits');
+    expect(fight1.nextState.mode).toBe('combat');
+    for (const m of Object.values(fight1.nextState.monsters)) {
+      m.currentHp = 0;
+      m.isDead = true;
+    }
+    const backToExplore = transitionCombatToExploration(fight1.nextState);
+    expect(backToExplore.nextState.mode).toBe('exploration');
+
+    // Fight 2: only the living hero + fresh kobolds may roll initiative.
+    const fight2 = triggerDungeonEncounter(backToExplore.nextState, 'enc_kobolds');
+    expect(fight2.nextState.mode).toBe('combat');
+    const order = fight2.nextState.combat!.initiativeOrder.map((e) => e.entityId);
+    expect(order).toContain('hero-1');
+    expect(order.some((id) => id.startsWith('enc_kobolds-'))).toBe(true);
+    expect(order.some((id) => id.startsWith('enc_bandits-'))).toBe(false);
+
+    const activeId = fight2.nextState.combat!.activeCombatantId!;
+    const active = fight2.nextState.combat!.combatants[activeId]!;
+    expect(active.isDead).toBe(false);
+    expect(active.currentHp).toBeGreaterThan(0);
+    expect(fight2.nextState.combat!.turnBudget).not.toBeNull();
+  });
+});

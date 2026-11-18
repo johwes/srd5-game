@@ -132,9 +132,19 @@ export function startCombatEncounter(
   const events: CombatEvent[] = [];
   let currentState = rngState;
 
+  // Filter out pre-dead participants (corpses from prior encounters must
+  // never re-enter initiative) — party members at 0 HP without 3 death
+  // failures stay eligible so they can roll death saves on their turn.
+  const eligibleCombatants = combatants.filter(
+    (c) =>
+      !c.isDead &&
+      c.deathSaves.failures < 3 &&
+      !(c.side === 'monster' && c.currentHp <= 0),
+  );
+
   // 1. Determine Surprise
   const surpriseRes = determineSurprise({
-    combatants,
+    combatants: eligibleCombatants,
     rngState: currentState,
     partyStealth,
     monsterAmbush,
@@ -150,7 +160,7 @@ export function startCombatEncounter(
 
   // Clone combatants map and apply surprise flag
   const combatantMap: Record<string, Combatant> = {};
-  for (const c of combatants) {
+  for (const c of eligibleCombatants) {
     const isSurprised = surprisedLookup.has(c.id);
     combatantMap[c.id] = {
       ...c,
