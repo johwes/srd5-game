@@ -183,31 +183,70 @@ export function executeMonsterAction(options: ExecuteMonsterActionOptions): Mons
           sourceSpellOrAbilityName: action.name,
         });
 
-        const followSteps = passed ? (step.onSuccess ?? []) : step.onFail;
-        for (const sub of followSteps) {
-          if (sub.step === 'apply_condition') {
-            const condRes = applyConditionToCombatant(target, sub.conditionId, {
-              sourceId: attacker.id,
-              sourceName: action.name,
-              sourceEntityId: attacker.id,
-              durationRounds: sub.durationRounds,
-            });
-            combatantsMap[target.id] = condRes.combatant;
-            events.push(...condRes.events);
-          } else if (sub.step === 'deal_damage') {
-            const dmgRoll = rollDamage(rng, sub.diceFormula);
-            rng = dmgRoll.nextState;
-            const dmgApplied = applyDamage({
-              state: { ...currentState, rngState: rng, combatants: combatantsMap },
-              targetId: target.id,
-              rawAmount: dmgRoll.total,
-              damageType: sub.damageType,
-              attackerId: attacker.id,
-              sourceName: action.name,
-            });
-            rng = dmgApplied.state.rngState;
-            combatantsMap[target.id] = dmgApplied.state.combatants[target.id]!;
-            events.push(...dmgApplied.events);
+        if (passed) {
+          if (step.onSuccess) {
+            for (const sub of step.onSuccess) {
+              if (sub.step === 'deal_damage') {
+                const dmgRoll = rollDamage(rng, sub.diceFormula);
+                rng = dmgRoll.nextState;
+                const dmgApplied = applyDamage({
+                  state: { ...currentState, rngState: rng, combatants: combatantsMap },
+                  targetId: target.id,
+                  rawAmount: dmgRoll.total,
+                  damageType: sub.damageType,
+                  attackerId: attacker.id,
+                  sourceName: action.name,
+                });
+                rng = dmgApplied.state.rngState;
+                combatantsMap[target.id] = dmgApplied.state.combatants[target.id]!;
+                events.push(...dmgApplied.events);
+              }
+            }
+          }
+          // Check for half-damage on save
+          for (const failStep of step.onFail) {
+            if (failStep.step === 'deal_damage' && failStep.halfOnSaveSuccess) {
+              const dmgRoll = rollDamage(rng, failStep.diceFormula);
+              rng = dmgRoll.nextState;
+              const dmgApplied = applyDamage({
+                state: { ...currentState, rngState: rng, combatants: combatantsMap },
+                targetId: target.id,
+                rawAmount: Math.floor(dmgRoll.total / 2),
+                damageType: failStep.damageType,
+                attackerId: attacker.id,
+                sourceName: action.name,
+              });
+              rng = dmgApplied.state.rngState;
+              combatantsMap[target.id] = dmgApplied.state.combatants[target.id]!;
+              events.push(...dmgApplied.events);
+            }
+          }
+        } else {
+          for (const sub of step.onFail) {
+            if (sub.step === 'apply_condition') {
+              const condRes = applyConditionToCombatant(target, sub.conditionId, {
+                sourceId: attacker.id,
+                sourceName: action.name,
+                sourceEntityId: attacker.id,
+                durationRounds: sub.durationRounds,
+              });
+              combatantsMap[target.id] = condRes.combatant;
+              events.push(...condRes.events);
+            } else if (sub.step === 'deal_damage') {
+              const dmgRoll = rollDamage(rng, sub.diceFormula);
+              rng = dmgRoll.nextState;
+              const dmgApplied = applyDamage({
+                state: { ...currentState, rngState: rng, combatants: combatantsMap },
+                targetId: target.id,
+                rawAmount: dmgRoll.total,
+                damageType: sub.damageType,
+                attackerId: attacker.id,
+                sourceName: action.name,
+              });
+              rng = dmgApplied.state.rngState;
+              combatantsMap[target.id] = dmgApplied.state.combatants[target.id]!;
+              events.push(...dmgApplied.events);
+            }
           }
         }
       }

@@ -110,7 +110,7 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         wallTerrain: 'wall_solid',
         hazardTerrain: 'rubble',
         monsters: ['kobold', 'giant-rat', 'giant-bat', 'goblin', 'giant-wolf-spider', 'skeleton', 'zombie'],
-        bossMonsters: ['goblin-boss', 'bugbear', 'warhorse-skeleton', 'shadow', 'thug', 'knight'],
+        bossMonsters: ['goblin-boss', 'bugbear', 'warhorse-skeleton', 'shadow', 'thug', 'knight', 'stone-golem', 'vampire'],
         trapType: {
           damageFormula: '1d6',
           damageType: 'bludgeoning',
@@ -129,7 +129,7 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         wallTerrain: 'wall_solid',
         hazardTerrain: 'water_shallow',
         monsters: ['ghoul', 'giant-spider', 'giant-wolf-spider', 'shadow', 'mummy', 'ghost', 'cultist'],
-        bossMonsters: ['wight', 'gelatinous-cube', 'specter', 'wraith', 'cult-fanatic'],
+        bossMonsters: ['wight', 'gelatinous-cube', 'specter', 'wraith', 'cult-fanatic', 'hydra', 'mummy-lord', 'vampire'],
         trapType: {
           damageFormula: '1d8',
           damageType: 'poison',
@@ -148,7 +148,7 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         wallTerrain: 'wall_solid',
         hazardTerrain: 'lava',
         monsters: ['orc', 'bandit', 'thug', 'hell-hound'],
-        bossMonsters: ['minotaur', 'ogre', 'berserker', 'troll', 'harpy'],
+        bossMonsters: ['minotaur', 'ogre', 'berserker', 'troll', 'harpy', 'fire-giant', 'young-red-dragon', 'adult-red-dragon'],
         trapType: {
           damageFormula: '2d6',
           damageType: 'fire',
@@ -167,7 +167,7 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         wallTerrain: 'wall_solid',
         hazardTerrain: 'rubble',
         monsters: ['cult-fanatic', 'mage', 'knight', 'veteran'],
-        bossMonsters: ['medusa', 'manticore', 'hill-giant', 'gladiator', 'oni'],
+        bossMonsters: ['medusa', 'manticore', 'hill-giant', 'gladiator', 'oni', 'frost-giant', 'clay-golem', 'stone-golem', 'archmage'],
         trapType: {
           damageFormula: '2d8',
           damageType: 'lightning',
@@ -186,7 +186,7 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         wallTerrain: 'wall_solid',
         hazardTerrain: 'chasm',
         monsters: ['mage', 'wight', 'wraith', 'cult-fanatic'],
-        bossMonsters: ['young-black-dragon', 'adult-black-dragon', 'wyvern', 'oni'],
+        bossMonsters: ['young-black-dragon', 'adult-black-dragon', 'wyvern', 'oni', 'vampire', 'archmage', 'mummy-lord', 'adult-red-dragon'],
         trapType: {
           damageFormula: '3d6',
           damageType: 'necrotic',

@@ -348,6 +348,416 @@
     }
   },
   {
+    "id": "adult-red-dragon",
+    "name": "Adult Red Dragon",
+    "size": "huge",
+    "type": "dragon",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 19,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 256,
+      "rollFormula": "19d12 + 133"
+    },
+    "speed": {
+      "walk": 40,
+      "climb": 40,
+      "fly": 80
+    },
+    "abilities": {
+      "str": 27,
+      "dex": 10,
+      "con": 25,
+      "int": 16,
+      "wis": 13,
+      "cha": 21
+    },
+    "savingThrows": {
+      "dex": 6,
+      "con": 13,
+      "wis": 7,
+      "cha": 11
+    },
+    "skills": {
+      "perception": 13,
+      "stealth": 6
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "fire"
+    ],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 120,
+      "blindsightFeet": 60,
+      "passivePerception": 23
+    },
+    "languages": [
+      "common",
+      "draconic"
+    ],
+    "challengeRating": 17,
+    "xp": 18000,
+    "aiArchetype": "artillery",
+    "traits": [
+      {
+        "id": "legendary-resistance",
+        "name": "Legendary Resistance (3/Day)",
+        "description": "If the dragon fails a saving throw, it can choose to succeed instead.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The dragon can use its Frightful Presence. It then makes three attacks: one with its bite and two with its claws.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "bite",
+              "count": 1
+            },
+            {
+              "actionId": "claw",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +14 to hit, reach 10 ft., one target. Hit: 19 (2d10 + 8) piercing damage plus 7 (2d6) fire damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 14,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d10 + 8",
+                "damageType": "piercing"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6",
+                "damageType": "fire"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "claw",
+        "name": "Claw",
+        "description": "Melee Weapon Attack: +14 to hit, reach 5 ft., one target. Hit: 15 (2d6 + 8) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 14,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 8",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tail",
+        "name": "Tail",
+        "description": "Melee Weapon Attack: +14 to hit, reach 15 ft., one target. Hit: 17 (2d8 + 8) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 15,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 14,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d8 + 8",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "fire-breath",
+        "name": "Fire Breath (Recharge 5–6)",
+        "description": "The dragon exhales fire in a 60-foot cone. Each creature in that area must make a DC 21 Dexterity saving throw, taking 63 (18d6) fire damage on a failed save, or half as much damage on a successful one.",
+        "actionCost": "action",
+        "recharge": {
+          "minRoll": 5,
+          "die": 6
+        },
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "cone",
+            "sizeFeet": 60
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "21",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "18d6",
+                "damageType": "fire",
+                "halfOnSaveSuccess": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
+    "id": "archmage",
+    "name": "Archmage",
+    "size": "medium",
+    "type": "humanoid",
+    "subtype": "any_race",
+    "alignment": "any_alignment",
+    "armorClass": {
+      "value": 12,
+      "type": "unarmored",
+      "notes": "15 with mage armor"
+    },
+    "hitPoints": {
+      "average": 99,
+      "rollFormula": "18d8 + 18"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 10,
+      "dex": 14,
+      "con": 12,
+      "int": 20,
+      "wis": 15,
+      "cha": 16
+    },
+    "savingThrows": {
+      "int": 9,
+      "wis": 6
+    },
+    "skills": {
+      "arcana": 13,
+      "history": 13
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 12
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 12,
+    "xp": 8400,
+    "aiArchetype": "artillery",
+    "traits": [
+      {
+        "id": "magic-resistance",
+        "name": "Magic Resistance",
+        "description": "The archmage has advantage on saving throws against spells and other magical effects.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws",
+            "condition": "save_against_magic"
+          }
+        ]
+      }
+    ],
+    "spellcasting": {
+      "ability": "int",
+      "spellSaveDc": 17,
+      "spellAttackBonus": 9,
+      "casterLevel": 18,
+      "classId": "wizard",
+      "slotsByLevel": {
+        "1": 4,
+        "2": 3,
+        "3": 3,
+        "4": 3,
+        "5": 3,
+        "6": 1,
+        "7": 1,
+        "8": 1,
+        "9": 1
+      },
+      "atWillSpellIds": [
+        "fire-bolt",
+        "mage-armor"
+      ],
+      "preparedSpellIds": [
+        "shield",
+        "magic-missile",
+        "misty-step",
+        "counterspell",
+        "fireball",
+        "lightning-bolt",
+        "fly",
+        "stoneskin",
+        "cone-of-cold",
+        "globe-of-invulnerability",
+        "time-stop"
+      ]
+    },
+    "actions": [
+      {
+        "id": "dagger",
+        "name": "Dagger",
+        "description": "Melee or Ranged Weapon Attack: +6 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 4 (1d4 + 2) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 20,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 6,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d4 + 2",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "fire-bolt",
+        "name": "Fire Bolt",
+        "description": "Ranged Spell Attack: +9 to hit, range 120 ft., one target. Hit: 22 (4d10) fire damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 120,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_spell",
+            "attackBonusOverride": 9,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "4d10",
+                "damageType": "fire"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cone-of-cold",
+        "name": "Cone of Cold",
+        "description": "A 60-foot cone of cold. Each creature in that area must make a DC 17 Constitution saving throw, taking 36 (8d8) cold damage on a failed save, or half as much on a successful one.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "cone",
+            "sizeFeet": 60
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "con",
+            "dcFormula": "17",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "8d8",
+                "damageType": "cold",
+                "halfOnSaveSuccess": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lightning-bolt",
+        "name": "Lightning Bolt",
+        "description": "A 100-foot line of lightning that is 5 feet wide. Each creature in that line must make a DC 17 Dexterity saving throw, taking 28 (8d6) lightning damage on a failed save, or half as much on a successful one.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "line",
+            "sizeFeet": 100,
+            "widthFeet": 5
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "17",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "8d6",
+                "damageType": "lightning",
+                "halfOnSaveSuccess": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
     "id": "bandit",
     "name": "Bandit",
     "size": "medium",
@@ -660,6 +1070,168 @@
         ]
       }
     ]
+  },
+  {
+    "id": "clay-golem",
+    "name": "Clay Golem",
+    "size": "large",
+    "type": "construct",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 14,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 133,
+      "rollFormula": "14d10 + 56"
+    },
+    "speed": {
+      "walk": 20
+    },
+    "abilities": {
+      "str": 20,
+      "dex": 9,
+      "con": 18,
+      "int": 3,
+      "wis": 11,
+      "cha": 1
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "acid",
+      "poison",
+      "psychic",
+      "bludgeoning",
+      "piercing",
+      "slashing"
+    ],
+    "conditionImmunities": [
+      "charmed",
+      "exhaustion",
+      "frightened",
+      "paralyzed",
+      "petrified",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 9,
+    "xp": 5000,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "acid-absorption",
+        "name": "Acid Absorption",
+        "description": "Whenever the golem is subjected to acid damage, it takes no damage and instead regains hit points equal to the acid damage dealt.",
+        "modifiers": []
+      },
+      {
+        "id": "berserk",
+        "name": "Berserk",
+        "description": "Whenever the golem starts its turn with 60 hit points or fewer, roll a d6. On a 6, the golem goes berserk.",
+        "modifiers": []
+      },
+      {
+        "id": "magic-resistance",
+        "name": "Magic Resistance",
+        "description": "The golem has advantage on saving throws against spells and other magical effects.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws",
+            "condition": "save_against_magic"
+          }
+        ]
+      },
+      {
+        "id": "magic-weapons",
+        "name": "Magic Weapons",
+        "description": "The golem's weapon attacks are magical.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The golem makes two slam attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "slam",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "slam",
+        "name": "Slam",
+        "description": "Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 16 (2d10 + 5) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 8,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d10 + 5",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "haste",
+        "name": "Haste (Recharge 5–6)",
+        "description": "Until the end of its next turn, the golem gains a +2 bonus to AC, has advantage on Dexterity saving throws, and can use its slam attack as a bonus action.",
+        "actionCost": "action",
+        "recharge": {
+          "minRoll": 5,
+          "die": 6
+        },
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "clay-golem-haste",
+            "name": "Haste (+2 AC)",
+            "durationRounds": 2,
+            "requiresConcentration": false,
+            "modifiers": [
+              {
+                "type": "flat_bonus",
+                "target": "ac",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
   },
   {
     "id": "cult-fanatic",
@@ -983,6 +1555,248 @@
         ]
       }
     ]
+  },
+  {
+    "id": "fire-giant",
+    "name": "Fire Giant",
+    "size": "huge",
+    "type": "giant",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 18,
+      "type": "armor",
+      "armorIds": [
+        "plate-armor"
+      ]
+    },
+    "hitPoints": {
+      "average": 162,
+      "rollFormula": "13d12 + 78"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 25,
+      "dex": 9,
+      "con": 23,
+      "int": 10,
+      "wis": 14,
+      "cha": 13
+    },
+    "savingThrows": {
+      "dex": 3,
+      "con": 10,
+      "cha": 5
+    },
+    "skills": {
+      "athletics": 11,
+      "perception": 6
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "fire"
+    ],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 16
+    },
+    "languages": [
+      "giant"
+    ],
+    "challengeRating": 9,
+    "xp": 5000,
+    "aiArchetype": "brute",
+    "traits": [],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The giant makes two greatsword attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "greatsword",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "greatsword",
+        "name": "Greatsword",
+        "description": "Melee Weapon Attack: +11 to hit, reach 10 ft., one target. Hit: 28 (6d6 + 7) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 11,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "6d6 + 7",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rock",
+        "name": "Rock",
+        "description": "Ranged Weapon Attack: +11 to hit, range 60/240 ft., one target. Hit: 29 (4d10 + 7) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 240,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 11,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "4d10 + 7",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
+    "id": "frost-giant",
+    "name": "Frost Giant",
+    "size": "huge",
+    "type": "giant",
+    "alignment": "neutral_evil",
+    "armorClass": {
+      "value": 15,
+      "type": "natural",
+      "notes": "patchwork armor"
+    },
+    "hitPoints": {
+      "average": 138,
+      "rollFormula": "12d12 + 60"
+    },
+    "speed": {
+      "walk": 40
+    },
+    "abilities": {
+      "str": 23,
+      "dex": 9,
+      "con": 21,
+      "int": 9,
+      "wis": 10,
+      "cha": 12
+    },
+    "savingThrows": {
+      "con": 8,
+      "wis": 3,
+      "cha": 4
+    },
+    "skills": {
+      "athletics": 9,
+      "perception": 3
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "cold"
+    ],
+    "conditionImmunities": [],
+    "senses": {
+      "passivePerception": 13
+    },
+    "languages": [
+      "giant"
+    ],
+    "challengeRating": 8,
+    "xp": 3900,
+    "aiArchetype": "brute",
+    "traits": [],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The giant makes two greataxe attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "greataxe",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "greataxe",
+        "name": "Greataxe",
+        "description": "Melee Weapon Attack: +9 to hit, reach 10 ft., one target. Hit: 25 (3d12 + 6) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 9,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d12 + 6",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rock",
+        "name": "Rock",
+        "description": "Ranged Weapon Attack: +9 to hit, range 60/240 ft., one target. Hit: 28 (4d10 + 6) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 240,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "ranged_weapon",
+            "attackBonusOverride": 9,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "4d10 + 6",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
   },
   {
     "id": "gelatinous-cube",
@@ -2783,6 +3597,113 @@
     ]
   },
   {
+    "id": "hydra",
+    "name": "Hydra",
+    "size": "huge",
+    "type": "monstrosity",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 15,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 172,
+      "rollFormula": "15d12 + 75"
+    },
+    "speed": {
+      "walk": 30,
+      "swim": 30
+    },
+    "abilities": {
+      "str": 20,
+      "dex": 12,
+      "con": 20,
+      "int": 2,
+      "wis": 10,
+      "cha": 7
+    },
+    "savingThrows": {},
+    "skills": {
+      "perception": 6
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 16
+    },
+    "languages": [],
+    "challengeRating": 8,
+    "xp": 3900,
+    "aiArchetype": "brute",
+    "traits": [
+      {
+        "id": "multiple-heads",
+        "name": "Multiple Heads",
+        "description": "The hydra has five heads. While it has more than one head, the hydra has advantage on saving throws against being blinded, charmed, deafened, frightened, stunned, and knocked unconscious.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws",
+            "condition": "save_against_frightened"
+          }
+        ]
+      },
+      {
+        "id": "reactive-heads",
+        "name": "Reactive Heads",
+        "description": "For each head the hydra has beyond one, it gets an extra reaction that can be used only for opportunity attacks.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The hydra makes five bite attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "bite",
+              "count": 5
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +8 to hit, reach 10 ft., one target. Hit: 10 (1d10 + 5) piercing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 8,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d10 + 5",
+                "damageType": "piercing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
     "id": "knight",
     "name": "Knight",
     "size": "medium",
@@ -3820,6 +4741,227 @@
                 "step": "apply_condition",
                 "conditionId": "frightened",
                 "durationRounds": 2
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
+    "id": "mummy-lord",
+    "name": "Mummy Lord",
+    "size": "medium",
+    "type": "undead",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 17,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 97,
+      "rollFormula": "13d8 + 39"
+    },
+    "speed": {
+      "walk": 20
+    },
+    "abilities": {
+      "str": 18,
+      "dex": 10,
+      "con": 17,
+      "int": 11,
+      "wis": 18,
+      "cha": 16
+    },
+    "savingThrows": {
+      "con": 8,
+      "int": 5,
+      "wis": 9,
+      "cha": 8
+    },
+    "skills": {
+      "history": 5,
+      "religion": 5
+    },
+    "damageVulnerabilities": [
+      "fire"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [
+      "necrotic",
+      "poison",
+      "bludgeoning",
+      "piercing",
+      "slashing"
+    ],
+    "conditionImmunities": [
+      "charmed",
+      "exhaustion",
+      "frightened",
+      "paralyzed",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvisionFeet": 60,
+      "passivePerception": 14
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 15,
+    "xp": 13000,
+    "aiArchetype": "controller",
+    "traits": [
+      {
+        "id": "magic-resistance",
+        "name": "Magic Resistance",
+        "description": "The mummy lord has advantage on saving throws against spells and other magical effects.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws",
+            "condition": "save_against_magic"
+          }
+        ]
+      },
+      {
+        "id": "rejuvenation",
+        "name": "Rejuvenation",
+        "description": "A destroyed mummy lord gains a new body in 24 hours if its heart is intact.",
+        "modifiers": []
+      },
+      {
+        "id": "legendary-resistance",
+        "name": "Legendary Resistance (3/Day)",
+        "description": "If the mummy lord fails a saving throw, it can choose to succeed instead.",
+        "modifiers": []
+      }
+    ],
+    "spellcasting": {
+      "ability": "wis",
+      "spellSaveDc": 17,
+      "spellAttackBonus": 9,
+      "casterLevel": 10,
+      "classId": "cleric",
+      "slotsByLevel": {
+        "1": 4,
+        "2": 3,
+        "3": 3,
+        "4": 3,
+        "5": 2
+      },
+      "atWillSpellIds": [
+        "sacred-flame"
+      ],
+      "preparedSpellIds": [
+        "guiding-bolt",
+        "hold-person",
+        "spiritual-weapon",
+        "dispel-magic"
+      ]
+    },
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The mummy lord can use its Dreadful Glare and makes one attack with its rotting fist.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "dreadful-glare",
+              "count": 1
+            },
+            {
+              "actionId": "rotting-fist",
+              "count": 1
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "rotting-fist",
+        "name": "Rotting Fist",
+        "description": "Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 14 (3d6 + 4) bludgeoning damage plus 21 (6d6) necrotic damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 9,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d6 + 4",
+                "damageType": "bludgeoning"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "6d6",
+                "damageType": "necrotic"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dreadful-glare",
+        "name": "Dreadful Glare",
+        "description": "The mummy lord targets one creature it can see within 60 feet. The target must succeed on a DC 16 Wisdom saving throw against this magic or become frightened until the end of the mummy's next turn.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 60,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "wis",
+            "dcFormula": "16",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "frightened",
+                "durationRounds": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "harm",
+        "name": "Harm (Recharge 5–6)",
+        "description": "The mummy lord unleashes a burst of necrotic decay on a creature within 60 feet. DC 16 Constitution saving throw, taking 49 (14d6) necrotic damage on a failed save, or half as much damage on a successful one.",
+        "actionCost": "action",
+        "recharge": {
+          "minRoll": 5,
+          "die": 6
+        },
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 60,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "con",
+            "dcFormula": "16",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "14d6",
+                "damageType": "necrotic",
+                "halfOnSaveSuccess": true
               }
             ]
           }
@@ -5130,6 +6272,160 @@
     "source": "srd-5.1"
   },
   {
+    "id": "stone-golem",
+    "name": "Stone Golem",
+    "size": "large",
+    "type": "construct",
+    "alignment": "unaligned",
+    "armorClass": {
+      "value": 17,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 178,
+      "rollFormula": "17d10 + 85"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 22,
+      "dex": 9,
+      "con": 20,
+      "int": 3,
+      "wis": 11,
+      "cha": 1
+    },
+    "savingThrows": {},
+    "skills": {},
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "poison",
+      "psychic",
+      "bludgeoning",
+      "piercing",
+      "slashing"
+    ],
+    "conditionImmunities": [
+      "charmed",
+      "exhaustion",
+      "frightened",
+      "paralyzed",
+      "petrified",
+      "poisoned"
+    ],
+    "senses": {
+      "darkvisionFeet": 120,
+      "passivePerception": 10
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 10,
+    "xp": 5900,
+    "aiArchetype": "controller",
+    "traits": [
+      {
+        "id": "immutable-form",
+        "name": "Immutable Form",
+        "description": "The golem is immune to any spell or effect that would alter its form.",
+        "modifiers": []
+      },
+      {
+        "id": "magic-resistance",
+        "name": "Magic Resistance",
+        "description": "The golem has advantage on saving throws against spells and other magical effects.",
+        "modifiers": [
+          {
+            "type": "roll_mode",
+            "mode": "advantage",
+            "target": "all_saving_throws",
+            "condition": "save_against_magic"
+          }
+        ]
+      },
+      {
+        "id": "magic-weapons",
+        "name": "Magic Weapons",
+        "description": "The golem's weapon attacks are magical.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The golem makes two slam attacks.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "slam",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "slam",
+        "name": "Slam",
+        "description": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 19 (3d8 + 6) bludgeoning damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 10,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d8 + 6",
+                "damageType": "bludgeoning"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "slow",
+        "name": "Slow (Recharge 5–6)",
+        "description": "The golem targets one or more creatures it can see within 10 feet. Each target must make a DC 17 Wisdom saving throw. On a failed save, the target is restrained for 1 minute.",
+        "actionCost": "action",
+        "recharge": {
+          "minRoll": 5,
+          "die": 6
+        },
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "wis",
+            "dcFormula": "17",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "restrained",
+                "durationRounds": 10
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
     "id": "thug",
     "name": "Thug",
     "size": "medium",
@@ -5385,6 +6681,188 @@
                 "step": "deal_damage",
                 "diceFormula": "2d6 + 4",
                 "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
+  },
+  {
+    "id": "vampire",
+    "name": "Vampire",
+    "size": "medium",
+    "type": "undead",
+    "subtype": "shapechanger",
+    "alignment": "lawful_evil",
+    "armorClass": {
+      "value": 16,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 144,
+      "rollFormula": "17d8 + 68"
+    },
+    "speed": {
+      "walk": 30
+    },
+    "abilities": {
+      "str": 18,
+      "dex": 18,
+      "con": 18,
+      "int": 17,
+      "wis": 15,
+      "cha": 18
+    },
+    "savingThrows": {
+      "dex": 9,
+      "wis": 7,
+      "cha": 9
+    },
+    "skills": {
+      "perception": 7,
+      "stealth": 9
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [
+      "necrotic",
+      "bludgeoning",
+      "piercing",
+      "slashing"
+    ],
+    "damageImmunities": [],
+    "conditionImmunities": [],
+    "senses": {
+      "darkvisionFeet": 120,
+      "passivePerception": 17
+    },
+    "languages": [
+      "common"
+    ],
+    "challengeRating": 13,
+    "xp": 10000,
+    "aiArchetype": "skirmisher",
+    "traits": [
+      {
+        "id": "regeneration",
+        "name": "Regeneration",
+        "description": "The vampire regains 20 hit points at the start of its turn if it has at least 1 hit point and isn’t in sunlight or running water.",
+        "modifiers": []
+      },
+      {
+        "id": "spider-climb",
+        "name": "Spider Climb",
+        "description": "The vampire can climb difficult surfaces without needing to make an ability check.",
+        "modifiers": []
+      },
+      {
+        "id": "legendary-resistance",
+        "name": "Legendary Resistance (3/Day)",
+        "description": "If the vampire fails a saving throw, it can choose to succeed instead.",
+        "modifiers": []
+      }
+    ],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The vampire makes two attacks, only one of which can be a bite attack.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "unarmed-strike",
+              "count": 1
+            },
+            {
+              "actionId": "bite",
+              "count": 1
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "unarmed-strike",
+        "name": "Unarmed Strike",
+        "description": "Melee Weapon Attack: +9 to hit, reach 5 ft., one creature. Hit: 8 (1d8 + 4) bludgeoning damage. Instead of dealing damage, the vampire can grapple the target.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 9,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d8 + 4",
+                "damageType": "bludgeoning"
+              },
+              {
+                "step": "apply_condition",
+                "conditionId": "grappled",
+                "durationRounds": 10
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +9 to hit, reach 5 ft., one creature. Hit: 7 (1d6 + 4) piercing damage plus 10 (3d6) necrotic damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 9,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6 + 4",
+                "damageType": "piercing"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "3d6",
+                "damageType": "necrotic"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "charm",
+        "name": "Charm",
+        "description": "The vampire targets one humanoid it can see within 30 feet. The target must succeed on a DC 17 Wisdom saving throw or be charmed.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 30,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "wis",
+            "dcFormula": "17",
+            "onFail": [
+              {
+                "step": "apply_condition",
+                "conditionId": "charmed",
+                "durationRounds": 10
               }
             ]
           }
@@ -6389,6 +7867,173 @@
         ]
       }
     ]
+  },
+  {
+    "id": "young-red-dragon",
+    "name": "Young Red Dragon",
+    "size": "large",
+    "type": "dragon",
+    "alignment": "chaotic_evil",
+    "armorClass": {
+      "value": 18,
+      "type": "natural"
+    },
+    "hitPoints": {
+      "average": 178,
+      "rollFormula": "17d10 + 85"
+    },
+    "speed": {
+      "walk": 40,
+      "climb": 40,
+      "fly": 80
+    },
+    "abilities": {
+      "str": 23,
+      "dex": 10,
+      "con": 21,
+      "int": 14,
+      "wis": 11,
+      "cha": 19
+    },
+    "savingThrows": {
+      "dex": 4,
+      "con": 9,
+      "wis": 4,
+      "cha": 8
+    },
+    "skills": {
+      "perception": 8,
+      "stealth": 4
+    },
+    "damageVulnerabilities": [],
+    "damageResistances": [],
+    "damageImmunities": [
+      "fire"
+    ],
+    "conditionImmunities": [],
+    "senses": {
+      "blindsightFeet": 30,
+      "darkvisionFeet": 120,
+      "passivePerception": 18
+    },
+    "languages": [
+      "common",
+      "draconic"
+    ],
+    "challengeRating": 10,
+    "xp": 5900,
+    "aiArchetype": "artillery",
+    "traits": [],
+    "actions": [
+      {
+        "id": "multiattack",
+        "name": "Multiattack",
+        "description": "The dragon makes three attacks: one with its bite and two with its claws.",
+        "actionCost": "action",
+        "multiattack": {
+          "sequence": [
+            {
+              "actionId": "bite",
+              "count": 1
+            },
+            {
+              "actionId": "claw",
+              "count": 2
+            }
+          ]
+        },
+        "effects": []
+      },
+      {
+        "id": "bite",
+        "name": "Bite",
+        "description": "Melee Weapon Attack: +10 to hit, reach 10 ft., one target. Hit: 17 (2d10 + 6) piercing damage plus 3 (1d6) fire damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 10,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 10,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d10 + 6",
+                "damageType": "piercing"
+              },
+              {
+                "step": "deal_damage",
+                "diceFormula": "1d6",
+                "damageType": "fire"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "claw",
+        "name": "Claw",
+        "description": "Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 13 (2d6 + 6) slashing damage.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "single",
+          "rangeFeet": 5,
+          "targetFilter": "enemy"
+        },
+        "effects": [
+          {
+            "step": "attack_roll",
+            "attackType": "melee_weapon",
+            "attackBonusOverride": 10,
+            "onHit": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "2d6 + 6",
+                "damageType": "slashing"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "fire-breath",
+        "name": "Fire Breath (Recharge 5–6)",
+        "description": "The dragon exhales fire in a 30-foot cone. Each creature in that area must make a DC 17 Dexterity saving throw, taking 56 (16d6) fire damage on a failed save, or half as much damage on a successful one.",
+        "actionCost": "action",
+        "recharge": {
+          "minRoll": 5,
+          "die": 6
+        },
+        "targeting": {
+          "type": "self_aoe",
+          "rangeFeet": 0,
+          "aoe": {
+            "shape": "cone",
+            "sizeFeet": 30
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "17",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "16d6",
+                "damageType": "fire",
+                "halfOnSaveSuccess": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "source": "srd-5.1"
   },
   {
     "id": "zombie",

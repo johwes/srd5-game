@@ -982,35 +982,82 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
             outcome: passed ? 'success' : 'failure',
             sourceSpellOrAbilityName: attack.name,
           });
-          const followSteps = passed ? (step.onSuccess ?? []) : step.onFail;
-          for (const sub of followSteps) {
-            if (sub.step === 'apply_condition') {
-              const condRes = applyConditionToCombatant(nextTarget, sub.conditionId, {
-                sourceId: attacker.id,
-                sourceName: attack.name,
-                sourceEntityId: attacker.id,
-                durationRounds: sub.durationRounds,
-              });
-              nextTarget = condRes.combatant;
-              events.push(...condRes.events);
-            } else if (sub.step === 'deal_damage') {
-              const subDmg = rollDamage(currentState, sub.diceFormula);
-              currentState = subDmg.nextState;
-              const subApplied = applyDamage({
-                state: {
-                  ...currentCombatState,
-                  rngState: currentState,
-                  combatants: { ...currentCombatState.combatants, [target.id]: nextTarget },
-                },
-                targetId: nextTarget.id,
-                rawAmount: subDmg.total,
-                damageType: sub.damageType,
-                attackerId: attacker.id,
-                sourceName: attack.name,
-              });
-              currentState = subApplied.state.rngState;
-              nextTarget = subApplied.state.combatants[target.id]!;
-              events.push(...subApplied.events);
+          if (passed) {
+            if (step.onSuccess) {
+              for (const sub of step.onSuccess) {
+                if (sub.step === 'deal_damage') {
+                  const subDmg = rollDamage(currentState, sub.diceFormula);
+                  currentState = subDmg.nextState;
+                  const subApplied = applyDamage({
+                    state: {
+                      ...currentCombatState,
+                      rngState: currentState,
+                      combatants: { ...currentCombatState.combatants, [target.id]: nextTarget },
+                    },
+                    targetId: nextTarget.id,
+                    rawAmount: subDmg.total,
+                    damageType: sub.damageType,
+                    attackerId: attacker.id,
+                    sourceName: attack.name,
+                  });
+                  currentState = subApplied.state.rngState;
+                  nextTarget = subApplied.state.combatants[target.id]!;
+                  events.push(...subApplied.events);
+                }
+              }
+            }
+            // Check for half-damage on save
+            for (const failStep of step.onFail) {
+              if (failStep.step === 'deal_damage' && failStep.halfOnSaveSuccess) {
+                const subDmg = rollDamage(currentState, failStep.diceFormula);
+                currentState = subDmg.nextState;
+                const subApplied = applyDamage({
+                  state: {
+                    ...currentCombatState,
+                    rngState: currentState,
+                    combatants: { ...currentCombatState.combatants, [target.id]: nextTarget },
+                  },
+                  targetId: nextTarget.id,
+                  rawAmount: Math.floor(subDmg.total / 2),
+                  damageType: failStep.damageType,
+                  attackerId: attacker.id,
+                  sourceName: attack.name,
+                });
+                currentState = subApplied.state.rngState;
+                nextTarget = subApplied.state.combatants[target.id]!;
+                events.push(...subApplied.events);
+              }
+            }
+          } else {
+            for (const sub of step.onFail) {
+              if (sub.step === 'apply_condition') {
+                const condRes = applyConditionToCombatant(nextTarget, sub.conditionId, {
+                  sourceId: attacker.id,
+                  sourceName: attack.name,
+                  sourceEntityId: attacker.id,
+                  durationRounds: sub.durationRounds,
+                });
+                nextTarget = condRes.combatant;
+                events.push(...condRes.events);
+              } else if (sub.step === 'deal_damage') {
+                const subDmg = rollDamage(currentState, sub.diceFormula);
+                currentState = subDmg.nextState;
+                const subApplied = applyDamage({
+                  state: {
+                    ...currentCombatState,
+                    rngState: currentState,
+                    combatants: { ...currentCombatState.combatants, [target.id]: nextTarget },
+                  },
+                  targetId: nextTarget.id,
+                  rawAmount: subDmg.total,
+                  damageType: sub.damageType,
+                  attackerId: attacker.id,
+                  sourceName: attack.name,
+                });
+                currentState = subApplied.state.rngState;
+                nextTarget = subApplied.state.combatants[target.id]!;
+                events.push(...subApplied.events);
+              }
             }
           }
         } else if (step.step === 'apply_condition') {

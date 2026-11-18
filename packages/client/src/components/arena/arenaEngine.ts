@@ -163,9 +163,13 @@ export function getMonstersForWave(
   } else if (wave === 3) {
     const pool = ['ogre', 'hobgoblin', 'wight', 'berserker', 'specter', 'veteran', 'knight', 'hell-hound', 'mummy', 'ghost'];
     return pool.slice(0, Math.min(pool.length, countFactor));
+  } else if (wave === 4) {
+    // Wave 4: CR 4-9 champions
+    const pool = ['gladiator', 'troll', 'wraith', 'wyvern', 'oni', 'minotaur', 'frost-giant', 'clay-golem', 'hydra'];
+    return pool.slice(0, Math.min(pool.length, countFactor));
   } else {
-    // High wave boss encounter
-    const pool = ['gladiator', 'troll', 'wraith', 'wyvern', 'oni', 'minotaur', 'ogre'];
+    // High wave apex boss encounter (CR 9-17)
+    const pool = ['fire-giant', 'young-red-dragon', 'stone-golem', 'archmage', 'vampire', 'mummy-lord', 'adult-red-dragon'];
     return pool.slice(0, Math.min(pool.length, countFactor));
   }
 }

@@ -33,6 +33,7 @@ import { normalizeSeed, nextRandomFloat, rollDie } from '../dice/prng.js';
 export const BOUNTY_TARGET_POOL = [
   'goblin', 'kobold', 'orc', 'bandit', 'bugbear', 'wolf', 'giant-spider', 'owlbear', 'skeleton', 'zombie',
   'thug', 'berserker', 'specter', 'veteran', 'knight', 'troll', 'mummy', 'gladiator', 'oni',
+  'frost-giant', 'hydra', 'fire-giant', 'vampire', 'archmage',
 ] as const;
 
 /** Tavern-board quest givers (original flavor, no SRD Product Identity). */

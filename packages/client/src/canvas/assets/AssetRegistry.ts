@@ -97,6 +97,14 @@ const MONSTER_NAME_TO_SPRITE: Record<string, string> = {
   knight: 'npc_knight',
   veteran: 'npc_knight',
   gladiator: 'npc_armsman',
+  archmage: 'npc_elder_mage',
+  vampire: 'monster_demon',
+  'mummy lord': 'monster_zombie',
+  'mummy-lord': 'monster_zombie',
+  'frost giant': 'monster_ogre',
+  'frost-giant': 'monster_ogre',
+  'fire giant': 'monster_ogre',
+  'fire-giant': 'monster_ogre',
 };
 
 /**
@@ -186,6 +194,9 @@ const MONSTER_NAME_KEYWORD_MAP: Record<string, string> = {
   wyvern: 'monster_dragon',
   oni: 'monster_demon',
   berserker: 'hero_barbarian',
+  archmage: 'npc_elder_mage',
+  vampire: 'monster_demon',
+  giant: 'monster_ogre',
 };
 
 /**

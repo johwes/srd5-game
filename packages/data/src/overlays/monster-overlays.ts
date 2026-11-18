@@ -2395,4 +2395,521 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
   "adult-black-dragon": {
     aiArchetype: "artillery",
   },
+  "adult-red-dragon": {
+    aiArchetype: "artillery",
+    traits: {
+      "legendary-resistance": { modifiers: [] },
+    },
+    actions: {
+      bite: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 14,
+            onHit: [
+              { step: "deal_damage", diceFormula: "2d10 + 8", damageType: "piercing" },
+              { step: "deal_damage", diceFormula: "2d6", damageType: "fire" },
+            ],
+          },
+        ],
+      },
+      claw: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 14,
+            onHit: [
+              { step: "deal_damage", diceFormula: "2d6 + 8", damageType: "slashing" },
+            ],
+          },
+        ],
+      },
+      tail: {
+        targeting: { type: "single", rangeFeet: 15, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 14,
+            onHit: [
+              { step: "deal_damage", diceFormula: "2d8 + 8", damageType: "bludgeoning" },
+            ],
+          },
+        ],
+      },
+      "fire-breath": {
+        targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "cone", sizeFeet: 60 } },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "dex",
+            dcFormula: "21",
+            onFail: [
+              {
+                step: "deal_damage",
+                diceFormula: "18d6",
+                damageType: "fire",
+                halfOnSaveSuccess: true,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  archmage: {
+    aiArchetype: "artillery",
+    traits: {
+      "magic-resistance": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "all_saving_throws",
+            condition: "save_against_magic",
+          },
+        ],
+      },
+    },
+    actions: {
+      dagger: {
+        targeting: { type: "single", rangeFeet: 20, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 6,
+            onHit: [
+              { step: "deal_damage", diceFormula: "1d4 + 2", damageType: "piercing" },
+            ],
+          },
+        ],
+      },
+      "fire-bolt": {
+        targeting: { type: "single", rangeFeet: 120, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "ranged_spell",
+            attackBonusOverride: 9,
+            onHit: [
+              { step: "deal_damage", diceFormula: "4d10", damageType: "fire" },
+            ],
+          },
+        ],
+      },
+      "cone-of-cold": {
+        targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "cone", sizeFeet: 60 } },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "con",
+            dcFormula: "17",
+            onFail: [
+              {
+                step: "deal_damage",
+                diceFormula: "8d8",
+                damageType: "cold",
+                halfOnSaveSuccess: true,
+              },
+            ],
+          },
+        ],
+      },
+      "lightning-bolt": {
+        targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "line", sizeFeet: 100, widthFeet: 5 } },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "dex",
+            dcFormula: "17",
+            onFail: [
+              {
+                step: "deal_damage",
+                diceFormula: "8d6",
+                damageType: "lightning",
+                halfOnSaveSuccess: true,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "clay-golem": {
+    aiArchetype: "brute",
+    traits: {
+      "acid-absorption": { modifiers: [] },
+      berserk: { modifiers: [] },
+      "magic-resistance": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "all_saving_throws",
+            condition: "save_against_magic",
+          },
+        ],
+      },
+      "magic-weapons": { modifiers: [] },
+    },
+    actions: {
+      slam: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 8,
+            onHit: [
+              { step: "deal_damage", diceFormula: "2d10 + 5", damageType: "bludgeoning" },
+            ],
+          },
+        ],
+      },
+      haste: {
+        recharge: { minRoll: 5, die: 6 },
+        targeting: { type: "self", rangeFeet: 0 },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "clay-golem-haste",
+            name: "Haste (+2 AC)",
+            durationRounds: 2,
+            requiresConcentration: false,
+            modifiers: [
+              {
+                type: "flat_bonus",
+                target: "ac",
+                value: 2,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "fire-giant": {
+    aiArchetype: "brute",
+    actions: {
+      greatsword: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 11,
+            onHit: [
+              { step: "deal_damage", diceFormula: "6d6 + 7", damageType: "slashing" },
+            ],
+          },
+        ],
+      },
+      rock: {
+        targeting: { type: "single", rangeFeet: 240, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "ranged_weapon",
+            attackBonusOverride: 11,
+            onHit: [
+              { step: "deal_damage", diceFormula: "4d10 + 7", damageType: "bludgeoning" },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "frost-giant": {
+    aiArchetype: "brute",
+    actions: {
+      greataxe: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 9,
+            onHit: [
+              { step: "deal_damage", diceFormula: "3d12 + 6", damageType: "slashing" },
+            ],
+          },
+        ],
+      },
+      rock: {
+        targeting: { type: "single", rangeFeet: 240, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "ranged_weapon",
+            attackBonusOverride: 9,
+            onHit: [
+              { step: "deal_damage", diceFormula: "4d10 + 6", damageType: "bludgeoning" },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  hydra: {
+    aiArchetype: "brute",
+    traits: {
+      "multiple-heads": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "all_saving_throws",
+            condition: "save_against_frightened",
+          },
+        ],
+      },
+      "reactive-heads": { modifiers: [] },
+    },
+    actions: {
+      bite: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 8,
+            onHit: [
+              { step: "deal_damage", diceFormula: "1d10 + 5", damageType: "piercing" },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "mummy-lord": {
+    aiArchetype: "controller",
+    traits: {
+      "magic-resistance": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "all_saving_throws",
+            condition: "save_against_magic",
+          },
+        ],
+      },
+      rejuvenation: { modifiers: [] },
+      "legendary-resistance": { modifiers: [] },
+    },
+    actions: {
+      "rotting-fist": {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 9,
+            onHit: [
+              { step: "deal_damage", diceFormula: "3d6 + 4", damageType: "bludgeoning" },
+              { step: "deal_damage", diceFormula: "6d6", damageType: "necrotic" },
+            ],
+          },
+        ],
+      },
+      "dreadful-glare": {
+        targeting: { type: "single", rangeFeet: 60, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "wis",
+            dcFormula: "16",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "frightened",
+                durationRounds: 1,
+              },
+            ],
+          },
+        ],
+      },
+      harm: {
+        targeting: { type: "single", rangeFeet: 60, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "con",
+            dcFormula: "16",
+            onFail: [
+              {
+                step: "deal_damage",
+                diceFormula: "14d6",
+                damageType: "necrotic",
+                halfOnSaveSuccess: true,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "stone-golem": {
+    aiArchetype: "controller",
+    traits: {
+      "immutable-form": { modifiers: [] },
+      "magic-resistance": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "all_saving_throws",
+            condition: "save_against_magic",
+          },
+        ],
+      },
+      "magic-weapons": { modifiers: [] },
+    },
+    actions: {
+      slam: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 10,
+            onHit: [
+              { step: "deal_damage", diceFormula: "3d8 + 6", damageType: "bludgeoning" },
+            ],
+          },
+        ],
+      },
+      slow: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "wis",
+            dcFormula: "17",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "restrained",
+                durationRounds: 10,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  vampire: {
+    aiArchetype: "skirmisher",
+    traits: {
+      regeneration: { modifiers: [] },
+      "spider-climb": { modifiers: [] },
+      "legendary-resistance": { modifiers: [] },
+    },
+    actions: {
+      "unarmed-strike": {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 9,
+            onHit: [
+              { step: "deal_damage", diceFormula: "1d8 + 4", damageType: "bludgeoning" },
+              {
+                step: "apply_condition",
+                conditionId: "grappled",
+                durationRounds: 10,
+              },
+            ],
+          },
+        ],
+      },
+      bite: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 9,
+            onHit: [
+              { step: "deal_damage", diceFormula: "1d6 + 4", damageType: "piercing" },
+              { step: "deal_damage", diceFormula: "3d6", damageType: "necrotic" },
+            ],
+          },
+        ],
+      },
+      charm: {
+        targeting: { type: "single", rangeFeet: 30, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "wis",
+            dcFormula: "17",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "charmed",
+                durationRounds: 10,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  "young-red-dragon": {
+    aiArchetype: "artillery",
+    actions: {
+      bite: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 10,
+            onHit: [
+              { step: "deal_damage", diceFormula: "2d10 + 6", damageType: "piercing" },
+              { step: "deal_damage", diceFormula: "1d6", damageType: "fire" },
+            ],
+          },
+        ],
+      },
+      claw: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 10,
+            onHit: [
+              { step: "deal_damage", diceFormula: "2d6 + 6", damageType: "slashing" },
+            ],
+          },
+        ],
+      },
+      "fire-breath": {
+        targeting: { type: "self_aoe", rangeFeet: 0, aoe: { shape: "cone", sizeFeet: 30 } },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "dex",
+            dcFormula: "17",
+            onFail: [
+              {
+                step: "deal_damage",
+                diceFormula: "16d6",
+                damageType: "fire",
+                halfOnSaveSuccess: true,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
 };
