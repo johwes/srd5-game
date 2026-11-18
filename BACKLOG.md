@@ -239,7 +239,7 @@ flowchart LR
 | ID | Status | Title | Package | Depends On |
 | :--- | :---: | :--- | :--- | :--- |
 | **SRD-1001** | `[x]` | Author monster wave 1 (CR 0–2 staples: beasts, goblinoids, undead, NPCs; Tier-0 sprite reuse) with biome table wiring and headless tests | `@srd5/data`, `@srd5/engine` | SRD-310, SRD-106 |
-| **SRD-1002** | `[ ]` | Author monster wave 2 (CR 3–7 bruisers/controllers; Tier-1 atlas mappings for new NPC frames) with biome table wiring and headless tests | `@srd5/data`, `@srd5/engine`, `@srd5/client` | SRD-1001, SRD-401 |
+| **SRD-1002** | `[x]` | Author monster wave 2 (CR 3–7 bruisers/controllers; Tier-1 atlas mappings for new NPC frames) with biome table wiring and headless tests | `@srd5/data`, `@srd5/engine`, `@srd5/client` | SRD-1001, SRD-401 |
 | **SRD-1003** | `[ ]` | Author monster wave 3 (CR 8+ bosses and lair threats) with biome/Delve boss tables and headless tests | `@srd5/data`, `@srd5/engine` | SRD-1002 |
 | **SRD-1004** | `[ ]` | Audit and complete SRD 5.1 spell coverage (L0–L9 gaps with Tier-A executable overlays and headless tests) | `@srd5/data`, `@srd5/engine` | SRD-310, SRD-106 |
 | **SRD-1005** | `[ ]` | Build remix modes: Daily Descent seed, Draft Party generator, and Boss Rush gauntlet | `@srd5/engine`, `@srd5/client` | SRD-408, SRD-508, SRD-509 |

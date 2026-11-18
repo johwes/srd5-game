@@ -110,7 +110,7 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         wallTerrain: 'wall_solid',
         hazardTerrain: 'rubble',
         monsters: ['kobold', 'giant-rat', 'giant-bat', 'goblin', 'giant-wolf-spider', 'skeleton', 'zombie'],
-        bossMonsters: ['goblin-boss', 'bugbear', 'warhorse-skeleton', 'shadow', 'thug'],
+        bossMonsters: ['goblin-boss', 'bugbear', 'warhorse-skeleton', 'shadow', 'thug', 'knight'],
         trapType: {
           damageFormula: '1d6',
           damageType: 'bludgeoning',
@@ -128,8 +128,8 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         primaryFloorTerrain: 'floor_stone',
         wallTerrain: 'wall_solid',
         hazardTerrain: 'water_shallow',
-        monsters: ['ghoul', 'giant-spider', 'giant-wolf-spider', 'shadow', 'cultist'],
-        bossMonsters: ['wight', 'gelatinous-cube', 'specter', 'cult-fanatic'],
+        monsters: ['ghoul', 'giant-spider', 'giant-wolf-spider', 'shadow', 'mummy', 'ghost', 'cultist'],
+        bossMonsters: ['wight', 'gelatinous-cube', 'specter', 'wraith', 'cult-fanatic'],
         trapType: {
           damageFormula: '1d8',
           damageType: 'poison',
@@ -147,8 +147,8 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         primaryFloorTerrain: 'floor_stone',
         wallTerrain: 'wall_solid',
         hazardTerrain: 'lava',
-        monsters: ['orc', 'bandit', 'thug'],
-        bossMonsters: ['minotaur', 'ogre', 'berserker', 'harpy'],
+        monsters: ['orc', 'bandit', 'thug', 'hell-hound'],
+        bossMonsters: ['minotaur', 'ogre', 'berserker', 'troll', 'harpy'],
         trapType: {
           damageFormula: '2d6',
           damageType: 'fire',
@@ -166,8 +166,8 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         primaryFloorTerrain: 'floor_stone',
         wallTerrain: 'wall_solid',
         hazardTerrain: 'rubble',
-        monsters: ['cult-fanatic', 'mage'],
-        bossMonsters: ['medusa', 'manticore', 'hill-giant'],
+        monsters: ['cult-fanatic', 'mage', 'knight', 'veteran'],
+        bossMonsters: ['medusa', 'manticore', 'hill-giant', 'gladiator', 'oni'],
         trapType: {
           damageFormula: '2d8',
           damageType: 'lightning',
@@ -185,8 +185,8 @@ export function getBiomeTheme(biome: BiomeTier): BiomeTheme {
         primaryFloorTerrain: 'floor_stone',
         wallTerrain: 'wall_solid',
         hazardTerrain: 'chasm',
-        monsters: ['mage', 'wight', 'cult-fanatic'],
-        bossMonsters: ['young-black-dragon', 'adult-black-dragon'],
+        monsters: ['mage', 'wight', 'wraith', 'cult-fanatic'],
+        bossMonsters: ['young-black-dragon', 'adult-black-dragon', 'wyvern', 'oni'],
         trapType: {
           damageFormula: '3d6',
           damageType: 'necrotic',

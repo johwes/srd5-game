@@ -161,11 +161,11 @@ export function getMonstersForWave(
     const pool = ['orc', 'orc', 'hobgoblin', 'ghoul', 'goblin', 'thug', 'scout', 'shadow'];
     return pool.slice(0, Math.min(pool.length, countFactor + 1));
   } else if (wave === 3) {
-    const pool = ['ogre', 'hobgoblin', 'hobgoblin', 'wight', 'berserker', 'specter'];
+    const pool = ['ogre', 'hobgoblin', 'wight', 'berserker', 'specter', 'veteran', 'knight', 'hell-hound', 'mummy', 'ghost'];
     return pool.slice(0, Math.min(pool.length, countFactor));
   } else {
     // High wave boss encounter
-    const pool = ['minotaur', 'ogre', 'orc', 'orc'];
+    const pool = ['gladiator', 'troll', 'wraith', 'wyvern', 'oni', 'minotaur', 'ogre'];
     return pool.slice(0, Math.min(pool.length, countFactor));
   }
 }

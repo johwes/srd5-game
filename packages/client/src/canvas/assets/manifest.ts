@@ -66,6 +66,13 @@ export const KENNEY_SPRITE_FRAMES: Record<string, TileFrame> = {
   hero_sorcerer: f(0, 7),
   hero_warlock: f(3, 9),
 
+  // Tier-1 NPC Frames (CC0 Tiny Dungeon tilemap_packed.png coordinates per Spec 09 §2)
+  npc_knight: f(0, 8), // (0, 8) Armored knight (knight, veteran, guard captain)
+  npc_armsman: f(2, 8), // (2, 8) Brown-haired fighter (gladiator, armsman, thug)
+  npc_noble: f(3, 8), // (3, 8) Woman in purple (noble, priestess)
+  npc_elder_mage: f(4, 8), // (4, 8) Staff elder / priest
+  npc_hunter: f(4, 9), // (4, 9) Headband ranger / scout
+
   // Common Monsters
   monster_goblin: f(1, 9),
   monster_orc: f(1, 9),

@@ -32,7 +32,7 @@ import { normalizeSeed, nextRandomFloat, rollDie } from '../dice/prng.js';
 /** SRD 5.1 monster IDs used as bounty targets (no Product Identity). */
 export const BOUNTY_TARGET_POOL = [
   'goblin', 'kobold', 'orc', 'bandit', 'bugbear', 'wolf', 'giant-spider', 'owlbear', 'skeleton', 'zombie',
-  'thug', 'berserker', 'specter',
+  'thug', 'berserker', 'specter', 'veteran', 'knight', 'troll', 'mummy', 'gladiator', 'oni',
 ] as const;
 
 /** Tavern-board quest givers (original flavor, no SRD Product Identity). */

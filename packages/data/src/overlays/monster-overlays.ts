@@ -360,6 +360,53 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  ghost: {
+    aiArchetype: "controller",
+    traits: {
+      "ethereal-sight": { modifiers: [] },
+      "incorporeal-movement": { modifiers: [] },
+    },
+    actions: {
+      "withering-touch": {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 5,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "4d6 + 3",
+                damageType: "necrotic",
+              },
+            ],
+          },
+        ],
+      },
+      "horrifying-visage": {
+        targeting: { type: "single", rangeFeet: 60, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "wis",
+            dcFormula: "13",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "frightened",
+                durationRounds: 10,
+                repeatSaveAtTurnEnd: {
+                  ability: "wis",
+                  dcFormula: "13",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
   "giant-bat": {
     aiArchetype: "skirmisher",
     traits: {
@@ -536,6 +583,101 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
         ],
       },
     },
+  },
+  gladiator: {
+    aiArchetype: "brute",
+    traits: {
+      brave: {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "all_saving_throws",
+            condition: "save_against_frightened",
+          },
+        ],
+      },
+      brute: { modifiers: [] },
+    },
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [{ actionId: "spear", count: 3 }],
+        },
+        effects: [],
+      },
+      spear: {
+        targeting: { type: "single", rangeFeet: 20, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6 + 4",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+      "shield-bash": {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d4 + 4",
+                damageType: "bludgeoning",
+              },
+              {
+                step: "saving_throw",
+                ability: "str",
+                dcFormula: "15",
+                onFail: [
+                  {
+                    step: "apply_condition",
+                    conditionId: "prone",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    },
+    reactions: [
+      {
+        id: "parry",
+        name: "Parry",
+        description:
+          "The gladiator adds 3 to its AC against one melee attack that would hit it. To do so, the gladiator must see the attacker and be wielding a melee weapon.",
+        actionCost: "reaction",
+        targeting: { type: "self", rangeFeet: 0 },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "gladiator-parry",
+            name: "Parry (+3 AC)",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [
+              {
+                type: "flat_bonus",
+                target: "ac",
+                value: 3,
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   goblin: {
     aiArchetype: "skirmisher",
@@ -744,6 +886,76 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  "hell-hound": {
+    aiArchetype: "artillery",
+    traits: {
+      "keen-hearing-and-smell": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "skill:perception",
+          },
+        ],
+      },
+      "pack-tactics": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "attack_rolls",
+          },
+        ],
+      },
+    },
+    actions: {
+      bite: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 5,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d8 + 3",
+                damageType: "piercing",
+              },
+              {
+                step: "deal_damage",
+                diceFormula: "2d6",
+                damageType: "fire",
+              },
+            ],
+          },
+        ],
+      },
+      "fire-breath": {
+        recharge: { minRoll: 5, die: 6 },
+        targeting: {
+          type: "self_aoe",
+          rangeFeet: 0,
+          aoe: { shape: "cone", sizeFeet: 15 },
+        },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "dex",
+            dcFormula: "12",
+            onFail: [
+              {
+                step: "deal_damage",
+                diceFormula: "6d6",
+                damageType: "fire",
+                halfOnSaveSuccess: true,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
   "hill-giant": {
     aiArchetype: "brute",
     actions: {
@@ -898,6 +1110,103 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  knight: {
+    aiArchetype: "controller",
+    traits: {
+      brave: {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "all_saving_throws",
+            condition: "save_against_frightened",
+          },
+        ],
+      },
+    },
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [{ actionId: "greatsword", count: 2 }],
+        },
+        effects: [],
+      },
+      greatsword: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 5,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6 + 3",
+                damageType: "slashing",
+              },
+            ],
+          },
+        ],
+      },
+      "heavy-crossbow": {
+        targeting: { type: "single", rangeFeet: 100, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "ranged_weapon",
+            attackBonusOverride: 2,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d10",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+      leadership: {
+        recharge: { restType: "short_rest", uses: 1 },
+        targeting: { type: "self", rangeFeet: 0 },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "knight-leadership",
+            name: "Leadership",
+            durationRounds: 10,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    },
+    reactions: [
+      {
+        id: "parry",
+        name: "Parry",
+        description:
+          "The knight adds 2 to its AC against one melee attack that would hit it. To do so, the knight must see the attacker and be wielding a melee weapon.",
+        actionCost: "reaction",
+        targeting: { type: "self", rangeFeet: 0 },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "knight-parry",
+            name: "Parry (+2 AC)",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [
+              {
+                type: "flat_bonus",
+                target: "ac",
+                value: 2,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
   manticore: {
     aiArchetype: "artillery",
     traits: {
@@ -1017,6 +1326,73 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  mummy: {
+    aiArchetype: "controller",
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [
+            { actionId: "rotting-fist", count: 1 },
+          ],
+        },
+        effects: [],
+      },
+      "rotting-fist": {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 5,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6 + 3",
+                damageType: "bludgeoning",
+              },
+              {
+                step: "deal_damage",
+                diceFormula: "3d6",
+                damageType: "necrotic",
+              },
+              {
+                step: "saving_throw",
+                ability: "con",
+                dcFormula: "12",
+                onFail: [
+                  {
+                    step: "apply_active_effect",
+                    effectId: "mummy-rot",
+                    name: "Mummy Rot",
+                    durationRounds: 4800,
+                    requiresConcentration: false,
+                    modifiers: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      "dreadful-glare": {
+        targeting: { type: "single", rangeFeet: 60, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "saving_throw",
+            ability: "wis",
+            dcFormula: "11",
+            onFail: [
+              {
+                step: "apply_condition",
+                conditionId: "frightened",
+                durationRounds: 2,
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
   noble: {
     aiArchetype: "skirmisher",
     actions: {
@@ -1096,6 +1472,54 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
                 step: "deal_damage",
                 diceFormula: "2d6 + 4",
                 damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  oni: {
+    aiArchetype: "controller",
+    traits: {
+      regeneration: { modifiers: [] },
+    },
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [{ actionId: "glaive", count: 2 }],
+        },
+        effects: [],
+      },
+      claw: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d8 + 4",
+                damageType: "slashing",
+              },
+            ],
+          },
+        ],
+      },
+      glaive: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d10 + 4",
+                damageType: "slashing",
               },
             ],
           },
@@ -1505,6 +1929,131 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
       },
     },
   },
+  troll: {
+    aiArchetype: "brute",
+    traits: {
+      "keen-smell": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "advantage",
+            target: "skill:perception",
+          },
+        ],
+      },
+      regeneration: { modifiers: [] },
+    },
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [
+            { actionId: "bite", count: 1 },
+            { actionId: "claw", count: 2 },
+          ],
+        },
+        effects: [],
+      },
+      bite: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d6 + 4",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+      claw: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6 + 4",
+                damageType: "slashing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  veteran: {
+    aiArchetype: "brute",
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [
+            { actionId: "longsword", count: 2 },
+            { actionId: "shortsword", count: 1 },
+          ],
+        },
+        effects: [],
+      },
+      longsword: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 5,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d8 + 3",
+                damageType: "slashing",
+              },
+            ],
+          },
+        ],
+      },
+      shortsword: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 5,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d6 + 3",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+      "heavy-crossbow": {
+        targeting: { type: "single", rangeFeet: 100, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "ranged_weapon",
+            attackBonusOverride: 3,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "1d10 + 1",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
   wight: {
     aiArchetype: "controller",
     traits: {
@@ -1659,6 +2208,151 @@ export const SRD_MONSTER_OVERLAYS: Readonly<Record<string, MonsterOverlaySpec>> 
                   {
                     step: "apply_condition",
                     conditionId: "prone",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  wraith: {
+    aiArchetype: "controller",
+    traits: {
+      "incorporeal-movement": { modifiers: [] },
+      "sunlight-sensitivity": {
+        modifiers: [
+          {
+            type: "roll_mode",
+            mode: "disadvantage",
+            target: "attack_rolls",
+          },
+          {
+            type: "roll_mode",
+            mode: "disadvantage",
+            target: "skill:perception",
+          },
+        ],
+      },
+    },
+    actions: {
+      "life-drain": {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 6,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "4d8 + 3",
+                damageType: "necrotic",
+              },
+              {
+                step: "saving_throw",
+                ability: "con",
+                dcFormula: "14",
+                onFail: [
+                  {
+                    step: "apply_active_effect",
+                    effectId: "wraith-life-drained",
+                    name: "Life Drained",
+                    durationRounds: 4800,
+                    requiresConcentration: false,
+                    modifiers: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      "create-specter": {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "corpse" },
+        effects: [
+          {
+            step: "apply_active_effect",
+            effectId: "wraith-create-specter",
+            name: "Specter Created",
+            durationRounds: 1,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    },
+  },
+  wyvern: {
+    aiArchetype: "skirmisher",
+    actions: {
+      multiattack: {
+        multiattack: {
+          sequence: [
+            { actionId: "bite", count: 1 },
+            { actionId: "stinger", count: 1 },
+          ],
+        },
+        effects: [],
+      },
+      bite: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6 + 4",
+                damageType: "piercing",
+              },
+            ],
+          },
+        ],
+      },
+      claws: {
+        targeting: { type: "single", rangeFeet: 5, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d8 + 4",
+                damageType: "slashing",
+              },
+            ],
+          },
+        ],
+      },
+      stinger: {
+        targeting: { type: "single", rangeFeet: 10, targetFilter: "enemy" },
+        effects: [
+          {
+            step: "attack_roll",
+            attackType: "melee_weapon",
+            attackBonusOverride: 7,
+            onHit: [
+              {
+                step: "deal_damage",
+                diceFormula: "2d6 + 4",
+                damageType: "piercing",
+              },
+              {
+                step: "saving_throw",
+                ability: "con",
+                dcFormula: "15",
+                onFail: [
+                  {
+                    step: "deal_damage",
+                    diceFormula: "7d6",
+                    damageType: "poison",
+                    halfOnSaveSuccess: true,
                   },
                 ],
               },

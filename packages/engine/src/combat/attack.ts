@@ -1022,6 +1022,24 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
           });
           nextTarget = condRes.combatant;
           events.push(...condRes.events);
+        } else if (step.step === 'deal_damage') {
+          const subDmg = rollDamage(currentState, step.diceFormula);
+          currentState = subDmg.nextState;
+          const subApplied = applyDamage({
+            state: {
+              ...currentCombatState,
+              rngState: currentState,
+              combatants: { ...currentCombatState.combatants, [target.id]: nextTarget },
+            },
+            targetId: nextTarget.id,
+            rawAmount: subDmg.total,
+            damageType: step.damageType,
+            attackerId: attacker.id,
+            sourceName: attack.name,
+          });
+          currentState = subApplied.state.rngState;
+          nextTarget = subApplied.state.combatants[target.id]!;
+          events.push(...subApplied.events);
         }
       }
     }
