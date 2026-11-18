@@ -9,5 +9,6 @@ export * from './settlements.js';
 export * from './shops.js';
 export * from './hub.js';
 export * from './quests.js';
+export * from './quest-chains.js';
 export * from './battles.js';
 export * from './delves.js';

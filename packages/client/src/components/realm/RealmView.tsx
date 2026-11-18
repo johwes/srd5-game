@@ -562,11 +562,17 @@ export function RealmView({
         isOpen={modalState === 'quests'}
         onClose={() => setModalState(null)}
         questLog={session.questLog}
+        chainLog={session.chainLog}
         currentPoiId={currentPoi && isSettlementPoi(currentPoi) ? currentPoi.id : null}
         currentDay={session.travel.currentDay}
         initialTab={questTab}
         onAccept={(questId) => dispatchRealm({ type: 'REALM_ACCEPT_QUEST', questId })}
         onAbandon={(questId) => dispatchRealm({ type: 'REALM_ABANDON_QUEST', questId })}
+        onStartChain={(chainId) => dispatchRealm({ type: 'REALM_START_CHAIN', chainId })}
+        onChooseChainOption={(chainId, optionId) =>
+          dispatchRealm({ type: 'REALM_CHOOSE_CHAIN_OPTION', chainId, optionId })
+        }
+        onAbandonChain={(chainId) => dispatchRealm({ type: 'REALM_ABANDON_CHAIN', chainId })}
       />
 
       {/* Faction reputation modal */}

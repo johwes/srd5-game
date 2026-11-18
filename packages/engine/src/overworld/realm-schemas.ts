@@ -226,6 +226,26 @@ export type RealmEvent =
       goldTotal: number;
     }
   | { type: 'QUEST_ACCEPTED'; questId: string; title: string; day: number }
+  | { type: 'CHAIN_STARTED'; chainId: string; title: string; day: number }
+  | { type: 'CHAIN_STAGE_COMPLETED'; chainId: string; stageId: string; title: string; day: number }
+  | {
+      type: 'CHAIN_CHOICE_MADE';
+      chainId: string;
+      stageId: string;
+      optionId: string;
+      label: string;
+      day: number;
+    }
+  | {
+      type: 'CHAIN_COMPLETED';
+      chainId: string;
+      title: string;
+      goldAwarded: number;
+      reputationAwarded: number;
+      day: number;
+    }
+  | { type: 'CHAIN_FAILED'; chainId: string; title: string; day: number; reason: string }
+  | { type: 'CHAIN_UNLOCKED'; chainId: string; title: string; day: number }
   | {
       type: 'QUEST_COMPLETED';
       questId: string;

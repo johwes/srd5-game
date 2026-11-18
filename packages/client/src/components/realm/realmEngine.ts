@@ -17,6 +17,8 @@ import {
   type OverworldQuest,
   type OverworldTravelEvent,
   type OverworldTravelState,
+  type QuestChainLog,
+  type ChainAdvanceResult,
   type QuestLog,
   type RealmDelveKind,
   type RealmDelveState,
@@ -26,18 +28,26 @@ import {
   type TravelPace,
   PLAYER_FACTION_ID,
   RealmError,
+  abandonQuestChain,
   acceptQuest,
   acceptSettlementRumor,
   activateOverworldShrine,
+  adjustFactionReputation,
+  advanceChainsForClearedPoi,
+  advanceChainsForVisit,
   blessPartyWithTemple,
+  buildStarterQuestChains,
   campOverworld,
   canCampEarly,
+  chooseChainBranch,
   cleansePartyAffliction,
   completeQuestForParty,
   computeDerivedCharacter,
   createCharacterCombatant,
   createOverworldTravelState,
+  createQuestChainLog,
   createQuestLog,
+  expireQuestChains,
   failQuest,
   filterMarketStockForParty,
   forceExpeditionMarch,
@@ -68,6 +78,7 @@ import {
   resolveOverworldBattle,
   sellItem,
   startOverworldBattle,
+  startQuestChain,
   startRealmDelve,
   travelAlongPath,
 } from '@srd5/engine';
@@ -102,6 +113,8 @@ export interface RealmSessionState {
   /** Stable display/command order of the party combatant ids. */
   partyOrder: string[];
   questLog: QuestLog;
+  /** Multi-stage quest chains (SRD-809): branches, timers, follow-ups. */
+  chainLog: QuestChainLog;
   /** Per-settlement shop inventories keyed by POI id. */
   shops: Record<string, ShopInventory>;
   /** Dungeon entrance / monster lair POIs already cleared by the party. */
@@ -182,6 +195,9 @@ export type RealmCommand =
     }
   | { type: 'REALM_ACCEPT_QUEST'; questId: string }
   | { type: 'REALM_ABANDON_QUEST'; questId: string }
+  | { type: 'REALM_START_CHAIN'; chainId: string }
+  | { type: 'REALM_CHOOSE_CHAIN_OPTION'; chainId: string; optionId: string }
+  | { type: 'REALM_ABANDON_CHAIN'; chainId: string }
   | { type: 'REALM_BUY_ITEM'; poiId: string; itemId: string; quantity: number; characterId?: string }
   | { type: 'REALM_SELL_ITEM'; poiId: string; characterId: string; instanceId: string }
   | { type: 'REALM_HEAR_RUMOR'; poiId: string; targetPoiId: string }
@@ -297,6 +313,7 @@ export function createRealmSession(
     party,
     partyOrder,
     questLog: createQuestLog(boardQuests),
+    chainLog: createQuestChainLog(buildStarterQuestChains(map)),
     shops,
     clearedPoiIds: [],
     revealedPoiIds: getSettlements(map).map((poi) => poi.id),
@@ -488,6 +505,74 @@ export interface ReduceRealmOptions {
   compendium?: SrdCompendium;
 }
 
+/** Applies a chain advance: swaps in the next log, pays out completion gold, and shifts faction reputation (both ways). */
+function applyChainAdvance(
+  next: RealmSessionState,
+  events: RealmSessionEvent[],
+  advance: ChainAdvanceResult,
+): void {
+  next.chainLog = advance.log;
+  const applyReputation = (factionId: string, delta: number): void => {
+    if (!next.map.factions[factionId]) return;
+    const change = adjustFactionReputation(next.map, factionId, delta);
+    next.map = change.map;
+    events.push({
+      type: 'REPUTATION_CHANGED',
+      factionId,
+      previous: change.previous,
+      value: change.reputation,
+      tier: change.tier,
+    });
+  };
+  for (const effect of advance.reputationEffects) {
+    applyReputation(effect.factionId, effect.delta);
+  }
+  for (const completion of advance.chainCompletions) {
+    next.travel = { ...next.travel, gold: next.travel.gold + completion.rewardGold };
+    for (const effect of completion.reputationEffects) {
+      applyReputation(effect.factionId, effect.delta);
+    }
+  }
+  events.push(...advance.events);
+}
+
+/** Fails timed chain offers past their expiry for the current day. */
+function expireChainsForDay(next: RealmSessionState, events: RealmSessionEvent[]): void {
+  const expired = expireQuestChains(next.chainLog, next.travel.currentDay);
+  if (expired.events.length > 0) {
+    next.chainLog = expired.log;
+    events.push(...expired.events);
+  }
+}
+
+/** Advances talk/turn-in chain stages for the POI the party stands on. */
+function progressChainsForCurrentPoi(next: RealmSessionState, events: RealmSessionEvent[]): void {
+  const poi = getPoiAt(next.map, next.travel.partyPosition);
+  if (!poi) return;
+  const advanced = advanceChainsForVisit(
+    next.chainLog,
+    poi.id,
+    next.travel.currentDay,
+    next.clearedPoiIds,
+  );
+  applyChainAdvance(next, events, advanced);
+}
+
+/** Advances combat chain stages for a freshly cleared POI (battle/delve/shrine). */
+function progressChainsForClearedPoi(
+  next: RealmSessionState,
+  events: RealmSessionEvent[],
+  poiId: string,
+): void {
+  const advanced = advanceChainsForClearedPoi(
+    next.chainLog,
+    poiId,
+    next.travel.currentDay,
+    next.clearedPoiIds,
+  );
+  applyChainAdvance(next, events, advanced);
+}
+
 /**
  * Applies a serializable Realm command to the session, returning the next
  * session, domain events, and (when triggered) a tactical battle to mount.
@@ -505,6 +590,10 @@ export function reduceRealm(
   if (!Array.isArray(next.revealedPoiIds)) {
     next.revealedPoiIds = getSettlements(next.map).map((poi) => poi.id);
   }
+  // Backward compatibility with pre-SRD-809 sessions (no quest chains).
+  if (!next.chainLog) {
+    next.chainLog = createQuestChainLog(buildStarterQuestChains(next.map));
+  }
 
   switch (command.type) {
     case 'REALM_TRAVEL_TO': {
@@ -515,6 +604,7 @@ export function reduceRealm(
       const result = travelAlongPath(next.travel, next.map, { q, r });
       next.travel = result.state;
       events.push(...result.events);
+      expireChainsForDay(next, events);
 
       // Wandering hostiles may ambush the party on the road (never inside a
       // settlement). The encounter roll consumes the threaded travel RNG.
@@ -542,6 +632,7 @@ export function reduceRealm(
           };
         }
       }
+      progressChainsForCurrentPoi(next, events);
       return { session: next, events };
     }
 
@@ -605,6 +696,8 @@ export function reduceRealm(
           };
         }
       }
+      expireChainsForDay(next, events);
+      progressChainsForCurrentPoi(next, events);
       return { session: next, events };
     }
 
@@ -631,6 +724,37 @@ export function reduceRealm(
         title: quest.title,
         day: next.travel.currentDay,
       });
+      return { session: next, events };
+    }
+
+    case 'REALM_START_CHAIN': {
+      const started = startQuestChain(
+        next.chainLog,
+        command.chainId,
+        next.travel.currentDay,
+        next.clearedPoiIds,
+      );
+      applyChainAdvance(next, events, started);
+      // Starting at the offering board can immediately satisfy a `talk` stage.
+      progressChainsForCurrentPoi(next, events);
+      return { session: next, events };
+    }
+
+    case 'REALM_CHOOSE_CHAIN_OPTION': {
+      const chosen = chooseChainBranch(
+        next.chainLog,
+        command.chainId,
+        command.optionId,
+        next.travel.currentDay,
+        next.clearedPoiIds,
+      );
+      applyChainAdvance(next, events, chosen);
+      return { session: next, events };
+    }
+
+    case 'REALM_ABANDON_CHAIN': {
+      const abandoned = abandonQuestChain(next.chainLog, command.chainId, next.travel.currentDay);
+      applyChainAdvance(next, events, abandoned);
       return { session: next, events };
     }
 
@@ -817,6 +941,8 @@ export function reduceRealm(
           effectDescription: shrine.effectDescription,
         });
         events.push({ type: 'REALM_LOG', message: shrine.effectDescription });
+        // Shrine communion can satisfy `fetch` chain stages pointing here.
+        progressChainsForClearedPoi(next, events, poi.id);
         return { session: next, events };
       }
       if (poi.kind !== 'dungeon_entrance' && poi.kind !== 'monster_lair') {
@@ -896,6 +1022,9 @@ export function resolveRealmBattle(
   // Tactical GameEvents stay in the battle view's combat log; the realm log
   // only records the strategic commit-back summary below.
   const events: RealmSessionEvent[] = [];
+  if (!next.chainLog) {
+    next.chainLog = createQuestChainLog(buildStarterQuestChains(next.map));
+  }
 
   next.party = structuredClone(resolution.nextState.party);
   next.travel = { ...next.travel, gold: next.travel.gold + resolution.goldAwarded };
@@ -930,6 +1059,9 @@ export function resolveRealmBattle(
       events.push(...resolved.events);
       completedQuestIds.push(quest.id);
     }
+
+    // Advance bounty / escort / fetch chain stages pointing at this POI.
+    progressChainsForClearedPoi(next, events, battle.poiId);
   }
 
   events.push({
@@ -979,6 +1111,9 @@ export function resolveRealmDelve(
   void compendium;
   const next: RealmSessionState = structuredClone(session);
   const events: RealmSessionEvent[] = [];
+  if (!next.chainLog) {
+    next.chainLog = createQuestChainLog(buildStarterQuestChains(next.map));
+  }
 
   // Persistent party state (XP was awarded to buildState during encounters).
   next.party = structuredClone(delveGameState.party);
@@ -1017,6 +1152,9 @@ export function resolveRealmDelve(
       events.push(...resolved.events);
       completedQuestIds.push(quest.id);
     }
+
+    // Advance dungeon / fetch chain stages pointing at this delve.
+    progressChainsForClearedPoi(next, events, delve.poiId);
   }
 
   events.push({
@@ -1095,6 +1233,18 @@ export function describeRealmEvent(event: RealmSessionEvent): string {
       return `Quest complete: ${event.title} (+${event.goldAwarded} gp, +${event.reputationAwarded} rep)`;
     case 'QUEST_FAILED':
       return `Quest failed: ${event.title}`;
+    case 'CHAIN_STARTED':
+      return `Quest chain begun: ${event.title}`;
+    case 'CHAIN_STAGE_COMPLETED':
+      return `Chain stage complete: ${event.title}`;
+    case 'CHAIN_CHOICE_MADE':
+      return `Chain choice: ${event.label}`;
+    case 'CHAIN_COMPLETED':
+      return `Quest chain complete: ${event.title} (+${event.goldAwarded} gp, +${event.reputationAwarded} rep)`;
+    case 'CHAIN_FAILED':
+      return `Quest chain failed: ${event.title} (${event.reason})`;
+    case 'CHAIN_UNLOCKED':
+      return `New quest chain unlocked: ${event.title}`;
     case 'RUMOR_HEARD':
       return `Inn rumor: ${event.targetName} marked on the map`;
     case 'ITEM_IDENTIFIED':
@@ -1187,6 +1337,12 @@ export async function loadRealmSession(
   if (!Array.isArray((data.session as RealmSessionState).revealedPoiIds)) {
     (data.session as RealmSessionState).revealedPoiIds = getSettlements(data.session.map).map(
       (poi) => poi.id,
+    );
+  }
+  // Backward compatibility with pre-SRD-809 saves (no quest chains).
+  if (!(data.session as RealmSessionState).chainLog) {
+    (data.session as RealmSessionState).chainLog = createQuestChainLog(
+      buildStarterQuestChains(data.session.map),
     );
   }
   return data;
