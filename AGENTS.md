@@ -12,6 +12,7 @@ At the start of every session, inspect the project state in this order:
 
 1. **Check Git Status & History**:
    - Run `git status`, `git pull --rebase origin main` (to sync latest changes), and `git log -n 5 --oneline` to see recent progress and verify whether there is any uncommitted work in progress.
+   - **Do NOT run pre-flight test suites** before starting work. Assume the baseline codebase on `main` is clean and passing.
 2. **Check the Backlog ([BACKLOG.md](file:///home/jwesterl/ai/srd5-game/BACKLOG.md))**:
    - Inspect `BACKLOG.md` to see which tickets are marked `[x]` (Done), `[~]` (In Progress), and `[ ]` (Todo).
    - Identify the next unblocked ticket(s) based on the `Depends On` column and Epic dependency graph.
@@ -52,15 +53,22 @@ When asked to implement a specific ticket or the "next $N$ backlog item(s)" (e.g
 3. **Implement & Test**:
    - Read the linked specification file in `docs/spec/` for that ticket's Epic.
    - Write the implementation and corresponding `vitest` unit/integration tests covering the ticket's acceptance criteria in `BACKLOG.md`.
-   - Run verification commands from the repository root:
-     ```bash
-     pnpm typecheck
-     pnpm test
-     pnpm build
-     ```
-   - *(Environment Note: If `pnpm install` needs network access to fetch npm packages during `SRD-101`, run only the package installation step with `BypassSandbox: true`, then run all subsequent builds and tests inside the standard sandbox).*
+   - **Lean In-Session Verification (Per Ticket)**:
+     To keep autonomous iterations fast without sacrificing regression safety, run scoped checks inside your session before committing:
+     1. Run targeted unit/integration tests for the touched package(s):
+        ```bash
+        pnpm --filter @srd5/<touched-package> test
+        ```
+     2. Run the monorepo typecheck to ensure zero cross-package contract breaks:
+        ```bash
+        pnpm typecheck
+        ```
+     3. Build rules:
+        - If `@srd5/client` was modified, verify the client build: `pnpm --filter @srd5/client run build`
+        - If only `@srd5/data`, `@srd5/engine`, `@srd5/transport`, or `@srd5/server` were modified, run their respective fast build (e.g. `pnpm --filter @srd5/data run build`). Do NOT run the heavy Vite client production bundler on non-client tickets.
+     4. **Do NOT run Playwright E2E (`pnpm test:e2e`)** on individual ticket iterations unless the ticket explicitly requires browser E2E test authoring/verification. Full E2E is executed as a dedicated post-batch gate.
 4. **Mark Done in `BACKLOG.md`**:
-   - Once all tests, typechecks, and acceptance criteria pass, update the ticket status in `BACKLOG.md` from `[~]` to `[x]` (and check off any matching items in the Epic Acceptance Criteria checklist).
+   - Once all ticket tests and typechecks pass, update the ticket status in `BACKLOG.md` from `[~]` to `[x]` (and check off any matching items in the Epic Acceptance Criteria checklist).
 5. **Commit to Git, Push to Remote & Stop (When Requested)**:
    - Commit each completed ticket to Git immediately so progress is preserved across sessions.
    - Use Conventional Commits referencing the ticket ID:
@@ -72,3 +80,22 @@ When asked to implement a specific ticket or the "next $N$ backlog item(s)" (e.g
    - Always include the updated `BACKLOG.md` in the commit so the git history and backlog status stay strictly in sync.
    - Push the commit(s) to the remote repository (`git push origin main` or current branch).
    - Verify with `git status` that the working tree is clean and up to date with origin, then exit/respond with a concise summary of the completed ticket.
+
+---
+
+## 4. Batch Completion & Full E2E Gate Protocol
+
+When running an autonomous batch loop (e.g., Ralph loop), the loop concludes with a single dedicated verification session that executes the full monorepo gate:
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm test:e2e
+```
+
+If any issues, regressions, or broken builds are uncovered during this gate:
+1. Fix the issues directly in the codebase.
+2. Verify all 4 checks pass cleanly.
+3. Commit the fixes with `fix(gate): resolve post-batch integration and e2e regressions`.
+4. Push to `origin main` and inspect `git log` to summarize the batch results.
