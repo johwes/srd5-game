@@ -125,6 +125,7 @@ export const InteractivePropSpecSchema = z.object({
   trapHalfDamageOnSave: z.boolean().optional(),
   lootTable: LootBundleSpecSchema.optional(),
   discovered: z.boolean().optional(),
+  listenDc: z.number().int().positive().optional(),
   ac: z.number().int().positive().optional(),
   hp: z.number().int().positive().optional(),
   targetFloorId: z.string().optional(),

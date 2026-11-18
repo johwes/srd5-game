@@ -10,6 +10,8 @@ interface PropInteractionCardProps {
   onInteract: PropInteractHandler;
   onClose: () => void;
   onUseShrine?: (propId: string) => void;
+  /** Latest listen result to display (from a CHECK_RESOLVED note). */
+  resultNote?: string | null;
 }
 
 const KIND_ICON: Record<string, string> = {
@@ -29,7 +31,7 @@ const KIND_ICON: Record<string, string> = {
  * state, each with its check preview. Dismissed via Esc, click-away, or any
  * committed action.
  */
-export function PropInteractionCard({ prop, options, onInteract, onClose, onUseShrine }: PropInteractionCardProps) {
+export function PropInteractionCard({ prop, options, onInteract, onClose, onUseShrine, resultNote }: PropInteractionCardProps) {
   const handleAction = (interaction: PropInteractionKind) => {
     if (prop.kind === 'shrine' && interaction === 'open' && onUseShrine) {
       onUseShrine(prop.id);
@@ -70,6 +72,15 @@ export function PropInteractionCard({ prop, options, onInteract, onClose, onUseS
           ✕
         </button>
       </div>
+
+      {resultNote && (
+        <div
+          data-testid={`prop-listen-result-${prop.id}`}
+          className="rounded-lg bg-sky-950/60 border border-sky-700/50 px-2.5 py-2 text-[11px] text-sky-200 italic"
+        >
+          👂 {resultNote}
+        </div>
+      )}
 
       {options.length === 0 ? (
         <div className="text-xs text-slate-500 italic">Nothing to do here.</div>

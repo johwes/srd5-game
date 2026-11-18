@@ -71,6 +71,27 @@ describe('SRD-510 click-to-inspect prop interaction', () => {
     expect(await screen.findByTestId('tactical-combat-hud')).toBeDefined();
   });
 
+  it('listens at the door and shows the hint in the card', async () => {
+    HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(null);
+    render(
+      <DungeonView
+        partyCharacters={getDefaultDungeonPartyCharacters()}
+        compendium={defaultCompendium}
+        initialFloorId="kaelen-floor-1"
+        initialGameState={buildAdjacentState()}
+        onExitToRoster={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('inspect-prop-btn-door_f1_courtyard_barracks'));
+    fireEvent.click(screen.getByTestId('prop-action-listen-door_f1_courtyard_barracks'));
+
+    const result = await screen.findByTestId('prop-listen-result-door_f1_courtyard_barracks');
+    expect(result.textContent!.length).toBeGreaterThan(0);
+    // Listening is silent: the door stays closed and no combat starts.
+    expect(screen.queryByTestId('tactical-combat-hud')).toBeNull();
+  });
+
   it('closes the card on Esc and on explicit close', () => {
     HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(null);
     render(

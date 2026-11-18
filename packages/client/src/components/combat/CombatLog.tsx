@@ -871,7 +871,7 @@ export function CombatLog({
             type: event.type,
             category: 'saves',
             title: `${actor} ${event.checkType.replace(/_/g, ' ')} check`,
-            summary: `d20 ${event.roll}${signed(event.modifier)} = ${event.total}${event.dc !== undefined ? ` vs DC ${event.dc}` : ''} → ${event.success ? 'SUCCESS' : 'FAIL'}`,
+            summary: `d20 ${event.roll}${signed(event.modifier)} = ${event.total}${event.dc !== undefined ? ` vs DC ${event.dc}` : ''} → ${event.success ? 'SUCCESS' : 'FAIL'}${event.note ? ` — ${event.note}` : ''}`,
             badge: {
               label: event.success ? 'SUCCESS' : 'FAIL',
               color: event.success

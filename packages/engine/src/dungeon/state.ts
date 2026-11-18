@@ -198,6 +198,7 @@ export function createDungeonGameState(options: CreateDungeonGameOptions): GameS
       lockDc: p.lockDc,
       detectionDc: p.detectionDc,
       disarmDc: p.disarmDc,
+      listenDc: p.listenDc,
       discovered: p.discovered ?? (p.detectionDc === undefined),
       ac: p.ac,
       hp: p.hp,

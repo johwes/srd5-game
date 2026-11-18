@@ -14,6 +14,7 @@ import {
   resolvePropInteraction,
   triggerTrapEffect,
 } from '../dungeon/props.js';
+import { rollD20 } from '../dice/evaluator.js';
 
 function makePartyMember(options: {
   id: string;
@@ -836,12 +837,12 @@ describe('SRD-502: Interactive Props Engine', () => {
         { id: 'd', kind: 'door', state: 'closed' },
         rogue(),
       );
-      expect(closed.map((o) => o.interaction)).toEqual(['open', 'search']);
+      expect(closed.map((o) => o.interaction)).toEqual(['open', 'listen', 'search']);
       const open = getAvailablePropInteractions(
         { id: 'd', kind: 'door', state: 'open' },
         rogue(),
       );
-      expect(open.map((o) => o.interaction)).toEqual(['close', 'search']);
+      expect(open.map((o) => o.interaction)).toEqual(['close', 'listen', 'search']);
     });
 
     it('offers Pick Lock / Force Open with DC hints for locked doors and chests', () => {
@@ -850,7 +851,7 @@ describe('SRD-502: Interactive Props Engine', () => {
         rogue(),
       );
       const kinds = opts.map((o) => o.interaction);
-      expect(kinds).toEqual(['pick_lock', 'force_open', 'search']);
+      expect(kinds).toEqual(['pick_lock', 'force_open', 'listen', 'search']);
       expect(opts[0]).toMatchObject({ label: 'Pick Lock' });
       expect(opts[0]!.checkHint).toContain('DC 15');
       expect(opts[1]!.checkHint).toContain('DC 17');
@@ -896,4 +897,217 @@ describe('SRD-502: Interactive Props Engine', () => {
       ).toBe('Pull Lever');
     });
   });
+
+  describe('8. SRD-511: Listen at Doors', () => {
+    const makeListenFloor = (
+      encounters: Array<{
+        id: string;
+        roomId: string;
+        monsters: Array<{ monsterId: string }>;
+      }> = [],
+    ): DungeonFloorSpec => {
+      const cells: DungeonFloorSpec['cells'] = [];
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          const isWall = x === 0 || x === 9 || y === 0 || y === 9;
+          cells.push({
+            x,
+            y,
+            roomId: x <= 4 ? 'room_a' : 'room_b',
+            terrain: isWall ? 'wall_solid' : 'floor_stone',
+            baseLight: 'bright',
+            elevationFeet: 0,
+          });
+        }
+      }
+      return {
+        id: 'listen_test_floor',
+        name: 'Listening Test Floor',
+        width: 10,
+        height: 10,
+        partySpawnCells: [{ x: 3, y: 4 }],
+        cells,
+        props: [
+          {
+            id: 'door_ab',
+            x: 4,
+            y: 4,
+            kind: 'door',
+            state: 'closed',
+            blocksMovement: true,
+            blocksSight: true,
+            listenDc: 10,
+          },
+        ],
+        encounters: encounters.map((e) => ({
+          ...e,
+          triggered: false,
+          monsters: e.monsters.map((m) => ({ ...m, spawnX: 6, spawnY: 4 })),
+        })),
+        rooms: [
+          { id: 'room_a', name: 'Antechamber', description: 'West', isSafeRoom: false },
+          { id: 'room_b', name: 'Guardroom', description: 'East', isSafeRoom: false },
+        ],
+      };
+    };
+
+    const listenState = (floor: DungeonFloorSpec, perceptionBonus: number, rngState: number) => {
+      const listener = makePartyMember({
+        id: 'listener',
+        name: 'Listener',
+        x: 3,
+        y: 4,
+        skills: {
+          perception: { totalBonus: perceptionBonus },
+          investigation: { totalBonus: 0 },
+          athletics: { totalBonus: 0 },
+        },
+      });
+      return createDungeonGameState({ floor, party: [listener], rngState });
+    };
+
+    it('reports silence when nothing lurks beyond, without triggering encounters', () => {
+      const state = listenState(makeListenFloor(), 20, 7);
+      const res = reduceGame(state, {
+        type: 'LISTEN_AT_DOOR',
+        actorId: 'listener',
+        propId: 'door_ab',
+      });
+      const check = res.events.find((e) => e.type === 'CHECK_RESOLVED');
+      expect(check).toMatchObject({ checkType: 'perception', success: true });
+      expect((check as unknown as { note?: string }).note).toMatch(/Nothing stirs/);
+      expect(res.nextState.dungeon!.encounters.every((e) => !e.triggered)).toBe(true);
+      expect(res.nextState.party['listener']!.currentHp).toBe(20);
+    });
+
+    it('misreads on a bad failure and hears faint sounds on a near miss', () => {
+      const silent = listenState(
+        makeListenFloor([{ id: 'enc-g', roomId: 'room_b', monsters: [{ monsterId: 'goblin' }] }]),
+        -15,
+        99,
+      );
+      const silentRes = reduceGame(silent, {
+        type: 'LISTEN_AT_DOOR',
+        actorId: 'listener',
+        propId: 'door_ab',
+      });
+      expect(
+        (silentRes.events.find((e) => e.type === 'CHECK_RESOLVED') as unknown as { note?: string } | undefined)?.note,
+      ).toMatch(/Stillness/);
+
+      let nearMissSeed = -1;
+      for (let s = 1; s < 500; s++) {
+        const r = rollD20(s, { modifier: 4, mode: 'normal' });
+        if (r.total >= 6 && r.total <= 9) {
+          nearMissSeed = s;
+          break;
+        }
+      }
+      expect(nearMissSeed).toBeGreaterThan(0);
+      const faint = listenState(
+        makeListenFloor([{ id: 'enc-g', roomId: 'room_b', monsters: [{ monsterId: 'goblin' }] }]),
+        4,
+        nearMissSeed,
+      );
+      const faintRes = reduceGame(faint, {
+        type: 'LISTEN_AT_DOOR',
+        actorId: 'listener',
+        propId: 'door_ab',
+      });
+      const faintCheck = faintRes.events.find((e) => e.type === 'CHECK_RESOLVED') as
+        | { success: boolean; note?: string }
+        | undefined;
+      expect(faintCheck?.success).toBe(false);
+      expect(faintCheck?.note).toMatch(/Faint/);
+    });
+
+    it('describes occupant character on success and counts on a decisive success', () => {
+      let successSeed = -1;
+      for (let s = 1; s < 500; s++) {
+        const r = rollD20(s, { modifier: 4, mode: 'normal' });
+        if (r.total >= 10 && r.total <= 14) {
+          successSeed = s;
+          break;
+        }
+      }
+      expect(successSeed).toBeGreaterThan(0);
+      const heard = listenState(
+        makeListenFloor([{ id: 'enc-g', roomId: 'room_b', monsters: [{ monsterId: 'goblin' }] }]),
+        4,
+        successSeed,
+      );
+      const heardRes = reduceGame(heard, {
+        type: 'LISTEN_AT_DOOR',
+        actorId: 'listener',
+        propId: 'door_ab',
+      });
+      const heardCheck = heardRes.events.find((e) => e.type === 'CHECK_RESOLVED') as
+        | { success: boolean; note?: string }
+        | undefined;
+      expect(heardCheck?.success).toBe(true);
+      expect(heardCheck?.note).toMatch(/muffled voices/);
+
+      const counted = listenState(
+        makeListenFloor([
+          {
+            id: 'enc-s',
+            roomId: 'room_b',
+            monsters: [{ monsterId: 'skeleton' }, { monsterId: 'skeleton' }, { monsterId: 'skeleton' }],
+          },
+        ]),
+        20,
+        7,
+      );
+      const countedRes = reduceGame(counted, {
+        type: 'LISTEN_AT_DOOR',
+        actorId: 'listener',
+        propId: 'door_ab',
+      });
+      const countedCheck = countedRes.events.find((e) => e.type === 'CHECK_RESOLVED') as
+        | { success: boolean; note?: string }
+        | undefined;
+      expect(countedCheck?.success).toBe(true);
+      expect(countedCheck?.note).toMatch(/three movers|two or three/);
+      expect(countedCheck?.note).toMatch(/bone/);
+      expect(countedRes.nextState.dungeon!.encounters.every((e) => !e.triggered)).toBe(true);
+    });
+
+    it('rejects listening at non-doors and from out of reach', () => {
+      const floor = makeListenFloor();
+      floor.props = [
+        {
+          id: 'crate',
+          x: 3,
+          y: 5,
+          kind: 'chest',
+          state: 'closed',
+          blocksMovement: false,
+          blocksSight: false,
+        },
+      ];
+      const state = listenState(floor, 20, 7);
+      expect(() =>
+        reduceGame(state, { type: 'LISTEN_AT_DOOR', actorId: 'listener', propId: 'crate' }),
+      ).toThrow(/only listen at doors/);
+
+      const farFloor = makeListenFloor();
+      const farState = listenState(farFloor, 20, 7);
+      (farState.party['listener'] as Combatant).position = { x: 1, y: 1 };
+      expect(() =>
+        reduceGame(farState, { type: 'LISTEN_AT_DOOR', actorId: 'listener', propId: 'door_ab' }),
+      ).toThrow(/not adjacent/);
+    });
+
+    it('exposes Listen in the interaction card options for doors', () => {
+      const rogue = makePartyMember({ id: 'r', name: 'R', tools: ['thieves_tools'] });
+      const opts = getAvailablePropInteractions(
+        { id: 'd', kind: 'door', state: 'closed', listenDc: 12 },
+        rogue,
+      );
+      const listen = opts.find((o) => o.interaction === 'listen');
+      expect(listen?.label).toBe('Listen');
+      expect(listen?.checkHint).toMatch(/DC 12/);
+    });
+  });
 });
+

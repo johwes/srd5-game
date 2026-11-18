@@ -78,6 +78,8 @@ export interface InteractiveProp {
   lockDc?: number;
   detectionDc?: number;
   disarmDc?: number;
+  /** SRD-510 §3.2: WIS (Perception) DC to hear through (doors). */
+  listenDc?: number;
   discovered?: boolean;
   ac?: number;
   hp?: number;
@@ -150,6 +152,11 @@ export type GameCommand =
   | {
       type: 'EXPLORE_SEARCH';
       actorId: string;
+    }
+  | {
+      type: 'LISTEN_AT_DOOR';
+      actorId: string;
+      propId: string;
     }
   | {
       type: 'START_REST';
@@ -338,6 +345,8 @@ export type GameEvent =
       total: number;
       success: boolean;
       triggered?: boolean;
+      /** Human-readable finding (e.g. a Listen-at-door hint). */
+      note?: string;
     }
   | {
       type: 'LOOT_ACQUIRED';

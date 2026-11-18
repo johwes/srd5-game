@@ -584,6 +584,10 @@ export function DungeonView({
         setInspectedPropId(null);
         return;
       }
+      if (interaction === 'listen') {
+        void handleDispatch({ type: 'LISTEN_AT_DOOR', actorId: leadExplorerId, propId });
+        return;
+      }
       void handleDispatch({
         type: 'INTERACT_PROP',
         actorId: leadExplorerId,
@@ -598,6 +602,19 @@ export function DungeonView({
     },
     [getAuthState, handleDispatch, leadExplorerId],
   );
+
+  // Latest listen result for the inspected prop (CHECK_RESOLVED carries the
+  // hint in `note`; searching the same prop never sets one).
+  const inspectedPropListenNote = (() => {
+    if (!visibleInspectedProp) return null;
+    for (let i = events.length - 1; i >= 0; i--) {
+      const ev = events[i]!;
+      if (ev.type === 'CHECK_RESOLVED' && ev.targetId === visibleInspectedProp.id && typeof ev.note === 'string') {
+        return ev.note;
+      }
+    }
+    return null;
+  })();
 
   // Cell click handling. SRD-410 manual targeting consumes combat clicks
   // while an action is armed (right-click cancels).
@@ -1082,6 +1099,7 @@ export function DungeonView({
                 <PropInteractionCard
                   prop={visibleInspectedProp}
                   options={inspectedPropOptions}
+                  resultNote={inspectedPropListenNote}
                   onInteract={handleCardInteract}
                   onClose={() => setInspectedPropId(null)}
                   onUseShrine={(propId) => {

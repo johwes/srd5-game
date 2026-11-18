@@ -1,4 +1,4 @@
-import { type AbilityId } from '@srd5/data';
+import { type AbilityId, defaultCompendium, type SrdCompendium } from '@srd5/data';
 import { type Combatant } from '../combat/types.js';
 import { rollD20, rollDamage } from '../dice/evaluator.js';
 import {
@@ -122,6 +122,7 @@ export type PropInteractionKind =
   | 'pick_lock'
   | 'disarm_trap'
   | 'force_open'
+  | 'listen'
   | 'search'
   | 'attack';
 
@@ -151,6 +152,7 @@ export function getAvailablePropInteractions(
     | 'kind'
     | 'state'
     | 'lockDc'
+    | 'listenDc'
     | 'detectionDc'
     | 'disarmDc'
     | 'trapDamageFormula'
@@ -178,6 +180,7 @@ export function getAvailablePropInteractions(
         getActorCheckBonus(actor as Combatant, 'investigation'),
       )
     : undefined;
+  const listenBonus = actor ? getActorCheckBonus(actor as Combatant, 'perception') : undefined;
 
   switch (prop.kind) {
     case 'door':
@@ -209,6 +212,14 @@ export function getAvailablePropInteractions(
       } else if (prop.state === 'open') {
         options.push({ interaction: 'close', label: 'Close' });
       }
+      options.push({
+        interaction: 'listen',
+        label: 'Listen',
+        checkHint:
+          listenBonus !== undefined
+            ? `WIS (Perception) ${signed(listenBonus)} vs DC ${prop.listenDc ?? 12}`
+            : undefined,
+      });
       options.push({
         interaction: 'search',
         label: 'Search',
@@ -363,6 +374,120 @@ export function triggerTrapEffect(options: {
     saveMade,
     saveSuccess,
   };
+}
+
+/**
+ * SRD-511: Listen at a door. An adjacent hero makes a WIS (Perception) check
+ * against the prop's listenDc (default 12). Hints are derived deterministically
+ * from *untriggered* encounters in rooms neighboring the prop — listening never
+ * triggers encounters, costs no resources, and works through closed doors.
+ */
+export function listenAtDoor(options: {
+  state: GameState;
+  actorId: string;
+  propId: string;
+  compendium?: SrdCompendium;
+}): { nextState: GameState; events: GameEvent[]; hint: string } {
+  const { state, actorId, propId } = options;
+  if (state.mode !== 'exploration') {
+    throw new Error('Listening at doors is an exploration activity');
+  }
+
+  const actor = state.party[actorId];
+  if (!actor || actor.isDead || actor.currentHp <= 0) {
+    throw new Error(`Listening actor not found or down: ${actorId}`);
+  }
+  const prop = state.props.find((p) => p.id === propId);
+  if (!prop) {
+    throw new Error(`Interactive prop not found: ${propId}`);
+  }
+  if (prop.kind !== 'door' && !(prop.kind === 'secret_door' && prop.discovered)) {
+    throw new Error(`You can only listen at doors (not ${prop.kind})`);
+  }
+  if (!isAdjacent(actor.position, { x: prop.x, y: prop.y })) {
+    throw new Error(`Actor ${actorId} is not adjacent to prop ${propId}`);
+  }
+
+  const nextState = structuredClone(state);
+  let rngState = nextState.rngState;
+  const dc = prop.listenDc ?? 12;
+  const bonus = getActorCheckBonus(nextState.party[actorId]!, 'perception');
+  const rollRes = rollD20(rngState, { modifier: bonus, mode: 'normal' });
+  rngState = rollRes.nextState;
+  nextState.rngState = rngState;
+  const success = rollRes.total >= dc;
+  const margin = rollRes.total - dc;
+
+  // Neighboring rooms: any roomId touching the prop's 8 neighbors (plus its
+  // own cell). Sounds carry from untriggered encounters in those rooms.
+  const neighborRooms = new Set<string>();
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const cell = nextState.grid.cells.find(
+        (c) => c.x === prop.x + dx && c.y === prop.y + dy,
+      );
+      if (cell?.roomId) neighborRooms.add(cell.roomId);
+    }
+  }
+  const nearby = (nextState.dungeon?.encounters ?? []).filter(
+    (e) => !e.triggered && e.roomId !== undefined && neighborRooms.has(e.roomId),
+  );
+  const monsterCount = nearby.reduce((sum, e) => sum + (e.monsters?.length ?? 0), 0);
+
+  let hint: string;
+  if (monsterCount === 0) {
+    hint = 'Nothing stirs beyond the door.';
+  } else if (margin <= -5) {
+    hint = 'Stillness. Nothing stirs beyond.';
+  } else if (!success) {
+    hint = 'Faint, undecipherable sounds on the other side.';
+  } else {
+    const compendium = options.compendium ?? defaultCompendium;
+    const typeCounts = new Map<string, number>();
+    for (const enc of nearby) {
+      for (const m of enc.monsters ?? []) {
+        const kind = compendium.getMonster(m.monsterId)?.type ?? 'unknown';
+        typeCounts.set(kind, (typeCounts.get(kind) ?? 0) + 1);
+      }
+    }
+    const topType = [...typeCounts.entries()].sort(
+      (a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1),
+    )[0]?.[0] ?? 'unknown';
+    const character: Record<string, string> = {
+      undead: 'dry scraping and the clack of old bone',
+      beast: 'bestial snuffling and skittering claws',
+      humanoid: 'muffled voices, arguing in low tones',
+      fiend: 'a heat-shimmer hiss and whispered malice',
+      monstrosity: 'heavy, uneven footfalls',
+      giant: 'slow, ponderous footfalls',
+      ooze: 'wet, sucking movement',
+    };
+    const sounds = character[topType] ?? 'strange movement and breathing';
+    if (margin >= 5) {
+      const band =
+        monsterCount <= 1 ? 'a single mover' : monsterCount <= 3 ? 'two or three movers' : 'a group of movers (four or more)';
+      hint = `You make out ${band} — ${sounds}.`;
+    } else {
+      hint = `You hear ${sounds} beyond the door.`;
+    }
+  }
+
+  const events: GameEvent[] = [
+    {
+      type: 'CHECK_RESOLVED',
+      actorId,
+      checkType: 'perception',
+      targetId: prop.id,
+      dc,
+      roll: rollRes.naturalRoll,
+      modifier: bonus,
+      total: rollRes.total,
+      success,
+      note: hint,
+    },
+  ];
+
+  return { nextState, events, hint };
 }
 
 /**

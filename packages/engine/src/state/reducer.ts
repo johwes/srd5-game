@@ -39,6 +39,7 @@ import { updateDungeonRoomDiscovery } from '../dungeon/state.js';
 import {
   checkPassivePerceptionForProps,
   triggerTrapEffect,
+  listenAtDoor,
   resolveActiveSearch,
   resolvePropInteraction,
 } from '../dungeon/props.js';
@@ -835,6 +836,18 @@ export function reduceGame(
       });
       nextState = searchRes.nextState;
       events.push(...searchRes.events);
+      break;
+    }
+
+    case 'LISTEN_AT_DOOR': {
+      const listenRes = listenAtDoor({
+        state: nextState,
+        actorId: command.actorId,
+        propId: command.propId,
+        compendium: options?.compendium,
+      });
+      nextState = listenRes.nextState;
+      events.push(...listenRes.events);
       break;
     }
 
