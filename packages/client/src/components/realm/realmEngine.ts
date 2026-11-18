@@ -21,32 +21,43 @@ import {
   type RealmDelveKind,
   type RealmDelveState,
   type RealmEvent,
+  type SettlementRumor,
   type ShopInventory,
   type TravelPace,
   PLAYER_FACTION_ID,
   RealmError,
   acceptQuest,
+  acceptSettlementRumor,
   activateOverworldShrine,
+  blessPartyWithTemple,
   campOverworld,
   canCampEarly,
+  cleansePartyAffliction,
   completeQuestForParty,
   computeDerivedCharacter,
   createCharacterCombatant,
   createOverworldTravelState,
   createQuestLog,
   failQuest,
+  filterMarketStockForParty,
   forceExpeditionMarch,
   forageForRations,
   generateOverworldMap,
   generateQuestBoard,
+  generateSettlementRumors,
   generateShopInventory,
   generateWildernessBattle,
   getDailyTravelPoints,
   getFactionByPoi,
+  getIdentifyCost,
   getPoiAt,
   getReputationDisposition,
   getSettlements,
+  getSettlementHubAccess,
+  getTempleBlessingCost,
+  getTempleCleanseCost,
   getTravelDayBudget,
+  identifyMagicItem,
   isSafeRestSite,
   mixBattleSeed,
   nextRandomFloat,
@@ -95,6 +106,8 @@ export interface RealmSessionState {
   shops: Record<string, ShopInventory>;
   /** Dungeon entrance / monster lair POIs already cleared by the party. */
   clearedPoiIds: string[];
+  /** Wilderness POIs revealed through inn rumors (SRD-808). */
+  revealedPoiIds: string[];
   /** Ancient shrine POIs already communed with (one blessing per shrine). */
   usedShrinePoiIds: string[];
 }
@@ -169,14 +182,12 @@ export type RealmCommand =
     }
   | { type: 'REALM_ACCEPT_QUEST'; questId: string }
   | { type: 'REALM_ABANDON_QUEST'; questId: string }
-  | {
-      type: 'REALM_BUY_ITEM';
-      poiId: string;
-      itemId: string;
-      quantity: number;
-      characterId?: string;
-    }
+  | { type: 'REALM_BUY_ITEM'; poiId: string; itemId: string; quantity: number; characterId?: string }
   | { type: 'REALM_SELL_ITEM'; poiId: string; characterId: string; instanceId: string }
+  | { type: 'REALM_HEAR_RUMOR'; poiId: string; targetPoiId: string }
+  | { type: 'REALM_IDENTIFY_ITEM'; poiId: string; characterId: string; instanceId: string }
+  | { type: 'REALM_TEMPLE_CLEANSE'; poiId: string; characterId: string }
+  | { type: 'REALM_TEMPLE_BLESS'; poiId: string }
   | { type: 'REALM_ENTER_POI'; poiId: string };
 
 // ---------------------------------------------------------------------------
@@ -288,6 +299,7 @@ export function createRealmSession(
     questLog: createQuestLog(boardQuests),
     shops,
     clearedPoiIds: [],
+    revealedPoiIds: getSettlements(map).map((poi) => poi.id),
     usedShrinePoiIds: [],
   };
 }
@@ -399,6 +411,33 @@ function assertTradeAllowed(session: RealmSessionState, poi: OverworldPOI): void
   }
 }
 
+function requireSettlementAtParty(session: RealmSessionState, poiId: string): OverworldPOI {
+  const poi = requirePoiAtParty(session, poiId);
+  if (!isSettlementPoi(poi)) throw new RealmError(`${poi.name} is not a settlement`);
+  return poi;
+}
+
+/** Deterministic inn rumors for a settlement (SRD-808). Stable per map seed. */
+export function getHubRumors(session: RealmSessionState, poiId: string): SettlementRumor[] {
+  const poi = session.map.pois[poiId];
+  if (!poi) throw new RealmError(`Unknown location "${poiId}"`);
+  const seed = mixBattleSeed(session.map.worldSeed, poi.q, poi.r);
+  return generateSettlementRumors(session.map, poi, mixBattleSeed(seed, 808), {
+    excludePoiIds: session.clearedPoiIds,
+  }).rumors;
+}
+
+/** Market stock visible to the party after reputation gating (SRD-808). */
+export function getHubMarketStock(session: RealmSessionState, poiId: string): ShopInventory | null {
+  const inventory = session.shops[poiId];
+  if (!inventory) return null;
+  const poi = session.map.pois[poiId];
+  if (!poi) return null;
+  const access = getSettlementHubAccess(session.map, poi);
+  if (!access.marketOpen) return { ...inventory, items: [] };
+  return { ...inventory, items: filterMarketStockForParty(inventory.items, access.reputation) };
+}
+
 function startBattleFromSession(
   session: RealmSessionState,
   battle: GeneratedOverworldBattle,
@@ -462,6 +501,10 @@ export function reduceRealm(
   const compendium = options.compendium ?? defaultCompendium;
   const next: RealmSessionState = structuredClone(session);
   const events: RealmSessionEvent[] = [];
+  // Backward compatibility with pre-SRD-808 sessions (no revealed POI tracking).
+  if (!Array.isArray(next.revealedPoiIds)) {
+    next.revealedPoiIds = getSettlements(next.map).map((poi) => poi.id);
+  }
 
   switch (command.type) {
     case 'REALM_TRAVEL_TO': {
@@ -646,6 +689,115 @@ export function reduceRealm(
         equippedSlots: clearEquippedReferences(seller.buildState.equippedSlots, command.instanceId),
       };
       events.push(...result.events);
+      return { session: next, events };
+    }
+
+    case 'REALM_HEAR_RUMOR': {
+      const poi = requireSettlementAtParty(next, command.poiId);
+      const access = getSettlementHubAccess(next.map, poi);
+      if (!access.innOpen) throw new RealmError(`${poi.name} has no inn`);
+      const rumors = getHubRumors(next, poi.id);
+      const rumor = rumors.find((entry) => entry.targetPoiId === command.targetPoiId);
+      if (!rumor) throw new RealmError(`No such rumor at ${poi.name}`);
+      if (next.revealedPoiIds.includes(rumor.targetPoiId)) {
+        throw new RealmError(`${rumor.targetName} is already marked on your map`);
+      }
+      if (next.travel.gold < rumor.costGp) {
+        throw new RealmError(`Not enough gold for a round of ale (need ${rumor.costGp} gp)`);
+      }
+      next.travel = { ...next.travel, gold: next.travel.gold - rumor.costGp };
+      next.revealedPoiIds = acceptSettlementRumor(next.revealedPoiIds, rumor);
+      events.push({
+        type: 'RUMOR_HEARD',
+        poiId: poi.id,
+        targetPoiId: rumor.targetPoiId,
+        targetName: rumor.targetName,
+      });
+      events.push({
+        type: 'REALM_LOG',
+        message: `Rumor heard: ${rumor.targetName} marked on the map`,
+      });
+      return { session: next, events };
+    }
+
+    case 'REALM_IDENTIFY_ITEM': {
+      const poi = requireSettlementAtParty(next, command.poiId);
+      const access = getSettlementHubAccess(next.map, poi);
+      if (!access.marketOpen) {
+        throw new RealmError(`${poi.name} market is closed to your party (${access.tier})`);
+      }
+      const hero = next.party[command.characterId];
+      if (!hero?.buildState) throw new RealmError(`Unknown hero "${command.characterId}"`);
+      const index = hero.buildState.inventory.findIndex(
+        (i) => i.instanceId === command.instanceId,
+      );
+      if (index < 0) throw new RealmError(`Item "${command.instanceId}" not in ${hero.name}'s inventory`);
+      const result = identifyMagicItem(next.travel, hero.buildState.inventory[index]!, access.reputation);
+      next.travel = result.state;
+      const inventory = [...hero.buildState.inventory];
+      inventory[index] = result.instance;
+      hero.buildState = { ...hero.buildState, inventory };
+      events.push({
+        type: 'ITEM_IDENTIFIED',
+        poiId: poi.id,
+        itemId: result.instance.itemId,
+        instanceId: result.instance.instanceId,
+        costGp: result.costGp,
+        goldRemaining: result.state.gold,
+      });
+      return { session: next, events };
+    }
+
+    case 'REALM_TEMPLE_CLEANSE': {
+      const poi = requireSettlementAtParty(next, command.poiId);
+      const access = getSettlementHubAccess(next.map, poi);
+      if (!access.templeOpen) {
+        throw new RealmError(
+          `${poi.name} temple is closed to your party (${access.tier})`,
+        );
+      }
+      const costGp = getTempleCleanseCost(access.reputation);
+      if (next.travel.gold < costGp) {
+        throw new RealmError(`Not enough gold for cleansing (need ${costGp} gp)`);
+      }
+      const cleansed = cleansePartyAffliction(next.party, command.characterId);
+      next.party = cleansed.party;
+      next.travel = { ...next.travel, gold: next.travel.gold - costGp };
+      const hero = next.party[command.characterId]!;
+      events.push({
+        type: 'TEMPLE_CLEANSED',
+        poiId: poi.id,
+        characterId: command.characterId,
+        characterName: hero.name,
+        removed: cleansed.removed,
+        costGp,
+        goldRemaining: next.travel.gold,
+      });
+      return { session: next, events };
+    }
+
+    case 'REALM_TEMPLE_BLESS': {
+      const poi = requireSettlementAtParty(next, command.poiId);
+      const access = getSettlementHubAccess(next.map, poi);
+      if (!access.templeOpen) {
+        throw new RealmError(
+          `${poi.name} temple is closed to your party (${access.tier})`,
+        );
+      }
+      const costGp = getTempleBlessingCost(access.reputation);
+      if (next.travel.gold < costGp) {
+        throw new RealmError(`Not enough gold for a blessing (need ${costGp} gp)`);
+      }
+      const blessed = blessPartyWithTemple(next.party);
+      next.party = blessed.party;
+      next.travel = { ...next.travel, gold: next.travel.gold - costGp };
+      events.push({
+        type: 'TEMPLE_BLESSED',
+        poiId: poi.id,
+        costGp,
+        goldRemaining: next.travel.gold,
+        blessedCount: blessed.blessedCount,
+      });
       return { session: next, events };
     }
 
@@ -943,6 +1095,16 @@ export function describeRealmEvent(event: RealmSessionEvent): string {
       return `Quest complete: ${event.title} (+${event.goldAwarded} gp, +${event.reputationAwarded} rep)`;
     case 'QUEST_FAILED':
       return `Quest failed: ${event.title}`;
+    case 'RUMOR_HEARD':
+      return `Inn rumor: ${event.targetName} marked on the map`;
+    case 'ITEM_IDENTIFIED':
+      return `Identified ${event.itemId} for ${event.costGp} gp`;
+    case 'TEMPLE_CLEANSED':
+      return `${event.characterName} cleansed (${event.removed.join(', ')}) for ${event.costGp} gp`;
+    case 'TEMPLE_BLESSED':
+      return event.costGp > 0
+        ? `The temple blesses ${event.blessedCount} hero(es) for ${event.costGp} gp`
+        : `The temple blesses ${event.blessedCount} hero(es) free of charge (exalted allies)`;
     case 'REALM_ENCOUNTER_STARTED':
       return event.origin === 'wilderness'
         ? 'Wandering hostiles attack the party on the road!'
@@ -1021,5 +1183,11 @@ export async function loadRealmSession(
   if (!raw || typeof raw !== 'object') return null;
   const data = raw as RealmSaveData;
   if (data.version !== 1 || !data.session?.map || !data.session?.travel) return null;
+  // Backward compatibility with pre-SRD-808 saves (no revealed POI tracking).
+  if (!Array.isArray((data.session as RealmSessionState).revealedPoiIds)) {
+    (data.session as RealmSessionState).revealedPoiIds = getSettlements(data.session.map).map(
+      (poi) => poi.id,
+    );
+  }
   return data;
 }

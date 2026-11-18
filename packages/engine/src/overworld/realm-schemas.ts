@@ -166,6 +166,9 @@ export const OverworldQuestSchema = z.object({
   targetPoiId: z.string().min(1).optional(),
   targetName: z.string().min(1).optional(),
   targetMonsterId: z.string().min(1).optional(),
+  /** Tavern-board quest giver (SRD-808 flavor, deterministic per posting). */
+  giverName: z.string().min(1).optional(),
+  giverBlurb: z.string().min(1).optional(),
   rewardGold: z.number().int().nonnegative(),
   reputationReward: z.number().int(),
   difficultyTier: z.number().int().min(1).max(4),
@@ -231,4 +234,34 @@ export type RealmEvent =
       reputationAwarded: number;
       day: number;
     }
-  | { type: 'QUEST_FAILED'; questId: string; title: string; day: number };
+  | { type: 'QUEST_FAILED'; questId: string; title: string; day: number }
+  | {
+      type: 'RUMOR_HEARD';
+      poiId: string;
+      targetPoiId: string;
+      targetName: string;
+    }
+  | {
+      type: 'ITEM_IDENTIFIED';
+      poiId: string;
+      itemId: string;
+      instanceId: string;
+      costGp: number;
+      goldRemaining: number;
+    }
+  | {
+      type: 'TEMPLE_CLEANSED';
+      poiId: string;
+      characterId: string;
+      characterName: string;
+      removed: string[];
+      costGp: number;
+      goldRemaining: number;
+    }
+  | {
+      type: 'TEMPLE_BLESSED';
+      poiId: string;
+      costGp: number;
+      goldRemaining: number;
+      blessedCount: number;
+    };

@@ -50,6 +50,11 @@ function QuestCard({
         </span>
       </div>
       <p className="text-xs text-slate-400 leading-snug">{quest.description}</p>
+      {quest.giverName && (
+        <p data-testid={`realm-quest-giver-${quest.id}`} className="text-[11px] text-amber-200/90 italic leading-snug">
+          — {quest.giverName}: “{quest.giverBlurb}”
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
         {quest.targetName && (
           <span className="text-slate-300">📍 {quest.targetName}</span>

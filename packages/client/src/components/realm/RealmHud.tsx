@@ -51,6 +51,7 @@ export interface RealmHudProps {
   onOpenFactions: () => void;
   onOpenShop: () => void;
   onOpenQuestBoard: () => void;
+  onOpenHub: () => void;
   onEnterPoi: () => void;
   onEndlessDelve: () => void;
   onOpenPause: () => void;
@@ -73,6 +74,7 @@ export function RealmHud({
   onOpenFactions,
   onOpenShop,
   onOpenQuestBoard,
+  onOpenHub,
   onEnterPoi,
   onEndlessDelve,
   onOpenPause,
@@ -377,6 +379,16 @@ export function RealmHud({
               )}
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
+              {atSettlement && (
+                <button
+                  type="button"
+                  data-testid="realm-hud-hub-btn"
+                  onClick={onOpenHub}
+                  className="px-3 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-xs font-black text-white min-h-[44px] shadow-lg"
+                >
+                  🏘️ Adventuring Hub
+                </button>
+              )}
               {atSettlement && (
                 <button
                   type="button"

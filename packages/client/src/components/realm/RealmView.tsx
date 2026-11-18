@@ -25,6 +25,7 @@ import { RealmCampModal } from './RealmCampModal.js';
 import { RealmFactionsModal } from './RealmFactionsModal.js';
 import { RealmQuestJournalModal, type RealmQuestTab } from './RealmQuestJournalModal.js';
 import { RealmShopModal } from './RealmShopModal.js';
+import { RealmSettlementHubModal } from './RealmSettlementHubModal.js';
 import {
   type RealmCommand,
   type RealmExpeditionPreview,
@@ -61,6 +62,7 @@ type RealmModalMode =
   | 'camp'
   | 'shop'
   | 'quests'
+  | 'hub'
   | 'factions'
   | 'pause'
   | 'defeat'
@@ -442,6 +444,7 @@ export function RealmView({
               setQuestTab('board');
               setModalState('quests');
             }}
+            onOpenHub={() => setModalState('hub')}
             onEnterPoi={() => {
               if (currentPoi) {
                 dispatchRealm({ type: 'REALM_ENTER_POI', poiId: currentPoi.id });
@@ -498,6 +501,60 @@ export function RealmView({
             instanceId,
           });
         }}
+      />
+
+      {/* Settlement adventuring hub (SRD-808): inn / market / temple / board */}
+      <RealmSettlementHubModal
+        isOpen={modalState === 'hub'}
+        onClose={() => setModalState(null)}
+        session={session}
+        poi={currentPoi && isSettlementPoi(currentPoi) ? currentPoi : null}
+        onCamp={(restType) => {
+          setModalState(null);
+          dispatchRealm({ type: 'REALM_CAMP', restType });
+        }}
+        onHearRumor={(targetPoiId) => {
+          if (!currentPoi) return;
+          dispatchRealm({ type: 'REALM_HEAR_RUMOR', poiId: currentPoi.id, targetPoiId });
+        }}
+        onBuy={(itemId, quantity, characterId) => {
+          if (!currentPoi) return;
+          dispatchRealm({
+            type: 'REALM_BUY_ITEM',
+            poiId: currentPoi.id,
+            itemId,
+            quantity,
+            characterId,
+          });
+        }}
+        onSell={(characterId, instanceId) => {
+          if (!currentPoi) return;
+          dispatchRealm({
+            type: 'REALM_SELL_ITEM',
+            poiId: currentPoi.id,
+            characterId,
+            instanceId,
+          });
+        }}
+        onIdentify={(characterId, instanceId) => {
+          if (!currentPoi) return;
+          dispatchRealm({
+            type: 'REALM_IDENTIFY_ITEM',
+            poiId: currentPoi.id,
+            characterId,
+            instanceId,
+          });
+        }}
+        onCleanse={(characterId) => {
+          if (!currentPoi) return;
+          dispatchRealm({ type: 'REALM_TEMPLE_CLEANSE', poiId: currentPoi.id, characterId });
+        }}
+        onBless={() => {
+          if (!currentPoi) return;
+          dispatchRealm({ type: 'REALM_TEMPLE_BLESS', poiId: currentPoi.id });
+        }}
+        onAcceptQuest={(questId) => dispatchRealm({ type: 'REALM_ACCEPT_QUEST', questId })}
+        onAbandonQuest={(questId) => dispatchRealm({ type: 'REALM_ABANDON_QUEST', questId })}
       />
 
       {/* Quest board + journal modal */}

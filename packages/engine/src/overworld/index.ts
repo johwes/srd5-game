@@ -7,6 +7,7 @@ export * from './realm-schemas.js';
 export * from './factions.js';
 export * from './settlements.js';
 export * from './shops.js';
+export * from './hub.js';
 export * from './quests.js';
 export * from './battles.js';
 export * from './delves.js';

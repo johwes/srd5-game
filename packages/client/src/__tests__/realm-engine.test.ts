@@ -21,6 +21,7 @@ import {
   createRealmSession,
   describeRealmEvent,
   getCurrentPoi,
+  getHubRumors,
   getPartyList,
   getRealmDayBudget,
   isSettlementPoi,
@@ -617,6 +618,120 @@ describe('SRD-805: Realm session controller (Spec 06 Section 4)', () => {
       expect(loaded).not.toBeNull();
       expect(JSON.stringify(loaded!.session)).toBe(JSON.stringify(moved));
       expect(loaded!.worldName).toBe(moved.map.worldName);
+    });
+  });
+
+  describe('Settlement hub (SRD-808)', () => {
+    it('REALM_HEAR_RUMOR spends 1 gp and reveals the target POI', () => {
+      const session = bootstrap();
+      const start = getCurrentPoi(session);
+      expect(start && isSettlementPoi(start)).toBe(true);
+      const rumors = getHubRumors(session, start!.id);
+      expect(rumors.length).toBeGreaterThan(0);
+      const target = rumors[0]!;
+      const goldBefore = session.travel.gold;
+      const result = reduceRealm(session, {
+        type: 'REALM_HEAR_RUMOR',
+        poiId: start!.id,
+        targetPoiId: target.targetPoiId,
+      });
+      expect(result.session.travel.gold).toBe(goldBefore - target.costGp);
+      expect(result.session.revealedPoiIds).toContain(target.targetPoiId);
+      expect(result.events.some((e) => e.type === 'RUMOR_HEARD')).toBe(true);
+      expect(() =>
+        reduceRealm(result.session, {
+          type: 'REALM_HEAR_RUMOR',
+          poiId: start!.id,
+          targetPoiId: target.targetPoiId,
+        }),
+      ).toThrow(RealmError);
+      expect(mathRandomSpy).not.toHaveBeenCalled();
+    });
+
+    it('REALM_IDENTIFY_ITEM identifies an unidentified magic item for gold', () => {
+      const session = bootstrap();
+      const shopPoi = findShopSettlement(session);
+      const atShop = atPoi(session, shopPoi);
+      const heroId = atShop.partyOrder[0]!;
+      const withItem: RealmSessionState = {
+        ...atShop,
+        party: {
+          ...atShop.party,
+          [heroId]: {
+            ...atShop.party[heroId]!,
+            buildState: {
+              ...atShop.party[heroId]!.buildState!,
+              inventory: [
+                {
+                  instanceId: 'hub-test-cloak',
+                  itemId: 'cloak-of-protection',
+                  quantity: 1,
+                  isMagicItem: true,
+                  identified: false,
+                },
+              ],
+            },
+          },
+        },
+      };
+      const goldBefore = withItem.travel.gold;
+      const result = reduceRealm(withItem, {
+        type: 'REALM_IDENTIFY_ITEM',
+        poiId: shopPoi.id,
+        characterId: heroId,
+        instanceId: 'hub-test-cloak',
+      });
+      expect(result.session.travel.gold).toBeLessThan(goldBefore);
+      expect(
+        result.session.party[heroId]!.buildState!.inventory.find(
+          (i) => i.instanceId === 'hub-test-cloak',
+        )!.identified,
+      ).toBe(true);
+      expect(result.events.some((e) => e.type === 'ITEM_IDENTIFIED')).toBe(true);
+    });
+
+    it('REALM_TEMPLE_CLEANSE and REALM_TEMPLE_BLESS resolve through the temple', () => {
+      const session = bootstrap();
+      const templePoi = getSettlements(session.map).find((p) =>
+        p.services?.includes('temple'),
+      );
+      if (!templePoi) return;
+      const atTemple = atPoi(session, templePoi);
+      const heroId = atTemple.partyOrder[0]!;
+      const afflicted: RealmSessionState = {
+        ...atTemple,
+        party: {
+          ...atTemple.party,
+          [heroId]: { ...atTemple.party[heroId]!, conditions: ['poisoned'] },
+        },
+      };
+      const cleansed = reduceRealm(afflicted, {
+        type: 'REALM_TEMPLE_CLEANSE',
+        poiId: templePoi.id,
+        characterId: heroId,
+      });
+      expect(cleansed.session.party[heroId]!.conditions).not.toContain('poisoned');
+      expect(cleansed.events.some((e) => e.type === 'TEMPLE_CLEANSED')).toBe(true);
+
+      const blessed = reduceRealm(cleansed.session, {
+        type: 'REALM_TEMPLE_BLESS',
+        poiId: templePoi.id,
+      });
+      expect(blessed.events.some((e) => e.type === 'TEMPLE_BLESSED')).toBe(true);
+      expect(
+        getPartyList(blessed.session).filter((h) => !h.isDead).every((h) =>
+          (h.blessings ?? []).includes('temple_blessing'),
+        ),
+      ).toBe(true);
+      expect(mathRandomSpy).not.toHaveBeenCalled();
+    });
+
+    it('quest postings carry giver blurbs', () => {
+      const session = bootstrap();
+      for (const quest of session.questLog.quests) {
+        expect(quest.giverName && quest.giverName.length).toBeGreaterThan(0);
+        expect(quest.giverBlurb && quest.giverBlurb.length).toBeGreaterThan(0);
+      }
     });
   });
 });

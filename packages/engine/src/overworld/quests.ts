@@ -34,6 +34,36 @@ export const BOUNTY_TARGET_POOL = [
   'goblin', 'kobold', 'orc', 'bandit', 'bugbear', 'wolf', 'giant-spider', 'owlbear', 'skeleton', 'zombie',
 ] as const;
 
+/** Tavern-board quest givers (original flavor, no SRD Product Identity). */
+export const QUEST_GIVER_NAMES = [
+  'Bram Holloway', 'Sella Marrow', 'Old Fenwick', 'Mira Thistledown', 'Corvin Ash',
+  'Dame Ysolde', 'Tavernkeep Pell', 'Scout Rennick', 'Widow Harlowe', 'Brother Anselm',
+  'Captain Vey', 'Herbalist Wren',
+] as const;
+
+const QUEST_GIVER_BLURBS: Record<QuestKind, readonly string[]> = {
+  bounty: [
+    '“They took my brother on the east road. I will pay good coin to see the beasts driven off.”',
+    '“Merchants whisper about this menace over every ale. End it and the council will remember.”',
+    '“I have counted the tracks myself — too many to face alone. Help us.”',
+  ],
+  dungeon: [
+    '“Old maps mark a vault beneath those ruins. Bring back what the dark has kept.”',
+    '“None who entered have returned with both their wits and their purse. Prove me wrong.”',
+    '“The stones there remember an older war. Clear them and keep what you find.”',
+  ],
+  fetch: [
+    '“Lost on the road and dear to me — return it and drink free on my tab.”',
+    '“A simple errand for steady boots. The pay is honest, I swear it.”',
+    '“My caravan cannot wait. Whoever recovers the goods earns my thanks and coin.”',
+  ],
+  escort: [
+    '“The roads grow teeth after dusk. See my wagons through and name your price in ale.”',
+    '“Bandits watch the passes. Guard us and the guild will speak well of you.”',
+    '“My mules are brave but my guards are few. Walk with us.”',
+  ],
+};
+
 export interface QuestBoardGenerationResult {
   quests: OverworldQuest[];
   nextRngState: number;
@@ -106,6 +136,9 @@ export function generateQuestBoard(
     const reputationReward = 4 + difficultyTier * 3;
     const expiresDay = config.currentDay + 8 + Math.floor(nextFloat() * 13);
     const targetName = target?.name;
+    const giverName = pick(QUEST_GIVER_NAMES, nextFloat());
+    const blurbs = QUEST_GIVER_BLURBS[kind];
+    const giverBlurb = pick(blurbs, nextFloat());
 
     let title: string;
     let description: string;
@@ -138,6 +171,8 @@ export function generateQuestBoard(
       ...(target ? { targetPoiId: target.id } : {}),
       ...(targetName ? { targetName } : {}),
       ...(kind === 'bounty' ? { targetMonsterId: pick(BOUNTY_TARGET_POOL, nextFloat()) } : {}),
+      giverName,
+      giverBlurb,
       rewardGold: baseReward,
       reputationReward,
       difficultyTier,
