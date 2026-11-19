@@ -18,7 +18,9 @@ Featuring a pure deterministic rules engine, modern Baldur's Gate 3-inspired tac
   - [1. Typecheck](#1-typecheck)
   - [2. Unit & Integration Tests](#2-unit--integration-tests)
   - [3. Playwright End-to-End (E2E) Tests](#3-playwright-end-to-end-e2e-tests)
-  - [4. Automated Visual Playtest Bot](#4-automated-visual-playtest-bot)
+  - [4. Headless Soak & Invariant Playtest Bot](#4-headless-soak--invariant-playtest-bot)
+  - [5. Automated Visual Playtest Bot](#5-automated-visual-playtest-bot)
+  - [6. Full Verification Gate](#6-full-verification-gate)
 - [Building for Production](#building-for-production)
 - [Specifications & Documentation](#specifications--documentation)
 - [Legal & Licensing Compliance](#legal--licensing-compliance)
@@ -57,6 +59,8 @@ The **SRD 5.1 Tactical Turn-Based Dungeon Crawler** brings authentic tabletop 5t
    - Procedurally generated subterranean gauntlet. Battle through escalating dungeon depths, ration supplies, visit ancient floor shrines, and climb the permadeath score ladder.
 3. **The Arena (Skirmish & Testing)**:
    - Instant tactical skirmish mode. Customize hero party rosters, pick enemy monster waves (e.g. Goblins, Wolves, Bugbears), and test tactical builds.
+4. **The Realm (Multi-Nation War Campaign)**:
+   - Procedurally generated overworld sandbox where 3–4 rival nations wage a dynamic territory war. Choose a banner, run Special-Ops missions with tactical Approaches, engage classed-squad war battles, negotiate truces or hire sub-factions, and manage enemy territory patrols & threat escalation.
 
 ---
 
@@ -136,30 +140,65 @@ pnpm --filter @srd5/data test
 # Rules engine, combat lifecycle, AI, and math tests
 pnpm --filter @srd5/engine test
 
+# Transport & Fog-of-War projection tests
+pnpm --filter @srd5/transport test
+
 # Client component & state machine tests
 pnpm --filter @srd5/client test
+
+# Multiplayer server tests
+pnpm --filter @srd5/server test
 ```
 
 ### 3. Playwright End-to-End (E2E) Tests
 
-Headless browser tests that launch the client at native Steam Deck resolution (1280×800) and verify the complete user flow: Title Menu &rarr; Campaign Setup Wizard &rarr; Party Assembly &rarr; Dungeon Delve &rarr; Arena Skirmish &rarr; Roguelite mode:
+Headless browser tests that launch the client at native Steam Deck resolution (1280×800) and verify the complete user flow: Title Menu &rarr; Campaign Setup Wizard &rarr; Party Assembly &rarr; Dungeon Delve &rarr; Arena Skirmish &rarr; Roguelite mode &rarr; The Realm War Campaign:
 
 ```bash
+# Run the full Playwright E2E suite
 pnpm test:e2e
+
+# Run just the Realm War & Combat UI invariant playtest spec
+pnpm exec playwright test packages/client/e2e/realm-war-playtest.spec.ts
 ```
 
 To run Playwright interactively with the visual UI runner:
 
 ```bash
-pnpm --filter @srd5/client exec playwright test --ui
+pnpm exec playwright test --ui
 ```
 
-### 4. Automated Visual Playtest Bot
+### 4. Headless Soak & Invariant Playtest Bot
+
+A fast, deterministic headless playtest bot (`scripts/soak-playtest.ts`) that runs multi-seed campaigns through the authoritative engine without a browser. On every run it:
+
+- Deals **randomized 4-hero parties across all 12 SRD 5.1 classes** and SRD races (including darkvision & non-darkvision mixes).
+- Drives **accelerated XP and multi-level-up progression (Level 1 &rarr; Level 5)** through `validateLevelUp` and `applyLevelUp` / `applyBetweenCombatLevelUp` (exercising subclasses, ASIs, Extra Attack, and higher-level spells).
+- Proactively activates **class & racial features** (`USE_CLASS_FEATURE`), casts **diverse spells** (`DECLARE_CAST_SPELL`), and executes **melee/ranged weapon attacks** (`DECLARE_ATTACK`).
+- Enforces **gameplay invariants** on every turn: darkness/darkvision Fog-of-War visibility (`projectPlayerView`), concentration buff cleanup, cube AOE anchor geometry, finite HP, valid active turn ownership, and Realm War diplomacy/patrol/threat decay rules.
+
+```bash
+# Default 3-seed soak run (~30s, covers all 12 SRD classes)
+pnpm playtest:soak
+
+# Larger multi-seed stress run (pass any seed count, e.g. 20)
+pnpm playtest:soak 20
+```
+
+### 5. Automated Visual Playtest Bot
 
 An automated bot (`scripts/playtest.ts`) that launches a headless browser, interacts with all major views, casts spells, executes melee attacks, triggers movement, and captures high-resolution screenshots to `artifacts/playtest/`:
 
 ```bash
 pnpm run playtest
+```
+
+### 6. Full Verification Gate
+
+To run the complete pre-release verification pipeline (typecheck, all unit/integration tests, production build, and Playwright E2E):
+
+```bash
+pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e
 ```
 
 ---
@@ -190,6 +229,7 @@ The project's architectural decisions, rules formulas, and backlog are thoroughl
   - `05-multiplayer-and-ui.md` — Fog-of-war projection, transport, and PixiJS viewport.
   - `06-game-modes-and-progression.md` — Arena, Deep Descent, and Overworld specs.
   - `07-main-menu-and-campaign-launcher.md` — Front-end shell & Steam Deck layout.
+  - `10-realm-war-campaign.md` — Multi-Nation War Campaign, War Power simulation, Special-Ops missions, classed squads, and diplomacy.
 
 ---
 
