@@ -214,6 +214,14 @@ test.describe('SRD-605: Steam-Ready Title Screen & New Game Campaign Setup E2E S
     // Verify the Realm overworld view mounted
     await expect(page.getByTestId('realm-view-container')).toBeVisible({ timeout: 10000 });
 
+    // SRD-1106: new Realm war campaigns launch with the banner-pick modal.
+    // Select a nation to dismiss it before using the Realm HUD.
+    const nationModal = page.getByTestId('realm-nation-select-modal');
+    if (await nationModal.isVisible()) {
+      await page.getByTestId('realm-nation-option-dawn-crown').click();
+      await expect(nationModal).not.toBeVisible();
+    }
+
     // The unbounded Endless Delve quick option remains launchable from the Realm.
     await expect(page.getByTestId('realm-hud-endless-delve-btn')).toBeVisible();
     await page.getByTestId('realm-hud-endless-delve-btn').click();
