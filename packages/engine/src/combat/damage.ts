@@ -432,12 +432,35 @@ export function applyDamage(options: ApplyDamageOptions): ApplyDamageResult {
     }
   }
 
+  let nextInitiativeOrder = state.initiativeOrder;
+  let nextActiveCombatantIndex = state.activeCombatantIndex;
+
   if (concentrationBroken) {
+    const brokenConcTargets = new Set(target.concentratingOn?.targetEntityIds ?? []);
+    const despawnedSummonIds = new Set<string>();
+
     for (const [cid, comb] of Object.entries(nextCombatants)) {
+      // Despawn concentration-linked summons owned by the caster whose concentration broke
+      if (comb.isSummon && comb.summonedByEntityId === target.id && comb.summonConcentrationLinked) {
+        despawnedSummonIds.add(cid);
+        delete nextCombatants[cid];
+        events.push({
+          type: 'SUMMON_EXPIRED',
+          entityId: cid,
+          summonId: comb.summonId ?? cid,
+          reason: 'concentration',
+          sourceName: comb.summonSourceName,
+        });
+        continue;
+      }
+
+      let modified = false;
+      let cConds = [...comb.conditions];
+      let remConditions = comb.activeConditions;
+      let remEffects = comb.activeEffects;
+
       if (comb.activeConditions) {
-        let modified = false;
-        let cConds = [...comb.conditions];
-        const rem = comb.activeConditions.filter((ac) => {
+        remConditions = comb.activeConditions.filter((ac) => {
           if (ac.sourceEntityId === target.id && ac.requiresConcentration) {
             modified = true;
             cConds = cConds.filter((c) => c !== ac.conditionId);
@@ -451,14 +474,37 @@ export function applyDamage(options: ApplyDamageOptions): ApplyDamageResult {
           }
           return true;
         });
-        if (modified) {
-          nextCombatants[cid] = {
-            ...comb,
-            conditions: cConds,
-            activeConditions: rem,
-          };
-        }
       }
+
+      if (comb.activeEffects) {
+        remEffects = comb.activeEffects.filter((ae) => {
+          const matchesCaster =
+            ae.sourceEntityId === target.id ||
+            (ae.sourceEntityId === undefined && brokenConcTargets.has(comb.id));
+          if (ae.requiresConcentration && matchesCaster) {
+            modified = true;
+            return false;
+          }
+          return true;
+        });
+      }
+
+      if (modified) {
+        nextCombatants[cid] = {
+          ...comb,
+          conditions: cConds,
+          activeConditions: remConditions,
+          activeEffects: remEffects,
+        };
+      }
+    }
+
+    if (despawnedSummonIds.size > 0) {
+      nextInitiativeOrder = state.initiativeOrder.filter((e) => !despawnedSummonIds.has(e.entityId));
+      const removedBefore = state.initiativeOrder
+        .slice(0, nextActiveCombatantIndex)
+        .filter((e) => despawnedSummonIds.has(e.entityId)).length;
+      nextActiveCombatantIndex = Math.max(0, nextActiveCombatantIndex - removedBefore);
     }
   }
 
@@ -480,6 +526,8 @@ export function applyDamage(options: ApplyDamageOptions): ApplyDamageResult {
     outcome: victoryOutcome,
     combatants: nextCombatants,
     hazardZones: nextHazardZones,
+    initiativeOrder: nextInitiativeOrder,
+    activeCombatantIndex: nextActiveCombatantIndex,
     rngState: currentState,
   };
 

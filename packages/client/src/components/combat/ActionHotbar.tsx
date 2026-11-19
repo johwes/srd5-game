@@ -21,37 +21,98 @@ import type {
 } from './types.js';
 
 /**
+ * Substitutes `@variable` placeholders in spell dice/amount formulas with the
+ * active caster's actual derived stats for readable tooltips (e.g.,
+ * `1d4 + @spellMod` -> `1d4 + 3` for a WIS 16 Cleric).
+ */
+export function resolveSpellFormulaForTooltip(
+  formula: string,
+  caster?: PlayerViewCombatant | null,
+  slotLevel?: number,
+): string {
+  const sheet = caster?.characterSheet;
+  const primarySpellClass = sheet?.spellcasting?.classes?.[0];
+  const primaryAbility = sheet?.spellcasting?.primaryAbility ?? primarySpellClass?.ability;
+  const spellMod =
+    primarySpellClass?.abilityModifier ??
+    (primaryAbility && sheet?.abilities?.[primaryAbility]
+      ? sheet.abilities[primaryAbility].modifier
+      : undefined);
+  const spellSaveDc =
+    sheet?.spellcasting?.primarySpellSaveDc ?? primarySpellClass?.spellSaveDc;
+
+  const vars: Record<string, number | undefined> = {
+    spellMod,
+    spellcastingMod: spellMod,
+    spellSaveDC: spellSaveDc,
+    spellSaveDc,
+    slotLevel,
+    casterMaxHp: caster?.maxHp ?? sheet?.maxHp,
+    proficiencyBonus: sheet?.proficiencyBonus,
+    strMod: sheet?.abilities?.str?.modifier,
+    dexMod: sheet?.abilities?.dex?.modifier,
+    conMod: sheet?.abilities?.con?.modifier,
+    intMod: sheet?.abilities?.int?.modifier,
+    wisMod: sheet?.abilities?.wis?.modifier,
+    chaMod: sheet?.abilities?.cha?.modifier,
+  };
+
+  let out = formula.replace(/@([a-zA-Z0-9_]+)/g, (match, name: string) => {
+    const val = vars[name];
+    return val !== undefined ? String(val) : match;
+  });
+
+  // Clean up "+ -N", "+ 0", and "- 0" after substitution
+  out = out.replace(/\s*\+\s*-(\d+)/g, ' - $1');
+  out = out.replace(/\s*[+-]\s*0\b/g, '');
+  return out.trim();
+}
+
+/**
  * Summarizes a spell's executable effect pipeline into BG3-tooltip style
  * one-line effect descriptions (reference: screenshots 085 / 086).
  */
 function collectSpellEffectLines(
   steps: readonly EffectStepSpec[] | undefined,
+  caster?: PlayerViewCombatant | null,
+  slotLevel?: number,
   depth = 0,
 ): string[] {
   if (!steps || depth > 2) return [];
   const lines: string[] = [];
+  const saveDc =
+    caster?.characterSheet?.spellcasting?.primarySpellSaveDc ??
+    caster?.characterSheet?.spellcasting?.classes?.[0]?.spellSaveDc;
   for (const step of steps) {
     switch (step.step) {
       case 'deal_damage':
         lines.push(
-          `Deal ${step.diceFormula} ${step.damageType} damage${step.halfOnSaveSuccess ? ' (half on successful save)' : ''}.`,
+          `Deal ${resolveSpellFormulaForTooltip(step.diceFormula, caster, slotLevel)} ${step.damageType} damage${step.halfOnSaveSuccess ? ' (half on successful save)' : ''}.`,
         );
         break;
       case 'saving_throw':
-        lines.push(`Saving throw: ${step.ability.toUpperCase()} vs your spell save DC.`);
-        lines.push(...collectSpellEffectLines(step.onFail, depth + 1));
-        lines.push(...collectSpellEffectLines(step.onSuccess, depth + 1));
+        lines.push(
+          saveDc !== undefined
+            ? `Saving throw: ${step.ability.toUpperCase()} vs DC ${saveDc}.`
+            : `Saving throw: ${step.ability.toUpperCase()} vs your spell save DC.`,
+        );
+        lines.push(...collectSpellEffectLines(step.onFail, caster, slotLevel, depth + 1));
+        lines.push(...collectSpellEffectLines(step.onSuccess, caster, slotLevel, depth + 1));
         break;
       case 'attack_roll':
         lines.push(`Spell attack roll (${step.attackType.replace(/_/g, ' ')}).`);
-        lines.push(...collectSpellEffectLines(step.onHit, depth + 1));
-        lines.push(...collectSpellEffectLines(step.onMiss, depth + 1));
+        lines.push(...collectSpellEffectLines(step.onHit, caster, slotLevel, depth + 1));
+        lines.push(...collectSpellEffectLines(step.onMiss, caster, slotLevel, depth + 1));
         break;
       case 'heal':
-        lines.push(`Restore ${step.diceFormula} hit points.`);
+        lines.push(
+          `Restore ${resolveSpellFormulaForTooltip(step.diceFormula, caster, slotLevel)} hit points.`,
+        );
         break;
       case 'grant_temp_hp':
-        lines.push(`Grant ${step.amountFormula} temporary hit points.`);
+        lines.push(
+          `Grant ${resolveSpellFormulaForTooltip(step.amountFormula, caster, slotLevel)} temporary hit points.`,
+        );
         break;
       case 'apply_condition':
         lines.push(`Inflict ${String(step.conditionId).replace(/-/g, ' ')}.`);
@@ -80,10 +141,14 @@ function collectSpellEffectLines(
   return lines;
 }
 
-function summarizeSpellEffects(spell: SpellData): string[] {
+function summarizeSpellEffects(
+  spell: SpellData,
+  caster?: PlayerViewCombatant | null,
+  slotLevel?: number,
+): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const line of collectSpellEffectLines(spell.effects)) {
+  for (const line of collectSpellEffectLines(spell.effects, caster, slotLevel)) {
     if (!seen.has(line)) {
       seen.add(line);
       out.push(line);
@@ -797,7 +862,7 @@ export function ActionHotbar({
                           badge={isCantrip ? 'Cantrip' : `Level ${spell.level}`}
                           subtitle={`${spell.school} · ${spell.castingTime}`}
                           effectLines={[
-                            ...summarizeSpellEffects(spell),
+                            ...summarizeSpellEffects(spell, activeCombatant, defaultSlot),
                             `Target: ${targetingSummary.previewLabel}`,
                             `Range: ${formatSpellRange(spell.targeting)}`,
                           ]}

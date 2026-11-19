@@ -667,4 +667,91 @@ describe('SRD-308: All 15 SRD 5.1 Conditions', () => {
     expect(updatedHero.conditions.includes('restrained')).toBe(false);
     expect(res.events.some((e) => e.type === 'CONDITION_REMOVED' && e.conditionId === 'restrained')).toBe(true);
   });
+
+  it('removes concentration-linked activeEffects (e.g. Bless) from all allies when caster fails concentration save in applyDamage', () => {
+    const cleric = makeTestCombatant({
+      id: 'cleric-1',
+      name: 'Bram Ironheart',
+      side: 'party',
+      currentHp: 20,
+      maxHp: 20,
+      concentratingOn: {
+        sourceId: 'bless',
+        sourceName: 'Bless',
+        targetEntityIds: ['ally-1', 'ally-2'],
+        remainingRounds: 10,
+      },
+    });
+    const ally1 = makeTestCombatant({
+      id: 'ally-1',
+      name: 'Lyra Silversun',
+      side: 'party',
+      activeEffects: [
+        {
+          effectId: 'bless',
+          name: 'Bless',
+          sourceEntityId: 'cleric-1',
+          requiresConcentration: true,
+          remainingRounds: 10,
+          modifiers: [],
+        },
+      ],
+    });
+    const ally2 = makeTestCombatant({
+      id: 'ally-2',
+      name: 'Vex Tealeaf',
+      side: 'party',
+      activeEffects: [
+        {
+          effectId: 'bless',
+          name: 'Bless',
+          sourceEntityId: 'cleric-1',
+          requiresConcentration: true,
+          remainingRounds: 10,
+          modifiers: [],
+        },
+        {
+          effectId: 'non-conc-buff',
+          name: 'Mage Armor',
+          sourceEntityId: 'ally-1',
+          requiresConcentration: false,
+          remainingRounds: 100,
+          modifiers: [],
+        },
+      ],
+    });
+
+    const state: CombatState = {
+      encounterId: 'enc-bless',
+      round: 1,
+      phase: 'active_turn',
+      initiativeOrder: [
+        { entityId: cleric.id, initiative: 15, naturalRoll: 10, dexterityScore: 10, tieBreaker: 0 },
+        { entityId: ally1.id, initiative: 12, naturalRoll: 10, dexterityScore: 14, tieBreaker: 0 },
+        { entityId: ally2.id, initiative: 10, naturalRoll: 10, dexterityScore: 16, tieBreaker: 0 },
+      ],
+      activeCombatantIndex: 0,
+      activeCombatantId: cleric.id,
+      turnBudget: null,
+      combatants: { [cleric.id]: cleric, [ally1.id]: ally1, [ally2.id]: ally2 },
+      surprisedCombatantIds: [],
+      outcome: 'in_progress',
+      rngState: 42,
+    };
+
+    // High raw damage ensures DC > 20 so CON save fails deterministically
+    const res = applyDamage({
+      state,
+      targetId: cleric.id,
+      rawAmount: 50,
+      damageType: 'slashing',
+    });
+
+    expect(res.concentrationBroken).toBe(true);
+    expect(res.state.combatants['cleric-1']?.concentratingOn).toBeUndefined();
+    expect(res.state.combatants['ally-1']?.activeEffects ?? []).toHaveLength(0);
+    expect(res.state.combatants['ally-2']?.activeEffects?.map((e) => e.effectId)).toEqual([
+      'non-conc-buff',
+    ]);
+  });
 });

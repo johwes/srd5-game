@@ -1257,7 +1257,8 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         const newEffect = {
           effectId: step.effectId,
           name: step.name,
-          requiresConcentration: step.requiresConcentration,
+          sourceEntityId: nextCaster.id,
+          requiresConcentration: step.requiresConcentration || Boolean(spell.concentration),
           remainingRounds: step.durationRounds,
           modifiers: step.modifiers,
         };
