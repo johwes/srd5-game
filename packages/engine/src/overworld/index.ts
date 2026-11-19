@@ -13,3 +13,4 @@ export * from './quest-chains.js';
 export * from './battles.js';
 export * from './delves.js';
 export * from './war.js';
+export * from './war-squads.js';

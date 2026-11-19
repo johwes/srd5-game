@@ -10,6 +10,7 @@ import { isIncapacitated } from '../combat/conditions.js';
 import type { GameCommand, GameEvent, GameState } from '../state/types.js';
 import { reduceGame } from '../state/reducer.js';
 import type { AiPlan, PlanAiTurnOptions } from './types.js';
+import { planClassKitTurn } from './class-kits.js';
 import {
   estimateAverageDamage,
   estimateHitProbability,
@@ -193,6 +194,23 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       actor.characterSheet?.featureIds?.includes('pack-tactics') ||
       actor.characterSheet?.traitIds?.includes('pack-tactics'),
   );
+
+  // SRD-1102 — Class-kit tactical AI (Spec 10 §4.1): war-squad classed NPCs
+  // (fighter/wizard/cleric/rogue) use real 5e features & spells. An explicit
+  // archetypeOverride still wins so scripted encounters can force a role.
+  if (!archetypeOverride && actor.characterSheet) {
+    const kitPlan = planClassKitTurn({
+      actor,
+      state,
+      grid,
+      hostiles: allHostiles,
+      allies: allAllies,
+      gridCreatures,
+      remainingMovement,
+      dispositionMatrix,
+    });
+    if (kitPlan) return kitPlan;
+  }
 
   // =========================================================================
   // ARCHETYPE: ARTILLERY / AOE CASTER
