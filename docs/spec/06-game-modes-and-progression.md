@@ -325,6 +325,9 @@ Arena (skirmish lab).
    consistent with §3.2. Rations are purchasable in towns with party gold.
    Run scores and graveyard entries persist per delve.
 
+### 4.4 Multi-Nation War & Special-Ops Campaign (Epic 11)
+The strategic campaign layer for **The Realm**—randomized Good/Neutral/Evil warring nations, War Power Dominance win/loss, living strategic POIs (rebuilt bridges, contested neutral mines, cursed domestic mines, multi-wave POI defenses), class-based dynamic-CR enemy squads, POI-specific 5e Approach dialogues, Diplomacy/Truces/Sub-Faction patronage, and enemy territory patrols with natural Threat decay—is specified in full in **[10-realm-war-campaign.md](file:///home/jwesterl/ai/srd5-game/docs/spec/10-realm-war-campaign.md)**.
+
 ---
 
 ## 5. Staging Roadmap & Implementation Order
