@@ -12,6 +12,7 @@
     "test:e2e": "playwright test",
     "ralph": "bash scripts/ralph-loop.sh",
     "playtest": "tsx scripts/playtest.ts",
+    "playtest:soak": "tsx scripts/soak-playtest.ts",
     "dev": "pnpm --filter @srd5/client run dev"
   },
   "pnpm": {
