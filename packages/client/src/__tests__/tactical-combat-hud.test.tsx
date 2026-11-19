@@ -617,7 +617,7 @@ describe('SRD-406: React Tactical Combat HUD', () => {
       expect(onEndTurn).toHaveBeenCalledTimes(1);
     });
 
-    it('honors parent-controlled log/dice visibility (Arena mode)', () => {
+    it('owns log/dice visibility with parent-provided defaults and toggle notifications (Arena mode)', () => {
       const { viewState } = createMockPlayerViewState();
       const onToggleLog = vi.fn();
       const onToggleDice = vi.fn();
@@ -626,31 +626,32 @@ describe('SRD-406: React Tactical Combat HUD', () => {
         <TacticalCombatHud
           viewState={viewState}
           compendium={defaultCompendium}
-          showCombatLog={false}
-          showDiceTray={false}
+          defaultShowCombatLog={false}
+          defaultShowDiceTray={false}
           onToggleCombatLog={onToggleLog}
           onToggleDiceTray={onToggleDice}
         />,
       );
 
-      // Closed by parent: no right panel rendered
+      // Closed initially: no right panel rendered
       expect(screen.queryByTestId('combat-hud-right-panel')).toBeNull();
 
-      // Toggle buttons delegate to the parent instead of internal state
+      // Toggles flip internal state AND notify the parent with the new value
       fireEvent.click(screen.getByTestId('combat-hud-toggle-log-btn'));
       expect(onToggleLog).toHaveBeenCalledTimes(1);
+      expect(onToggleLog).toHaveBeenCalledWith(true);
       fireEvent.click(screen.getByTestId('combat-hud-toggle-dice-btn'));
       expect(onToggleDice).toHaveBeenCalledTimes(1);
-      // Internal state must not open the panel behind the parent's back
-      expect(screen.queryByTestId('combat-hud-right-panel')).toBeNull();
+      expect(onToggleDice).toHaveBeenCalledWith(true);
+      expect(screen.getByTestId('combat-hud-right-panel')).toBeDefined();
 
-      // Parent opens both: panel renders with log and dice tray
+      // Re-rendering with open defaults keeps the (already open) panel up
       rerender(
         <TacticalCombatHud
           viewState={viewState}
           compendium={defaultCompendium}
-          showCombatLog
-          showDiceTray
+          defaultShowCombatLog
+          defaultShowDiceTray
           onToggleCombatLog={onToggleLog}
           onToggleDiceTray={onToggleDice}
         />,

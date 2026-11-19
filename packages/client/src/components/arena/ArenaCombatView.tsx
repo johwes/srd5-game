@@ -19,6 +19,7 @@ import {
 } from '@srd5/engine';
 import { LocalTransport, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
+import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
 import { TacticalCombatHud, TargetingCommitBar, useManualTargeting } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
 import {
@@ -88,13 +89,10 @@ export function ArenaCombatView({
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // HUD sidebar panels (Log & Dice Tray)
-  const [showLog, setShowLog] = useState(false);
-  const [showDiceTray, setShowDiceTray] = useState(false);
-
+  // HUD sidebar panels (Log & Dice Tray) are owned by TacticalCombatHud;
+  // the Arena only feeds inspected rolls (the HUD auto-opens the tray).
   const handleInspectRoll = (roll: DiceRollRecord) => {
     setActiveRoll(roll);
-    setShowDiceTray(true);
   };
 
   const showFeedback = useCallback((msg: string) => {
@@ -250,15 +248,17 @@ export function ArenaCombatView({
   const cancelPendingTarget = manualTargeting.cancelPendingTarget;
 
   // SRD-410: Esc cancels armed targeting (turn-change reset lives in the hook).
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        cancelPendingTarget();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [cancelPendingTarget]);
+  // Routed through the shared Escape stack so modals and the pause menu win.
+  useEscHandler(
+    () => {
+      cancelPendingTarget();
+      return true;
+    },
+    {
+      priority: ESC_PRIORITY.targeting,
+      active: manualTargeting.pendingTarget.kind !== 'none',
+    },
+  );
 
   // Targeting-aware Character Sheet shortcut ('C' / 'I'): opens the sheet for
   // the currently selected combatant instead of always the first party member.
@@ -583,10 +583,6 @@ export function ArenaCombatView({
         events={events}
         activeRoll={activeRoll}
         rollHistory={rollHistory}
-        showCombatLog={showLog}
-        showDiceTray={showDiceTray}
-        onToggleCombatLog={() => setShowLog((prev) => !prev)}
-        onToggleDiceTray={() => setShowDiceTray((prev) => !prev)}
         onInspectRoll={handleInspectRoll}
         title={config.name}
         subtitle={

@@ -14,6 +14,7 @@ import {
   saveAppSettings,
   resetAppSettings,
 } from '../../persistence/settingsPersistence.js';
+import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
 import type {
   PauseMenuModalProps,
   PauseMenuSubView,
@@ -66,27 +67,21 @@ export function PauseMenuModal({
     }
   }, [isOpen, settingsStorage, reloadSlots]);
 
-  // Keyboard navigation: Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        if (subView === 'main') {
-          onClose();
-        } else {
-          setSubView('main');
-          setStatusMessage(null);
-          setErrorMessage(null);
-        }
+  // Keyboard navigation: Escape backs out of subviews or closes the menu
+  // (BG3 layering via the shared useEscStack — the topmost layer wins).
+  useEscHandler(
+    () => {
+      if (subView === 'main') {
+        onClose();
+      } else {
+        setSubView('main');
+        setStatusMessage(null);
+        setErrorMessage(null);
       }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, subView, onClose]);
+      return true;
+    },
+    { priority: ESC_PRIORITY.modal, active: isOpen },
+  );
 
   if (!isOpen) return null;
 

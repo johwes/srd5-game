@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { GameIcon } from '../../canvas/assets/index.js';
 import { SRD_LEGAL_ATTRIBUTION, SRD_VERSION } from '@srd5/data';
 import { getDailyDescentDateString, getDailyDescentSeed } from '@srd5/engine';
 import { getTransportInfo } from '@srd5/transport';
@@ -168,7 +169,7 @@ export function TitleMenuView({
               onClick={onOpenArena}
               className="min-h-[44px] px-3.5 py-1.5 rounded-lg border border-amber-900/60 bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-amber-300 transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none"
             >
-              ⚔️ Arena Skirmish
+              <GameIcon name="crossed-swords" category="raw" size={14} /> Arena Skirmish
             </button>
           )}
           <button
@@ -177,7 +178,7 @@ export function TitleMenuView({
             onClick={() => setIsCreditsOpen(true)}
             className="min-h-[44px] px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-slate-300 transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none"
           >
-            📜 Credits &amp; Legal
+            <GameIcon name="scroll-unfurled" category="raw" size={14} /> Credits &amp; Legal
           </button>
           <button
             type="button"
@@ -322,13 +323,20 @@ export function TitleMenuView({
             className="w-full min-h-[50px] rounded-xl px-6 py-2.5 border border-slate-800 bg-slate-900/70 hover:bg-slate-800 hover:border-slate-700 text-slate-200 transition-colors flex items-center justify-between text-left focus:ring-2 focus:ring-amber-400 focus:outline-none cursor-pointer"
           >
             <span className="text-sm sm:text-base font-semibold tracking-wide flex items-center gap-2">
-              <span>💾</span>
+              <span className="flex items-center"><GameIcon name="tied-scroll" category="raw" size={16} /></span>
               <span>Load Game</span>
             </span>
             <span className="text-xs text-slate-500">Manage Save Slots</span>
           </button>
 
-          {/* CHARACTER VAULT & BUILDER */}
+          {/* TOOLS & EXTRAS (secondary verbs: roster, builder, offline manual) */}
+          <section aria-label="Tools and extras" className="space-y-2 pt-2">
+            <div className="flex items-center gap-3 text-slate-600" aria-hidden="true">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-700/60" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Tools &amp; Extras</span>
+              <div className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-700/60" />
+            </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
             <button
               type="button"
@@ -350,7 +358,7 @@ export function TitleMenuView({
               className="min-h-[48px] rounded-xl px-4 py-2.5 border border-slate-800 bg-slate-900/70 hover:bg-slate-800 hover:border-amber-600/50 text-slate-200 transition-colors flex items-center justify-between text-left focus:ring-2 focus:ring-amber-400 focus:outline-none cursor-pointer"
             >
               <span className="text-xs sm:text-sm font-semibold flex items-center gap-1.5">
-                <span>🎲</span>
+                <span className="flex items-center"><GameIcon name="dice-shield" category="raw" size={16} /></span>
                 <span>Roll New Hero</span>
               </span>
               <span className="text-[10px] text-amber-400/90 font-medium">7-Step</span>
@@ -365,11 +373,12 @@ export function TitleMenuView({
             className="w-full min-h-[48px] rounded-xl px-6 py-2.5 border border-slate-800 bg-slate-900/60 hover:bg-slate-800 hover:border-slate-700 text-slate-300 transition-colors flex items-center justify-between text-left focus:ring-2 focus:ring-amber-400 focus:outline-none cursor-pointer"
           >
             <span className="text-xs sm:text-sm font-semibold flex items-center gap-2">
-              <span>📖</span>
+              <span className="flex items-center"><GameIcon name="scroll-unfurled" category="raw" size={16} /></span>
               <span>SRD 5.1 Rules Compendium</span>
             </span>
             <span className="text-[11px] text-slate-500">Offline Manual</span>
           </button>
+          </section>
         </div>
       </main>
 

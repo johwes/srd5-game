@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { GameIcon } from '../../canvas/assets/index.js';
 import type { OverworldPOI, TravelPace, WarDiplomacyState, WarState } from '@srd5/engine';
 import {
   TRAVEL_PACE_PROFILES,
@@ -32,9 +33,9 @@ const TIME_ICONS: Record<string, string> = {
 };
 
 const PACE_LABELS: Record<TravelPace, string> = {
-  slow: '🐢 Slow',
-  normal: '🚶 Normal',
-  fast: '🏃 Fast',
+  slow: 'Slow',
+  normal: 'Normal',
+  fast: 'Fast',
 };
 
 export interface RealmHudProps {
@@ -92,6 +93,7 @@ export function RealmHud({
   onOpenNationSelect,
   onOpenWarRoom,
 }: RealmHudProps) {
+  const [expeditionOpen, setExpeditionOpen] = useState(true);
   const { travel, map } = session;
   const warState = war ?? session.war ?? null;
   const diplomacyState = diplomacy ?? session.diplomacy ?? null;
@@ -156,44 +158,26 @@ export function RealmHud({
             className="px-2 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30"
             title="Movement points remaining today"
           >
-            🥾 {travel.travelPointsRemaining}/{dailyPoints} MP
+            <GameIcon name="sprint" category="raw" size={12} /> {travel.travelPointsRemaining}/{dailyPoints} MP
           </span>
           <span
             data-testid="realm-hud-rations"
             className="px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
           >
-            🍖 {travel.rations}
+            <GameIcon name="berries-bowl" category="raw" size={12} /> {travel.rations}
           </span>
           <span
             data-testid="realm-hud-gold"
             className="px-2 py-1 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/30"
           >
-            💰 {travel.gold} gp
+            <GameIcon name="coins" category="raw" size={12} /> {travel.gold} gp
           </span>
           <span
             data-testid="realm-hud-miles"
             className="px-2 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700"
           >
-            🧭 {travel.milesTraveled} mi
+            {travel.milesTraveled} mi
           </span>
-          <div className="flex rounded-lg bg-slate-900 p-0.5 border border-slate-800" role="group" aria-label="Travel pace">
-            {(Object.keys(TRAVEL_PACE_PROFILES) as TravelPace[]).map((pace) => (
-              <button
-                key={pace}
-                type="button"
-                data-testid={`realm-hud-pace-${pace}`}
-                aria-pressed={travel.travelPace === pace}
-                onClick={() => onSetPace(pace)}
-                className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors min-h-[32px] ${
-                  travel.travelPace === pace
-                    ? 'bg-amber-500 text-slate-950'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                {PACE_LABELS[pace]}
-              </button>
-            ))}
-          </div>
         </div>
       </header>
 
@@ -204,7 +188,7 @@ export function RealmHud({
       >
         {warState ? (
           <>
-            <span className="text-[11px] font-bold text-amber-300">⚔️ War</span>
+            <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1"><GameIcon name="crossed-swords" category="raw" size={12} /> War</span>
             {warState.nationOrder.map((nationId) => {
               const nation = warState.nations[nationId]!;
               const total = getWarNationTotal(nation);
@@ -238,7 +222,7 @@ export function RealmHud({
                     : 'bg-orange-500/15 text-orange-300 border-orange-500/40'
                 }`}
               >
-                🔥 {getWarThreatTier(maxThreatEntry.level)} {maxThreatEntry.level}
+                <GameIcon name="burning-skull" category="raw" size={12} /> {getWarThreatTier(maxThreatEntry.level)} {maxThreatEntry.level}
               </span>
             )}
             {onOpenWarRoom && (
@@ -248,7 +232,7 @@ export function RealmHud({
                 onClick={onOpenWarRoom}
                 className="ml-auto px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-500 text-[11px] font-black text-slate-950 min-h-[32px]"
               >
-                ⚔️ War Room
+                <GameIcon name="crossed-swords" category="raw" size={14} /> War Room
               </button>
             )}
           </>
@@ -264,7 +248,7 @@ export function RealmHud({
                 onClick={onOpenNationSelect}
                 className="ml-auto px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-500 text-[11px] font-black text-slate-950 min-h-[32px]"
               >
-                ⚔️ Choose Banner
+                <GameIcon name="crossed-swords" category="raw" size={14} /> Choose Banner
               </button>
             )}
           </>
@@ -319,7 +303,7 @@ export function RealmHud({
               className="mb-2 rounded-lg border border-sky-500/40 bg-sky-950/60 p-2"
             >
               <h3 className="text-[10px] font-bold uppercase tracking-wider text-sky-300 mb-1">
-                🧭 Expedition Preview
+                Expedition Preview
               </h3>
               {expeditionPreviewError ? (
                 <p
@@ -349,7 +333,7 @@ export function RealmHud({
                     data-testid="realm-hud-expedition-preview-rations"
                     className="text-right font-mono"
                   >
-                    🍖 {expeditionPreview.rations}
+                    <GameIcon name="berries-bowl" category="raw" size={12} /> {expeditionPreview.rations}
                   </dd>
                   <dt className="text-slate-400">Arrival</dt>
                   <dd
@@ -390,6 +374,47 @@ export function RealmHud({
           data-testid="realm-hud-action-bar"
           className="pointer-events-auto flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-950/90 backdrop-blur-md p-2 shadow-xl"
         >
+          {/* Expedition cluster (BG3 contextual grouping): pace + field travel verbs */}
+          <div
+            data-testid="realm-hud-expedition-group"
+            className="flex items-stretch gap-1.5 rounded-lg border border-slate-700/70 bg-slate-900/50 p-1"
+          >
+            <button
+              type="button"
+              data-testid="realm-hud-expedition-toggle"
+              onClick={() => setExpeditionOpen((prev) => !prev)}
+              aria-expanded={expeditionOpen}
+              aria-label={expeditionOpen ? 'Collapse expedition actions' : 'Expand expedition actions'}
+              title="Travel pace and field actions"
+              className="px-1.5 rounded-md text-slate-400 hover:text-amber-300 hover:bg-slate-800 text-[11px] font-bold transition-colors min-h-[44px]"
+            >
+              {expeditionOpen ? '◀' : '🧭'}
+            </button>
+            {expeditionOpen && (
+              <>
+                <div className="flex flex-col justify-center gap-0.5">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 px-1">
+                    Expedition
+                  </span>
+                  <div className="flex rounded-lg bg-slate-900 p-0.5 border border-slate-800" role="group" aria-label="Travel pace">
+                    {(Object.keys(TRAVEL_PACE_PROFILES) as TravelPace[]).map((pace) => (
+                      <button
+                        key={pace}
+                        type="button"
+                        data-testid={`realm-hud-pace-${pace}`}
+                        aria-pressed={travel.travelPace === pace}
+                        onClick={() => onSetPace(pace)}
+                        className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors min-h-[32px] ${
+                          travel.travelPace === pace
+                            ? 'bg-amber-500 text-slate-950'
+                            : 'text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        {PACE_LABELS[pace]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
           <button
             type="button"
             data-testid="realm-hud-forage-btn"
@@ -397,7 +422,7 @@ export function RealmHud({
             className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-emerald-300 min-h-[44px]"
             title="Spend 1 MP to forage for rations (Survival check)"
           >
-            🌿 Forage
+            <GameIcon name="chestnut-leaf" category="raw" size={14} /> Forage
           </button>
           <button
             type="button"
@@ -407,7 +432,7 @@ export function RealmHud({
             className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-orange-300 min-h-[44px] disabled:opacity-40 disabled:cursor-not-allowed"
             title="Push beyond dusk for +2 MP today — each living hero spends 1 Hit Die or gains Exhaustion (once per day)"
           >
-            🥾💨 Forced March
+            <GameIcon name="sprint" category="raw" size={14} /> Forced March
           </button>
           <button
             type="button"
@@ -415,15 +440,21 @@ export function RealmHud({
             onClick={onOpenCamp}
             className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-amber-300 min-h-[44px]"
           >
-            🏕️ Camp
+            <GameIcon name="fire-bowl" category="raw" size={14} /> Camp
           </button>
+              </>
+            )}
+          </div>
+
+          {/* Records & mode actions stay top-level: journal, factions, endless delve */}
+
           <button
             type="button"
             data-testid="realm-hud-journal-btn"
             onClick={onOpenJournal}
             className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-sky-300 min-h-[44px]"
           >
-            📜 Journal{activeQuestCount > 0 ? ` (${activeQuestCount})` : ''}
+            <GameIcon name="scroll-quill" category="raw" size={14} /> Journal{activeQuestCount > 0 ? ` (${activeQuestCount})` : ''}
           </button>
           <button
             type="button"
@@ -431,7 +462,7 @@ export function RealmHud({
             onClick={onOpenFactions}
             className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-purple-300 min-h-[44px]"
           >
-            🚩 Factions
+            <GameIcon name="crowned-heart" category="raw" size={14} /> Factions
           </button>
           <button
             type="button"
@@ -440,7 +471,7 @@ export function RealmHud({
             className="px-3 py-2 rounded-lg bg-stone-900 border border-stone-600 hover:bg-stone-800 text-xs font-semibold text-stone-200 min-h-[44px]"
             title="Launch the unbounded Deep Descent roguelite run (graveyard high scores)"
           >
-            💀 Endless Delve
+            <GameIcon name="burning-skull" category="raw" size={14} /> Endless Delve
           </button>
         </div>
 
@@ -469,7 +500,7 @@ export function RealmHud({
               </div>
               {safeRest && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold whitespace-nowrap">
-                  🛏️ Safe Inn
+                  <GameIcon name="sleeping-bag" category="raw" size={12} /> Safe Inn
                 </span>
               )}
             </div>
@@ -481,7 +512,7 @@ export function RealmHud({
                   onClick={onOpenHub}
                   className="px-3 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-xs font-black text-white min-h-[44px] shadow-lg"
                 >
-                  🏘️ Adventuring Hub
+                  <GameIcon name="entry-door" category="raw" size={14} /> Adventuring Hub
                 </button>
               )}
               {atSettlement && (
@@ -491,7 +522,7 @@ export function RealmHud({
                   onClick={onOpenCamp}
                   className="px-3 py-2 rounded-lg bg-emerald-900/40 border border-emerald-600/50 hover:bg-emerald-800/50 text-xs font-semibold text-emerald-200 min-h-[44px]"
                 >
-                  🛏️ Inn Rest
+                  <GameIcon name="sleeping-bag" category="raw" size={14} /> Inn Rest
                 </button>
               )}
               {atSettlement && hasShop && (
@@ -501,7 +532,7 @@ export function RealmHud({
                   onClick={onOpenShop}
                   className="px-3 py-2 rounded-lg bg-amber-900/40 border border-amber-600/50 hover:bg-amber-800/50 text-xs font-semibold text-amber-200 min-h-[44px]"
                 >
-                  🛒 Shop
+                  <GameIcon name="two-coins" category="raw" size={14} /> Shop
                 </button>
               )}
               {atSettlement && hasQuestBoard && (
@@ -511,7 +542,7 @@ export function RealmHud({
                   onClick={onOpenQuestBoard}
                   className="px-3 py-2 rounded-lg bg-sky-900/40 border border-sky-600/50 hover:bg-sky-800/50 text-xs font-semibold text-sky-200 min-h-[44px]"
                 >
-                  📋 Quest Board
+                  <GameIcon name="tied-scroll" category="raw" size={14} /> Quest Board
                 </button>
               )}
               {enterablePoi && (
@@ -521,7 +552,7 @@ export function RealmHud({
                   onClick={onEnterPoi}
                   className="px-3 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-xs font-black text-white min-h-[44px] shadow-lg"
                 >
-                  ⚔️ Enter {currentPoi.kind === 'monster_lair' ? 'Lair' : 'Dungeon'}
+                  <GameIcon name="sword-brandish" category="raw" size={14} /> Enter {currentPoi.kind === 'monster_lair' ? 'Lair' : 'Dungeon'}
                 </button>
               )}
               {currentPoi.kind === 'ancient_shrine' && (

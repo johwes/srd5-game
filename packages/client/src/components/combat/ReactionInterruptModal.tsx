@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { AvailableReaction } from '@srd5/engine';
+import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
 import type { ReactionInterruptModalProps } from './types.js';
 
 export function ReactionInterruptModal({
@@ -54,17 +55,22 @@ export function ReactionInterruptModal({
     return () => clearInterval(interval);
   }, [prompt, onResolve, deadlineMs, serverAuthoritativeTimeout]);
 
-  // Keyboard navigation: Escape to pass, number keys to choose reaction
+  // Escape passes the prompt (BG3 layering via the shared useEscStack —
+  // the reaction interrupt is topmost while open). Number keys stay on a
+  // dedicated listener since they never conflict with the Escape stack.
+  useEscHandler(
+    () => {
+      onResolve({ execute: false });
+      return true;
+    },
+    { priority: ESC_PRIORITY.reaction, active: isOpen && prompt != null },
+  );
+
+  // Keyboard navigation: number keys to choose reaction
   useEffect(() => {
     if (!isOpen || !prompt) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onResolve({ execute: false });
-        return;
-      }
-
       const num = parseInt(e.key, 10);
       if (!isNaN(num) && num >= 1 && num <= prompt.availableReactions.length) {
         e.preventDefault();

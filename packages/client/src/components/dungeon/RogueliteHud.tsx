@@ -1,13 +1,20 @@
 import React from 'react';
+import { GameIcon } from '../../canvas/assets/index.js';
 import type { DeepDescentRunState } from '@srd5/engine';
 import { getBiomeForDepth, getBiomeTheme } from '@srd5/engine';
 
 export interface RogueliteHudProps {
   runState: DeepDescentRunState;
   onOpenRestCamp?: () => void;
+  /**
+   * BG3-style chrome folding: `'bar'` renders the standalone full-width run
+   * strip; `'pills'` renders the same run status as an inline pill group for
+   * embedding inside the exploration header (single chrome, no double header).
+   */
+  layout?: 'bar' | 'pills';
 }
 
-export function RogueliteHud({ runState, onOpenRestCamp }: RogueliteHudProps) {
+export function RogueliteHud({ runState, onOpenRestCamp, layout = 'bar' }: RogueliteHudProps) {
   const depth = runState.currentDepth;
   const biome = getBiomeForDepth(depth);
   const theme = getBiomeTheme(biome);
@@ -39,7 +46,11 @@ export function RogueliteHud({ runState, onOpenRestCamp }: RogueliteHudProps) {
   return (
     <div
       data-testid="roguelite-hud-bar"
-      className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-slate-950/90 border-b border-slate-800/80 text-xs backdrop-blur-sm z-30"
+      className={
+        layout === 'pills'
+          ? 'flex flex-wrap items-center gap-x-3 gap-y-1 text-xs min-w-0'
+          : 'flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-slate-950/90 border-b border-slate-800/80 text-xs backdrop-blur-sm z-30'
+      }
     >
       {/* Depth & Biome */}
       <div className="flex items-center gap-2">
@@ -64,19 +75,19 @@ export function RogueliteHud({ runState, onOpenRestCamp }: RogueliteHudProps) {
           }
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-semibold ${rationsColor}`}
         >
-          <span>🍗</span>
+          <GameIcon name="berries-bowl" category="raw" size={14} />
           <span>{rations} Rations</span>
         </div>
 
         {/* Gold */}
         <div className="flex items-center gap-1 px-2.5 py-1 rounded-md border border-yellow-800/60 bg-yellow-950/40 text-yellow-300 font-semibold">
-          <span>🪙</span>
+          <GameIcon name="coins" category="raw" size={14} />
           <span>{runState.goldCollected} GP</span>
         </div>
 
         {/* Monsters Slain */}
         <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-800 bg-slate-900/60 text-rose-300 font-semibold">
-          <span>⚔</span>
+          <GameIcon name="crossed-swords" category="raw" size={14} />
           <span>{runState.monstersSlain} Slain</span>
         </div>
 

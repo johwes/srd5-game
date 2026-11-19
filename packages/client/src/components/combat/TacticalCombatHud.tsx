@@ -7,6 +7,7 @@ import { CombatLog } from './CombatLog.js';
 import { InitiativeRibbon } from './InitiativeRibbon.js';
 import { SelectedEnemyCard } from './SelectedEnemyCard.js';
 import { PartyPortraits } from './PartyPortraits.js';
+import { GameIcon } from '../../canvas/assets/index.js';
 import { ReactionInterruptModal } from './ReactionInterruptModal.js';
 import { playerControlsViewEntity } from '../../utils/summonPresentation.js';
 import type { TacticalCombatHudProps } from './types.js';
@@ -24,8 +25,8 @@ export function TacticalCombatHud({
   events = [],
   activeRoll: controlledActiveRoll,
   rollHistory = [],
-  showCombatLog = true,
-  showDiceTray = true,
+  defaultShowCombatLog = true,
+  defaultShowDiceTray = true,
   onToggleCombatLog,
   onToggleDiceTray,
   onSelectCombatant,
@@ -50,24 +51,18 @@ export function TacticalCombatHud({
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(
     null,
   );
-  const [isPartyCollapsed, setIsPartyCollapsed] = useState(true);
-  const [internalShowLog, setInternalShowLog] = useState(showCombatLog);
-  const [internalShowDiceTray, setInternalShowDiceTray] = useState(showDiceTray);
+  const [isPartyCollapsed, setIsPartyCollapsed] = useState(false);
+  const [internalShowLog, setInternalShowLog] = useState(defaultShowCombatLog);
+  const [internalShowDiceTray, setInternalShowDiceTray] = useState(defaultShowDiceTray);
   const [inspectedRoll, setInspectedRoll] = useState<DiceRollRecord | null>(null);
 
   const selectedCombatantId =
     controlledSelectedId !== undefined ? controlledSelectedId : internalSelectedId;
 
-  // Log / dice tray visibility honors controlled props when the parent owns
-  // the toggle state (Arena), and falls back to internal state otherwise
-  // (Dungeon). Reading only the initial prop value here used to freeze the
-  // Arena's panels shut.
-  const isLogControlled = onToggleCombatLog !== undefined;
-  const isDiceTrayControlled = onToggleDiceTray !== undefined;
-  const effectiveShowLog = isLogControlled ? showCombatLog : internalShowLog;
-  const effectiveShowDiceTray = isDiceTrayControlled
-    ? showDiceTray
-    : internalShowDiceTray;
+  // Single ownership: the HUD owns panel visibility; parents that passed
+  // onToggle* callbacks are notified after each toggle (no mirrored state).
+  const effectiveShowLog = internalShowLog;
+  const effectiveShowDiceTray = internalShowDiceTray;
 
   const handleSelectCombatant = (id: string) => {
     if (onSelectCombatant) {
@@ -78,40 +73,30 @@ export function TacticalCombatHud({
   };
 
   const handleToggleLog = () => {
-    if (onToggleCombatLog) {
-      onToggleCombatLog();
-    } else {
-      setInternalShowLog((prev) => !prev);
-    }
+    setInternalShowLog((prev) => {
+      onToggleCombatLog?.(!prev);
+      return !prev;
+    });
   };
 
   const handleToggleDiceTray = () => {
-    if (onToggleDiceTray) {
-      onToggleDiceTray();
-    } else {
-      setInternalShowDiceTray((prev) => !prev);
-    }
+    setInternalShowDiceTray((prev) => {
+      onToggleDiceTray?.(!prev);
+      return !prev;
+    });
   };
 
   const handleCollapseDiceTray = () => {
-    if (isDiceTrayControlled) {
-      if (showDiceTray) {
-        onToggleDiceTray?.();
-      }
-    } else {
-      setInternalShowDiceTray(false);
-    }
+    setInternalShowDiceTray(false);
+    onToggleDiceTray?.(false);
   };
 
   const handleInspectRoll = (roll: DiceRollRecord, label?: string) => {
     setInspectedRoll(roll);
-    if (isDiceTrayControlled) {
-      if (!showDiceTray) {
-        onToggleDiceTray?.();
-      }
-    } else if (!internalShowDiceTray) {
-      setInternalShowDiceTray(true);
-    }
+    setInternalShowDiceTray((prev) => {
+      if (!prev) onToggleDiceTray?.(true);
+      return true;
+    });
     if (onInspectRoll) {
       onInspectRoll(roll, label);
     }
@@ -243,7 +228,7 @@ export function TacticalCombatHud({
                 }`}
                 title="Toggle Combat Log"
               >
-                📜 Log
+                <GameIcon name="tied-scroll" category="raw" size={14} /> Log
               </button>
 
               <button
@@ -258,7 +243,7 @@ export function TacticalCombatHud({
                 }`}
                 title="Toggle Dice Tray"
               >
-                🎲 Dice
+                <GameIcon name="dice-shield" category="raw" size={14} /> Dice
               </button>
             </div>
         </div>

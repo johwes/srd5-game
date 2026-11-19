@@ -1,4 +1,7 @@
 import React from 'react';
+import { GameIcon } from '../../canvas/assets/index.js';
+import type { DeepDescentRunState } from '@srd5/engine';
+import { RogueliteHud } from './RogueliteHud.js';
 import type { DungeonExplorationHudProps } from './types.js';
 
 export function DungeonExplorationHud({
@@ -13,6 +16,8 @@ export function DungeonExplorationHud({
   adjacentProps,
   selectedProp,
   hasUnclaimedLoot = false,
+  /** Deep Descent / Realm delve run state — folds the run strip into the header. */
+  runState = null,
   onToggleStealth,
   onOpenMarchingOrder,
   onOpenRestCamp,
@@ -70,6 +75,13 @@ export function DungeonExplorationHud({
           </div>
         </div>
 
+        {/* Folded run-loop status (Deep Descent / Realm delve): single chrome */}
+        {runState && (
+          <div className="hidden md:block min-w-0 flex-1 px-2 border-x border-slate-800/70">
+            <RogueliteHud runState={runState} layout="pills" />
+          </div>
+        )}
+
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Stealth Toggle */}
@@ -85,7 +97,7 @@ export function DungeonExplorationHud({
             }`}
             title="Toggle party stealth movement (affects surprise checks)"
           >
-            <span>{inStealth ? '🥷' : '👣'}</span>
+            <span className="flex items-center">{inStealth ? <GameIcon name="cloak-dagger" category="raw" size={14} /> : <GameIcon name="sprint" category="raw" size={14} />}</span>
             <span>{inStealth ? 'Stealth Active' : 'Normal Pace'}</span>
           </button>
 
@@ -96,7 +108,7 @@ export function DungeonExplorationHud({
             onClick={onOpenMarchingOrder}
             className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
-            <span>🛡️</span>
+            <GameIcon name="shield" category="raw" size={14} />
             <span>Formation ({formationLabel})</span>
           </button>
 
@@ -108,7 +120,7 @@ export function DungeonExplorationHud({
             className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
             title="Perform active WIS (Perception) / INT (Investigation) search to detect hidden traps or secret doors"
           >
-            <span>🔍</span>
+            <GameIcon name="eye-shield" category="raw" size={14} />
             <span>Search Room</span>
           </button>
 
@@ -119,7 +131,7 @@ export function DungeonExplorationHud({
             onClick={onOpenRestCamp}
             className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
-            <span>🏕️</span>
+            <GameIcon name="fire-bowl" category="raw" size={14} />
             <span>Rest Camp</span>
           </button>
 
@@ -130,7 +142,7 @@ export function DungeonExplorationHud({
             onClick={onOpenLootInventory}
             className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors relative"
           >
-            <span>🎒</span>
+            <GameIcon name="chest" category="raw" size={14} />
             <span>Inventory</span>
             {hasUnclaimedLoot && (
               <span className="w-2 h-2 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5 animate-ping" />
@@ -144,7 +156,7 @@ export function DungeonExplorationHud({
             onClick={onOpenSaveLoad}
             className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
-            <span>💾</span>
+            <GameIcon name="tied-scroll" category="raw" size={14} />
             <span>Save / Load</span>
           </button>
 
@@ -270,7 +282,7 @@ export function DungeonExplorationHud({
                         onClick={onDescendStairs}
                         className="px-3 py-1 rounded bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md transition-colors"
                       >
-                        Descend to Next Floor 🪜
+                        Descend to Next Floor
                       </button>
                     )}
 
@@ -281,7 +293,7 @@ export function DungeonExplorationHud({
                         onClick={onAscendStairs}
                         className="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-colors"
                       >
-                        Ascend Stairs 🪜
+                        Ascend Stairs
                       </button>
                     )}
                   </div>

@@ -17,6 +17,7 @@ import {
 } from '@srd5/engine';
 import { LocalTransport, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
+import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
 import { TacticalCombatHud, TargetingCommitBar, useManualTargeting } from '../combat/index.js';
 
 /**
@@ -289,16 +290,17 @@ export function RealmBattleView({
   });
 
   // SRD-410: Esc cancels armed targeting (turn-change reset lives in the hook).
-  const { cancelPendingTarget: cancelArmedTarget } = manualTargeting;
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        cancelArmedTarget();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [cancelArmedTarget]);
+  // Routed through the shared Escape stack so modals and the pause menu win.
+  useEscHandler(
+    () => {
+      manualTargeting.cancelPendingTarget();
+      return true;
+    },
+    {
+      priority: ESC_PRIORITY.targeting,
+      active: manualTargeting.pendingTarget.kind !== 'none',
+    },
+  );
 
   // AI monster turn execution (mirrors the dungeon combat loop).
   const executeAiMonsterTurn = useCallback(async () => {

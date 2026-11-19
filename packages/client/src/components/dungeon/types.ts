@@ -7,6 +7,7 @@ import type {
 } from '@srd5/data';
 import type {
   Combatant,
+  DeepDescentRunState,
   GameState,
   GridPoint,
   InteractiveProp,
@@ -96,6 +97,8 @@ export interface DungeonExplorationHudProps {
   adjacentProps: InteractiveProp[] | PlayerViewProp[];
   selectedProp?: InteractiveProp | PlayerViewProp | null;
   hasUnclaimedLoot?: boolean;
+  /** Deep Descent / Realm delve run state — folds the run strip into the header. */
+  runState?: DeepDescentRunState | null;
   onToggleStealth: () => void;
   onOpenMarchingOrder: () => void;
   onOpenRestCamp: () => void;

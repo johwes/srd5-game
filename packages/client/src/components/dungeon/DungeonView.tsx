@@ -37,6 +37,7 @@ import {
   truncatePathToBudget,
 } from '@srd5/engine';
 import { LocalTransport, type PlayerViewProp, type PlayerViewState } from '@srd5/transport';
+import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { TacticalCombatHud, TargetingCommitBar, useManualTargeting } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
@@ -48,7 +49,6 @@ import { RestCampModal } from './RestCampModal.js';
 import { SaveLoadModal } from './SaveLoadModal.js';
 import { ShrineModal } from './ShrineModal.js';
 import { GraveyardModal } from './GraveyardModal.js';
-import { RogueliteHud } from './RogueliteHud.js';
 import { PauseMenuModal } from '../system/index.js';
 import {
   buildDungeonSession,
@@ -213,10 +213,6 @@ export function DungeonView({
   const [inspectedPropId, setInspectedPropId] = useState<string | null>(null);
   // Latest manual-targeting API for the Escape handler below (the hook
   // itself is instantiated after the active combatant is resolved).
-  const manualTargetingRef = useRef<{
-    pendingKind: string;
-    cancel: () => void;
-  }>({ pendingKind: 'none', cancel: () => {} });
   const [graveyardEntry, setGraveyardEntry] = useState<GraveyardEntry | null>(null);
   const [campaignVictory, setCampaignVictory] = useState(false);
   const [selectedCombatantId, setSelectedCombatantId] = useState<string | null>(null);
@@ -235,52 +231,9 @@ export function DungeonView({
     }, 3500);
   }, []);
 
-  // Global Escape key handler to toggle Pause Menu or close active modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        // An armed manual target takes precedence: Esc cancels targeting first.
-        const mt = manualTargetingRef.current;
-        if (mt.pendingKind !== 'none') {
-          e.preventDefault();
-          e.stopPropagation();
-          mt.cancel();
-          return;
-        }
-        // An inspected prop card takes precedence over the pause menu.
-        if (inspectedPropId !== null) {
-          e.preventDefault();
-          e.stopPropagation();
-          setInspectedPropId(null);
-          return;
-        }
-        const target = e.target as HTMLElement | null;
-        if (
-          target &&
-          (target.tagName === 'INPUT' ||
-            target.tagName === 'TEXTAREA' ||
-            target.tagName === 'SELECT' ||
-            target.isContentEditable)
-        ) {
-          return;
-        }
-
-        e.preventDefault();
-        setModalState((current) => {
-          if (current === 'pause_menu') {
-            return null; // Resume Game
-          }
-          if (current !== null) {
-            return null; // Close any active submodal
-          }
-          return 'pause_menu'; // Open Pause Menu
-        });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [inspectedPropId]);
+  // Escape-key priority stack (BG3 layering: armed targeting > prop card >
+  // modal / pause menu). Registered on the shared useEscStack — a single
+  // global listener dispatches to the topmost layer only.
 
   // AI automation for combat
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -540,10 +493,41 @@ export function DungeonView({
     }),
     onInspectCombatant: (id) => setSelectedCombatantId(id),
   });
-  manualTargetingRef.current = {
-    pendingKind: manualTargeting.pendingTarget.kind,
-    cancel: manualTargeting.cancelPendingTarget,
-  };
+  // Escape-key priority stack (BG3 layering), registered after the targeting
+  // hook exists so `active` reads live render state (no stale-ref timing gap).
+  // A single global listener dispatches each Escape press to the topmost layer.
+  useEscHandler(
+    () => {
+      manualTargeting.cancelPendingTarget();
+      return true;
+    },
+    {
+      priority: ESC_PRIORITY.targeting,
+      active: manualTargeting.pendingTarget.kind !== 'none',
+    },
+  );
+  useEscHandler(
+    () => {
+      setInspectedPropId(null);
+      return true;
+    },
+    { priority: ESC_PRIORITY.modal, active: inspectedPropId !== null },
+  );
+  useEscHandler(
+    () => {
+      setModalState((current) => {
+        if (current === 'pause_menu') {
+          return null; // Resume Game
+        }
+        if (current !== null) {
+          return null; // Close any active submodal
+        }
+        return 'pause_menu'; // Open Pause Menu
+      });
+      return true;
+    },
+    { priority: ESC_PRIORITY.base },
+  );
 
   const executeAiMonsterTurn = useCallback(async () => {
     if (!activeCombatant || !activeCombatantId || !isMonsterTurn || isAiThinking) {
@@ -1063,14 +1047,6 @@ export function DungeonView({
       ) : (
         /* EXPLORATION MODE */
         <div className="relative w-full h-full flex flex-col overflow-hidden">
-          {/* Run-loop Top Status HUD (Descent + Realm delves) */}
-          {isRunMode && rogueliteState && (
-            <RogueliteHud
-              runState={rogueliteState.runState}
-              onOpenRestCamp={() => setModalState('rest_camp')}
-            />
-          )}
-
           <div className="relative flex-1 min-h-0 w-full overflow-hidden">
             <TacticalCanvasViewport
               grid={viewState.grid}
@@ -1109,6 +1085,7 @@ export function DungeonView({
               formation={marchingConfig.formation}
               adjacentProps={adjacentProps}
               selectedProp={visibleInspectedProp}
+              runState={isRunMode && rogueliteState ? rogueliteState.runState : null}
               onInspectProp={(id) =>
                 setInspectedPropId((prev) => (prev === id ? null : id))
               }

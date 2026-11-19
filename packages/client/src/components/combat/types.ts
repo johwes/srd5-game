@@ -159,11 +159,17 @@ export interface TacticalCombatHudProps {
   events?: GameEvent[];
   activeRoll?: DiceRollRecord | null;
   rollHistory?: DiceRollRecord[];
-  showCombatLog?: boolean;
-  showDiceTray?: boolean;
+  /**
+   * BG3-style single owner: the HUD always owns log/dice visibility. Parents
+   * pass initial values only; toggles report the new state via the
+   * `onToggle*` notification callbacks (previously the Arena mirrored this
+   * state and fought the HUD for ownership).
+   */
+  defaultShowCombatLog?: boolean;
+  defaultShowDiceTray?: boolean;
   isPlayerControlled?: boolean;
-  onToggleCombatLog?: () => void;
-  onToggleDiceTray?: () => void;
+  onToggleCombatLog?: (open: boolean) => void;
+  onToggleDiceTray?: (open: boolean) => void;
   onSelectCombatant?: (combatantId: string) => void;
   onOpenCharacterSheet?: (combatantId: string) => void;
   onLevelUpCharacter?: (combatantId: string) => void;

@@ -18,6 +18,7 @@ import {
 } from '@srd5/engine';
 import { LocalTransport } from '@srd5/transport';
 import { OverworldCanvasViewport } from '../../canvas/index.js';
+import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
 import { DungeonView } from '../dungeon/index.js';
 import {
   type DungeonStorageAdapter,
@@ -156,32 +157,20 @@ export function RealmView({
     setLogEntries((prev) => [...prev.slice(-60), ...lines]);
   }, []);
 
-  // Escape toggles the pause menu / closes the active modal.
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      if (overlayActiveRef.current) return;
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-      e.preventDefault();
+  // Escape toggles the pause menu / closes the active modal (BG3 layering via
+  // the shared useEscStack — the topmost layer owns the key).
+  useEscHandler(
+    () => {
       setModalState((current) => {
         if (current === 'defeat') return current;
         if (current === 'pause') return null;
         if (current !== null) return null;
         return 'pause';
       });
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+      return true;
+    },
+    { priority: ESC_PRIORITY.base, active: !overlayActiveRef.current },
+  );
 
   const dispatchRealm = useCallback(
     (command: RealmCommand) => {
