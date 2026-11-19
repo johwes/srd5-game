@@ -99,6 +99,13 @@ export const OVERWORLD_POI_KINDS = [
   'dungeon_entrance',
   'ancient_shrine',
   'monster_lair',
+  // SRD-1101 — strategic war POIs (Spec 10 Section 3).
+  'fortress',
+  'mine',
+  'bridge',
+  'supply_depot',
+  'prison_keep',
+  'subfaction_camp',
 ] as const;
 export const OverworldPOIKindSchema = z.enum(OVERWORLD_POI_KINDS);
 export type OverworldPOIKind = z.infer<typeof OverworldPOIKindSchema>;
@@ -113,6 +120,27 @@ export const OVERWORLD_POI_SERVICES = [
 export const OverworldPOIServiceSchema = z.enum(OVERWORLD_POI_SERVICES);
 export type OverworldPOIService = z.infer<typeof OverworldPOIServiceSchema>;
 
+/**
+ * Dynamic war status of a strategic POI (SRD-1101, Spec 10 Section 3).
+ *
+ * - `intact`: generates War Power each tick.
+ * - `sabotaged`: generates nothing until repaired (mission hook, SRD-1103).
+ * - `destroyed`: generates nothing; bridges rebuild on `recoveryDay`.
+ * - `cursed`: necromantic curse; generates nothing, holds undead (cleanse hook).
+ * - `contested`: rival claim in progress; generates nothing (capture hook).
+ * - `under_attack`: timed incoming assault; defend before `attackDeadlineDay`.
+ */
+export const STRATEGIC_POI_STATUSES = [
+  'intact',
+  'sabotaged',
+  'destroyed',
+  'cursed',
+  'contested',
+  'under_attack',
+] as const;
+export const StrategicPOIStatusSchema = z.enum(STRATEGIC_POI_STATUSES);
+export type StrategicPOIStatus = z.infer<typeof StrategicPOIStatusSchema>;
+
 export const OverworldPOISchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -125,6 +153,21 @@ export const OverworldPOISchema = z.object({
   /** Depth tier for the generated delve (Spec 06 Section 4.3). */
   depthTier: z.number().int().min(1).optional(),
   services: z.array(OverworldPOIServiceSchema).optional(),
+  // --- SRD-1101 strategic war metadata (all optional; absent on non-war POIs) ---
+  /** Dynamic war status; only meaningful on strategic POI kinds. */
+  strategicStatus: StrategicPOIStatusSchema.optional(),
+  /** War day the status last changed. */
+  statusChangedDay: z.number().int().min(1).optional(),
+  /** War day a destroyed bridge finishes rebuilding (owner restores logistics). */
+  recoveryDay: z.number().int().min(1).optional(),
+  /** Countdown day for an incoming `under_attack` defense (protect_poi hook). */
+  attackDeadlineDay: z.number().int().min(1).optional(),
+  /** War Power generated per war tick while `intact`. */
+  powerValue: z.number().int().min(0).max(10).optional(),
+  /** War nation currently holding this POI (defaults to `factionId`). */
+  ownerNationId: z.string().min(1).optional(),
+  /** Rival nation contesting / besieging this POI (for `contested` / `under_attack`). */
+  contestedByNationId: z.string().min(1).optional(),
 });
 export type OverworldPOI = z.infer<typeof OverworldPOISchema>;
 
