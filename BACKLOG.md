@@ -260,7 +260,7 @@ flowchart LR
 | :--- | :---: | :--- | :--- | :--- |
 | **SRD-1101** | `[x]` | Implement War Core schemas, 8 balanced nation archetypes (3 Good / 3 Neutral / 2 Evil), strategic POI extensions, and living war simulation tick | `@srd5/engine` | SRD-803, SRD-804 |
 | **SRD-1102** | `[x]` | Implement dynamic-CR class-based enemy squads (Warrior/Mage/Cleric/Thief), upgraded class-kit tactical AI, and multi-wave Protect POI defense battles | `@srd5/engine` | SRD-308, SRD-505, SRD-1101 |
-| **SRD-1103** | `[ ]` | Implement Special-Ops mission catalog (Offensive, Domestic, Defense, Artifact) and POI-specific 5e Approach Dialogue resolver (skills, rope assist, spells, bluffs, frontal assault) | `@srd5/engine` | SRD-1101, SRD-1102 |
+| **SRD-1103** | `[x]` | Implement Special-Ops mission catalog (Offensive, Domestic, Defense, Artifact) and POI-specific 5e Approach Dialogue resolver (skills, rope assist, spells, bluffs, frontal assault) | `@srd5/engine` | SRD-1101, SRD-1102 |
 | **SRD-1104** | `[ ]` | Implement Diplomacy (Truces, Mercenaries, Thieves' Guild), Sub-Faction patronage chains (Orc guerrilla warfare, Druid Circle), and Enemy Territory Patrols with Threat/Heat & natural decay | `@srd5/engine` | SRD-802, SRD-1101, SRD-1103 |
 | **SRD-1105** | `[ ]` | Wire War Campaign state, missions, diplomacy, patrols, and multi-wave battle reinforcements into `realmEngine.ts`, `OverworldMapLayer.ts`, and `RealmBattleView.tsx` | `@srd5/client` | SRD-805, SRD-1104 |
 | **SRD-1106** | `[ ]` | Build Realm War UI modals (`RealmNationSelectModal`, `RealmWarRoomModal`, `RealmMissionApproachModal`, `RealmPatrolModal`), HUD War Power / Threat indicators, and Victory/Defeat endings with tests | `@srd5/client` | SRD-1105 |

@@ -192,12 +192,14 @@ function ensureWarSquadSpells(state: CharacterBuildState, classId: WarSquadClass
         next.spellcasting.preparedSpellIds,
         'magic-missile',
         'burning-hands',
+        'shatter',
         'fireball',
       );
       next.spellcasting.spellbookSpellIds = ensure(
         next.spellcasting.spellbookSpellIds,
         'magic-missile',
         'burning-hands',
+        'shatter',
         'fireball',
         'mage-armor',
         'shield',
@@ -207,11 +209,13 @@ function ensureWarSquadSpells(state: CharacterBuildState, classId: WarSquadClass
         next.spellcasting.preparedSpellIds,
         'magic-missile',
         'burning-hands',
+        'shatter',
       );
       next.spellcasting.spellbookSpellIds = ensure(
         next.spellcasting.spellbookSpellIds,
         'magic-missile',
         'burning-hands',
+        'shatter',
         'mage-armor',
         'shield',
       );
