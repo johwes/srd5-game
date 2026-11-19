@@ -40,6 +40,13 @@ export function CombatLog({
   const [hoveredEntryId, setHoveredEntryId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const logContainerRef = useRef<HTMLDivElement>(null);
+  const knownNamesRef = useRef<Record<string, string>>({});
+
+  for (const [cid, c] of Object.entries(combatants)) {
+    if (c?.name) {
+      knownNamesRef.current[cid] = c.name;
+    }
+  }
 
   const activeFilter = controlledFilter ?? internalFilter;
 
@@ -53,7 +60,16 @@ export function CombatLog({
 
   const getCombatantName = (id?: string) => {
     if (!id) return 'Unknown';
-    return combatants[id]?.name ?? id;
+    const known = combatants[id]?.name ?? knownNamesRef.current[id];
+    if (known) return known;
+    const encMatch = /^enc_[a-z0-9_]+-([a-z0-9-]+)-\d+$/i.exec(id);
+    if (encMatch?.[1]) {
+      return encMatch[1]
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+    return id;
   };
 
   const prettifyId = (id?: string) => (id ?? 'unknown').replace(/[-_]/g, ' ');

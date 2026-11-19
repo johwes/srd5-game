@@ -176,4 +176,34 @@ describe('CombatLog event coverage (no raw JSON)', () => {
     expect(text).toContain('reaches level 2');
     expect(text).not.toContain('{"type"');
   });
+
+  it('humanizes dungeon encounter monster instance IDs when not present in current combatants map', () => {
+    render(
+      <CombatLog
+        events={[
+          {
+            type: 'ATTACK_RESOLVED',
+            attackerId: 'enc_f1_goblin_boss-goblin-boss-1',
+            targetId: 'pregen-rogue',
+            attackType: 'ranged_weapon',
+            weaponOrSpellName: 'Javelin',
+            roll: 18,
+            totalToHit: 22,
+            targetAc: 14,
+            outcome: 'hit',
+          },
+          {
+            type: 'TURN_ENDED',
+            entityId: 'enc_f1_goblin_boss-goblin-3',
+            round: 1,
+          },
+        ]}
+      />,
+    );
+
+    const text = screen.getByTestId('combat-log').textContent ?? '';
+    expect(text).toContain('Goblin Boss attacks pregen-rogue');
+    expect(text).toContain('End turn: Goblin');
+    expect(text).not.toContain('enc_f1_goblin_boss');
+  });
 });

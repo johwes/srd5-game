@@ -164,6 +164,12 @@ export function rasterizeLine(
 export interface PointAoeGeometry {
   /** Snapped anchor intersection, in feet. */
   anchor: FeetPoint;
+  /**
+   * Near-edge intersection for cube AOEs so the hovered/clicked cell is always
+   * the starting cell of the cube rather than shifted off-by-one when facing
+   * south or east.
+   */
+  cubeAnchor: FeetPoint;
   /** Cube facing derived from caster toward target. */
   facing: CardinalFacing;
   /** Cone/line origin on the caster's footprint boundary toward the target. */
@@ -192,6 +198,10 @@ export function pointAoeGeometry(
     const dy = targetCenter.y - casterCenter.y;
     facing = Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 'e' : 'w') : dy >= 0 ? 's' : 'n';
   }
+  const cubeAnchor = intersectionFeet(
+    facing === 'e' ? targetCell.x : targetCell.x + 1,
+    facing === 's' ? targetCell.y : targetCell.y + 1,
+  );
   const coneOrigin =
     casterPos &&
     Math.hypot(targetCenter.x - cellCenterFeet(casterPos).x, targetCenter.y - cellCenterFeet(casterPos).y) >=
@@ -205,7 +215,7 @@ export function pointAoeGeometry(
   if (Math.hypot(direction.x, direction.y) < 1e-4) {
     direction = { x: 1, y: 0 };
   }
-  return { anchor, facing, coneOrigin, direction, targetCenter };
+  return { anchor, cubeAnchor, facing, coneOrigin, direction, targetCenter };
 }
 
 /**

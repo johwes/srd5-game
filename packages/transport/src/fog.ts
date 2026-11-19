@@ -131,11 +131,22 @@ export function computeVisibleGridCells(
         !c.conditions.includes('unconscious'),
     )
     .map((obs) => {
-      const darkvisionFeet =
-        (obs.characterSheet as any)?.darkvisionFeet ??
-        (obs.monsterData as any)?.darkvisionFeet ??
-        (obs as any).darkvisionFeet ??
+      const sheetSenses = obs.characterSheet?.senses;
+      const monsterSenses = obs.monsterData?.senses;
+      const explicitDarkvision =
+        (obs.characterSheet as { darkvisionFeet?: number } | undefined)?.darkvisionFeet ??
+        (obs.monsterData as { darkvisionFeet?: number } | undefined)?.darkvisionFeet ??
+        (obs as { darkvisionFeet?: number }).darkvisionFeet ??
         0;
+      const darkvisionFeet = Math.max(
+        explicitDarkvision,
+        sheetSenses?.darkvisionFeet ?? 0,
+        sheetSenses?.blindsightFeet ?? 0,
+        sheetSenses?.truesightFeet ?? 0,
+        monsterSenses?.darkvisionFeet ?? 0,
+        monsterSenses?.blindsightFeet ?? 0,
+        monsterSenses?.truesightFeet ?? 0,
+      );
       return {
         combatant: obs,
         darkvisionFeet,
@@ -165,13 +176,10 @@ export function computeVisibleGridCells(
         const baseLight = getCellLightLevel(grid, targetPoint, lightSources);
         const effLight = applyDarkvision(baseLight, distFeet, darkvisionFeet);
 
-        // A cell is visible if illuminated (bright or dim) or darkvision penetrates darkness
-        if (effLight !== 'darkness' || baseLight !== 'darkness') {
-          isVisible = true;
-          const rank = effLight === 'bright' ? 2 : effLight === 'dim' ? 1 : 0;
-          if (rank > bestLightRank) {
-            bestLightRank = rank;
-          }
+        isVisible = true;
+        const rank = effLight === 'bright' ? 2 : effLight === 'dim' ? 1 : 0;
+        if (rank > bestLightRank) {
+          bestLightRank = rank;
         }
       }
     }

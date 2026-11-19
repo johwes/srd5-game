@@ -420,4 +420,58 @@ describe('Active combatant fog exception (second-fight hard-lock fix)', () => {
     expect(view.combat!.activeCombatantId).toBe('goblin-hidden');
     expect(view.combatants['goblin-hidden']).toBeDefined();
   });
+
+  it('projects monsters in unlit darkness rooms during player turns and reads characterSheet.senses.darkvisionFeet', () => {
+    const grid = createTacticalGrid(10, 10, 'floor_stone', 'darkness');
+    const elfHero: Combatant = {
+      ...makePartyMember('elf-1', 'Lyra Silversun', 2, 2),
+      characterSheet: {
+        senses: {
+          darkvisionFeet: 60,
+          blindsightFeet: 0,
+          truesightFeet: 0,
+          tremorsenseFeet: 0,
+        },
+      } as any,
+    };
+    const halflingHero = makePartyMember('halfling-1', 'Vex Tealeaf', 3, 2);
+    const goblinBoss = makeMonster(
+      'enc_f1_goblin_boss-goblin-boss-1',
+      'Goblin Boss',
+      4,
+      2,
+    );
+
+    const state = createInitialGameState({
+      grid,
+      party: [elfHero, halflingHero],
+      monsters: [goblinBoss],
+    });
+    const started = reduceGame(state, {
+      type: 'START_COMBAT',
+      encounterId: 'enc_f1_goblin_boss',
+      combatants: [elfHero, halflingHero, goblinBoss],
+    }).nextState;
+
+    // On Vex Tealeaf's turn, Goblin Boss must still be visible and targetable
+    started.combat!.activeCombatantId = 'halfling-1';
+    const viewWithElf = projectPlayerView(started, 'player-1');
+    expect(viewWithElf.combatants['enc_f1_goblin_boss-goblin-boss-1']).toBeDefined();
+    const bossCellWithElf = viewWithElf.grid.cells.find((c) => c.x === 4 && c.y === 2);
+    expect(bossCellWithElf?.visibility).toBe('visible');
+    expect(bossCellWithElf?.effectiveLight).toBe('dim');
+
+    // Even when the darkvision hero (Lyra) is knocked unconscious at 0 HP,
+    // monsters in direct Line of Sight of Vex remain visible and targetable
+    started.combat!.combatants['elf-1']!.currentHp = 0;
+    started.combat!.combatants['elf-1']!.conditions.push('unconscious');
+    const viewWithoutDarkvision = projectPlayerView(started, 'player-1');
+    expect(
+      viewWithoutDarkvision.combatants['enc_f1_goblin_boss-goblin-boss-1'],
+    ).toBeDefined();
+    const bossInitEntry = viewWithoutDarkvision.combat?.initiativeOrder.find(
+      (e) => e.entityId === 'enc_f1_goblin_boss-goblin-boss-1',
+    );
+    expect(bossInitEntry?.isVisible).toBe(true);
+  });
 });

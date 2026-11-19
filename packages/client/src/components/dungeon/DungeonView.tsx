@@ -444,11 +444,54 @@ export function DungeonView({
   const leadExplorerId = marchingConfig.leadExplorerId;
   const leadCombatant = authState.party[leadExplorerId] ?? partyList[0];
 
+  // AI monster turn execution
+  const activeCombatantId = viewState.combat?.activeCombatantId ?? null;
+  const activeCombatant = activeCombatantId
+    ? viewState.combatants[activeCombatantId] ?? null
+    : null;
+  const isMonsterTurn =
+    viewState.mode === 'combat' &&
+    Boolean(activeCombatant && activeCombatant.side === 'monster');
+
+  // Keep selected party hero synced with the active turn in combat and the lead
+  // explorer in exploration so opening Character Sheet / Inventory targets the
+  // currently active hero rather than reverting to party slot 1.
+  useEffect(() => {
+    if (
+      viewState.mode === 'combat' &&
+      activeCombatantId &&
+      viewState.party[activeCombatantId]
+    ) {
+      setSelectedCombatantId(activeCombatantId);
+    }
+  }, [viewState.mode, activeCombatantId, viewState.party]);
+
+  useEffect(() => {
+    if (viewState.mode === 'exploration' && leadExplorerId && viewState.party[leadExplorerId]) {
+      setSelectedCombatantId(leadExplorerId);
+    }
+  }, [viewState.mode, leadExplorerId, viewState.party]);
+
+  const selectedPartyHeroId =
+    selectedCombatantId && viewState.party[selectedCombatantId]
+      ? selectedCombatantId
+      : null;
+  const activeTurnHeroId =
+    viewState.mode === 'combat' &&
+    activeCombatantId &&
+    viewState.party[activeCombatantId]
+      ? activeCombatantId
+      : null;
+  const focusedPartyHeroId =
+    selectedPartyHeroId ??
+    activeTurnHeroId ??
+    (viewState.party[leadExplorerId] ? leadExplorerId : (partyList[0]?.id ?? null));
+
   // Targeting-aware Character Sheet shortcut ('C' / 'I'): opens the sheet for
-  // the currently selected combatant (falling back to the lead explorer) so
-  // targeting actually determines whose sheet opens. Registered on capture so
-  // the App-level fallback (which always opens the first party member) never
-  // fires while the dungeon view is mounted.
+  // the currently focused party hero (selected party member -> active combat
+  // turn hero -> lead explorer). Registered on capture so the App-level
+  // fallback (which always opens the first party member) never fires while the
+  // dungeon view is mounted.
   useEffect(() => {
     const handleSheetShortcut = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -466,24 +509,14 @@ export function DungeonView({
       if (key !== 'c' && key !== 'i') return;
       e.preventDefault();
       e.stopPropagation();
-      const heroId = selectedCombatantId ?? leadExplorerId;
-      if (heroId && onOpenCharacterSheet) {
-        onOpenCharacterSheet(heroId);
+      if (focusedPartyHeroId && onOpenCharacterSheet) {
+        onOpenCharacterSheet(focusedPartyHeroId);
       }
     };
 
     window.addEventListener('keydown', handleSheetShortcut, { capture: true });
     return () => window.removeEventListener('keydown', handleSheetShortcut, { capture: true });
-  }, [selectedCombatantId, leadExplorerId, onOpenCharacterSheet]);
-
-  // AI monster turn execution
-  const activeCombatantId = viewState.combat?.activeCombatantId ?? null;
-  const activeCombatant = activeCombatantId
-    ? viewState.combatants[activeCombatantId] ?? null
-    : null;
-  const isMonsterTurn =
-    viewState.mode === 'combat' &&
-    Boolean(activeCombatant && activeCombatant.side === 'monster');
+  }, [focusedPartyHeroId, onOpenCharacterSheet]);
 
   const hasPendingReaction = Boolean(viewState.combat?.pendingReactionPrompt);
 
@@ -1047,7 +1080,15 @@ export function DungeonView({
               hoveredCell={hoveredCell}
               onCellHover={setHoveredCell}
               onCellClick={handleCellClick}
-              onCombatantClick={(combatantId) => setSelectedCombatantId(combatantId)}
+              onCombatantClick={(combatantId) => {
+                setSelectedCombatantId(combatantId);
+                if (viewState.party[combatantId]) {
+                  void handleDispatch({
+                    type: 'SET_MARCHING_ORDER',
+                    leadExplorerId: combatantId,
+                  });
+                }
+              }}
               enableHoverPathPreview={true}
               enableFogOfWar={true}
               showTokenHpArcs={true}
@@ -1089,12 +1130,13 @@ export function DungeonView({
                   actorId: leadExplorerId,
                 })
               }
-              onSelectLeadExplorer={(id) =>
-                handleDispatch({
+              onSelectLeadExplorer={(id) => {
+                setSelectedCombatantId(id);
+                void handleDispatch({
                   type: 'SET_MARCHING_ORDER',
                   leadExplorerId: id,
-                })
-              }
+                });
+              }}
               onInspectCharacter={onOpenCharacterSheet}
               onDescendStairs={
                 adjacentProps.some((p) => p.kind === 'stairs_down')
@@ -1242,7 +1284,7 @@ export function DungeonView({
       <LootInventoryModal
         isOpen={modalState === 'loot_inventory'}
         party={viewState.party}
-        initialHeroId={selectedCombatantId ?? leadExplorerId}
+        initialHeroId={focusedPartyHeroId}
         compendium={compendium}
         activeLoot={activeLoot}
         onClose={() => {

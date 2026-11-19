@@ -100,6 +100,22 @@ describe('SRD-405: PixiJS Dynamic Lighting & Fog-of-War Mask Layer', () => {
       expect(result[0]?.darkvisionFeet).toBe(60);
       expect(result[0]?.x).toBe(1);
       expect(result[0]?.y).toBe(1);
+
+      const nestedSensesResult = extractVisionObservers({
+        combatants: [
+          {
+            id: 'hero-elf',
+            name: 'Elf Wizard',
+            side: 'party',
+            size: 'medium',
+            position: { x: 2, y: 2 },
+            currentHp: 14,
+            maxHp: 14,
+            characterSheet: { senses: { darkvisionFeet: 60 } } as any,
+          },
+        ],
+      });
+      expect(nestedSensesResult[0]?.darkvisionFeet).toBe(60);
     });
   });
 
@@ -118,7 +134,19 @@ describe('SRD-405: PixiJS Dynamic Lighting & Fog-of-War Mask Layer', () => {
         ],
       };
 
-      const map = computeDynamicFog(pvg);
+      const map = computeDynamicFog(pvg, {
+        combatants: [
+          {
+            id: 'hero-1',
+            name: 'Hero',
+            side: 'party',
+            size: 'medium',
+            position: { x: 0, y: 0 },
+            currentHp: 20,
+            maxHp: 20,
+          },
+        ],
+      });
       expect(map.size).toBe(6);
 
       const cell00 = map.get('0,0');

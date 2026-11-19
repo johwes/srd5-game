@@ -155,6 +155,8 @@ export function TacticalCanvasViewport({
   const onCombatantHoverRef = useRef(onCombatantHover);
   onCombatantHoverRef.current = onCombatantHover;
 
+  const tokenClickAtRef = useRef<number>(0);
+
   // Initialize PixiJS Application
   useEffect(() => {
     isDisposedRef.current = false;
@@ -247,6 +249,7 @@ export function TacticalCanvasViewport({
         fogRendererRef.current = fogRenderer;
 
         tokenRenderer.onTokenClick = (tokenId) => {
+          tokenClickAtRef.current = Date.now();
           onCombatantClickRef.current?.(tokenId);
         };
         tokenRenderer.onTokenHover = (tokenId) => {
@@ -342,6 +345,7 @@ export function TacticalCanvasViewport({
   useEffect(() => {
     if (tokenRendererRef.current) {
       tokenRendererRef.current.onTokenClick = (tokenId) => {
+        tokenClickAtRef.current = Date.now();
         onCombatantClick?.(tokenId);
       };
       tokenRendererRef.current.onTokenHover = (tokenId) => {
@@ -685,8 +689,12 @@ export function TacticalCanvasViewport({
         }
       }
 
-      // If moved < 6px, treat as click
+      // If moved < 6px, treat as click (unless a token click already consumed this pointerdown)
       if (moved < 6) {
+        if (Date.now() - tokenClickAtRef.current < 400) {
+          tokenClickAtRef.current = 0;
+          return;
+        }
         const rect = canvas?.getBoundingClientRect();
         if (rect) {
           const screenX = e.clientX - rect.left;

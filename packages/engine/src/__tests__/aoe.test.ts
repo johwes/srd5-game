@@ -103,4 +103,27 @@ describe('AOE rasterizers', () => {
     // overlay construction; the rasterizers normalize internally.
     expect(geo.direction).toEqual({ x: 0, y: -22.5 });
   });
+
+  it('pointAoeGeometry cubeAnchor always includes the hovered/clicked target cell in all 4 cardinal facings (Grease 10-ft cube)', () => {
+    const target = { x: 14, y: 7 };
+    const casters = [
+      { pos: { x: 15, y: 5 }, expectedFacing: 's' },
+      { pos: { x: 15, y: 10 }, expectedFacing: 'n' },
+      { pos: { x: 10, y: 7 }, expectedFacing: 'e' },
+      { pos: { x: 17, y: 7 }, expectedFacing: 'w' },
+    ] as const;
+
+    for (const { pos, expectedFacing } of casters) {
+      const geo = pointAoeGeometry(target, pos);
+      expect(geo.facing).toBe(expectedFacing);
+      const cells = rasterizeAoe({
+        shape: 'cube',
+        origin: geo.cubeAnchor,
+        sideFeet: 10,
+        facing: geo.facing,
+      });
+      expect(cells).toHaveLength(4);
+      expect(cells).toContainEqual(target);
+    }
+  });
 });

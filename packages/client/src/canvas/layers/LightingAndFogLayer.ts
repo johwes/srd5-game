@@ -46,7 +46,7 @@ export const FOG_ALPHAS = {
   unexplored: 1.0, // Solid opaque black
   remembered: 0.72, // Dim shroud allowing terrain to show faintly
   dimLight: 0.35, // Light shadowy tint
-  darkness: 0.90, // Near-opaque shadow for pitch darkness
+  darkness: 0.48, // Shadowy tint for unlit areas while keeping tokens legible
   darkvision: 0.28, // Cool night-vision overlay for darkness seen via darkvision
   bright: 0.0, // Fully clear
   lightSourceBrightGlow: 0.18,
@@ -99,11 +99,22 @@ export function extractVisionObservers(
         : list.filter((c) => !c.isDead && !c.conditions?.includes('unconscious'));
 
     return activeList.map((c) => {
-      const darkvisionFeet =
+      const sheetSenses = (c as any).characterSheet?.senses;
+      const monsterSenses = (c as any).monsterData?.senses;
+      const explicitDarkvision =
         (c as any).characterSheet?.darkvisionFeet ??
         (c as any).monsterData?.darkvisionFeet ??
         (c as any).darkvisionFeet ??
         0;
+      const darkvisionFeet = Math.max(
+        explicitDarkvision,
+        sheetSenses?.darkvisionFeet ?? 0,
+        sheetSenses?.blindsightFeet ?? 0,
+        sheetSenses?.truesightFeet ?? 0,
+        monsterSenses?.darkvisionFeet ?? 0,
+        monsterSenses?.blindsightFeet ?? 0,
+        monsterSenses?.truesightFeet ?? 0,
+      );
       return {
         id: c.id,
         x: c.position.x,
@@ -132,7 +143,7 @@ export function computeDynamicFog(
 
   // Check if grid already carries projected PlayerViewCell visibilities
   const hasPrecomputedVisibility =
-    observers.length === 0 &&
+    (!options.observers || options.observers.length === 0) &&
     grid.cells.some(
       (c) => 'visibility' in c && typeof (c as any).visibility === 'string',
     );

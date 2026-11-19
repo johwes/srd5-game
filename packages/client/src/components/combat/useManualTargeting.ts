@@ -93,6 +93,7 @@ export function useManualTargeting(deps: ManualTargetingDeps): ManualTargetingAp
 
   const [pendingTarget, setPendingTarget] = useState<PendingTarget>({ kind: 'none' });
   const pendingAttackOptsRef = useRef<{ isOffHand?: boolean; twoHanded?: boolean } | null>(null);
+  const lastTokenActionAtRef = useRef<number>(0);
 
   const cancelPendingTarget = useCallback(() => {
     setPendingTarget({ kind: 'none' });
@@ -157,6 +158,48 @@ export function useManualTargeting(deps: ManualTargetingDeps): ManualTargetingAp
     [activeCombatantId, activeCombatant, compendium, dispatch],
   );
 
+  const handleCombatCellClick = useCallback(
+    (cell: GridPoint, button?: number): boolean => {
+      if (button === 2) {
+        cancelPendingTarget();
+        return true;
+      }
+      // Swallow the trailing pointerup cell click that immediately follows a
+      // pointerdown token click (e.g. killing a monster with a ranged attack
+      // must never walk the attacker onto the dead monster's square).
+      if (Date.now() - lastTokenActionAtRef.current < 400) {
+        lastTokenActionAtRef.current = 0;
+        return true;
+      }
+      if (pendingTarget.kind === 'none' || !activeCombatant) return false;
+      if (pendingTarget.kind === 'aoe') {
+        // Self spheres/cubes are anchored on the caster — just Confirm.
+        if (isSelfEmanation(pendingTarget) && !needsDirectionPick(pendingTarget)) {
+          showFeedback(`${pendingTarget.label} originates from you — Confirm to cast.`);
+          return true;
+        }
+        const dist = getFootprintDistanceFeet(
+          activeCombatant.position,
+          activeCombatant.size,
+          cell,
+          'small',
+        );
+        const aimRange = aimRangeFeet(pendingTarget);
+        if (dist > aimRange) {
+          showFeedback(
+            `AOE ${needsDirectionPick(pendingTarget) ? 'direction' : 'origin'} out of range (${dist}ft > ${aimRange}ft). Pick a closer point!`,
+          );
+          return true;
+        }
+        setPendingTarget({ ...pendingTarget, origin: { x: cell.x, y: cell.y } });
+        return true;
+      }
+      // Single/multi picks commit via token clicks; cell clicks never move.
+      return true;
+    },
+    [pendingTarget, activeCombatant, showFeedback, cancelPendingTarget],
+  );
+
   const handleCombatantClick = useCallback(
     (combatantId: string) => {
       if (!activeCombatant || isMonsterTurn) {
@@ -169,6 +212,11 @@ export function useManualTargeting(deps: ManualTargetingDeps): ManualTargetingAp
       }
       const candidate = combatants[combatantId];
       if (!candidate) return;
+      if (pendingTarget.kind === 'aoe') {
+        handleCombatCellClick(candidate.position, 0);
+        return;
+      }
+      lastTokenActionAtRef.current = Date.now();
       const validation = validateTargetPick(pendingTarget, candidate, activeCombatant, combatants, {
         dispositionMatrix: getCombatContext().dispositionMatrix,
       });
@@ -223,42 +271,17 @@ export function useManualTargeting(deps: ManualTargetingDeps): ManualTargetingAp
         }
       }
     },
-    [activeCombatant, isMonsterTurn, pendingTarget, combatants, getCombatContext, showFeedback, dispatch, onInspectCombatant],
-  );
-
-  const handleCombatCellClick = useCallback(
-    (cell: GridPoint, button?: number): boolean => {
-      if (button === 2) {
-        cancelPendingTarget();
-        return true;
-      }
-      if (pendingTarget.kind === 'none' || !activeCombatant) return false;
-      if (pendingTarget.kind === 'aoe') {
-        // Self spheres/cubes are anchored on the caster — just Confirm.
-        if (isSelfEmanation(pendingTarget) && !needsDirectionPick(pendingTarget)) {
-          showFeedback(`${pendingTarget.label} originates from you — Confirm to cast.`);
-          return true;
-        }
-        const dist = getFootprintDistanceFeet(
-          activeCombatant.position,
-          activeCombatant.size,
-          cell,
-          'small',
-        );
-        const aimRange = aimRangeFeet(pendingTarget);
-        if (dist > aimRange) {
-          showFeedback(
-            `AOE ${needsDirectionPick(pendingTarget) ? 'direction' : 'origin'} out of range (${dist}ft > ${aimRange}ft). Pick a closer point!`,
-          );
-          return true;
-        }
-        setPendingTarget({ ...pendingTarget, origin: { x: cell.x, y: cell.y } });
-        return true;
-      }
-      // Single/multi picks commit via token clicks; cell clicks never move.
-      return true;
-    },
-    [pendingTarget, activeCombatant, showFeedback, cancelPendingTarget],
+    [
+      activeCombatant,
+      isMonsterTurn,
+      pendingTarget,
+      combatants,
+      getCombatContext,
+      showFeedback,
+      dispatch,
+      onInspectCombatant,
+      handleCombatCellClick,
+    ],
   );
 
   const handleCommitMulti = useCallback(() => {

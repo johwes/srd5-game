@@ -233,6 +233,17 @@ describe('SRD-404: PixiJS Interactive Overlays (A* Path Preview, OA Warnings, AO
       });
       expect(cubeRes.template.shape).toBe('cube');
       expect(cubeRes.cells.length).toBeGreaterThan(0);
+      expect(cubeRes.cells).toContainEqual({ x: 7, y: 5 });
+
+      // 10-ft Grease cube aimed south from (15, 5) to hovered cell (14, 7) must include (14, 7)
+      const greaseSouth = computeAoeOverlay({
+        shape: 'cube',
+        casterPosition: { x: 15, y: 5 },
+        cursor: { x: 14, y: 7 },
+        sideFeet: 10,
+      });
+      expect(greaseSouth.cells).toHaveLength(4);
+      expect(greaseSouth.cells).toContainEqual({ x: 14, y: 7 });
     });
   });
 

@@ -279,7 +279,14 @@ export function ArenaCombatView({
       if (key !== 'c' && key !== 'i') return;
       e.preventDefault();
       e.stopPropagation();
-      const heroId = selectedCombatantId ?? viewState.party[viewState.combat?.activeCombatantId ?? '']?.id ?? Object.keys(viewState.party)[0];
+      const selectedPartyHeroId =
+        selectedCombatantId && viewState.party[selectedCombatantId]
+          ? selectedCombatantId
+          : null;
+      const heroId =
+        selectedPartyHeroId ??
+        viewState.party[viewState.combat?.activeCombatantId ?? '']?.id ??
+        Object.keys(viewState.party)[0];
       if (heroId && onOpenCharacterSheet) {
         onOpenCharacterSheet(heroId);
       }

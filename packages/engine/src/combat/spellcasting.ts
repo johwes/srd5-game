@@ -702,11 +702,20 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
           radiusFeet: sizeFeet,
         });
       } else if (shape === 'cube') {
+        const cubeFacing = options.cardinalFacing ?? pointGeo?.facing ?? 'e';
+        const cubeOrigin = pointGeo
+          ? options.cardinalFacing
+            ? intersectionFeet(
+                cubeFacing === 'e' ? centerPoint.x : centerPoint.x + 1,
+                cubeFacing === 's' ? centerPoint.y : centerPoint.y + 1,
+              )
+            : pointGeo.cubeAnchor
+          : intersectionFeet(centerPoint.x, centerPoint.y);
         aoeCells = rasterizeAoe({
           shape: 'cube',
-          origin: pointGeo ? pointGeo.anchor : intersectionFeet(centerPoint.x, centerPoint.y),
+          origin: cubeOrigin,
           sideFeet: sizeFeet,
-          facing: options.cardinalFacing ?? pointGeo?.facing ?? 'e',
+          facing: cubeFacing,
         });
       } else if (shape === 'cone') {
         const dir = options.direction ?? pointGeo?.direction ?? { x: 1, y: 0 };

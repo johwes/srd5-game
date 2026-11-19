@@ -264,9 +264,11 @@ export function computeAoeOverlay(
         const dy = cursorFeet.y - casterCenterFeet.y;
         facing = Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 'e' : 'w') : dy >= 0 ? 's' : 'n';
       }
+      const cellX = Math.floor(cursorFeet.x / 5);
+      const cellY = Math.floor(cursorFeet.y / 5);
       const origin = intersectionFeet(
-        Math.round(cursorFeet.x / 5),
-        Math.round(cursorFeet.y / 5),
+        facing === 'e' ? cellX : cellX + 1,
+        facing === 's' ? cellY : cellY + 1,
       );
       template = { shape: 'cube', origin, sideFeet, facing };
       break;
