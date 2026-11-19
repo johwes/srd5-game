@@ -1,10 +1,13 @@
 import React from 'react';
-import type { OverworldPOI, TravelPace } from '@srd5/engine';
+import type { OverworldPOI, TravelPace, WarDiplomacyState, WarState } from '@srd5/engine';
 import {
   TRAVEL_PACE_PROFILES,
   WEATHER_PROFILES,
   getFactionByPoi,
+  getNationThreat,
   getReputationTierProfile,
+  getWarNationTotal,
+  getWarThreatTier,
   isSafeRestSite,
 } from '@srd5/engine';
 import {
@@ -56,6 +59,11 @@ export interface RealmHudProps {
   onEndlessDelve: () => void;
   onOpenPause: () => void;
   onInspectCharacter?: (characterId: string) => void;
+  /** War campaign state (SRD-1106, Spec 10 §1/§7). Null before a banner is chosen. */
+  war?: WarState | null;
+  diplomacy?: WarDiplomacyState | null;
+  onOpenNationSelect?: () => void;
+  onOpenWarRoom?: () => void;
 }
 
 export function RealmHud({
@@ -79,8 +87,21 @@ export function RealmHud({
   onEndlessDelve,
   onOpenPause,
   onInspectCharacter,
+  war,
+  diplomacy,
+  onOpenNationSelect,
+  onOpenWarRoom,
 }: RealmHudProps) {
   const { travel, map } = session;
+  const warState = war ?? session.war ?? null;
+  const diplomacyState = diplomacy ?? session.diplomacy ?? null;
+  const maxThreatEntry =
+    warState && diplomacyState
+      ? warState.nationOrder
+          .filter((id) => id !== warState.playerNationId)
+          .map((id) => ({ nationId: id, level: getNationThreat(diplomacyState, id) }))
+          .sort((a, b) => b.level - a.level)[0] ?? null
+      : null;
   const party = getPartyList(session);
   const dailyPoints = dayBudget;
   const activeQuestCount = session.questLog.quests.filter((q) => q.status === 'active').length;
@@ -175,6 +196,80 @@ export function RealmHud({
           </div>
         </div>
       </header>
+
+      {/* War Power dominance strip + Threat badge (SRD-1106, Spec 10 §1/§7) */}
+      <div
+        data-testid="realm-hud-war-strip"
+        className="pointer-events-auto flex flex-wrap items-center gap-1.5 rounded-xl border border-amber-500/30 bg-slate-950/90 backdrop-blur-md px-2.5 py-1.5 shadow-xl"
+      >
+        {warState ? (
+          <>
+            <span className="text-[11px] font-bold text-amber-300">⚔️ War</span>
+            {warState.nationOrder.map((nationId) => {
+              const nation = warState.nations[nationId]!;
+              const total = getWarNationTotal(nation);
+              const pct = Math.max(0, Math.min(100, (total / warState.dominanceTarget) * 100));
+              return (
+                <span
+                  key={nationId}
+                  data-testid={`realm-hud-war-nation-${nationId}`}
+                  title={`${nation.name}: MIL ${nation.power.military} · ECO ${nation.power.economy} · ARC ${nation.power.arcana} · MOR ${nation.power.morale}`}
+                  className="flex items-center gap-1 text-[10px] font-mono text-slate-300"
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-sm border border-slate-600 inline-block"
+                    style={{ backgroundColor: nation.bannerColor }}
+                    aria-hidden="true"
+                  />
+                  {total}
+                  <span className="w-10 h-1 rounded-full bg-slate-800 overflow-hidden inline-block">
+                    <span className="block h-full bg-amber-500" style={{ width: `${pct}%` }} />
+                  </span>
+                </span>
+              );
+            })}
+            {maxThreatEntry && maxThreatEntry.level > 0 && (
+              <span
+                data-testid="realm-hud-threat-badge"
+                title="Threat cools -6/day outside their lands, -2/day undetected inside. Pursuit hunts at 55+."
+                className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${
+                  maxThreatEntry.level >= 55
+                    ? 'bg-red-500/15 text-red-300 border-red-500/40'
+                    : 'bg-orange-500/15 text-orange-300 border-orange-500/40'
+                }`}
+              >
+                🔥 {getWarThreatTier(maxThreatEntry.level)} {maxThreatEntry.level}
+              </span>
+            )}
+            {onOpenWarRoom && (
+              <button
+                type="button"
+                data-testid="realm-hud-war-room-btn"
+                onClick={onOpenWarRoom}
+                className="ml-auto px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-500 text-[11px] font-black text-slate-950 min-h-[32px]"
+              >
+                ⚔️ War Room
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <span className="text-[11px] text-slate-400 italic">
+              The Realm stirs — choose a banner to join the war.
+            </span>
+            {onOpenNationSelect && (
+              <button
+                type="button"
+                data-testid="realm-hud-choose-banner-btn"
+                onClick={onOpenNationSelect}
+                className="ml-auto px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-500 text-[11px] font-black text-slate-950 min-h-[32px]"
+              >
+                ⚔️ Choose Banner
+              </button>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Middle row: party strip (left) + travel log (right) */}
       <div className="flex-1 min-h-0 flex items-stretch justify-between gap-3 py-2">

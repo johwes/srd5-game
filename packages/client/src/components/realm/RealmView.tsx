@@ -8,9 +8,12 @@ import {
   type GeneratedOverworldBattle,
   type OverworldCoord,
   type RealmDelveState,
+  type WarPatrolApproach,
   type WaveReinforcementSpec,
   findOverworldPath,
   getFactionByPoi,
+  getNationThreat,
+  getWarThreatTier,
   isSafeRestSite,
 } from '@srd5/engine';
 import { LocalTransport } from '@srd5/transport';
@@ -28,6 +31,11 @@ import { RealmFactionsModal } from './RealmFactionsModal.js';
 import { RealmQuestJournalModal, type RealmQuestTab } from './RealmQuestJournalModal.js';
 import { RealmShopModal } from './RealmShopModal.js';
 import { RealmSettlementHubModal } from './RealmSettlementHubModal.js';
+import { RealmNationSelectModal } from './RealmNationSelectModal.js';
+import { RealmWarRoomModal } from './RealmWarRoomModal.js';
+import { RealmMissionApproachModal } from './RealmMissionApproachModal.js';
+import { RealmPatrolModal, buildPatrolPreviews } from './RealmPatrolModal.js';
+import { RealmWarOutcomeModal } from './RealmWarOutcomeModal.js';
 import {
   type RealmCommand,
   type RealmExpeditionPreview,
@@ -68,7 +76,10 @@ type RealmModalMode =
   | 'factions'
   | 'pause'
   | 'defeat'
-  | 'delve_results';
+  | 'delve_results'
+  | 'nation_select'
+  | 'war_room'
+  | 'mission_approach';
 
 export interface RealmViewProps {
   partyCharacters?: CharacterBuildState[];
@@ -115,6 +126,13 @@ export function RealmView({
   const [hoveredTile, setHoveredTile] = useState<OverworldCoord | null>(null);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [saveInfo, setSaveInfo] = useState<string | null>(null);
+  // Enemy-territory patrol encounter dialogue (SRD-1106, Spec 10 §7). Set when
+  // the party opts to face a patrol from the War Room diplomacy tab.
+  const [patrolNationId, setPatrolNationId] = useState<string | null>(null);
+  const [patrolResult, setPatrolResult] = useState<{ headline: string; rollLine: string | null } | null>(null);
+  // Dismissible war-outcome ending (SRD-1106, Spec 10 §1): shown once per
+  // verdict, "Keep Exploring" lets the party roam after the verdict.
+  const [outcomeDismissed, setOutcomeDismissed] = useState(false);
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionRef = useRef(session);
@@ -171,6 +189,37 @@ export function RealmView({
         const result = reduceRealm(sessionRef.current, command, { compendium });
         setSession(result.session);
         appendEvents(result.events, result.session.travel.currentDay);
+        // War-mission Approach Dialogue owns its modal (SRD-1106, Spec 10 §5):
+        // offered missions open the dialogue; bloodless resolutions keep it
+        // open on the d20 result; contested resolutions mount the battle.
+        if (command.type === 'NEGOTIATE_TRUCE' || command.type === 'HIRE_COVERT_ASSET') {
+          setPatrolResult(null);
+        }
+        if (command.type === 'ACCEPT_WAR_MISSION') {
+          setModalState('mission_approach');
+        }
+        if (command.type === 'RESOLVE_MISSION_APPROACH') {
+          if (!result.battle) setModalState('mission_approach');
+        }
+        if (command.type === 'COMPLETE_WAR_MISSION') {
+          setModalState(null);
+        }
+        // Patrol dialogue (SRD-1106, Spec 10 §7): a passed patrol surfaces the
+        // headline in the modal; a failed one mounts the Hunter-Killer battle.
+        if (command.type === 'RESOLVE_PATROL_ENCOUNTER') {
+          const resolved = result.events.find((e) => e.type === 'WAR_PATROL_RESOLVED');
+          const headline =
+            resolved && resolved.type === 'WAR_PATROL_RESOLVED' ? resolved.headline : 'Patrol resolved';
+          if (!result.battle) {
+            setPatrolResult({ headline, rollLine: null });
+          } else {
+            setPatrolResult({ headline, rollLine: 'The patrol attacks — deploy for battle!' });
+          }
+        }
+        if (command.type === 'SELECT_PLAYER_NATION') {
+          setOutcomeDismissed(false);
+          setModalState(null);
+        }
         if (result.battle && result.battleGameState) {
           const transport = new LocalTransport({
             initialState: result.battleGameState,
@@ -383,6 +432,57 @@ export function RealmView({
       : (session.map.pois[battle.battle.poiId ?? '']?.name ?? 'Dungeon Delve')
     : '';
 
+  // --- War UI derived state (SRD-1106, Spec 10 §5/§7) ---
+  const activeMission = session.activeWarMission;
+  const approachBonuses = useMemo(() => {
+    if (!activeMission) return {} as Record<string, { bonus: number; actorName: string }>;
+    const out: Record<string, { bonus: number; actorName: string }> = {};
+    for (const approach of activeMission.approaches) {
+      let best = { bonus: Number.NEGATIVE_INFINITY, actorName: getPartyList(session)[0]?.name ?? '—' };
+      for (const hero of getPartyList(session)) {
+        const skills = (hero.characterSheet?.skills ?? {}) as Record<string, { totalBonus?: number } | undefined>;
+        const primary = approach.skillId ? (skills[approach.skillId]?.totalBonus ?? Number.NEGATIVE_INFINITY) : Number.NEGATIVE_INFINITY;
+        const alternate = approach.alternateSkillId
+          ? (skills[approach.alternateSkillId]?.totalBonus ?? Number.NEGATIVE_INFINITY)
+          : Number.NEGATIVE_INFINITY;
+        const bonus = Math.max(primary, alternate);
+        if (bonus > best.bonus) best = { bonus, actorName: hero.name };
+      }
+      out[approach.id] = {
+        bonus: best.bonus === Number.NEGATIVE_INFINITY ? 0 : best.bonus,
+        actorName: best.actorName,
+      };
+    }
+    return out;
+  }, [activeMission, session]);
+
+  const patrolPreviews = useMemo(() => {
+    if (!patrolNationId) return [];
+    const heroes = getPartyList(session);
+    const bestOf = (...ids: string[]): { bonus: number; actorName: string } => {
+      let best = { bonus: Number.NEGATIVE_INFINITY, actorName: heroes[0]?.name ?? '—' };
+      for (const hero of heroes) {
+        const skills = (hero.characterSheet?.skills ?? {}) as Record<string, { totalBonus?: number } | undefined>;
+        const bonus = Math.max(...ids.map((id) => skills[id]?.totalBonus ?? Number.NEGATIVE_INFINITY));
+        if (bonus > best.bonus) best = { bonus, actorName: hero.name };
+      }
+      return { bonus: best.bonus === Number.NEGATIVE_INFINITY ? 0 : best.bonus, actorName: best.actorName };
+    };
+    const bluff = bestOf('persuasion', 'deception');
+    const evade = bestOf('stealth', 'survival');
+    return buildPatrolPreviews({
+      bluffBonus: bluff.bonus,
+      bluffActor: bluff.actorName,
+      evadeBonus: evade.bonus,
+      evadeActor: evade.actorName,
+      gold: session.travel.gold,
+    });
+  }, [patrolNationId, session]);
+
+  const patrolNationName = patrolNationId && session.war ? (session.war.nations[patrolNationId]?.name ?? patrolNationId) : (patrolNationId ?? '');
+  const patrolThreat = patrolNationId ? getNationThreat(session.diplomacy, patrolNationId) : 0;
+  const showWarOutcome = Boolean(session.war && session.war.outcome !== 'ongoing' && !outcomeDismissed);
+
   return (
     <div
       data-testid="realm-view-container"
@@ -484,6 +584,10 @@ export function RealmView({
             onEndlessDelve={() => setEndlessDelve(true)}
             onOpenPause={() => setModalState('pause')}
             onInspectCharacter={onOpenCharacterSheet}
+            war={session.war}
+            diplomacy={session.diplomacy}
+            onOpenNationSelect={() => setModalState('nation_select')}
+            onOpenWarRoom={() => setModalState('war_room')}
           />
         </div>
       )}
@@ -769,6 +873,90 @@ export function RealmView({
           </div>
         </div>
       )}
+
+      {/* War campaign modals (SRD-1106, Spec 10): new campaigns launch with the
+          banner pick; the War Room, Approach Dialogue, patrol dialogue, and
+          Victory/Defeat endings layer above the overworld map. */}
+      <RealmNationSelectModal
+        isOpen={modalState === 'nation_select' || (!session.war && !battle && !activeDelve && !endlessDelve)}
+        onSelectNation={(archetypeId) =>
+          dispatchRealm({ type: 'SELECT_PLAYER_NATION', archetypeId })
+        }
+      />
+      <RealmWarRoomModal
+        isOpen={modalState === 'war_room'}
+        war={session.war}
+        diplomacy={session.diplomacy}
+        map={session.map}
+        currentDay={session.travel.currentDay}
+        gold={session.travel.gold}
+        onClose={() => setModalState(null)}
+        onAcceptMission={(kind, poiId) => {
+          setModalState(null);
+          dispatchRealm({ type: 'ACCEPT_WAR_MISSION', missionKind: kind, poiId });
+          setModalState('mission_approach');
+        }}
+        onNegotiateTruce={(nationId) =>
+          dispatchRealm({ type: 'NEGOTIATE_TRUCE', targetNationId: nationId })
+        }
+        onFacePatrol={(nationId) => {
+          setPatrolNationId(nationId);
+          setPatrolResult(null);
+        }}
+        onHireAsset={(asset) => {
+          if (asset === 'mercenaries') {
+            dispatchRealm({ type: 'HIRE_COVERT_ASSET', asset });
+          } else {
+            // Thieves' Guild cells need a target: default to the first rival
+            // mine / supply depot on the map so the button always resolves.
+            const target = Object.values(session.map.pois).find((poi) =>
+              ['mine', 'supply_depot'].includes(poi.kind),
+            );
+            if (!target) {
+              showFeedback('No enemy supply depot or mine to strike.');
+              return;
+            }
+            dispatchRealm({ type: 'HIRE_COVERT_ASSET', asset, targetPoiId: target.id });
+          }
+        }}
+      />
+      <RealmMissionApproachModal
+        isOpen={modalState === 'mission_approach' && Boolean(activeMission)}
+        missionKind={activeMission?.mission.kind ?? ''}
+        poiName={activeMission?.poiName ?? ''}
+        approaches={activeMission?.approaches ?? []}
+        bonuses={approachBonuses}
+        resolved={activeMission?.resolved ?? null}
+        onChooseApproach={(approachId) =>
+          dispatchRealm({ type: 'RESOLVE_MISSION_APPROACH', approachId })
+        }
+        onClose={() => setModalState(null)}
+      />
+      <RealmPatrolModal
+        isOpen={patrolNationId !== null}
+        nationId={patrolNationId ?? ''}
+        nationName={patrolNationName}
+        threat={patrolThreat}
+        threatTier={getWarThreatTier(patrolThreat)}
+        gold={session.travel.gold}
+        previews={patrolPreviews}
+        result={patrolResult}
+        onChooseApproach={(approach: WarPatrolApproach) => {
+          if (patrolNationId) {
+            dispatchRealm({ type: 'RESOLVE_PATROL_ENCOUNTER', nationId: patrolNationId, approach });
+          }
+        }}
+        onClose={() => {
+          setPatrolNationId(null);
+          setPatrolResult(null);
+        }}
+      />
+      <RealmWarOutcomeModal
+        isOpen={showWarOutcome}
+        war={session.war}
+        onReturnToTitle={onExitToRoster}
+        onKeepExploring={() => setOutcomeDismissed(true)}
+      />
     </div>
   );
 }
