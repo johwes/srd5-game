@@ -10,6 +10,7 @@ import {
   type GameEvent,
   type GeneratedOverworldBattle,
   type GameState,
+  type MissionApproachOption,
   type OverworldBattleOrigin,
   type OverworldCoord,
   type OverworldMap,
@@ -23,9 +24,16 @@ import {
   type RealmDelveKind,
   type RealmDelveState,
   type RealmEvent,
+  type ResolvedMissionApproach,
   type SettlementRumor,
   type ShopInventory,
   type TravelPace,
+  type WarBattleModifiers,
+  type WarDiplomacyState,
+  type WarMission,
+  type WarMissionKind,
+  type WarState,
+  type WaveReinforcementSpec,
   PLAYER_FACTION_ID,
   RealmError,
   abandonQuestChain,
@@ -35,7 +43,9 @@ import {
   adjustFactionReputation,
   advanceChainsForClearedPoi,
   advanceChainsForVisit,
+  advanceWarSimulation,
   blessPartyWithTemple,
+  buildMissionApproaches,
   buildStarterQuestChains,
   campOverworld,
   canCampEarly,
@@ -44,9 +54,13 @@ import {
   completeQuestForParty,
   computeDerivedCharacter,
   createCharacterCombatant,
+  createInitialGameState,
   createOverworldTravelState,
   createQuestChainLog,
   createQuestLog,
+  createWarDiplomacyState,
+  decayWarThreats,
+  evaluateWarOutcome,
   expireQuestChains,
   failQuest,
   filterMarketStockForParty,
@@ -56,6 +70,7 @@ import {
   generateQuestBoard,
   generateSettlementRumors,
   generateShopInventory,
+  generateWarMissionBattle,
   generateWildernessBattle,
   getDailyTravelPoints,
   getFactionByPoi,
@@ -67,16 +82,25 @@ import {
   getTempleBlessingCost,
   getTempleCleanseCost,
   getTravelDayBudget,
+  hireMercenaryCompany,
+  hireThievesGuild,
   identifyMagicItem,
+  initializeWarState,
+  isPoiEligibleForMission,
   isSafeRestSite,
   mixBattleSeed,
+  negotiateTruce,
   nextRandomFloat,
   planExpedition,
   previewExpedition,
   populateSettlements,
   purchaseItem,
+  reportPatrolKill,
+  resolveMissionApproach,
   resolveOverworldBattle,
+  resolvePatrolEncounter,
   sellItem,
+  startCombatEncounter,
   startOverworldBattle,
   startQuestChain,
   startRealmDelve,
@@ -123,6 +147,36 @@ export interface RealmSessionState {
   revealedPoiIds: string[];
   /** Ancient shrine POIs already communed with (one blessing per shrine). */
   usedShrinePoiIds: string[];
+  /** Living multi-nation war state (SRD-1101 / SRD-1105); null before the party picks a nation. */
+  war: WarState | null;
+  /** Per-nation Threat, sub-faction progress, and the Druid blessing flag (SRD-1104). */
+  diplomacy: WarDiplomacyState;
+  /** Currently offered special-ops mission with its Approach Dialogue state (SRD-1103/1105). */
+  activeWarMission: ActiveWarMissionState | null;
+  /** Scheduled multi-wave war battle awaiting launch or resolution (SRD-1102/1105). */
+  pendingWarBattle: PendingWarBattleState | null;
+}
+
+/** A special-ops mission offered at a strategic POI plus Approach Dialogue progress. */
+export interface ActiveWarMissionState {
+  mission: WarMission;
+  poiId: string;
+  poiName: string;
+  targetNationId?: string;
+  approaches: MissionApproachOption[];
+  resolved: ResolvedMissionApproach | null;
+  status: 'offered' | 'approached' | 'battle' | 'complete';
+}
+
+/** A generated war-mission tactical battle with its scheduled reinforcement queue. */
+export interface PendingWarBattleState {
+  missionId: string;
+  poiId: string;
+  poiName: string;
+  battle: GeneratedOverworldBattle;
+  waves: WaveReinforcementSpec[];
+  reinforcementQueue: Combatant[];
+  modifiers: WarBattleModifiers;
 }
 
 export type RealmSessionEvent =
@@ -161,6 +215,21 @@ export type RealmSessionEvent =
       shrineType: string;
       effectDescription: string;
     }
+  // --- War Campaign events (SRD-1105, Spec 10) ---
+  | { type: 'WAR_NATION_SELECTED'; nationId: string; nationName: string }
+  | { type: 'WAR_MISSION_ACCEPTED'; missionId: string; kind: string; poiId: string; poiName: string }
+  | {
+      type: 'WAR_APPROACH_RESOLVED';
+      missionId: string;
+      approachId: string;
+      success: boolean;
+      bloodless: boolean;
+      headline: string;
+    }
+  | { type: 'WAR_MISSION_COMPLETED'; missionId: string; poiId: string; victory: boolean }
+  | { type: 'WAR_PATROL_RESOLVED'; nationId: string; approach: string; headline: string }
+  | { type: 'WAR_TRUCE_NEGOTIATED'; nationId: string; success: boolean; headline: string }
+  | { type: 'WAR_ASSET_HIRED'; asset: string; success: boolean; headline: string }
   | { type: 'REALM_LOG'; message: string };
 
 export interface RealmReduceResult {
@@ -204,7 +273,15 @@ export type RealmCommand =
   | { type: 'REALM_IDENTIFY_ITEM'; poiId: string; characterId: string; instanceId: string }
   | { type: 'REALM_TEMPLE_CLEANSE'; poiId: string; characterId: string }
   | { type: 'REALM_TEMPLE_BLESS'; poiId: string }
-  | { type: 'REALM_ENTER_POI'; poiId: string };
+  | { type: 'REALM_ENTER_POI'; poiId: string }
+  // --- War Campaign commands (SRD-1105, Spec 10) ---
+  | { type: 'SELECT_PLAYER_NATION'; archetypeId?: string }
+  | { type: 'ACCEPT_WAR_MISSION'; missionKind: WarMissionKind; poiId: string; targetNationId?: string }
+  | { type: 'RESOLVE_MISSION_APPROACH'; approachId: string }
+  | { type: 'COMPLETE_WAR_MISSION'; victory: boolean }
+  | { type: 'RESOLVE_PATROL_ENCOUNTER'; nationId: string; approach: 'bluff' | 'evade' | 'bribe' | 'fight' }
+  | { type: 'NEGOTIATE_TRUCE'; targetNationId: string; tributeGold?: number }
+  | { type: 'HIRE_COVERT_ASSET'; asset: 'mercenaries' | 'thieves_guild'; targetPoiId?: string };
 
 // ---------------------------------------------------------------------------
 // Bootstrap
@@ -318,6 +395,10 @@ export function createRealmSession(
     clearedPoiIds: [],
     revealedPoiIds: getSettlements(map).map((poi) => poi.id),
     usedShrinePoiIds: [],
+    war: null,
+    diplomacy: createWarDiplomacyState(),
+    activeWarMission: null,
+    pendingWarBattle: null,
   };
 }
 
@@ -498,6 +579,244 @@ function rollWildernessEncounter(
 }
 
 // ---------------------------------------------------------------------------
+// War Campaign helpers (SRD-1105, Spec 10)
+// ---------------------------------------------------------------------------
+
+/** Live DerivedCharacterSheets for Approach / patrol / diplomacy 5e checks. */
+function getPartySheets(session: RealmSessionState) {
+  return getPartyList(session)
+    .map((c) => c.characterSheet)
+    .filter((s): s is NonNullable<typeof s> => Boolean(s));
+}
+
+/** Mean total character level across the living party (dynamic-CR scaling). */
+function getPartyAverageLevel(session: RealmSessionState): number {
+  const sheets = getPartySheets(session);
+  if (sheets.length === 0) return 1;
+  const total = sheets.reduce((sum, s) => sum + Math.max(1, Math.min(20, s.totalLevel ?? 1)), 0);
+  return Math.max(1, Math.min(20, Math.round(total / sheets.length)));
+}
+
+/** Writes Approach-resolver slot deductions back onto party combatants. */
+function syncSheetsToParty(
+  session: RealmSessionState,
+  updatedSheets: Array<{ id: string } & Record<string, unknown>>,
+): void {
+  for (const sheet of updatedSheets) {
+    const hero = session.party[sheet.id];
+    if (hero) {
+      hero.characterSheet = sheet as unknown as Combatant['characterSheet'];
+    }
+  }
+}
+
+/**
+ * Advances the living war simulation (and Threat decay) to the travel clock.
+ * Runs after every travel/camp command that moves `travel.currentDay` while a
+ * war is active. Chronicle headlines surface as `REALM_LOG` entries.
+ */
+function syncWarToTravelDay(next: RealmSessionState, events: RealmSessionEvent[]): void {
+  if (!next.war || next.war.outcome !== 'ongoing') return;
+  const prevDay = next.war.currentDay;
+  if (next.travel.currentDay <= prevDay) return;
+  const result = advanceWarSimulation(next.war, next.map, { toDay: next.travel.currentDay });
+  next.war = result.war;
+  next.map = result.map;
+  for (const entry of result.events) {
+    events.push({ type: 'REALM_LOG', message: `⚔️ ${entry.headline}` });
+  }
+  const daysElapsed = Math.max(0, next.travel.currentDay - prevDay);
+  if (daysElapsed > 0) {
+    const decayed = decayWarThreats(next.diplomacy, { days: daysElapsed });
+    next.diplomacy = decayed.diplomacy;
+    for (const headline of decayed.headlines) {
+      events.push({ type: 'REALM_LOG', message: headline });
+    }
+  }
+}
+
+function requireWar(session: RealmSessionState): WarState {
+  if (!session.war) throw new RealmError('The war campaign has not begun — select your nation first');
+  return session.war;
+}
+
+/**
+ * Starts a war-mission tactical battle: the living party deploys on the west
+ * edge, the wave-1 classed garrison plus allied militia hold the east edge,
+ * Approach-phase surprise is applied, and waves 2+ queue as timed
+ * reinforcements for `RealmBattleView` (SRD-1102/1105).
+ */
+export function startWarMissionBattleState(
+  session: RealmSessionState,
+  generated: { battle: GeneratedOverworldBattle; waves: WaveReinforcementSpec[]; reinforcementQueue: Combatant[]; modifiers: WarBattleModifiers; enemies: Combatant[]; alliedMilitia: Combatant[] },
+  compendium: SrdCompendium = defaultCompendium,
+): { battle: GeneratedOverworldBattle; gameState: GameState; events: GameEvent[] } {
+  void compendium;
+  const living = getLivingParty(session);
+  const party = living.map((hero, index) => {
+    const spawn =
+      generated.battle.partySpawnCells[index] ?? generated.battle.partySpawnCells[0]!;
+    return { ...structuredClone(hero), side: 'party' as const, teamId: 'party', position: { ...spawn }, isSurprised: false };
+  });
+  const enemyIds = new Set(generated.enemies.map((e) => e.id));
+  const surprisedEnemies =
+    generated.modifiers.surpriseAttackerSide === 'party' || generated.modifiers.wave1EnemiesSurprised;
+  const surprisedParty = generated.modifiers.surpriseAttackerSide === 'enemy';
+  const enemies = generated.enemies.map((e) => ({
+    ...structuredClone(e),
+    isSurprised: surprisedEnemies ? true : e.isSurprised,
+  }));
+  const militia = generated.alliedMilitia.map((m) => structuredClone(m));
+  const explicitSurprisedEntityIds = [
+    ...(surprisedEnemies ? [...enemyIds] : []),
+    ...(surprisedParty ? party.map((p) => p.id) : []),
+  ];
+
+  let gameState = createInitialGameState({
+    id: generated.battle.battleId,
+    grid: generated.battle.grid,
+    party,
+    monsters: [...enemies, ...militia.filter((m) => m.side !== 'party')],
+    rngState: generated.battle.nextRngState,
+  });
+  // Allied militia fight on the party side: fold them into the party mirror.
+  for (const ally of militia.filter((m) => m.side === 'party')) {
+    gameState.party[ally.id] = ally;
+  }
+
+  const transition = startCombatEncounter({
+    encounterId: generated.battle.battleId,
+    combatants: [...party, ...enemies, ...militia],
+    rngState: generated.battle.nextRngState,
+    explicitSurprisedEntityIds: explicitSurprisedEntityIds.length > 0 ? explicitSurprisedEntityIds : undefined,
+  });
+
+  const nextParty: Record<string, Combatant> = {};
+  const nextMonsters: Record<string, Combatant> = {};
+  for (const [id, combatant] of Object.entries(transition.state.combatants)) {
+    if (combatant.side === 'party') nextParty[id] = combatant;
+    else nextMonsters[id] = combatant;
+  }
+  gameState = {
+    ...gameState,
+    mode: 'combat',
+    combat: transition.state,
+    party: nextParty,
+    monsters: nextMonsters,
+    rngState: transition.state.rngState,
+  };
+  return {
+    battle: generated.battle,
+    gameState,
+    events: [{ type: 'MODE_CHANGED', fromMode: 'exploration', toMode: 'combat' }, ...transition.events],
+  };
+}
+
+/**
+ * Applies war-mission completion (SRD-1105): POI status flips, War Power
+ * shifts, and Power Dominance evaluation. Pure on cloned session slices —
+ * the reducer owns persistence.
+ */
+function applyWarMissionCompletion(
+  next: RealmSessionState,
+  events: RealmSessionEvent[],
+  victory: boolean,
+): void {
+  const missionState = next.activeWarMission;
+  const war = requireWar(next);
+  const day = next.travel.currentDay;
+  const poi = next.map.pois[missionState?.poiId ?? ''];
+  const playerId = war.playerNationId;
+
+  const adjustPower = (nationId: string, pillar: 'military' | 'economy' | 'arcana' | 'morale', delta: number): void => {
+    const nation = next.war!.nations[nationId];
+    if (!nation) return;
+    nation.power[pillar] = Math.max(0, nation.power[pillar] + delta);
+  };
+
+  if (!missionState) throw new RealmError('No active war mission to complete');
+  const kind = missionState.mission.kind;
+
+  if (victory) {
+    switch (kind) {
+      case 'destroy_bridge': {
+        if (poi) {
+          poi.strategicStatus = 'destroyed';
+          poi.statusChangedDay = day;
+          poi.recoveryDay = day + 9;
+        }
+        if (missionState.targetNationId) adjustPower(missionState.targetNationId, 'economy', -3);
+        adjustPower(playerId, 'morale', 2);
+        break;
+      }
+      case 'protect_poi': {
+        if (poi && poi.strategicStatus === 'under_attack') {
+          poi.strategicStatus = 'intact';
+          poi.statusChangedDay = day;
+          delete poi.attackDeadlineDay;
+          delete poi.contestedByNationId;
+        }
+        adjustPower(playerId, 'military', 2);
+        break;
+      }
+      case 'cleanse_cursed_mine': {
+        if (poi) {
+          poi.strategicStatus = 'intact';
+          poi.statusChangedDay = day;
+        }
+        adjustPower(playerId, 'arcana', 2);
+        break;
+      }
+      case 'capture_neutral_mine': {
+        if (poi) {
+          poi.strategicStatus = 'intact';
+          poi.statusChangedDay = day;
+          poi.ownerNationId = playerId;
+          poi.factionId = playerId;
+          delete poi.contestedByNationId;
+          next.map.tiles[`${poi.q},${poi.r}`]!.factionControlId = playerId;
+        }
+        adjustPower(playerId, 'economy', 2);
+        break;
+      }
+      case 'recover_war_artifact': {
+        adjustPower(playerId, 'arcana', 3);
+        break;
+      }
+      default: {
+        // assassinate_general, poison_water_supply, sabotage_enemy_mine, rescue_spy
+        if (poi) {
+          poi.strategicStatus = 'sabotaged';
+          poi.statusChangedDay = day;
+        }
+        if (missionState.targetNationId) adjustPower(missionState.targetNationId, 'military', -3);
+        adjustPower(playerId, 'morale', 2);
+        break;
+      }
+    }
+    events.push({ type: 'REALM_LOG', message: `🏆 War mission complete: ${missionState.poiName} (${kind})` });
+  } else {
+    adjustPower(playerId, 'morale', -1);
+    events.push({ type: 'REALM_LOG', message: `💀 War mission failed at ${missionState.poiName} — the enemy holds the field` });
+  }
+
+  missionState.status = 'complete';
+  next.activeWarMission = null;
+  next.pendingWarBattle = null;
+
+  const verdict = evaluateWarOutcome(next.war!);
+  if (verdict.outcome !== 'ongoing' && next.war!.outcome === 'ongoing') {
+    next.war!.outcome = verdict.outcome;
+    next.war!.outcomeReason = verdict.reason;
+    next.war!.chronicle = [
+      ...next.war!.chronicle,
+      { day, kind: verdict.outcome, headline: verdict.reason ?? verdict.outcome },
+    ];
+    events.push({ type: 'REALM_LOG', message: verdict.reason ?? verdict.outcome });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Reducer
 // ---------------------------------------------------------------------------
 
@@ -594,6 +913,19 @@ export function reduceRealm(
   if (!next.chainLog) {
     next.chainLog = createQuestChainLog(buildStarterQuestChains(next.map));
   }
+  // Backward compatibility with pre-SRD-1105 sessions (no war campaign).
+  if (next.war === undefined) {
+    next.war = null;
+  }
+  if (!next.diplomacy) {
+    next.diplomacy = createWarDiplomacyState();
+  }
+  if (next.activeWarMission === undefined) {
+    next.activeWarMission = null;
+  }
+  if (next.pendingWarBattle === undefined) {
+    next.pendingWarBattle = null;
+  }
 
   switch (command.type) {
     case 'REALM_TRAVEL_TO': {
@@ -605,6 +937,7 @@ export function reduceRealm(
       next.travel = result.state;
       events.push(...result.events);
       expireChainsForDay(next, events);
+      syncWarToTravelDay(next, events);
 
       // Wandering hostiles may ambush the party on the road (never inside a
       // settlement). The encounter roll consumes the threaded travel RNG.
@@ -697,6 +1030,7 @@ export function reduceRealm(
         }
       }
       expireChainsForDay(next, events);
+      syncWarToTravelDay(next, events);
       progressChainsForCurrentPoi(next, events);
       return { session: next, events };
     }
@@ -976,6 +1310,330 @@ export function reduceRealm(
       };
     }
 
+    case 'SELECT_PLAYER_NATION': {
+      if (next.war) {
+        throw new RealmError('Your nation has already sworn its banners — the war is joined');
+      }
+      const founded = initializeWarState(next.map, {
+        seed: next.map.worldSeed,
+        ...(command.archetypeId ? { playerNationArchetypeId: command.archetypeId } : {}),
+      });
+      next.war = founded.war;
+      next.map = founded.map;
+      for (const entry of founded.events) {
+        events.push({ type: 'REALM_LOG', message: `⚔️ ${entry.headline}` });
+      }
+      events.push({
+        type: 'WAR_NATION_SELECTED',
+        nationId: founded.war.playerNationId,
+        nationName: founded.war.nations[founded.war.playerNationId]!.name,
+      });
+      return { session: next, events };
+    }
+
+    case 'ACCEPT_WAR_MISSION': {
+      const war = requireWar(next);
+      if (next.activeWarMission) {
+        throw new RealmError('Finish or abandon the current operation before accepting another');
+      }
+      const poi = next.map.pois[command.poiId];
+      if (!poi) throw new RealmError(`Unknown location "${command.poiId}"`);
+      if (!isPoiEligibleForMission(command.missionKind, poi.kind)) {
+        throw new RealmError(`${command.missionKind} cannot target ${poi.kind} (${poi.name})`);
+      }
+      // Default the target nation to the POI holder when it is a rival war
+      // nation (so offensive completions drain the right enemy even when the
+      // caller does not name one explicitly).
+      const holderId = poi.ownerNationId ?? poi.factionId;
+      const impliedTarget =
+        command.targetNationId ??
+        (holderId && holderId !== war.playerNationId && war.nations[holderId]
+          ? holderId
+          : undefined);
+      const mission: WarMission = {
+        id: `war_${command.missionKind}_${poi.id}`,
+        kind: command.missionKind,
+        poiId: poi.id,
+        poiKind: poi.kind,
+        poiName: poi.name,
+        ...(impliedTarget ? { targetNationId: impliedTarget } : {}),
+      };
+      const approaches = buildMissionApproaches(command.missionKind, poi.kind, {
+        seed: mixBattleSeed(next.map.worldSeed, poi.q, poi.r),
+      });
+      next.activeWarMission = {
+        mission,
+        poiId: poi.id,
+        poiName: poi.name,
+        ...(impliedTarget ? { targetNationId: impliedTarget } : {}),
+        approaches,
+        resolved: null,
+        status: 'offered',
+      };
+      void war;
+      events.push({
+        type: 'WAR_MISSION_ACCEPTED',
+        missionId: mission.id,
+        kind: command.missionKind,
+        poiId: poi.id,
+        poiName: poi.name,
+      });
+      return { session: next, events };
+    }
+
+    case 'RESOLVE_MISSION_APPROACH': {
+      const war = requireWar(next);
+      const missionState = next.activeWarMission;
+      if (!missionState || missionState.status !== 'offered') {
+        throw new RealmError('No offered war mission awaiting an approach');
+      }
+      const sheets = getPartySheets(next);
+      if (sheets.length === 0) throw new RealmError('No living heroes to lead the approach');
+      const resolved = resolveMissionApproach({
+        mission: missionState.mission,
+        approachId: command.approachId,
+        party: sheets,
+        rngState: next.travel.rngState,
+        approaches: missionState.approaches,
+      });
+      next.travel = { ...next.travel, rngState: resolved.nextRngState };
+      syncSheetsToParty(next, resolved.updatedParty);
+      missionState.resolved = resolved;
+      missionState.status = 'approached';
+      const bloodless = resolved.outcome === 'bloodless_success';
+      events.push({
+        type: 'WAR_APPROACH_RESOLVED',
+        missionId: missionState.mission.id,
+        approachId: resolved.approach.id,
+        success: resolved.success,
+        bloodless,
+        headline: resolved.headline,
+      });
+      if (bloodless) {
+        return { session: next, events };
+      }
+      // A contested approach escalates to a modified tactical battle with
+      // scheduled multi-wave reinforcements (SRD-1102/1105).
+      const poiNow = next.map.pois[missionState.poiId];
+      const firstRival = war.nationOrder.find((id) => id !== war.playerNationId)!;
+      const isOffensive = !['protect_poi', 'cleanse_cursed_mine', 'capture_neutral_mine', 'recover_war_artifact'].includes(
+        missionState.mission.kind,
+      );
+      const targetNation =
+        (isOffensive
+          ? (missionState.targetNationId ??
+            missionState.mission.targetNationId ??
+            (poiNow?.ownerNationId as string | undefined) ??
+            (poiNow?.factionId as string | undefined))
+          : ((poiNow?.contestedByNationId as string | undefined) ??
+            (poiNow?.ownerNationId && poiNow.ownerNationId !== war.playerNationId
+              ? (poiNow.ownerNationId as string)
+              : undefined))) ?? firstRival;
+      const generated = generateWarMissionBattle(
+        {
+          seed: mixBattleSeed(next.map.worldSeed, next.travel.currentDay, missionState.poiId.length),
+          missionKind: missionState.mission.kind,
+          poi: { id: missionState.poiId, kind: missionState.mission.poiKind },
+          party: getPartyList(next),
+          partyAverageLevel: getPartyAverageLevel(next),
+          nationId: targetNation,
+          enemyTeamId: 'war_enemies',
+          modifiers: resolved.modifiers,
+        },
+        compendium,
+      );
+      const started = startWarMissionBattleState(next, generated, compendium);
+      missionState.status = 'battle';
+      next.pendingWarBattle = {
+        missionId: missionState.mission.id,
+        poiId: missionState.poiId,
+        poiName: missionState.poiName,
+        battle: started.battle,
+        waves: generated.waves,
+        reinforcementQueue: [...generated.reinforcementQueue],
+        modifiers: generated.modifiers,
+      };
+      events.push({
+        type: 'REALM_ENCOUNTER_STARTED',
+        battleId: started.battle.battleId,
+        origin: 'wilderness',
+        poiId: missionState.poiId,
+      });
+      return {
+        session: next,
+        events,
+        battle: started.battle,
+        battleGameState: started.gameState,
+        battleEvents: started.events,
+      };
+    }
+
+    case 'COMPLETE_WAR_MISSION': {
+      requireWar(next);
+      if (!next.activeWarMission) {
+        throw new RealmError('No active war mission to complete');
+      }
+      const missionId = next.activeWarMission.mission.id;
+      const poiId = next.activeWarMission.poiId;
+      applyWarMissionCompletion(next, events, command.victory);
+      events.push({ type: 'WAR_MISSION_COMPLETED', missionId, poiId, victory: command.victory });
+      return { session: next, events };
+    }
+
+    case 'RESOLVE_PATROL_ENCOUNTER': {
+      requireWar(next);
+      const sheets = getPartySheets(next);
+      if (sheets.length === 0) throw new RealmError('No living heroes to face the patrol');
+      const resolved = resolvePatrolEncounter({
+        diplomacy: next.diplomacy,
+        war: next.war!,
+        party: sheets,
+        nationId: command.nationId,
+        approach: command.approach,
+        rngState: next.travel.rngState,
+        goldAvailable: next.travel.gold,
+      });
+      next.diplomacy = resolved.diplomacy;
+      next.travel = {
+        ...next.travel,
+        rngState: resolved.nextRngState,
+        gold: resolved.remainingGold,
+      };
+      syncSheetsToParty(next, resolved.updatedParty);
+      events.push({
+        type: 'WAR_PATROL_RESOLVED',
+        nationId: command.nationId,
+        approach: command.approach,
+        headline: resolved.headline,
+      });
+      if (resolved.outcome === 'passed') {
+        return { session: next, events };
+      }
+      // Steel is drawn: intercept with a Hunter-Killer pursuit squad battle.
+      // The default multi-wave defense schedule doubles as the pursuit
+      // reinforcement timetable (Spec 10 §7 + §4.2).
+      const avgLevel = getPartyAverageLevel(next);
+      const generated = generateWarMissionBattle(
+        {
+          seed: mixBattleSeed(next.map.worldSeed, next.travel.currentDay, command.nationId.length),
+          missionKind: 'protect_poi',
+          party: getPartyList(next),
+          partyAverageLevel: avgLevel,
+          nationId: command.nationId,
+          enemyTeamId: 'war_enemies',
+          modifiers: {},
+        },
+        compendium,
+      );
+      const started = startWarMissionBattleState(next, generated, compendium);
+      // Patrol fights are standalone skirmishes, not mission battles — but the
+      // multi-wave plumbing reuses the same reinforcement schedule.
+      next.pendingWarBattle = {
+        missionId: `patrol_${command.nationId}_${next.travel.currentDay}`,
+        poiId: command.nationId,
+        poiName: `Patrol (${command.nationId})`,
+        battle: started.battle,
+        waves: generated.waves,
+        reinforcementQueue: [...generated.reinforcementQueue],
+        modifiers: generated.modifiers,
+      };
+      events.push({
+        type: 'REALM_ENCOUNTER_STARTED',
+        battleId: started.battle.battleId,
+        origin: 'wilderness',
+      });
+      // Patrol kills raise Threat only once reported; record the kill now so a
+      // victorious skirmish heats the territory (SRD-1104 §7).
+      const kill = reportPatrolKill({
+        diplomacy: next.diplomacy,
+        war: next.war!,
+        nationId: command.nationId,
+        day: next.travel.currentDay,
+      });
+      next.diplomacy = kill.diplomacy;
+      if (kill.war) next.war = kill.war;
+      return {
+        session: next,
+        events,
+        battle: started.battle,
+        battleGameState: started.gameState,
+        battleEvents: started.events,
+      };
+    }
+
+    case 'NEGOTIATE_TRUCE': {
+      const war = requireWar(next);
+      const sheets = getPartySheets(next);
+      if (sheets.length === 0) throw new RealmError('No living heroes to parley');
+      const tribute = command.tributeGold ?? 0;
+      if (tribute > next.travel.gold) {
+        throw new RealmError(`War chest holds ${next.travel.gold} gp — cannot offer ${tribute} gp tribute`);
+      }
+      const negotiated = negotiateTruce({
+        war,
+        party: sheets,
+        targetNationId: command.targetNationId,
+        rngState: next.travel.rngState,
+        day: next.travel.currentDay,
+        tributeGold: tribute,
+      });
+      next.war = negotiated.war;
+      next.travel = { ...next.travel, rngState: negotiated.nextRngState, gold: next.travel.gold - negotiated.goldSpent };
+      events.push({
+        type: 'WAR_TRUCE_NEGOTIATED',
+        nationId: command.targetNationId,
+        success: negotiated.success,
+        headline: negotiated.headline,
+      });
+      return { session: next, events };
+    }
+
+    case 'HIRE_COVERT_ASSET': {
+      const war = requireWar(next);
+      const sheets = getPartySheets(next);
+      if (sheets.length === 0) throw new RealmError('No living heroes to hire blades');
+      if (command.asset === 'mercenaries') {
+        const hired = hireMercenaryCompany({
+          war,
+          party: sheets,
+          rngState: next.travel.rngState,
+          goldAvailable: next.travel.gold,
+          day: next.travel.currentDay,
+        });
+        next.war = hired.war;
+        next.travel = { ...next.travel, rngState: hired.nextRngState, gold: hired.remainingGold };
+        events.push({
+          type: 'WAR_ASSET_HIRED',
+          asset: 'mercenaries',
+          success: hired.success,
+          headline: hired.headline,
+        });
+        return { session: next, events };
+      }
+      if (!command.targetPoiId) {
+        throw new RealmError('Thieves’ Guild cells need a target supply depot or mine');
+      }
+      const job = hireThievesGuild({
+        war,
+        map: next.map,
+        party: sheets,
+        targetPoiId: command.targetPoiId,
+        rngState: next.travel.rngState,
+        goldAvailable: next.travel.gold,
+        day: next.travel.currentDay,
+      });
+      next.war = job.war;
+      next.map = job.map;
+      next.travel = { ...next.travel, rngState: job.nextRngState, gold: job.remainingGold };
+      events.push({
+        type: 'WAR_ASSET_HIRED',
+        asset: 'thieves_guild',
+        success: job.success,
+        headline: job.headline,
+      });
+      return { session: next, events };
+    }
+
     default: {
       const exhaustive: never = command;
       throw new RealmError(`Unknown realm command: ${JSON.stringify(exhaustive)}`);
@@ -1025,11 +1683,56 @@ export function resolveRealmBattle(
   if (!next.chainLog) {
     next.chainLog = createQuestChainLog(buildStarterQuestChains(next.map));
   }
+  if (!next.diplomacy) {
+    next.diplomacy = createWarDiplomacyState();
+  }
 
   next.party = structuredClone(resolution.nextState.party);
   next.travel = { ...next.travel, gold: next.travel.gold + resolution.goldAwarded };
 
   const completedQuestIds: string[] = [];
+  // War-mission and patrol skirmishes resolve through the war campaign
+  // completion path instead of the POI-clearance path (SRD-1105).
+  if (next.pendingWarBattle && next.activeWarMission) {
+    const missionId = next.activeWarMission.mission.id;
+    const poiId = next.activeWarMission.poiId;
+    applyWarMissionCompletion(next, events, true);
+    events.push({ type: 'WAR_MISSION_COMPLETED', missionId, poiId, victory: true });
+    events.push({
+      type: 'REALM_BATTLE_RESOLVED',
+      battleId: battle.battleId,
+      totalXp: resolution.totalXp,
+      goldAwarded: resolution.goldAwarded,
+      completedQuestIds,
+    });
+    return {
+      session: next,
+      events,
+      totalXp: resolution.totalXp,
+      goldAwarded: resolution.goldAwarded,
+      completedQuestIds,
+    };
+  }
+  if (next.pendingWarBattle) {
+    // Standalone patrol skirmish: heat already recorded at interception time.
+    const pending = next.pendingWarBattle;
+    next.pendingWarBattle = null;
+    events.push({
+      type: 'REALM_BATTLE_RESOLVED',
+      battleId: battle.battleId,
+      totalXp: resolution.totalXp,
+      goldAwarded: resolution.goldAwarded,
+      completedQuestIds,
+    });
+    events.push({ type: 'REALM_LOG', message: `🏆 Patrol scattered near ${pending.poiName}` });
+    return {
+      session: next,
+      events,
+      totalXp: resolution.totalXp,
+      goldAwarded: resolution.goldAwarded,
+      completedQuestIds,
+    };
+  }
   if (battle.poiId) {
     if (!next.clearedPoiIds.includes(battle.poiId)) {
       next.clearedPoiIds.push(battle.poiId);
@@ -1285,6 +1988,22 @@ export function describeRealmEvent(event: RealmSessionEvent): string {
       return event.effectDescription;
     case 'REALM_LOG':
       return event.message;
+    case 'WAR_NATION_SELECTED':
+      return `Banners raised for ${event.nationName} — the war for the Realm begins`;
+    case 'WAR_MISSION_ACCEPTED':
+      return `Special-ops mission accepted: ${event.kind} at ${event.poiName}`;
+    case 'WAR_APPROACH_RESOLVED':
+      return event.headline;
+    case 'WAR_MISSION_COMPLETED':
+      return event.victory
+        ? `War mission at ${event.poiId} complete — the enemy reels`
+        : `War mission at ${event.poiId} failed — the enemy holds the field`;
+    case 'WAR_PATROL_RESOLVED':
+      return event.headline;
+    case 'WAR_TRUCE_NEGOTIATED':
+      return event.headline;
+    case 'WAR_ASSET_HIRED':
+      return event.headline;
     default:
       return '';
   }
@@ -1344,6 +2063,19 @@ export async function loadRealmSession(
     (data.session as RealmSessionState).chainLog = createQuestChainLog(
       buildStarterQuestChains(data.session.map),
     );
+  }
+  // Backward compatibility with pre-SRD-1105 saves (no war campaign).
+  if ((data.session as RealmSessionState).war === undefined) {
+    (data.session as RealmSessionState).war = null;
+  }
+  if (!(data.session as RealmSessionState).diplomacy) {
+    (data.session as RealmSessionState).diplomacy = createWarDiplomacyState();
+  }
+  if ((data.session as RealmSessionState).activeWarMission === undefined) {
+    (data.session as RealmSessionState).activeWarMission = null;
+  }
+  if ((data.session as RealmSessionState).pendingWarBattle === undefined) {
+    (data.session as RealmSessionState).pendingWarBattle = null;
   }
   return data;
 }

@@ -2,11 +2,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CharacterBuildState, SrdCompendium } from '@srd5/data';
 import { defaultCompendium } from '@srd5/data';
 import {
+  type Combatant,
   type DungeonFloorSpec,
   type GameState,
   type GeneratedOverworldBattle,
   type OverworldCoord,
   type RealmDelveState,
+  type WaveReinforcementSpec,
   findOverworldPath,
   getFactionByPoi,
   isSafeRestSite,
@@ -80,6 +82,10 @@ export interface RealmViewProps {
 interface ActiveBattle {
   transport: LocalTransport;
   battle: GeneratedOverworldBattle;
+  /** Timed war-mission wave schedule (SRD-1102/1105, Spec 10 §4.2). */
+  waves: WaveReinforcementSpec[];
+  /** Scheduled (not yet spawned) war reinforcements. */
+  reinforcementQueue: Combatant[];
 }
 
 interface ActiveDelve {
@@ -170,7 +176,12 @@ export function RealmView({
             initialState: result.battleGameState,
             defaultPlayerId: 'player-1',
           });
-          setBattle({ transport, battle: result.battle });
+          setBattle({
+            transport,
+            battle: result.battle,
+            waves: result.session.pendingWarBattle?.waves ?? [],
+            reinforcementQueue: result.session.pendingWarBattle?.reinforcementQueue ?? [],
+          });
           setModalState(null);
         }
         if (result.delve && result.delveGameState && result.delveFloor) {
@@ -244,6 +255,24 @@ export function RealmView({
         }
         setBattle(null);
       } else {
+        // A lost war-mission battle still resolves the campaign op as a
+        // defeat (enemy holds the field); standalone wilderness wipes keep the
+        // legacy defeat modal without campaign side effects.
+        if (sessionRef.current.pendingWarBattle && sessionRef.current.activeWarMission) {
+          try {
+            const result = reduceRealm(
+              sessionRef.current,
+              { type: 'COMPLETE_WAR_MISSION', victory: false },
+              { compendium },
+            );
+            setSession(result.session);
+            appendEvents(result.events, result.session.travel.currentDay);
+          } catch (err: unknown) {
+            console.error('Error resolving war mission defeat:', err);
+          }
+        } else if (sessionRef.current.pendingWarBattle) {
+          setSession({ ...sessionRef.current, pendingWarBattle: null });
+        }
         setBattle(null);
         setModalState('defeat');
       }
@@ -406,6 +435,8 @@ export function RealmView({
           compendium={compendium}
           onBattleEnd={handleBattleEnd}
           onOpenCharacterSheet={onOpenCharacterSheet}
+          waves={battle.waves}
+          reinforcementQueue={battle.reinforcementQueue}
         />
       ) : (
         <div className="relative w-full h-full overflow-hidden">

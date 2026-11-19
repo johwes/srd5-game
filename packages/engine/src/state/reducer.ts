@@ -61,6 +61,7 @@ import {
   type InteractiveProp,
   type PlayerSlotAssignment,
 } from './types.js';
+import { spawnWarReinforcements } from '../overworld/war-squads.js';
 
 export interface ReduceGameResult {
   nextState: GameState;
@@ -496,6 +497,16 @@ export function reduceGame(
         nextState = combatEndRes.nextState;
         events.push(...combatEndRes.events);
       }
+      break;
+    }
+
+    case 'SPAWN_REINFORCEMENTS': {
+      if (nextState.mode !== 'combat' || !nextState.combat) {
+        throw new Error('Cannot execute SPAWN_REINFORCEMENTS outside active combat');
+      }
+      const res = spawnWarReinforcements(nextState, command.combatants, { wave: command.wave });
+      nextState = res.nextState;
+      events.push(...res.events);
       break;
     }
 

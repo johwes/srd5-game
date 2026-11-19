@@ -256,6 +256,14 @@ export type GameCommand =
     }
   | { type: 'END_TURN'; actorId: string }
 
+  // War Campaign multi-wave reinforcements (Spec 10 §4.2, SRD-1105): injects
+  // scheduled wave combatants mid-combat with seeded initiative.
+  | {
+      type: 'SPAWN_REINFORCEMENTS';
+      combatants: Combatant[];
+      wave?: number;
+    }
+
   // Summoned Creature Commands (Spec 08 §4.2)
   | {
       type: 'DISMISS_SUMMON';

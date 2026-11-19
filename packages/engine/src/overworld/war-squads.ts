@@ -9,7 +9,9 @@ import { applyLevelUp, getLevelUpRequirements } from '../character/level-up.js';
 import { computeDerivedCharacter } from '../character/derived.js';
 import type { DerivedCharacterSheet } from '../character/schemas.js';
 import { createCharacterCombatant, createMonsterCombatant } from '../combat/combatant.js';
-import type { Combatant } from '../combat/types.js';
+import type { Combatant, CombatEvent } from '../combat/types.js';
+import { compareInitiativeEntries, rollInitiativeForCombatants } from '../combat/initiative.js';
+import type { GameEvent, GameState } from '../state/types.js';
 import {
   generateBattleTerrainGrid,
   generateOverworldBattle,
@@ -564,4 +566,100 @@ export function isWarMissionPoi(poi: Pick<OverworldPOI, 'kind'>): boolean {
 
 export function getWarSquadMonsterPool(nationId: string): string[] {
   return [...pickMonsterPool(nationId)];
+}
+
+// ---------------------------------------------------------------------------
+// Mid-combat reinforcement injection (SRD-1105)
+// ---------------------------------------------------------------------------
+
+export interface SpawnWarReinforcementsResult {
+  nextState: GameState;
+  events: GameEvent[];
+  spawnedIds: string[];
+}
+
+/**
+ * Spawns scheduled war reinforcements into a live tactical `GameState`
+ * (SRD-1105, Spec 10 §4.2). Pure and deterministic: initiative for each
+ * newcomer is rolled from the state's seeded PRNG, the full initiative order
+ * is re-sorted with the standard SRD 5.1 tiebreakers, and the active turn
+ * pointer is preserved by entity id so no combatant loses its turn.
+ *
+ * Newcomers join `combat.combatants` and the matching `monsters`/`party`
+ * mirror (by `side`). Duplicate ids are skipped. Throws `RealmError` when
+ * called outside an active combat.
+ */
+export function spawnWarReinforcements(
+  state: GameState,
+  combatants: Combatant[],
+  options: { wave?: number } = {},
+): SpawnWarReinforcementsResult {
+  if (!state.combat || state.mode !== 'combat') {
+    throw new RealmError('Cannot spawn reinforcements outside active combat');
+  }
+  const incoming = combatants.filter(
+    (c) => !state.combat!.combatants[c.id] && !state.party[c.id] && !state.monsters[c.id],
+  );
+  if (incoming.length === 0) {
+    return { nextState: structuredClone(state), events: [], spawnedIds: [] };
+  }
+
+  const nextState: GameState = structuredClone(state);
+  const combat = nextState.combat!;
+  const activeId = combat.activeCombatantId;
+  let rngState = combat.rngState;
+
+  const rolled = rollInitiativeForCombatants(incoming, rngState);
+  rngState = rolled.nextRngState;
+  const initiativeById = new Map(rolled.entries.map((e) => [e.entityId, e]));
+
+  for (const newcomer of incoming) {
+    combat.combatants[newcomer.id] = structuredClone(newcomer);
+    if (newcomer.side === 'party') {
+      nextState.party[newcomer.id] = structuredClone(newcomer);
+    } else {
+      nextState.monsters[newcomer.id] = structuredClone(newcomer);
+    }
+  }
+
+  const merged = [...combat.initiativeOrder, ...rolled.entries];
+  merged.sort(compareInitiativeEntries);
+  combat.initiativeOrder = merged;
+  combat.rngState = rngState;
+  nextState.rngState = rngState;
+  if (activeId) {
+    const preserved = merged.findIndex((e) => e.entityId === activeId);
+    if (preserved >= 0) combat.activeCombatantIndex = preserved;
+  }
+  // Reopen a finished encounter: reserve waves arriving after the opening
+  // garrison fell must not be swallowed by an already-recorded victory.
+  if (combat.phase === 'combat_ended') {
+    combat.phase = 'active_turn';
+    combat.outcome = 'in_progress';
+  }
+
+  const events: GameEvent[] = [
+    ...rolled.events,
+    {
+      type: 'ENCOUNTER_TRIGGERED',
+      encounterId: combat.encounterId,
+      roomId: options.wave !== undefined ? `wave-${options.wave}` : 'reinforcements',
+      monsterIds: incoming.map((c) => c.id),
+      isSurprisedParty: false,
+      isSurprisedMonsters: false,
+    },
+  ];
+  void initiativeById;
+
+  return { nextState, events, spawnedIds: incoming.map((c) => c.id) };
+}
+
+/** Waves whose `deployRound` has arrived and which have not spawned yet. */
+export function getDueReinforcementWaves(
+  waves: WaveReinforcementSpec[],
+  currentRound: number,
+  spawnedWaves: readonly number[],
+): WaveReinforcementSpec[] {
+  const spawned = new Set(spawnedWaves);
+  return waves.filter((w) => w.wave !== 1 && w.deployRound <= currentRound && !spawned.has(w.wave));
 }

@@ -2,6 +2,7 @@ import { Container, Graphics, Text } from 'pixi.js';
 import type {
   OverworldCoord,
   OverworldMap,
+  OverworldPOI,
   OverworldTerrainType,
   TimeOfDay,
 } from '@srd5/engine';
@@ -37,6 +38,54 @@ export const OVERWORLD_POI_COLORS: Record<string, number> = {
   ancient_shrine: 0x22d3ee,
   monster_lair: 0xef4444,
 };
+
+/**
+ * Strategic war POI palette (SRD-1105, Spec 10 Section 3): fortresses square
+ * and iron-grey, mines/bridges/depots amber-brown, prison keeps slate, and
+ * sub-faction camps green.
+ */
+export const OVERWORLD_STRATEGIC_POI_COLORS: Record<string, number> = {
+  fortress: 0x94a3b8,
+  mine: 0xd97706,
+  bridge: 0xb45309,
+  supply_depot: 0xca8a04,
+  prison_keep: 0x475569,
+  subfaction_camp: 0x16a34a,
+};
+
+export const STRATEGIC_POI_KINDS: readonly string[] = [
+  'fortress',
+  'mine',
+  'bridge',
+  'supply_depot',
+  'prison_keep',
+  'subfaction_camp',
+];
+
+export function isStrategicPoiKind(kind: string): boolean {
+  return STRATEGIC_POI_KINDS.includes(kind);
+}
+
+/**
+ * Status badges for living-war POIs (SRD-1105): `intact` POIs render no
+ * badge; every other `strategicStatus` renders a glyph + dark pill behind
+ * the POI name label so cursed/destroyed/sabotaged/contested/under-attack
+ * holdings read at a glance on the 64×64 world map.
+ */
+export const STRATEGIC_STATUS_BADGES: Record<string, { glyph: string; color: number }> = {
+  cursed: { glyph: '💀 cursed', color: 0x7c3aed },
+  destroyed: { glyph: '💥 destroyed', color: 0x7f1d1d },
+  sabotaged: { glyph: '🛠️ sabotaged', color: 0xb45309 },
+  contested: { glyph: '🟡 contested', color: 0x854d0e },
+  under_attack: { glyph: '⚔️ under attack', color: 0xdc2626 },
+};
+
+export function getStrategicPoiBadge(poi: Pick<OverworldPOI, 'kind' | 'strategicStatus'>): string | null {
+  if (!isStrategicPoiKind(poi.kind)) return null;
+  const status = poi.strategicStatus ?? 'intact';
+  if (status === 'intact') return null;
+  return STRATEGIC_STATUS_BADGES[status]?.glyph ?? status;
+}
 
 const TIME_TINTS: Record<TimeOfDay, { color: number; alpha: number }> = {
   dawn: { color: 0xff9a5a, alpha: 0.06 },
@@ -176,6 +225,9 @@ export class OverworldMapRenderer {
       map.height,
       cellSize,
       clearedPoiIds.join(','),
+      Object.values(map.pois)
+        .map((p) => `${p.id}:${p.kind}:${p.strategicStatus ?? '-'}`)
+        .join(','),
       Object.values(map.factions)
         .map((f) => `${f.id}:${f.relationshipWithParty}`)
         .join(','),
@@ -310,7 +362,10 @@ export class OverworldMapRenderer {
       const cy = poi.r * cellSize + half;
       marker.position.set(cx, cy);
 
-      const color = OVERWORLD_POI_COLORS[poi.kind] ?? 0xffffff;
+      const strategic = isStrategicPoiKind(poi.kind);
+      const color = strategic
+        ? (OVERWORLD_STRATEGIC_POI_COLORS[poi.kind] ?? 0xffffff)
+        : (OVERWORLD_POI_COLORS[poi.kind] ?? 0xffffff);
       const cleared = clearedPoiIds.includes(poi.id);
       const g = new Graphics();
       const radius = cellSize * 0.34;
@@ -334,6 +389,21 @@ export class OverworldMapRenderer {
           .fill({ color, alpha: 0.95 })
           .stroke({ width: 1.5, color: 0x0f172a });
         g.circle(0, 0, radius * 0.35).fill(0x0f172a);
+      } else if (poi.kind === 'fortress' || poi.kind === 'prison_keep') {
+        // War strongholds: crenellated square with a banner-color core.
+        g.rect(-radius * 0.8, -radius * 0.8, radius * 1.6, radius * 1.6)
+          .fill({ color, alpha: 1 })
+          .stroke({ width: 2, color: 0x0f172a });
+        g.rect(-radius * 0.3, -radius * 0.3, radius * 0.6, radius * 0.6).fill(0x0f172a);
+      } else if (strategic) {
+        // Mines, bridges, depots, sub-faction camps: diamond with status ring.
+        g.moveTo(0, -radius)
+          .lineTo(radius * 0.85, 0)
+          .lineTo(0, radius)
+          .lineTo(-radius * 0.85, 0)
+          .closePath()
+          .fill({ color, alpha: poi.strategicStatus === 'destroyed' ? 0.5 : 1 })
+          .stroke({ width: 1.5, color: 0x0f172a });
       } else {
         // Settlements: framed disc, capitals larger with a star dot.
         const settlementRadius = poi.kind === 'capital' ? radius * 1.15 : radius;
@@ -350,6 +420,19 @@ export class OverworldMapRenderer {
           .lineTo(radius * 0.65, -radius * 0.45)
           .stroke({ width: 2, color: 0x22c55e });
       }
+      // Living-war status ring: under-attack POIs pulse red, cursed POIs
+      // violet, destroyed POIs dark — visible even at 24px cells.
+      const statusRing: Record<string, number> = {
+        under_attack: 0xdc2626,
+        cursed: 0x7c3aed,
+        sabotaged: 0xb45309,
+        contested: 0xeab308,
+        destroyed: 0x450a0a,
+      };
+      const ringColor = poi.strategicStatus ? statusRing[poi.strategicStatus] : undefined;
+      if (strategic && ringColor !== undefined && poi.strategicStatus !== 'intact') {
+        g.circle(0, 0, radius * 1.15).stroke({ width: 2, color: ringColor, alpha: 0.95 });
+      }
       marker.addChild(g);
 
       const label = new Text({
@@ -365,6 +448,24 @@ export class OverworldMapRenderer {
       label.position.set(0, radius + 2);
       label.label = `PoiLabel_${poi.id}`;
       marker.addChild(label);
+
+      // Status badge pill beneath the name (SRD-1105).
+      const badge = getStrategicPoiBadge(poi);
+      if (badge) {
+        const badgeLabel = new Text({
+          text: badge,
+          style: {
+            fontFamily: 'monospace',
+            fontSize: Math.max(7, Math.round(cellSize * 0.32)),
+            fill: 0xffffff,
+            stroke: { color: 0x0f172a, width: 2 },
+          },
+        });
+        badgeLabel.anchor.set(0.5, 0);
+        badgeLabel.position.set(0, radius + 2 + Math.max(8, Math.round(cellSize * 0.4)) + 3);
+        badgeLabel.label = `PoiBadge_${poi.id}`;
+        marker.addChild(badgeLabel);
+      }
 
       this.poiContainer.addChild(marker);
     }

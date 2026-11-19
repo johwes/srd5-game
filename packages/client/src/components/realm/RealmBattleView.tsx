@@ -2,13 +2,16 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { SrdCompendium } from '@srd5/data';
 import { defaultCompendium } from '@srd5/data';
 import {
+  type Combatant,
   type DiceRollRecord,
   type GameCommand,
   type GameEvent,
   type GameState,
   type GeneratedOverworldBattle,
   type GridPoint,
+  type WaveReinforcementSpec,
   findPath,
+  getDueReinforcementWaves,
   planAiTurn,
   truncatePathToBudget,
 } from '@srd5/engine';
@@ -35,6 +38,18 @@ export interface RealmBattleViewProps {
   compendium?: SrdCompendium;
   onBattleEnd: (outcome: RealmBattleOutcome, gameState: GameState) => void;
   onOpenCharacterSheet?: (characterId: string) => void;
+  /** Timed wave schedule for war-mission defenses (SRD-1102/1105, Spec 10 §4.2). */
+  waves?: WaveReinforcementSpec[];
+  /** Scheduled (not yet spawned) reinforcements deployed on their `deployRound`. */
+  reinforcementQueue?: Combatant[];
+}
+
+/** Derives the scheduled wave number from a reinforcement combatant id. */
+export function getReinforcementWaveNumber(combatantId: string): number | null {
+  const waveMatch = combatantId.match(/_wave(\d+)/) ?? combatantId.match(/_w(\d+)_/);
+  if (!waveMatch) return null;
+  const parsed = Number.parseInt(waveMatch[1]!, 10);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export function RealmBattleView({
@@ -45,6 +60,8 @@ export function RealmBattleView({
   compendium = defaultCompendium,
   onBattleEnd,
   onOpenCharacterSheet,
+  waves = [],
+  reinforcementQueue = [],
 }: RealmBattleViewProps) {
   const [viewState, setViewState] = useState<PlayerViewState>(() =>
     transport.getPlayerViewState(),
@@ -68,6 +85,91 @@ export function RealmBattleView({
     if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
     feedbackTimeoutRef.current = setTimeout(() => setActionFeedback(null), 3500);
   }, []);
+
+  // --- Multi-wave reinforcements (SRD-1102/1105, Spec 10 §4.2) ---
+  const wavesRef = useRef(waves);
+  wavesRef.current = waves;
+  const queueRef = useRef(reinforcementQueue);
+  queueRef.current = reinforcementQueue;
+  const spawnedWavesRef = useRef<Set<number>>(new Set());
+  const spawningWavesRef = useRef<Set<number>>(new Set());
+  const battleIdRef = useRef(battle.battleId);
+  if (battleIdRef.current !== battle.battleId) {
+    battleIdRef.current = battle.battleId;
+    spawnedWavesRef.current = new Set();
+    spawningWavesRef.current = new Set();
+  }
+
+  /** Combatant ids from the queue not yet present in the live combat. */
+  const getUnspawned = useCallback((auth: GameState): Combatant[] => {
+    const live = auth.combat?.combatants ?? {};
+    return queueRef.current.filter((c) => !live[c.id]);
+  }, []);
+
+  const spawnWave = useCallback(
+    async (waveNum: number, members: Combatant[]) => {
+      if (members.length === 0 || spawningWavesRef.current.has(waveNum)) return;
+      spawningWavesRef.current.add(waveNum);
+      try {
+        await transport.dispatch({
+          type: 'SPAWN_REINFORCEMENTS',
+          combatants: members,
+          wave: waveNum,
+        });
+        spawnedWavesRef.current.add(waveNum);
+        const edge = wavesRef.current.find((w) => w.wave === waveNum)?.spawnEdge ?? 'the field';
+        showFeedback(`⚔️ Enemy wave ${waveNum} storms in from the ${edge}!`);
+      } catch (err: unknown) {
+        console.error('Error spawning war reinforcements:', err);
+      } finally {
+        spawningWavesRef.current.delete(waveNum);
+      }
+    },
+    [transport, showFeedback],
+  );
+
+  /**
+   * Deploys scheduled waves whose `deployRound` has arrived, or rushes the
+   * next wave forward when the field is clear but reserves remain (so a fast
+   * party cannot end the battle before wave 2 musters).
+   */
+  const maybeSpawnDueWaves = useCallback(
+    (auth: GameState) => {
+      const queue = queueRef.current;
+      if (queue.length === 0 || !auth.combat) return;
+      const unspawned = getUnspawned(auth);
+      if (unspawned.length === 0) return;
+      const spawned = [...spawnedWavesRef.current];
+
+      const due = getDueReinforcementWaves(wavesRef.current, auth.combat.round, spawned);
+      for (const wave of due) {
+        let members = unspawned.filter((c) => getReinforcementWaveNumber(c.id) === wave.wave);
+        if (members.length === 0) {
+          // Fallback for queue entries without a wave-tagged id: deploy them
+          // with the earliest due wave rather than stranding them.
+          members = unspawned.filter((c) => getReinforcementWaveNumber(c.id) === null);
+        }
+        void spawnWave(wave.wave, members);
+      }
+
+      const livingEnemies = Object.values(auth.combat.combatants).filter(
+        (c) => c.side === 'monster' && !c.isDead && c.currentHp > 0,
+      );
+      if (livingEnemies.length === 0 && auth.combat.phase !== 'combat_ended') {
+        const nextWaveNum = unspawned
+          .map((c) => getReinforcementWaveNumber(c.id))
+          .filter((n): n is number => n !== null && !spawnedWavesRef.current.has(n))
+          .sort((a, b) => a - b)[0];
+        if (nextWaveNum !== undefined) {
+          void spawnWave(
+            nextWaveNum,
+            unspawned.filter((c) => getReinforcementWaveNumber(c.id) === nextWaveNum),
+          );
+        }
+      }
+    },
+    [getUnspawned, spawnWave],
+  );
 
   // Subscribe to the authoritative combat transport.
   useEffect(() => {
@@ -119,8 +221,14 @@ export function RealmBattleView({
       }
 
       // Battle end detection: hand the authoritative state back to the Realm.
+      // Scheduled reserves muster first — a cleared field with unspawned
+      // waves rushes the next wave forward instead of ending the battle.
       const auth = transport.getAuthoritativeState();
-      if (!battleEndedRef.current && auth.combat?.phase === 'combat_ended') {
+      maybeSpawnDueWaves(auth);
+      const reservesRemain =
+        queueRef.current.length > 0 &&
+        queueRef.current.some((c) => !auth.combat?.combatants[c.id]);
+      if (!battleEndedRef.current && auth.combat?.phase === 'combat_ended' && !reservesRemain) {
         battleEndedRef.current = true;
         const outcome: RealmBattleOutcome =
           auth.combat.outcome === 'party_victory' ? 'victory' : 'defeat';
@@ -134,7 +242,7 @@ export function RealmBattleView({
       if (aiTurnTimeoutRef.current) clearTimeout(aiTurnTimeoutRef.current);
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
     };
-  }, [transport]);
+  }, [transport, maybeSpawnDueWaves]);
 
   const handleDispatch = useCallback(
     async (command: GameCommand) => {
