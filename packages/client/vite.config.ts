@@ -38,6 +38,30 @@ function clientLoggerPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), clientLoggerPlugin()],
+  build: {
+    // The tactical viewport pulls in all of Pixi v8. Isolate the vendor
+    // payloads from app code so game-logic edits don't invalidate the
+    // renderer chunks in players' caches (and vice versa).
+    // NOTE: the ~2MB main chunk is intentional — the offline-ready SRD 5.1
+    // dataset (~1MB JSON: classes, spells, monsters, Kaelen module) plus the
+    // deterministic engine must ship with the app (no network at runtime).
+    chunkSizeWarningLimit: 2300,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/pixi.js')) return 'pixi-vendor';
+          if (
+            id.includes('node_modules/react-dom') ||
+            (id.includes('node_modules/react/') && !id.includes('node_modules/react-')) ||
+            id.includes('node_modules/scheduler')
+          ) {
+            return 'react-vendor';
+          }
+          return undefined;
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

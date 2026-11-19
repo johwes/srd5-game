@@ -2,6 +2,9 @@ import {
   type AbilityId,
   type CharacterBuildState,
   type ChoiceSpec,
+  // NOTE: direct source imports are the repo scripts convention (see
+  // validate-spell-targeting.ts). Each package's `exports` map maps `.` to
+  // `./src/index.ts`, so this tests fresh source — never a stale `dist` build.
   defaultCompendium,
   getSunkenCryptModule,
 } from '../packages/data/src/index.ts';
@@ -10,6 +13,7 @@ import {
   type GameCommand,
   type GameState,
   type LevelUpRequest,
+  // NOTE: see above — source imports keep the soak bot on fresh engine code.
   advanceWarSimulation,
   applyBetweenCombatLevelUp,
   applyLevelUp,

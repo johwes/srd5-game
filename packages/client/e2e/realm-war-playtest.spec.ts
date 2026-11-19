@@ -67,18 +67,18 @@ test.describe('Automated Playtest: Realm War Campaign & Combat UI Invariants', (
     await expect(page.getByTestId('realm-war-hire-mercenaries-btn')).toBeVisible();
     await expect(page.getByTestId('realm-war-hire-thieves-btn')).toBeVisible();
 
-    // Switch to Special-Ops Missions tab and accept the first available mission
+    // Switch to Special-Ops Missions tab and accept the first available mission.
+    // The missions tab renders the full mission catalog against the seeded war
+    // map, which always places strategic POIs — so at least one accept button
+    // must exist. A zero-mission war room is a generation bug: fail loudly.
     await page.getByTestId('realm-war-room-tab-missions').click();
     await expect(page.getByTestId('realm-war-room-missions')).toBeVisible();
     const acceptBtns = warRoom.locator('[data-testid^="realm-war-mission-accept-"]');
-    if ((await acceptBtns.count()) > 0) {
-      await acceptBtns.first().click();
-      // Accepting a mission launches the Mission Approach modal (or closes War Room)
-      await expect(page.getByTestId('realm-mission-approach-modal')).toBeVisible({ timeout: 5000 });
-    } else {
-      await page.getByTestId('realm-war-room-close-btn').click();
-      await expect(warRoom).not.toBeVisible();
-    }
+    await expect(acceptBtns.first()).toBeVisible({ timeout: 5000 });
+    expect(await acceptBtns.count()).toBeGreaterThan(0);
+    await acceptBtns.first().click();
+    // Accepting a mission launches the Mission Approach modal (or closes War Room)
+    await expect(page.getByTestId('realm-mission-approach-modal')).toBeVisible({ timeout: 5000 });
 
     // Verify no horizontal overflow at 1280×800
     const overflow = await page.evaluate(
