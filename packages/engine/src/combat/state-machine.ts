@@ -304,6 +304,37 @@ export function startTurn(
     }
   }
 
+  // If the combatant is still unconscious at 0 HP (did not roll a Nat 20 to
+  // wake up at 1 HP, or is already stabilized at 0 HP), they have no actions
+  // or movement to take — automatically advance to the next combatant as long
+  // as someone else in initiative can still act (prevents infinite recursion).
+  if (
+    updatedCombatant.currentHp <= 0 &&
+    !updatedCombatant.isDead &&
+    updatedCombatant.side === 'party'
+  ) {
+    const nextCombatantsMap = {
+      ...state.combatants,
+      [combatantId]: updatedCombatant,
+    };
+    const someoneElseCanAct = state.initiativeOrder.some((entry) => {
+      if (entry.entityId === combatantId) return false;
+      const other = nextCombatantsMap[entry.entityId];
+      return Boolean(other && !other.isDead && other.currentHp > 0);
+    });
+    if (someoneElseCanAct) {
+      return endTurn(
+        {
+          ...state,
+          rngState: currentState,
+          combatants: nextCombatantsMap,
+          activeCombatantId: combatantId,
+        },
+        events,
+      );
+    }
+  }
+
   let intermediateState: CombatState = {
     ...state,
     rngState: currentState,

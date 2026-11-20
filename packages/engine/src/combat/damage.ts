@@ -862,6 +862,12 @@ export function executeDeathSave(options: ExecuteDeathSaveOptions): DeathSaveRes
     isDead,
     isStable,
     conditions,
+    characterSheet: combatant.characterSheet
+      ? {
+          ...combatant.characterSheet,
+          deathSaves: { ...deathSaves },
+        }
+      : undefined,
   };
 
   const nextCombatants = {

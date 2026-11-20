@@ -60,6 +60,7 @@ export const TurnBudgetSchema = z.object({
   extraAttacksRemaining: z.number().int().nonnegative(),
   disengaged: z.boolean(),
   dodging: z.boolean(),
+  sneakAttackUsedThisTurn: z.boolean().optional(),
 });
 export type TurnBudget = z.infer<typeof TurnBudgetSchema>;
 

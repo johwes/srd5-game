@@ -8,6 +8,7 @@ import {
   createTurnBudget,
   startCombatEncounter,
   type Combatant,
+  type CombatState,
 } from '../combat/index.js';
 import {
   executeGrapple,
@@ -944,5 +945,82 @@ describe('SRD-305: Seeded PRNG Determinism', () => {
     expect(resA.damageDealt).toBe(resB.damageDealt);
     expect(resA.outcome).toBe(resB.outcome);
     expect(resA.state.rngState).toBe(resB.state.rngState);
+  });
+});
+
+describe('SRD 5.1 Rogue Sneak Attack', () => {
+  it('adds Sneak Attack dice on a ranged/finesse hit when an ally is within 5 ft of the target, once per turn', () => {
+    const rogueBuild = requirePregenCharacter('pregen-rogue');
+    const rogueSheet = computeDerivedCharacter(rogueBuild, compendium);
+    const rogue = createCharacterCombatant(rogueSheet, { x: 1, y: 1 }, { side: 'party', buildState: rogueBuild });
+
+    const fighterBuild = requirePregenCharacter('pregen-fighter');
+    const fighterSheet = computeDerivedCharacter(fighterBuild, compendium);
+    // Fighter stands adjacent (5 ft) to the goblin at (5, 1)
+    const fighter = createCharacterCombatant(fighterSheet, { x: 4, y: 1 }, { side: 'party', buildState: fighterBuild });
+
+    const goblinData = compendium.getMonster('goblin')!;
+    const goblin = createMonsterCombatant(goblinData, 'goblin-1', { x: 5, y: 1 }, { side: 'monster' });
+    goblin.maxHp = 50;
+    goblin.currentHp = 50;
+
+    const started = startCombatEncounter({
+      encounterId: 'sneak-test',
+      combatants: [rogue, fighter, goblin],
+      rngState: 42,
+    }).state;
+    const baseState: CombatState = {
+      ...started,
+      activeCombatantId: rogue.id,
+      turnBudget: createTurnBudget(rogue),
+    };
+
+    const res = executeWeaponAttack({
+      state: baseState,
+      attackerId: rogue.id,
+      targetId: goblin.id,
+      customAttack: {
+        name: 'Shortbow',
+        attackType: 'ranged_weapon',
+        toHitBonus: 20, // guaranteed hit
+        damageDice: '1d6',
+        damageBonus: 3,
+        damageType: 'piercing',
+        reachFeet: 5,
+        rangeFeet: { normal: 80, long: 320 },
+      },
+    });
+
+    expect(res.outcome === 'hit' || res.outcome === 'critical_hit').toBe(true);
+    const sneakRoll = res.events.find(
+      (e) => e.type === 'DICE_ROLLED' && e.rollPurpose === 'sneak_attack_damage',
+    );
+    expect(sneakRoll).toBeDefined();
+    expect(res.state.turnBudget?.sneakAttackUsedThisTurn).toBe(true);
+
+    // Second attack on the same turn must NOT trigger Sneak Attack again
+    const secondRes = executeWeaponAttack({
+      state: {
+        ...res.state,
+        turnBudget: { ...res.state.turnBudget!, action: 1 },
+      },
+      attackerId: rogue.id,
+      targetId: goblin.id,
+      customAttack: {
+        name: 'Shortbow',
+        attackType: 'ranged_weapon',
+        toHitBonus: 20,
+        damageDice: '1d6',
+        damageBonus: 3,
+        damageType: 'piercing',
+        reachFeet: 5,
+        rangeFeet: { normal: 80, long: 320 },
+      },
+    });
+    expect(
+      secondRes.events.some(
+        (e) => e.type === 'DICE_ROLLED' && e.rollPurpose === 'sneak_attack_damage',
+      ),
+    ).toBe(false);
   });
 });

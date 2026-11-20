@@ -128,6 +128,36 @@ describe('SRD-410 pending targeting', () => {
     });
     expect(res.errorFeedback).toMatch(/twice/);
   });
+
+  it('allows friendly healing spells to target unconscious (0 HP) allies, but rejects dead allies and hostile downed targets', () => {
+    const cureWounds = defaultCompendium.getSpell('cure-wounds')!;
+    const cleric = makeCombatant({ id: 'cleric', position: { x: 0, y: 0 } });
+    const downedMage = makeCombatant({ id: 'mage', currentHp: 0, isDead: false, position: { x: 1, y: 0 } });
+    const deadMage = makeCombatant({ id: 'dead-mage', currentHp: 0, isDead: true, position: { x: 1, y: 0 } });
+    const downedGoblin = makeCombatant({
+      id: 'goblin',
+      side: 'monster',
+      teamId: 'monsters',
+      currentHp: 0,
+      isDead: false,
+      position: { x: 1, y: 0 },
+    });
+
+    const healPending = buildPendingTargetForSpell(cureWounds, 1);
+    expect(healPending?.kind).toBe('single');
+    if (!healPending || healPending.kind !== 'single') return;
+    expect(validateTargetPick(healPending, downedMage, cleric, {}).ok).toBe(true);
+    expect(validateTargetPick(healPending, deadMage, cleric, {}).ok).toBe(false);
+
+    const atkPending = buildPendingTargetForAttack({
+      id: 'mace',
+      name: 'Mace',
+      rangeType: 'melee',
+      reachFeet: 5,
+    });
+    if (atkPending.kind !== 'single') return;
+    expect(validateTargetPick(atkPending, downedGoblin, cleric, {}).ok).toBe(false);
+  });
 });
 
 function pickedCanCommit(p: { kind: string }): boolean {

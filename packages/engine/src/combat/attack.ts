@@ -910,6 +910,7 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   // 10. Damage Calculation on Hit
   let damageRollRecord: DiceRollRecord | undefined;
   let damageDealt = 0;
+  let sneakAttackDiceCount = 0;
   let nextTarget: Combatant = { ...(currentCombatants[target.id] ?? target) };
 
   if (outcome === 'hit' || outcome === 'critical_hit') {
@@ -925,6 +926,49 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     currentState = dmgRes.nextState;
     damageRollRecord = dmgRes.record;
     damageDealt = Math.max(0, dmgRes.total);
+
+    // SRD 5.1 Rogue Sneak Attack: once per turn on a hit with a finesse or ranged weapon
+    // when the rogue has advantage OR another non-incapacitated enemy of the target is
+    // within 5 ft of the target and the rogue does not have disadvantage.
+    const rogueClass =
+      attacker.characterSheet?.classes.find((c) => c.classId === 'rogue') ??
+      attacker.buildState?.classes.find((c) => c.classId === 'rogue');
+    const rogueLevel = rogueClass?.level ?? 0;
+    const isFinesseOrRanged =
+      attack.attackType === 'ranged_weapon' || attack.properties.includes('finesse');
+    const sneakAlreadyUsed = Boolean(nextTurnBudget?.sneakAttackUsedThisTurn);
+    if (rogueLevel > 0 && isFinesseOrRanged && !sneakAlreadyUsed) {
+      const hasAdjacentAlly = Object.values(currentCombatants).some((other) => {
+        if (other.id === attacker.id || other.id === target.id) return false;
+        if (other.isDead || other.currentHp <= 0 || isIncapacitated(other)) return false;
+        if (!areHostile(other, target, currentCombatState.dispositionMatrix)) return false;
+        return getFootprintDistanceFeet(other.position, other.size, target.position, target.size) <= 5;
+      });
+      const qualifiesForSneakAttack =
+        mode === 'advantage' || (mode !== 'disadvantage' && hasAdjacentAlly);
+      if (qualifiesForSneakAttack) {
+        sneakAttackDiceCount = Math.ceil(rogueLevel / 2);
+        const sneakFormula = `${sneakAttackDiceCount}d6`;
+        const sneakRes = rollDamage(currentState, sneakFormula, { critical: isCritical });
+        currentState = sneakRes.nextState;
+        damageDealt += Math.max(0, sneakRes.total);
+        if (nextTurnBudget) {
+          nextTurnBudget = { ...nextTurnBudget, sneakAttackUsedThisTurn: true };
+        }
+        events.push({
+          type: 'DICE_ROLLED',
+          actorId: attacker.id,
+          rollPurpose: 'sneak_attack_damage',
+          notation: sneakRes.record.formula,
+          rolls: sneakRes.record.rolls,
+          kept: sneakRes.record.kept,
+          modifier: sneakRes.record.modifier,
+          total: sneakRes.total,
+          mode: 'normal',
+        });
+      }
+    }
+
     if (halveDamage) {
       damageDealt = Math.floor(damageDealt / 2);
     }
@@ -1105,7 +1149,10 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     damage: damageDealt > 0 ? {
       total: damageDealt,
       damageType: attack.damageType,
-      diceFormula: attack.damageFormula,
+      diceFormula:
+        sneakAttackDiceCount > 0
+          ? `${attack.damageFormula} + ${sneakAttackDiceCount}d6 (Sneak Attack)`
+          : attack.damageFormula,
     } : undefined,
     cover: cover !== 'none' ? cover : undefined,
   });

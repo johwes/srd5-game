@@ -247,7 +247,10 @@ export function validateTargetPick(
   combatants: Record<string, PlayerViewCombatant>,
   opts?: ValidatePickOptions,
 ): { ok: boolean; error?: string } {
-  if (candidate.isDead || candidate.currentHp <= 0) {
+  if (candidate.isDead) {
+    return { ok: false, error: `${candidate.name} is dead and cannot be targeted.` };
+  }
+  if (candidate.currentHp <= 0 && pending.disposition !== 'friendly') {
     return { ok: false, error: `${candidate.name} is down and cannot be targeted.` };
   }
   if (isUntargetableSummon(candidate)) {

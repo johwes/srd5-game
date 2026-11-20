@@ -9,6 +9,7 @@ import {
   executeDeathSave,
   stabilizeCreature,
   executeWeaponAttack,
+  startTurn,
 } from '../combat/index.js';
 
 function createMockCombatant(overrides: Partial<Combatant> = {}): Combatant {
@@ -768,6 +769,55 @@ describe('SRD-307: Damage Pipeline, Health, Temp HP & Death Saves', () => {
       expect(dmgEvent).toBeDefined();
       if (dmgEvent && dmgEvent.type === 'DAMAGE_APPLIED') {
         expect(dmgEvent.deathSaveFailuresAdded).toBe(2);
+      }
+    });
+
+    it('auto-advances past an unconscious 0 HP PC after rolling their start-of-turn Death Save', () => {
+      const downedMage = createMockCombatant({
+        id: 'mage-down',
+        name: 'Lyra Silversun',
+        side: 'party',
+        currentHp: 0,
+        maxHp: 16,
+        conditions: ['unconscious', 'prone'],
+        deathSaves: { successes: 0, failures: 0 },
+      });
+      const standingCleric = createMockCombatant({
+        id: 'cleric-up',
+        name: 'Bram Ironheart',
+        side: 'party',
+        currentHp: 22,
+        maxHp: 22,
+      });
+      const goblin = createMockCombatant({
+        id: 'goblin-1',
+        name: 'Goblin',
+        side: 'monster',
+        currentHp: 7,
+        maxHp: 7,
+      });
+
+      // Find a seed where Lyra does not roll a Nat 20 on her death save
+      let state = createMockCombatState([downedMage, standingCleric, goblin]);
+      state = {
+        ...state,
+        rngState: 7,
+        activeCombatantId: downedMage.id,
+        initiativeOrder: [
+          { entityId: downedMage.id, initiative: 20, naturalRoll: 18, dexterityScore: 14, tieBreaker: 0 },
+          { entityId: standingCleric.id, initiative: 15, naturalRoll: 15, dexterityScore: 10, tieBreaker: 0 },
+          { entityId: goblin.id, initiative: 10, naturalRoll: 8, dexterityScore: 14, tieBreaker: 0 },
+        ],
+      };
+
+      const res = startTurn(state, downedMage.id);
+      const deathSaveEvent = res.events.find(
+        (e) => e.type === 'DEATH_SAVE_ROLLED' && e.entityId === downedMage.id,
+      );
+      expect(deathSaveEvent).toBeDefined();
+      if (deathSaveEvent && deathSaveEvent.type === 'DEATH_SAVE_ROLLED' && deathSaveEvent.roll !== 20) {
+        // Turn must auto-advance to Bram instead of pausing on unconscious Lyra
+        expect(res.state.activeCombatantId).toBe(standingCleric.id);
       }
     });
   });
