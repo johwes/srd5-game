@@ -263,6 +263,11 @@ export function RealmHud({
         >
           {party.map((hero) => {
             const hpPct = Math.max(0, Math.min(100, (hero.currentHp / hero.maxHp) * 100));
+            const heroLevel =
+              hero.characterSheet?.totalLevel ??
+              hero.buildState?.classes.reduce((s, c) => s + c.level, 0) ??
+              1;
+            const heroXp = hero.buildState?.runtime.xp ?? hero.characterSheet?.xp ?? 0;
             return (
               <button
                 key={hero.id}
@@ -284,6 +289,17 @@ export function RealmHud({
                     }`}
                     style={{ width: `${hpPct}%` }}
                   />
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-1 text-[9px] text-slate-400 font-mono">
+                  <span>Lv {heroLevel} · {heroXp} XP</span>
+                  {hero.levelUpAvailable && (
+                    <span
+                      data-testid={`realm-party-levelup-${hero.id}`}
+                      className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-sans font-bold"
+                    >
+                      ★ LVL UP
+                    </span>
+                  )}
                 </div>
                 {hero.isDead && (
                   <span className="text-[9px] text-red-400 font-bold">☠ DEAD</span>

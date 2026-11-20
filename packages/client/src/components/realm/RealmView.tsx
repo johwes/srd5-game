@@ -10,6 +10,8 @@ import {
   type RealmDelveState,
   type WarPatrolApproach,
   type WaveReinforcementSpec,
+  canLevelUpByXp,
+  computeDerivedCharacter,
   findOverworldPath,
   getFactionByPoi,
   getNationThreat,
@@ -88,7 +90,8 @@ export interface RealmViewProps {
   seed?: number;
   storageAdapter?: DungeonStorageAdapter;
   onExitToRoster: () => void;
-  onOpenCharacterSheet?: (characterId: string) => void;
+  onOpenCharacterSheet?: (characterId: string, liveBuild?: CharacterBuildState) => void;
+  onSyncPartyBuilds?: (updatedBuilds: CharacterBuildState[]) => void;
 }
 
 interface ActiveBattle {
@@ -113,6 +116,7 @@ export function RealmView({
   storageAdapter = defaultDungeonStorageAdapter,
   onExitToRoster,
   onOpenCharacterSheet,
+  onSyncPartyBuilds,
 }: RealmViewProps) {
   const [session, setSession] = useState<RealmSessionState>(() =>
     createRealmSession({ partyCharacters, compendium, seed }),
@@ -238,6 +242,71 @@ export function RealmView({
     [appendEvents, compendium, showFeedback],
   );
 
+  const syncPartyBuilds = useCallback(
+    (partyMap: Record<string, Combatant>) => {
+      if (!onSyncPartyBuilds) return;
+      const builds = Object.values(partyMap)
+        .map((hero) => hero.buildState)
+        .filter((b): b is CharacterBuildState => Boolean(b));
+      if (builds.length > 0) {
+        onSyncPartyBuilds(builds);
+      }
+    },
+    [onSyncPartyBuilds],
+  );
+
+  // Sync external character edits (e.g. LevelUpModal or CharacterSheetDrawer)
+  // back into the active Realm session's party combatants.
+  useEffect(() => {
+    if (partyCharacters.length === 0) return;
+    const byId = new Map(partyCharacters.map((c) => [c.id, c]));
+    setSession((prev) => {
+      let changed = false;
+      const nextParty: Record<string, Combatant> = { ...prev.party };
+      for (const [id, hero] of Object.entries(prev.party)) {
+        const external = byId.get(id);
+        if (!external || !hero.buildState) continue;
+        const extLevel = external.classes.reduce((s, c) => s + c.level, 0);
+        const curLevel = hero.buildState.classes.reduce((s, c) => s + c.level, 0);
+        // Only pull external updates when level increased or equipped/inventory changed
+        // without overwriting newer Realm XP if the external copy is stale.
+        if (extLevel > curLevel || (external.runtime.xp === hero.buildState.runtime.xp && external !== hero.buildState)) {
+          const mergedBuild: CharacterBuildState = {
+            ...external,
+            runtime: {
+              ...external.runtime,
+              xp: Math.max(external.runtime.xp, hero.buildState.runtime.xp),
+            },
+          };
+          const sheet = computeDerivedCharacter(mergedBuild, compendium);
+          const hpDelta = Math.max(0, sheet.maxHp - hero.maxHp);
+          nextParty[id] = {
+            ...hero,
+            buildState: mergedBuild,
+            characterSheet: sheet,
+            maxHp: sheet.maxHp,
+            currentHp: Math.min(sheet.maxHp, hero.currentHp + hpDelta),
+            armorClass: sheet.armorClass.totalAc,
+            attacksPerAction: sheet.attacksPerAction,
+            speedFeet: sheet.speedFeet,
+            levelUpAvailable: canLevelUpByXp(sheet.totalLevel, mergedBuild.runtime.xp),
+          };
+          changed = true;
+        }
+      }
+      return changed ? { ...prev, party: nextParty } : prev;
+    });
+  }, [partyCharacters, compendium]);
+
+  const handleInspectHero = useCallback(
+    (charId: string) => {
+      syncPartyBuilds(sessionRef.current.party);
+      const liveBuild = sessionRef.current.party[charId]?.buildState;
+      onOpenCharacterSheet?.(charId, liveBuild);
+    },
+    [onOpenCharacterSheet, syncPartyBuilds],
+  );
+
   // POI delve commit-back (SRD-806, Spec 06 §4.3): loot/XP/rations return to the
   // overworld party, the POI clears, linked quests resolve, and the delve's
   // graveyard entry persists. A wipe surfaces the defeat modal instead.
@@ -246,6 +315,7 @@ export function RealmView({
       try {
         const resolved = resolveRealmDelve(sessionRef.current, delve, gameState, compendium);
         setSession(resolved.session);
+        syncPartyBuilds(resolved.session.party);
         appendEvents(resolved.events, resolved.session.travel.currentDay);
         if (resolved.graveyardEntry) {
           saveGraveyardEntry(resolved.graveyardEntry);
@@ -263,7 +333,7 @@ export function RealmView({
         setActiveDelve(null);
       }
     },
-    [appendEvents, compendium, showFeedback],
+    [appendEvents, compendium, showFeedback, syncPartyBuilds],
   );
 
   // Tactical battle commit-back (Spec 06 Section 4.2 step 3).
@@ -280,6 +350,7 @@ export function RealmView({
             compendium,
           );
           setSession(resolved.session);
+          syncPartyBuilds(resolved.session.party);
           appendEvents(resolved.events, resolved.session.travel.currentDay);
           showFeedback(
             `Victory! +${resolved.totalXp} XP · +${resolved.goldAwarded} gp` +
@@ -315,7 +386,7 @@ export function RealmView({
         setModalState('defeat');
       }
     },
-    [battle, appendEvents, compendium, showFeedback],
+    [battle, appendEvents, compendium, showFeedback, syncPartyBuilds],
   );
 
   const handleTileClick = useCallback(
@@ -572,7 +643,7 @@ export function RealmView({
             }}
             onEndlessDelve={() => setEndlessDelve(true)}
             onOpenPause={() => setModalState('pause')}
-            onInspectCharacter={onOpenCharacterSheet}
+            onInspectCharacter={handleInspectHero}
             war={session.war}
             diplomacy={session.diplomacy}
             onOpenNationSelect={() => setModalState('nation_select')}

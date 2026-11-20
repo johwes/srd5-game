@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import {
+  OVERWORLD_EDGE_DIRECTIONS,
   type FactionAlignment,
   type OverworldMap,
   type OverworldPOI,
   type OverworldPOIKind,
+  type OverworldTile,
   OverworldMapSchema,
   overworldTileKey,
 } from './schemas.js';
@@ -526,10 +528,44 @@ export function initializeWarState(
   }
   const spread = shuffled(freeTiles, rngState);
   rngState = spread.nextRng;
-  const claims = spread.items.slice(0, needed);
+  const available: OverworldTile[] = [...spread.items];
+
+  const isAdjacentToOcean = (tile: OverworldTile): boolean =>
+    OVERWORLD_EDGE_DIRECTIONS.some((dir) => {
+      const neighbor = nextMap.tiles[overworldTileKey(tile.q + dir.q, tile.r + dir.r)];
+      return neighbor?.terrain === 'ocean';
+    });
+
+  const takeMatchingTile = (predicates: Array<(tile: OverworldTile) => boolean>): OverworldTile => {
+    for (const pred of predicates) {
+      const idx = available.findIndex(pred);
+      if (idx !== -1) {
+        return available.splice(idx, 1)[0]!;
+      }
+    }
+    return available.shift()!;
+  };
+
+  const takeTileForKind = (kind: OverworldPOIKind): OverworldTile => {
+    if (kind === 'bridge') {
+      return takeMatchingTile([
+        (t) => (t.riverEdges?.length ?? 0) > 0 && Boolean(t.roadThrough),
+        (t) => (t.riverEdges?.length ?? 0) > 0,
+        (t) => t.terrain === 'coast' || isAdjacentToOcean(t),
+      ]);
+    }
+    if (kind === 'mine') {
+      return takeMatchingTile([
+        (t) => t.terrain === 'mountains' || t.terrain === 'hills',
+      ]);
+    }
+    if (kind === 'supply_depot') {
+      return takeMatchingTile([(t) => Boolean(t.roadThrough)]);
+    }
+    return available.shift()!;
+  };
 
   const events: WarChronicleEntry[] = [];
-  let claimIndex = 0;
   const ownedByNation: Record<string, string[]> = {};
   const kindCounters: Record<string, number> = {};
 
@@ -570,11 +606,11 @@ export function initializeWarState(
   for (const nation of selected) {
     for (let i = 0; i < perNation; i++) {
       const kind = STRATEGIC_KIND_CYCLE[i % STRATEGIC_KIND_CYCLE.length]!;
-      placeStrategicPoi(kind, nation.id, claims[claimIndex++]!);
+      placeStrategicPoi(kind, nation.id, takeTileForKind(kind));
     }
   }
   for (let i = 0; i < options.neutralMineCount; i++) {
-    placeStrategicPoi('mine', undefined, claims[claimIndex++]!);
+    placeStrategicPoi('mine', undefined, takeTileForKind('mine'));
   }
 
   // Point each war faction at its stronghold seats.

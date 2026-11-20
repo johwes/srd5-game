@@ -608,8 +608,29 @@ export function App({
             partyCharacters={missionPartyCharacters}
             compendium={defaultCompendium}
             storageAdapter={dungeonStorageAdapter}
-            onOpenCharacterSheet={(charId) => {
+            onSyncPartyBuilds={(updatedBuilds) => {
+              let nextRoster = roster;
+              let changed = false;
+              for (const build of updatedBuilds) {
+                if (nextRoster.characters.some((c) => c.id === build.id)) {
+                  nextRoster = upsertRosterCharacter(nextRoster, build, {
+                    addToPartyIfRoom: false,
+                  });
+                  changed = true;
+                }
+              }
+              if (changed) {
+                persistAndSetRoster(nextRoster);
+              }
+            }}
+            onOpenCharacterSheet={(charId, liveBuild) => {
+              if (liveBuild && !roster.characters.some((c) => c.id === charId)) {
+                setSheetCharacterId(null);
+                setSheetFallbackCharacter(liveBuild);
+                return;
+              }
               const char =
+                liveBuild ??
                 roster.characters.find((c) => c.id === charId) ??
                 getPregenCharacter(charId);
               if (char) {

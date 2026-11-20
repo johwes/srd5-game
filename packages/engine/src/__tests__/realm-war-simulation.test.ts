@@ -150,6 +150,27 @@ describe('SRD-1101: initializeWarState()', () => {
       expect(owned.map((poi) => poi.kind).sort()).toEqual(['bridge', 'fortress', 'mine', 'supply_depot']);
     }
   });
+
+  it('places bridge POIs on river crossings or coastal waterfront tiles rather than dry inland terrain', () => {
+    for (const seed of [11, 42, 77, 101]) {
+      const { map } = initializeWarState(foundedRealm(seed), { seed, nationCount: 4 });
+      const bridges = getStrategicPOIs(map).filter((p) => p.kind === 'bridge');
+      expect(bridges.length).toBeGreaterThanOrEqual(4);
+      for (const bridge of bridges) {
+        const tile = map.tiles[`${bridge.q},${bridge.r}`]!;
+        const hasRiver = (tile.riverEdges?.length ?? 0) > 0;
+        const isWaterfront =
+          tile.terrain === 'coast' ||
+          [
+            { q: 0, r: -1 },
+            { q: 1, r: 0 },
+            { q: 0, r: 1 },
+            { q: -1, r: 0 },
+          ].some((d) => map.tiles[`${bridge.q + d.q},${bridge.r + d.r}`]?.terrain === 'ocean');
+        expect(hasRiver || isWaterfront).toBe(true);
+      }
+    }
+  });
 });
 
 describe('SRD-1101: advanceWarSimulation() living tick', () => {
