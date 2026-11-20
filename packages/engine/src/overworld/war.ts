@@ -382,30 +382,59 @@ export interface InitializeWarStateResult {
 function resolveNationSelection(
   rngState: number,
   nationCount: 3 | 4,
+  requiredArchetypeId?: string,
 ): { selected: WarNationArchetype[]; nextRng: number } {
+  const required = requiredArchetypeId
+    ? WAR_NATION_ARCHETYPES.find((a) => a.id === requiredArchetypeId)
+    : undefined;
+  if (requiredArchetypeId && !required) {
+    throw new RealmError(`Unknown player nation archetype '${requiredArchetypeId}'`);
+  }
+
   const order = shuffled(WAR_NATION_ARCHETYPES, rngState);
-  let state = order.nextRng;
-  let selected = order.items.slice(0, nationCount);
+  const state = order.nextRng;
+  let selected: WarNationArchetype[];
+  if (required) {
+    const rest = order.items.filter((a) => a.id !== required.id);
+    selected = [required, ...rest.slice(0, nationCount - 1)];
+  } else {
+    selected = order.items.slice(0, nationCount);
+  }
 
   const ensureAlignment = (
     current: WarNationArchetype[],
     wanted: FactionAlignment,
   ): WarNationArchetype[] => {
     if (current.some((a) => a.alignment === wanted)) return current;
-    const replacement = WAR_NATION_ARCHETYPES.find(
+    const replacement = order.items.find(
       (a) => a.alignment === wanted && !current.some((s) => s.id === a.id),
     );
     if (!replacement) return current;
-    // Replace a neutral member when possible so variety is preserved.
-    const victimIndex = current.findIndex((a) => a.alignment === 'neutral');
+    // Never evict the player's explicitly chosen nation or the sole opposite-alignment nation.
+    const oppositeAlignment: FactionAlignment | null =
+      wanted === 'good' ? 'evil' : wanted === 'evil' ? 'good' : null;
+    const firstOppositeIdx = oppositeAlignment
+      ? current.findIndex((a) => a.alignment === oppositeAlignment)
+      : -1;
+    const isProtected = (a: WarNationArchetype, idx: number): boolean =>
+      a.id === required?.id || (firstOppositeIdx !== -1 && idx === firstOppositeIdx);
+    let victimIndex = current.findIndex((a, idx) => a.alignment === 'neutral' && !isProtected(a, idx));
+    if (victimIndex === -1) {
+      for (let i = current.length - 1; i >= 0; i--) {
+        if (!isProtected(current[i]!, i)) {
+          victimIndex = i;
+          break;
+        }
+      }
+    }
+    if (victimIndex === -1) return current;
     const next = [...current];
-    next[victimIndex === -1 ? current.length - 1 : victimIndex] = replacement;
+    next[victimIndex] = replacement;
     return next;
   };
 
   selected = ensureAlignment(selected, 'good');
   selected = ensureAlignment(selected, 'evil');
-  void state;
   return { selected, nextRng: state };
 }
 
@@ -444,7 +473,7 @@ export function initializeWarState(
   rngState = countDraw.nextState;
   const nationCount = options.nationCount ?? (countDraw.value < 0.5 ? 3 : 4);
 
-  const selection = resolveNationSelection(rngState, nationCount);
+  const selection = resolveNationSelection(rngState, nationCount, options.playerNationArchetypeId);
   rngState = selection.nextRng;
   const selected = selection.selected;
 

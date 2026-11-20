@@ -108,6 +108,23 @@ describe('SRD-1101: initializeWarState()', () => {
     expect(war.nations['gilded-league']?.isPlayerNation).toBe(true);
   });
 
+  it('always includes any chosen player nation archetype across seeds while keeping Good + Evil balance', () => {
+    for (const archetype of WAR_NATION_ARCHETYPES) {
+      for (const seed of [1, 7, 42, 101]) {
+        const { war } = initializeWarState(foundedRealm(seed), {
+          seed,
+          nationCount: 3,
+          playerNationArchetypeId: archetype.id,
+        });
+        expect(war.playerNationId).toBe(archetype.id);
+        expect(war.nations[archetype.id]?.isPlayerNation).toBe(true);
+        const alignments = war.nationOrder.map((id) => war.nations[id]!.alignment);
+        expect(alignments).toContain('good');
+        expect(alignments).toContain('evil');
+      }
+    }
+  });
+
   it('replays bit-exactly from the same seed', () => {
     const first = initializeWarState(foundedRealm(2024), { seed: 2024 });
     const second = initializeWarState(foundedRealm(2024), { seed: 2024 });
