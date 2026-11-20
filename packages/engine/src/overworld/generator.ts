@@ -194,7 +194,8 @@ class CostHeap {
 
 /**
  * Finds the cheapest overland path between two macro tiles. Ocean tiles are
- * impassable; crossing a river edge adds +1 movement cost (fords are costly).
+ * impassable; fording an unbridged river edge adds +2 movement cost, while an
+ * intact `bridge` POI waives the river-crossing penalty (+0).
  * Returns null when no land route exists.
  */
 export function findOverworldPath(
@@ -207,6 +208,12 @@ export function findOverworldPath(
   if (!startTile || !goalTile) return null;
   if (startTile.terrain === 'ocean' || goalTile.terrain === 'ocean') return null;
   if (start.q === goal.q && start.r === goal.r) return { path: [{ ...start }], cost: 0 };
+
+  const hasIntactBridge = (tile: OverworldTile): boolean => {
+    if (!tile.poiId) return false;
+    const poi = map.pois[tile.poiId];
+    return poi?.kind === 'bridge' && poi.strategicStatus !== 'destroyed';
+  };
 
   const startKey = overworldTileKey(start.q, start.r);
   const goalKey = overworldTileKey(goal.q, goal.r);
@@ -237,7 +244,9 @@ export function findOverworldPath(
       const nr = cr + dir.r;
       const neighbor = getOverworldTile(map, nq, nr);
       if (!neighbor || neighbor.terrain === 'ocean') continue;
-      const riverPenalty = currentTile.riverEdges?.includes(e) ? 1 : 0;
+      const crossesRiver = currentTile.riverEdges?.includes(e) ?? false;
+      const riverPenalty =
+        crossesRiver && !hasIntactBridge(currentTile) && !hasIntactBridge(neighbor) ? 2 : 0;
       const nextCost = current.cost + neighbor.movementCost + riverPenalty;
       const nKey = overworldTileKey(nq, nr);
       if (nextCost < (dist.get(nKey) ?? Infinity)) {
@@ -419,17 +428,20 @@ export function generateOverworldMap(
   const elevAt = (q: number, r: number): number => elevation[r * width + q];
   const inBounds = (q: number, r: number): boolean => q >= 0 && q < width && r >= 0 && r < height;
 
-  // 2. Rivers: steepest-descent courses from highland sources to the sea.
+  // 2. Rivers: continuous downhill-biased courses from highland sources all the
+  //    way to the ocean (or merging into an existing river), never dead-ending
+  //    in shallow local elevation dips.
   const riverEdgeSets: Array<Set<number>> = Array.from({ length: tileCount }, () => new Set<number>());
   const riverPaths: OverworldCoord[][] = [];
+  const riverTiles = new Set<string>();
   const riverCount =
-    config.riverCount ?? Math.max(2, Math.floor(tileCount / 1200));
+    config.riverCount ?? Math.min(8, Math.max(3, Math.floor(tileCount / 600)));
 
   if (riverCount > 0) {
     let sourceCandidates: OverworldCoord[] = [];
     for (let r = 0; r < height; r++) {
       for (let q = 0; q < width; q++) {
-        if (elevAt(q, r) >= Math.max(0.68, seaLevel + 0.25)) {
+        if (elevAt(q, r) >= Math.max(0.62, seaLevel + 0.22)) {
           sourceCandidates.push({ q, r });
         }
       }
@@ -443,20 +455,72 @@ export function generateOverworldMap(
         }
       }
       landTiles.sort((a, b) => elevAt(b.q, b.r) - elevAt(a.q, a.r));
-      sourceCandidates = landTiles.slice(0, 8);
+      sourceCandidates = landTiles.slice(0, 12);
     }
 
     const usedSources = new Set<string>();
-    const minSourceSpacing = Math.max(4, Math.floor(Math.min(width, height) / 8));
+    const minSourceSpacing = Math.max(5, Math.floor(Math.min(width, height) / 6));
+
+    const routeRiverToSea = (start: OverworldCoord): OverworldCoord[] | null => {
+      const startKey = overworldTileKey(start.q, start.r);
+      const dist = new Map<string, number>([[startKey, 0]]);
+      const cameFrom = new Map<string, string>();
+      const heap = new CostHeap();
+      heap.push(startKey, 0);
+
+      let terminusKey: string | null = null;
+      while (heap.size > 0) {
+        const cur = heap.pop()!;
+        if (cur.cost > (dist.get(cur.key) ?? Infinity)) continue;
+        const [cq, cr] = cur.key.split(',').map(Number);
+
+        // Stop as soon as the river reaches the ocean
+        if (cur.key !== startKey && elevAt(cq, cr) < seaLevel) {
+          terminusKey = cur.key;
+          break;
+        }
+
+        const cElev = elevAt(cq, cr);
+        for (let e = 0; e < OVERWORLD_EDGE_DIRECTIONS.length; e++) {
+          const dir = OVERWORLD_EDGE_DIRECTIONS[e];
+          const nq = cq + dir.q;
+          const nr = cr + dir.r;
+          if (!inBounds(nq, nr)) continue;
+          const nKey = overworldTileKey(nq, nr);
+          const nElev = elevAt(nq, nr);
+          // Strongly prefer downhill flow, but allow carving through shallow local basins
+          // so every river reaches the ocean or joins a larger river.
+          const uphillPenalty = nElev >= cElev ? (nElev - cElev) * 14 + 0.35 : 0;
+          const meanderBias = ((nq * 31 + nr * 17 + config.seed) & 7) * 0.015;
+          const stepCost = 0.1 + uphillPenalty + meanderBias;
+          const nextCost = cur.cost + stepCost;
+          if (nextCost < (dist.get(nKey) ?? Infinity)) {
+            dist.set(nKey, nextCost);
+            cameFrom.set(nKey, cur.key);
+            heap.push(nKey, nextCost);
+          }
+        }
+      }
+
+      if (!terminusKey) return null;
+      const path: OverworldCoord[] = [];
+      let step: string | undefined = terminusKey;
+      while (step !== undefined) {
+        const [q, r] = step.split(',').map(Number);
+        path.unshift({ q, r });
+        step = cameFrom.get(step);
+      }
+      return path;
+    };
 
     for (let riverIdx = 0; riverIdx < riverCount; riverIdx++) {
-      // Pick a spread-out source.
+      // Pick a spread-out highland source not already on an existing river.
       let source: OverworldCoord | undefined;
-      for (let attempt = 0; attempt < 24; attempt++) {
+      for (let attempt = 0; attempt < 32; attempt++) {
         if (sourceCandidates.length === 0) break;
         const cand = sourceCandidates[Math.floor(nextFloat() * sourceCandidates.length)];
         const candKey = overworldTileKey(cand.q, cand.r);
-        if (usedSources.has(candKey)) continue;
+        if (usedSources.has(candKey) || riverTiles.has(candKey)) continue;
         let tooClose = false;
         for (const usedKey of usedSources) {
           const [uq, ur] = usedKey.split(',').map(Number);
@@ -465,7 +529,7 @@ export function generateOverworldMap(
             break;
           }
         }
-        if (!tooClose || attempt >= 16) {
+        if (!tooClose || attempt >= 20) {
           source = cand;
           usedSources.add(candKey);
           break;
@@ -473,53 +537,42 @@ export function generateOverworldMap(
       }
       if (!source) continue;
 
-      const path: OverworldCoord[] = [{ ...source }];
-      const visited = new Set<string>([overworldTileKey(source.q, source.r)]);
-      let current = source;
+      const path = routeRiverToSea(source);
+      if (!path || path.length < 2) continue;
 
-      for (;;) {
-        const currentElev = elevAt(current.q, current.r);
-        // Collect strictly-downhill neighbors.
-        let bestElev = Infinity;
-        let bestDirs: number[] = [];
-        for (let e = 0; e < OVERWORLD_EDGE_DIRECTIONS.length; e++) {
-          const dir = OVERWORLD_EDGE_DIRECTIONS[e];
-          const nq = current.q + dir.q;
-          const nr = current.r + dir.r;
-          if (!inBounds(nq, nr)) continue;
-          const nKey = overworldTileKey(nq, nr);
-          if (visited.has(nKey)) continue;
-          const nElev = elevAt(nq, nr);
-          if (nElev >= currentElev) continue;
-          if (nElev < bestElev) {
-            bestElev = nElev;
-            bestDirs = [e];
-          } else if (nElev === bestElev) {
-            bestDirs.push(e);
-          }
+      // Erode a gentle monotonic downhill valley along the carved river channel
+      // so water always strictly flows downhill without turning land into ocean.
+      for (let i = 1; i < path.length; i++) {
+        const a = path[i - 1]!;
+        const b = path[i]!;
+        const aIdx = a.r * width + a.q;
+        const bIdx = b.r * width + b.q;
+        const prevElev = elevation[aIdx]!;
+        const curElev = elevation[bIdx]!;
+        const isLast = i === path.length - 1;
+        if (curElev >= prevElev) {
+          const floorElev = isLast && curElev < seaLevel ? 0 : seaLevel;
+          const remaining = path.length - i;
+          const drop = Math.min(0.002, Math.max(0.00001, (prevElev - floorElev) / (remaining + 1)));
+          elevation[bIdx] = Math.max(floorElev + 0.00001, prevElev - drop);
         }
-        if (bestDirs.length === 0) break; // endorheic lake terminus
-
-        const chosenDir = bestDirs[Math.floor(nextFloat() * bestDirs.length)];
-        const dir = OVERWORLD_EDGE_DIRECTIONS[chosenDir];
-        const nq = current.q + dir.q;
-        const nr = current.r + dir.r;
-        const nKey = overworldTileKey(nq, nr);
-
-        // Mark the shared river edge on both banks (symmetric by construction).
-        riverEdgeSets[current.r * width + current.q].add(chosenDir);
-        riverEdgeSets[nr * width + nq].add((chosenDir + 2) % 4);
-
-        visited.add(nKey);
-        path.push({ q: nq, r: nr });
-        current = { q: nq, r: nr };
-
-        if (elevAt(nq, nr) < seaLevel) break; // reached the sea
       }
 
-      if (path.length > 1) {
-        riverPaths.push(path);
+      for (let i = 0; i < path.length - 1; i++) {
+        const a = path[i]!;
+        const b = path[i + 1]!;
+        const dirIdx = OVERWORLD_EDGE_DIRECTIONS.findIndex(
+          (d) => a.q + d.q === b.q && a.r + d.r === b.r,
+        );
+        if (dirIdx !== -1) {
+          riverEdgeSets[a.r * width + a.q].add(dirIdx);
+          riverEdgeSets[b.r * width + b.q].add((dirIdx + 2) % 4);
+        }
+        riverTiles.add(overworldTileKey(a.q, a.r));
       }
+      const last = path[path.length - 1]!;
+      riverTiles.add(overworldTileKey(last.q, last.r));
+      riverPaths.push(path);
     }
   }
 

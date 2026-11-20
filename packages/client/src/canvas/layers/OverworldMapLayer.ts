@@ -285,6 +285,10 @@ export class OverworldMapRenderer {
   private drawRivers(map: OverworldMap, cellSize: number): void {
     this.riverGraphics.clear();
     const half = cellSize / 2;
+    const bankWidth = Math.max(4, cellSize * 0.24);
+    const coreWidth = Math.max(2, cellSize * 0.13);
+
+    // Two-pass smooth waterways: darker riverbanks underneath + brighter water core
     for (const tile of Object.values(map.tiles)) {
       if (!tile.riverEdges || tile.riverEdges.length === 0) continue;
       const cx = tile.q * cellSize + half;
@@ -296,7 +300,20 @@ export class OverworldMapRenderer {
         this.riverGraphics
           .moveTo(cx, cy)
           .lineTo(ex, ey)
-          .stroke({ width: Math.max(2, cellSize * 0.14), color: 0x3b82f6, alpha: 0.9 });
+          .stroke({ width: bankWidth, color: 0x1e40af, alpha: 0.78, cap: 'round', join: 'round' });
+      }
+    }
+    for (const tile of Object.values(map.tiles)) {
+      if (!tile.riverEdges || tile.riverEdges.length === 0) continue;
+      const cx = tile.q * cellSize + half;
+      const cy = tile.r * cellSize + half;
+      for (const edge of tile.riverEdges) {
+        const ex = edge === 1 ? cx + half : edge === 3 ? cx - half : cx;
+        const ey = edge === 0 ? cy - half : edge === 2 ? cy + half : cy;
+        this.riverGraphics
+          .moveTo(cx, cy)
+          .lineTo(ex, ey)
+          .stroke({ width: coreWidth, color: 0x60a5fa, alpha: 0.95, cap: 'round', join: 'round' });
       }
     }
   }
@@ -395,8 +412,23 @@ export class OverworldMapRenderer {
           .fill({ color, alpha: 1 })
           .stroke({ width: 2, color: 0x0f172a });
         g.rect(-radius * 0.3, -radius * 0.3, radius * 0.6, radius * 0.6).fill(0x0f172a);
+      } else if (poi.kind === 'bridge') {
+        // Distinct arched stone/timber bridge deck spanning water.
+        const destroyed = poi.strategicStatus === 'destroyed';
+        const deckColor = destroyed ? 0x7f1d1d : 0xd97706;
+        // Bridge deck bar
+        g.rect(-radius * 1.05, -radius * 0.45, radius * 2.1, radius * 0.55)
+          .fill({ color: deckColor, alpha: destroyed ? 0.65 : 1 })
+          .stroke({ width: 1.5, color: 0x0f172a });
+        // Left & right stone abutments
+        g.rect(-radius * 1.05, radius * 0.1, radius * 0.5, radius * 0.6)
+          .fill({ color: 0x94a3b8, alpha: destroyed ? 0.6 : 1 })
+          .stroke({ width: 1.2, color: 0x0f172a });
+        g.rect(radius * 0.55, radius * 0.1, radius * 0.5, radius * 0.6)
+          .fill({ color: 0x94a3b8, alpha: destroyed ? 0.6 : 1 })
+          .stroke({ width: 1.2, color: 0x0f172a });
       } else if (strategic) {
-        // Mines, bridges, depots, sub-faction camps: diamond with status ring.
+        // Mines, depots, sub-faction camps: diamond with status ring.
         g.moveTo(0, -radius)
           .lineTo(radius * 0.85, 0)
           .lineTo(0, radius)

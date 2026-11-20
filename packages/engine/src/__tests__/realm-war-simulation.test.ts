@@ -13,6 +13,7 @@ import {
   WarStateSchema,
   advanceWarSimulation,
   evaluateWarOutcome,
+  findOverworldPath,
   generateOverworldMap,
   getStrategicPOIs,
   getWarNationTotal,
@@ -170,6 +171,42 @@ describe('SRD-1101: initializeWarState()', () => {
         expect(hasRiver || isWaterfront).toBe(true);
       }
     }
+  });
+
+  it('waives the river-crossing movement penalty on intact bridges and restores it when destroyed', () => {
+    const { map } = initializeWarState(foundedRealm(42), { seed: 42, nationCount: 4 });
+    const riverBridge = getStrategicPOIs(map).find((p) => {
+      if (p.kind !== 'bridge') return false;
+      const tile = map.tiles[`${p.q},${p.r}`];
+      return (tile?.riverEdges?.length ?? 0) > 0;
+    });
+    expect(riverBridge).toBeDefined();
+    const bridgeTile = map.tiles[`${riverBridge!.q},${riverBridge!.r}`]!;
+    const dirs = [
+      { q: 0, r: -1 },
+      { q: 1, r: 0 },
+      { q: 0, r: 1 },
+      { q: -1, r: 0 },
+    ];
+    const edge = bridgeTile.riverEdges!.find((e) => {
+      const n = map.tiles[`${bridgeTile.q + dirs[e]!.q},${bridgeTile.r + dirs[e]!.r}`];
+      return n && n.terrain !== 'ocean';
+    })!;
+    const neighbor = map.tiles[`${bridgeTile.q + dirs[edge]!.q},${bridgeTile.r + dirs[edge]!.r}`]!;
+
+    const intactRoute = findOverworldPath(map, { q: bridgeTile.q, r: bridgeTile.r }, { q: neighbor.q, r: neighbor.r });
+    expect(intactRoute).not.toBeNull();
+    expect(intactRoute!.cost).toBe(neighbor.movementCost);
+
+    const destroyedMap = structuredClone(map);
+    destroyedMap.pois[riverBridge!.id]!.strategicStatus = 'destroyed';
+    const destroyedRoute = findOverworldPath(
+      destroyedMap,
+      { q: bridgeTile.q, r: bridgeTile.r },
+      { q: neighbor.q, r: neighbor.r },
+    );
+    expect(destroyedRoute).not.toBeNull();
+    expect(destroyedRoute!.cost).toBeGreaterThan(intactRoute!.cost);
   });
 });
 

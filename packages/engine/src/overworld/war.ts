@@ -546,13 +546,23 @@ export function initializeWarState(
     return available.shift()!;
   };
 
+  const placedBridges: Array<{ q: number; r: number }> = [];
+  const MIN_BRIDGE_SPACING = 5;
+  const isWellSpacedBridge = (t: OverworldTile): boolean =>
+    placedBridges.every((b) => Math.abs(b.q - t.q) + Math.abs(b.r - t.r) >= MIN_BRIDGE_SPACING);
+
   const takeTileForKind = (kind: OverworldPOIKind): OverworldTile => {
     if (kind === 'bridge') {
-      return takeMatchingTile([
+      const chosen = takeMatchingTile([
+        (t) => (t.riverEdges?.length ?? 0) > 0 && Boolean(t.roadThrough) && isWellSpacedBridge(t),
+        (t) => (t.riverEdges?.length ?? 0) > 0 && isWellSpacedBridge(t),
+        (t) => (t.terrain === 'coast' || isAdjacentToOcean(t)) && isWellSpacedBridge(t),
         (t) => (t.riverEdges?.length ?? 0) > 0 && Boolean(t.roadThrough),
         (t) => (t.riverEdges?.length ?? 0) > 0,
         (t) => t.terrain === 'coast' || isAdjacentToOcean(t),
       ]);
+      placedBridges.push({ q: chosen.q, r: chosen.r });
+      return chosen;
     }
     if (kind === 'mine') {
       return takeMatchingTile([
