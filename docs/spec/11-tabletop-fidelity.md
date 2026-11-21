@@ -109,13 +109,13 @@ export interface KnowledgeRecallSpec {
 
 - **History**: unlocks quests (old battlefield, forgotten cache), grants dungeon-scoped bonuses (trap detection, ambush warning). Fail = no bonus.
 - **Religion**: shrine outcomes, unhallowed-ground warnings, cleanse-cursed-mine ward identification (promote today's mission-alt to a real dungeon verb).
-- **Arcana**: spell identification — pass to see a spell being cast (name/level) before deciding to counterspell; blind counter otherwise. Ward/decipher uses as today.
+- **Arcana**: spell identification — pass to see a spell being cast (name/level) before deciding to counterspell; fail and you may still counterspell, but blind (slot committed without knowing the target's level). Precedent: BG3's counterspell reaction prompt shows the incoming spell; here the Arcana check (Xanathar's-derived homebrew) gates whether you see it at all. Ward/decipher uses as today.
 - **Nature**: forage/identify split with Survival (Nature: what is it / is it safe; Survival: find enough of it).
 
 ### 3.3 Contested and missing rolls
 
 - **Insight**: opposed vs. Deception in social reads (patrol bluff, tribe intent, envoy missions). `passiveInsight` becomes the floor, and every social prompt shows a "something feels off" cue when the party's passive beats the speaker's Deception.
-- **Medicine**: stabilize becomes a real check (DC 10, healer's kit advantage); diagnose disease/poison branches.
+- **Medicine**: stabilize becomes a real check (DC 10; a healer's kit grants advantage — deliberate simplification of the 2014 rule where a kit stabilizes without a check, noted here so it reads as intent, not bug); diagnose disease/poison branches.
 - **Intimidation**: social third leg alongside Persuasion/Deception with distinct consequences (fear: compliance + attitude cost).
 - **Animal Handling**: mounts/beasts/pack animals, sub-faction beast encounters.
 - **Performance**: tavern/distraction/cover-identity verb (earn coin, distract guards, blend into crowds) — the alternative to cutting it.
@@ -149,22 +149,22 @@ Recall specs (`§3.2`) and passive dividends (`§3.4`) attach to content two way
 
 ### 4.1 Out-of-combat casting
 
-New command path (exploration/social) for non-hostile casts: `DECLARE_CAST_SPELL` outside combat resolves buffs, comprehension, detection, and ritual tags without an initiative context. Rituals (10-minute tag) cost time/rations rather than slots where the fiction demands it. This unlocks `knock` (prop hook alongside tools/Athletics), `detect-magic` (sense active effects/wards within range — real sense, not a marker), and all touch/utility buffs.
+New command path (exploration/social) for non-hostile casts: `DECLARE_CAST_SPELL` outside combat resolves buffs, comprehension, detection, ritual tags — and **healing** (`cure-wounds` et al. out of combat is a must, not a nice-to-have) — without an initiative context. Rituals (10-minute tag) cost time/rations rather than slots where the fiction demands it. This unlocks `knock` (prop hook alongside tools/Athletics), `detect-magic` (sense active effects/wards within range — real sense, not a marker), and all touch/utility buffs.
 
 ### 4.2 Marker-spell enforcement (correctness fixes)
 
 - `detect-magic`: real sense mechanic (reveals magical props/effects/concentrations in range).
-- `knock`: engine prop hook (unlock + loud noise → adjacent-room alert, the classic tradeoff).
+- `knock`: engine prop hook (unlock + loud report — SRD: audible 300 ft, implemented as adjacent-room alert, the classic tradeoff).
 - `sanctuary`: enforce ward (attackers must pass WIS save or redirect) — today only `charmed` is checked on attack.
 - `sleep`: HP-pool resolution per SRD (roll pool, lowest-HP creatures fall unconscious first) instead of unconditional `unconscious`.
-- `shield` buff id: reconcile `shield_ac_buff` with spell data id.
+- `shield` buff id: reconcile `shield_ac_buff` (engine) with `shield-ac-bonus` (data) — verified live mismatch; directly-cast Shield plants an id nothing expires.
 - Hazard-zone `onEnterOrStartTurn`: handle the dropped step types or explicitly mark unsupported (no silent drops).
 - Shared-language preconditions on enchantments (§2.2).
 
 ### 4.3 Capstones: Wish and Time Stop (bounded, BG2-style)
 
-- **Wish (L9)**: fixed menu of ~6 boons (restore party, grant resistance, supply cache, full rest, mass heal, one free resurrection), each an explicit effect bundle with a real cost (exhaustion + conduit closes / once-per-campaign). No open-ended parsing.
-- **Time Stop (L9)**: caster gains 2–3 consecutive solo turns (others frozen: no reactions, no hazard ticks against them); ends early on the standard SRD condition. Implemented as initiative manipulation, then resume.
+- **Wish (L9)**: fixed menu of ~6 boons (restore party, grant resistance, supply cache, full rest, mass heal, one free resurrection), each an explicit effect bundle. Stress follows SRD 5.1 (as already encoded in `spells.json`): casting for anything other than duplicating a spell risks incapacitation and a 33% chance of never casting Wish again (Strength falls to 3 for 2d4 days on stress). No open-ended parsing.
+- **Time Stop (L9)**: caster takes **1d4+1 consecutive solo turns** per SRD 5.1 (already encoded in the `time-stop-boon` adjudication data): others frozen (no reactions, no hazard ticks against them); ends early if the caster affects another creature. Implemented as initiative manipulation, then resume.
 
 ---
 

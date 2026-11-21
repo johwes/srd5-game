@@ -282,7 +282,7 @@ flowchart LR
 | :--- | :---: | :--- | :--- | :--- |
 | **SRD-1201** | `[ ]` | Author `comprehend-languages` + `tongues` executable overlays; resolve dangling draft-party spell id | `@srd5/data`, `@srd5/engine` | SRD-310 |
 | **SRD-1202** | `[ ]` | Language-gated encounters (party-level resolution, gesture/hostile/translator fallbacks); Orc-tribe reference quest | `@srd5/engine`, `@srd5/data` | SRD-1201, SRD-1104 |
-| **SRD-1203** | `[ ]` | Out-of-combat casting path (exploration/social) incl. ritual time costs | `@srd5/engine`, `@srd5/transport` | SRD-306 |
+| **SRD-1203** | `[ ]` | Out-of-combat casting path (exploration/social) incl. ritual time costs — MUST include out-of-combat healing (`cure-wounds` et al.); blocks knock/detect-magic/ritual value | `@srd5/engine`, `@srd5/transport` | SRD-306 |
 | **SRD-1204** | `[ ]` | Marker-spell enforcement: `detect-magic` sense, `knock` prop hook + alert tradeoff, `sanctuary` ward, `sleep` HP-pool, `shield` buff-id fix | `@srd5/engine` | SRD-1203, SRD-308 |
 | **SRD-1205** | `[ ]` | Hazard-zone `onEnter` step coverage (no silent drops) + shared-language preconditions on enchantments | `@srd5/engine` | SRD-308 |
 | **SRD-1206** | `[ ]` | Sleight of Hand theft verb (pickpocket/plant/lift, tools advantage, caught branches) + Fast Hands bonus-action tie-in | `@srd5/engine`, `@srd5/client` | SRD-502 |
@@ -297,7 +297,7 @@ flowchart LR
 
 ### Epic 12 Acceptance Criteria Details
 - [ ] **SRD-1201..1202**: Compendium lookups for both new spells resolve; Orc-tribe chain playable with and without Orcish (gesture path verified E2E).
-- [ ] **SRD-1203..1205**: Utility casts resolve outside combat; knock alerts adjacent rooms; sleep follows the HP pool; no hazard step is silently dropped.
+- [ ] **SRD-1203..1205**: Utility casts resolve outside combat — healing (`cure-wounds`) is required acceptance, not optional; knock alerts adjacent rooms; sleep follows the HP pool; no hazard step is silently dropped.
 - [ ] **SRD-1206..1208**: Theft success/caught branches; recall rewards apply; Insight opposes Deception; stabilize requires the check; `hide` grants `hidden`.
 - [ ] **SRD-1209..1210**: Diplomacy failures degrade the deal, never dead-end; Wish/Time Stop behave as bounded capstones with costs.
 - [ ] **SRD-1211..1212**: Builder shows status for every pick; integrity suite fails on new dangling offered content.
