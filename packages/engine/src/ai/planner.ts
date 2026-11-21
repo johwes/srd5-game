@@ -3,7 +3,8 @@ import type { GridPoint, TacticalGrid } from '../grid/model.js';
 import { getFootprintDistanceFeet, isWithinMeleeReach } from '../grid/footprints.js';
 import { computeCover, hasLineOfSight } from '../grid/vision.js';
 import { rasterizeSphere, rasterizeCone, rasterizeLine } from '../grid/aoe.js';
-import { findPath, canEndMoveAt, type GridCreature, type PathfindingResult } from '../grid/pathfinding.js';
+import { findPath, canEndMoveAt, isFootprintStepDifficultTerrain, computeStepCostFeet, type GridCreature, type PathfindingResult } from '../grid/pathfinding.js';
+import { isCellInHazardDifficultTerrain, type HazardZone } from '../combat/hazard-zone.js';
 import type { Combatant, CombatState } from '../combat/types.js';
 import { areAllied, areHostile, type DispositionMatrix } from '../combat/allegiance.js';
 import { isIncapacitated } from '../combat/conditions.js';
@@ -97,6 +98,117 @@ export function truncatePathToBudget(
   return { path: finalPath, costFeet: actualCost };
 }
 
+/**
+ * Hazard/prone-aware truncation that mirrors `executeMoveCombatant` cost
+ * semantics exactly (grid difficult + creature overlap + hazard-zone
+ * difficult + prone crawl). `truncatePathToBudget` trusts the A* step costs,
+ * which ignore hazard zones and prone — a 6-step path with one hazard cell
+ * plans as 30 ft but executes as 35 ft and throws
+ * "Not enough movement remaining". AI planning must use this variant so
+ * generated COMBAT_MOVE paths never exceed the turn budget at execution.
+ */
+export function truncatePathToExecutionBudget(
+  grid: TacticalGrid,
+  mover: GridCreature,
+  pathResult: PathfindingResult,
+  budgetFeet: number,
+  creatures: ReadonlyArray<GridCreature> = [],
+  hazardZones?: Record<string, HazardZone> | undefined,
+  isProne = false,
+): { path: GridPoint[]; costFeet: number } | null {
+  if (!pathResult.found || pathResult.path.length <= 1 || budgetFeet <= 0) {
+    return null;
+  }
+
+  // Recompute execution-equivalent costs step by step (start-inclusive skip).
+  const execCosts: number[] = [];
+  let currentPos = pathResult.path[0]!;
+  let total = 0;
+  for (let i = 1; i < pathResult.path.length; i++) {
+    const step = pathResult.path[i]!;
+    if (step.x === currentPos.x && step.y === currentPos.y) {
+      execCosts.push(0);
+      continue;
+    }
+    const moverAtCurrent: GridCreature = {
+      id: mover.id,
+      x: currentPos.x,
+      y: currentPos.y,
+      size: mover.size,
+      isProne: isProne || mover.isProne,
+    };
+    const difficult =
+      isFootprintStepDifficultTerrain(grid, moverAtCurrent, step, creatures) ||
+      isCellInHazardDifficultTerrain(hazardZones, step);
+    const { stepCostFeet } = computeStepCostFeet({
+      from: currentPos,
+      to: step,
+      difficultTerrain: difficult,
+      isProne: isProne || mover.isProne,
+    });
+    execCosts.push(stepCostFeet);
+    total += stepCostFeet;
+    currentPos = step;
+  }
+
+  // Fast path: whole path fits and end cell is occupiable.
+  if (total <= budgetFeet) {
+    const endPt = pathResult.path[pathResult.path.length - 1]!;
+    if (
+      canEndMoveAt(grid, mover, endPt, creatures, {
+        movementMode: 'walk',
+        allowTinyCellSharing: true,
+      })
+    ) {
+      return { path: pathResult.path, costFeet: total };
+    }
+  }
+
+  // Walk forward until budget exhausted (execution semantics).
+  let cost = 0;
+  let validIndex = 0;
+  currentPos = pathResult.path[0]!;
+  for (let i = 1; i < pathResult.path.length; i++) {
+    const stepCost = execCosts[i - 1]!;
+    const step = pathResult.path[i]!;
+    // Zero-cost no-op (duplicate start) never consumes budget.
+    if (step.x === currentPos.x && step.y === currentPos.y) {
+      validIndex = i;
+      continue;
+    }
+    if (cost + stepCost > budgetFeet) {
+      break;
+    }
+    cost += stepCost;
+    validIndex = i;
+    currentPos = step;
+  }
+
+  // Step backwards if the end cell cannot be legally occupied.
+  // Recompute cost from the surviving prefix so backing off occupiable
+  // cells also refunds their execution cost.
+  while (validIndex > 0) {
+    const endPt = pathResult.path[validIndex]!;
+    if (
+      canEndMoveAt(grid, mover, endPt, creatures, {
+        movementMode: 'walk',
+        allowTinyCellSharing: true,
+      })
+    ) {
+      break;
+    }
+    const steppedCost = execCosts[validIndex - 1] ?? 0;
+    cost = Math.max(0, cost - steppedCost);
+    validIndex--;
+  }
+
+  if (validIndex === 0) {
+    return null;
+  }
+
+  return { path: pathResult.path.slice(0, validIndex + 1), costFeet: cost };
+}
+
 function getMonsterActionReachFeet(action: { description?: string }): number {
   if (action.description) {
     const reachMatch = action.description.match(/reach\s+(\d+)\s*ft/i);
@@ -179,6 +291,9 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
     : (actor.speedFeet ?? 30);
   let remainingMovement = availableMovement;
   let currentActorPos: GridPoint = { x: actor.position.x, y: actor.position.y };
+  // Execution-parity costs: prone crawl and hazard-zone difficult terrain.
+  const aiIsProne = actor.conditions.includes('prone');
+  const aiHazardZones = state.hazardZones;
 
   const hasNimbleEscape = Boolean(
     actor.monsterData?.traits?.some(
@@ -256,16 +371,18 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       if (retreatGoal && (retreatGoal.x !== currentActorPos.x || retreatGoal.y !== currentActorPos.y)) {
         const pathRes = findPath({
           grid,
-          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
           goal: retreatGoal,
           creatures: gridCreatures,
         });
-        const truncated = truncatePathToBudget(
+        const truncated = truncatePathToExecutionBudget(
           grid,
-          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
           pathRes,
           remainingMovement,
           gridCreatures,
+          aiHazardZones,
+          aiIsProne,
         );
         if (truncated && truncated.path.length > 1) {
           commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -313,16 +430,18 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
     if (coverPos && (coverPos.x !== currentActorPos.x || coverPos.y !== currentActorPos.y)) {
       const pathRes = findPath({
         grid,
-        mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+        mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
         goal: coverPos,
         creatures: gridCreatures,
       });
-      const truncated = truncatePathToBudget(
+      const truncated = truncatePathToExecutionBudget(
         grid,
-        { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+        { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
         pathRes,
         remainingMovement,
         gridCreatures,
+        aiHazardZones,
+        aiIsProne,
       );
       if (truncated && truncated.path.length > 1) {
         commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -393,7 +512,7 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
         }
         const pRes = findPath({
           grid,
-          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
           goal: adj,
           creatures: gridCreatures,
         });
@@ -405,12 +524,14 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
 
       const commands: GameCommand[] = [];
       if (bestPathRes) {
-        const truncated = truncatePathToBudget(
+        const truncated = truncatePathToExecutionBudget(
           grid,
-          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
           bestPathRes,
           remainingMovement,
           gridCreatures,
+          aiHazardZones,
+          aiIsProne,
         );
         if (truncated && truncated.path.length > 1) {
           commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -468,16 +589,18 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
         if (coverPos && (coverPos.x !== currentActorPos.x || coverPos.y !== currentActorPos.y)) {
           const pathRes = findPath({
             grid,
-            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
             goal: coverPos,
             creatures: gridCreatures,
           });
-          const truncated = truncatePathToBudget(
+          const truncated = truncatePathToExecutionBudget(
             grid,
-            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
             pathRes,
             remainingMovement,
             gridCreatures,
+            aiHazardZones,
+            aiIsProne,
           );
           if (truncated && truncated.path.length > 1) {
             commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -513,7 +636,7 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
         for (const adj of adjCells) {
           const pRes = findPath({
             grid,
-            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
             goal: adj,
             creatures: gridCreatures,
           });
@@ -522,12 +645,14 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
           }
         }
         if (bestPathRes) {
-          const truncated = truncatePathToBudget(
+          const truncated = truncatePathToExecutionBudget(
             grid,
-            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
             bestPathRes,
             remainingMovement,
             gridCreatures,
+            aiHazardZones,
+            aiIsProne,
           );
           if (truncated && truncated.path.length > 1) {
             commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -573,16 +698,18 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
         if (retreatGoal && (retreatGoal.x !== currentActorPos.x || retreatGoal.y !== currentActorPos.y)) {
           const pathRes = findPath({
             grid,
-            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
             goal: retreatGoal,
             creatures: gridCreatures,
           });
-          const truncated = truncatePathToBudget(
+          const truncated = truncatePathToExecutionBudget(
             grid,
-            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+            { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
             pathRes,
             remainingMovement,
             gridCreatures,
+            aiHazardZones,
+            aiIsProne,
           );
           if (truncated && truncated.path.length > 1) {
             commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -625,7 +752,7 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       for (const adj of adjCells) {
         const pRes = findPath({
           grid,
-          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
           goal: adj,
           creatures: gridCreatures,
         });
@@ -636,12 +763,14 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       }
 
       if (bestPathRes) {
-        const truncated = truncatePathToBudget(
+        const truncated = truncatePathToExecutionBudget(
           grid,
-          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+          { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
           bestPathRes,
           remainingMovement,
           gridCreatures,
+          aiHazardZones,
+          aiIsProne,
         );
         if (truncated && truncated.path.length > 1) {
           commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -692,7 +821,7 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
     for (const adj of adjCells) {
       const pRes = findPath({
         grid,
-        mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+        mover: { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
         goal: adj,
         creatures: gridCreatures,
       });
@@ -701,12 +830,14 @@ export function planAiTurn(options: PlanAiTurnOptions): AiPlan {
       }
     }
     if (bestPathRes) {
-      const truncated = truncatePathToBudget(
+      const truncated = truncatePathToExecutionBudget(
         grid,
-        { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size },
+        { id: actor.id, x: currentActorPos.x, y: currentActorPos.y, size: actor.size, isProne: aiIsProne },
         bestPathRes,
         remainingMovement,
         gridCreatures,
+        aiHazardZones,
+        aiIsProne,
       );
       if (truncated && truncated.path.length > 1) {
         commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -812,7 +943,7 @@ function findBestRangedPosition(options: {
     if (cell.x !== actor.position.x || cell.y !== actor.position.y) {
       const pRes = findPath({
         grid,
-        mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+        mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size, isProne: actor.conditions.includes("prone") },
         goal: { x: cell.x, y: cell.y },
         creatures: gridCreatures,
       });
@@ -866,7 +997,7 @@ function findRetreatPosition(options: {
 
     const pRes = findPath({
       grid,
-      mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size },
+      mover: { id: actor.id, x: actor.position.x, y: actor.position.y, size: actor.size, isProne: actor.conditions.includes("prone") },
       goal: { x: cell.x, y: cell.y },
       creatures: gridCreatures,
     });

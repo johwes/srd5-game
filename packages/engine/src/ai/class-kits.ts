@@ -6,7 +6,8 @@ import type { DispositionMatrix } from '../combat/allegiance.js';
 import { areAllied, areHostile } from '../combat/allegiance.js';
 import type { GameCommand } from '../state/types.js';
 import type { AiPlan } from './types.js';
-import { truncatePathToBudget, getAdjacentCells } from './planner.js';
+import type { HazardZone } from '../combat/hazard-zone.js';
+import { truncatePathToExecutionBudget, getAdjacentCells } from './planner.js';
 
 /**
  * SRD-1102 — Class-kit tactical AI (Spec 10 §4.1).
@@ -89,17 +90,19 @@ function moveAdjacent(
   grid: TacticalGrid,
   gridCreatures: GridCreature[],
   remainingMovement: number,
+  hazardZones?: Record<string, HazardZone> | undefined,
 ): { commands: GameCommand[]; currentPos: GridPoint; remaining: number } {
   const commands: GameCommand[] = [];
   if (getFootprintDistanceFeet(currentPos, actor.size, target.position, target.size) <= 5) {
     return { commands, currentPos, remaining: remainingMovement };
   }
+  const isProne = actor.conditions.includes('prone');
   let bestPath: PathfindingResult | null = null;
   for (const adj of getAdjacentCells(target.position)) {
     if (adj.x === currentPos.x && adj.y === currentPos.y) return { commands, currentPos, remaining: remainingMovement };
     const pRes = findPath({
       grid,
-      mover: { id: actor.id, x: currentPos.x, y: currentPos.y, size: actor.size },
+      mover: { id: actor.id, x: currentPos.x, y: currentPos.y, size: actor.size, isProne },
       goal: adj,
       creatures: gridCreatures,
     });
@@ -108,12 +111,14 @@ function moveAdjacent(
     }
   }
   if (bestPath) {
-    const truncated = truncatePathToBudget(
+    const truncated = truncatePathToExecutionBudget(
       grid,
-      { id: actor.id, x: currentPos.x, y: currentPos.y, size: actor.size },
+      { id: actor.id, x: currentPos.x, y: currentPos.y, size: actor.size, isProne },
       bestPath,
       remainingMovement,
       gridCreatures,
+      hazardZones,
+      isProne,
     );
     if (truncated && truncated.path.length > 1) {
       commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -153,7 +158,7 @@ function planFighter(
   }
 
   const target = selectBestTarget(actor, hostiles);
-  const moved = moveAdjacent(actor, currentPos, target, grid, gridCreatures, remaining);
+  const moved = moveAdjacent(actor, currentPos, target, grid, gridCreatures, remaining, state.hazardZones);
   commands.push(...moved.commands);
   currentPos = moved.currentPos;
   remaining = moved.remaining;
@@ -331,7 +336,7 @@ function planCleric(
       };
     }
     if (knowsSpell(actor, 'cure-wounds') && slotAvailable(actor, 1)) {
-      const moved = moveAdjacent(actor, { ...actor.position }, injured, grid, gridCreatures, remainingMovement);
+      const moved = moveAdjacent(actor, { ...actor.position }, injured, grid, gridCreatures, remainingMovement, state.hazardZones);
       commands.push(...moved.commands);
       const nowAdjacent =
         getFootprintDistanceFeet(moved.currentPos, actor.size, injured.position, injured.size) <= 5;
@@ -430,10 +435,11 @@ function planRogue(
   gridCreatures: GridCreature[],
   remainingMovement: number,
 ): AiPlan {
-  void state;
   const commands: GameCommand[] = [];
   let currentPos = { ...actor.position };
   let remaining = remainingMovement;
+  const rogueIsProne = actor.conditions.includes('prone');
+  const rogueHazards = state.hazardZones;
 
   // Sneak Attack focus: prefer a hostile adjacent to one of our allies.
   const flanked =
@@ -474,16 +480,18 @@ function planRogue(
       if (bestCell && (bestCell.x !== currentPos.x || bestCell.y !== currentPos.y)) {
         const pRes = findPath({
           grid,
-          mover: { id: actor.id, x: currentPos.x, y: currentPos.y, size: actor.size },
+          mover: { id: actor.id, x: currentPos.x, y: currentPos.y, size: actor.size, isProne: rogueIsProne },
           goal: bestCell,
           creatures: gridCreatures,
         });
-        const truncated = truncatePathToBudget(
+        const truncated = truncatePathToExecutionBudget(
           grid,
-          { id: actor.id, x: currentPos.x, y: currentPos.y, size: actor.size },
+          { id: actor.id, x: currentPos.x, y: currentPos.y, size: actor.size, isProne: rogueIsProne },
           pRes,
           remaining,
           gridCreatures,
+          rogueHazards,
+          rogueIsProne,
         );
         if (truncated && truncated.path.length > 1) {
           commands.push({ type: 'COMBAT_MOVE', actorId: actor.id, path: truncated.path });
@@ -500,7 +508,7 @@ function planRogue(
   }
 
   // Close to the flanked mark, strike, then disengage if still threatened.
-  const moved = moveAdjacent(actor, currentPos, flanked, grid, gridCreatures, remaining);
+  const moved = moveAdjacent(actor, currentPos, flanked, grid, gridCreatures, remaining, state.hazardZones);
   commands.push(...moved.commands);
   currentPos = moved.currentPos;
   remaining = moved.remaining;

@@ -46,6 +46,7 @@ import {
 import {
   computeStepCostFeet,
   isFootprintStepDifficultTerrain,
+  type GridCreature,
 } from '../grid/pathfinding.js';
 import type { GridPoint, TacticalGrid } from '../grid/model.js';
 import {
@@ -822,8 +823,24 @@ export function executeMoveCombatant(
     if (step.x === currentPos.x && step.y === currentPos.y) {
       continue;
     }
+    const occupiers: GridCreature[] = Object.values(currentState.combatants)
+      .filter((c) => c.id !== actorId && !c.isDead && c.currentHp > 0)
+      .map((c) => ({
+        id: c.id,
+        x: c.position.x,
+        y: c.position.y,
+        size: c.size,
+      }));
+    const moverForTerrain: GridCreature = {
+      id: mover.id,
+      x: currentPos.x,
+      y: currentPos.y,
+      size: mover.size,
+      isProne,
+    };
     const isDifficult =
-      (grid && isFootprintStepDifficultTerrain(grid, { id: mover.id, x: step.x, y: step.y, size: mover.size }, step)) ||
+      (grid &&
+        isFootprintStepDifficultTerrain(grid, moverForTerrain, step, occupiers)) ||
       isCellInHazardDifficultTerrain(currentState.hazardZones, step);
 
     const stepResult = computeStepCostFeet({

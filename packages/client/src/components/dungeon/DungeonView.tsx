@@ -554,7 +554,19 @@ export function DungeonView({
         if (currentCombat?.pendingReactionPrompt) {
           return;
         }
-        await transport.dispatch(cmd);
+        try {
+          await transport.dispatch(cmd);
+        } catch (cmdErr) {
+          const msg = cmdErr instanceof Error ? cmdErr.message : String(cmdErr);
+          // Stale over-budget AI paths (e.g. hazard difficult applied at
+          // execution) must not cost the monster its attacks: skip the move
+          // and continue with the remaining plan (attack + END_TURN).
+          if (cmd.type === 'COMBAT_MOVE' && msg.includes('Not enough movement')) {
+            console.warn('[AI] Skipping over-budget monster move, continuing plan:', msg);
+            continue;
+          }
+          throw cmdErr;
+        }
         const postCombat = transport.getAuthoritativeState().combat;
         if (postCombat?.pendingReactionPrompt) {
           return;

@@ -316,7 +316,16 @@ export function RealmBattleView({
       });
       for (const cmd of plan.commands) {
         if (transport.getAuthoritativeState().combat?.pendingReactionPrompt) return;
-        await transport.dispatch(cmd);
+        try {
+          await transport.dispatch(cmd);
+        } catch (cmdErr) {
+          const msg = cmdErr instanceof Error ? cmdErr.message : String(cmdErr);
+          if (cmd.type === 'COMBAT_MOVE' && msg.includes('Not enough movement')) {
+            console.warn('[AI] Skipping over-budget monster move, continuing plan:', msg);
+            continue;
+          }
+          throw cmdErr;
+        }
         if (transport.getAuthoritativeState().combat?.pendingReactionPrompt) return;
       }
     } catch (err) {
