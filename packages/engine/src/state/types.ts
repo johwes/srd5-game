@@ -173,6 +173,18 @@ export type GameCommand =
       dcOverride?: number;
     }
   | {
+      type: 'ATTEMPT_RECALL';
+      actorId: string;
+      skill: 'history' | 'religion' | 'arcana' | 'nature';
+      dc: number;
+      reward:
+        | { kind: 'reveal_quest'; questId: string }
+        | { kind: 'trap_bonus'; bonus: number; scope: string }
+        | { kind: 'ward_info'; target: string }
+        | { kind: 'lore_note'; text: string };
+      roomId?: string;
+    }
+  | {
       type: 'START_REST';
       restType: 'short' | 'long';
       hitDiceToSpend?: Record<string, number | Record<number, number>>;
@@ -362,7 +374,11 @@ export type GameEvent =
         | 'sleight_of_hand'
         | 'athletics'
         | 'attack'
-        | 'saving_throw';
+        | 'saving_throw'
+        | 'history'
+        | 'religion'
+        | 'arcana'
+        | 'nature';
       targetId?: string;
       dc?: number;
       roll: number;
@@ -388,6 +404,22 @@ export type GameEvent =
       hadToolsAdvantage: boolean;
       asBonusAction: boolean;
       goldStolen?: number;
+      headline: string;
+    }
+  | {
+      type: 'RECALL_RESOLVED';
+      actorId: string;
+      skill: 'history' | 'religion' | 'arcana' | 'nature';
+      dc: number;
+      roll: number;
+      modifier: number;
+      total: number;
+      success: boolean;
+      questId?: string;
+      trapBonus?: number;
+      scope?: string;
+      revealedPropIds?: string[];
+      loreNote?: string;
       headline: string;
     }
   | {

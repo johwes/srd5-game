@@ -46,6 +46,7 @@ import {
   resolveKnockOnProp,
 } from '../dungeon/props.js';
 import { resolveTheftAttempt } from '../dungeon/theft.js';
+import { resolveRecallAttempt } from '../dungeon/recall.js';
 import { senseDetectMagic } from '../combat/marker-spells.js';
 import {
   checkDungeonEncounterTriggers,
@@ -991,6 +992,21 @@ export function reduceGame(
         nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
       }
       events.push(...theftRes.events);
+      break;
+    }
+
+    case 'ATTEMPT_RECALL': {
+      const recallRes = resolveRecallAttempt({
+        state: nextState,
+        actorId: command.actorId,
+        spec: { skill: command.skill, dc: command.dc, reward: command.reward },
+        roomId: command.roomId,
+      });
+      nextState = recallRes.nextState;
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...recallRes.events);
       break;
     }
 

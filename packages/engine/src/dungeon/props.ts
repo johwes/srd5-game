@@ -8,6 +8,7 @@ import {
   setGridCell,
 } from '../grid/model.js';
 import { hasLineOfSight } from '../grid/vision.js';
+import { getRecallTrapBonus } from './recall.js';
 import {
   type GameEvent,
   type GameState,
@@ -27,7 +28,16 @@ export function isAdjacent(a: GridPoint, b: GridPoint): boolean {
  */
 export function getActorCheckBonus(
   actor: Combatant,
-  checkType: 'thieves_tools' | 'perception' | 'investigation' | 'athletics' | AbilityId,
+  checkType:
+    | 'thieves_tools'
+    | 'perception'
+    | 'investigation'
+    | 'athletics'
+    | 'history'
+    | 'religion'
+    | 'arcana'
+    | 'nature'
+    | AbilityId,
 ): number {
   switch (checkType) {
     case 'thieves_tools': {
@@ -83,6 +93,22 @@ export function getActorCheckBonus(
         return actor.monsterData.skills.athletics;
       }
       return actor.strengthModifier ?? Math.floor(((actor.strengthScore ?? 10) - 10) / 2);
+    }
+
+    case 'history':
+    case 'religion':
+    case 'arcana':
+    case 'nature': {
+      const sheetSkills = actor.characterSheet?.skills as
+        | Record<string, { totalBonus?: number } | undefined>
+        | undefined;
+      if (typeof sheetSkills?.[checkType]?.totalBonus === 'number') {
+        return sheetSkills[checkType]!.totalBonus!;
+      }
+      const monsterSkills = actor.monsterData?.skills as Record<string, number> | undefined;
+      if (typeof monsterSkills?.[checkType] === 'number') return monsterSkills[checkType]!;
+      // All four recall skills are INT-based in SRD 5.1.
+      return actor.characterSheet?.abilities.int.modifier ?? 0;
     }
 
     case 'str':
@@ -574,7 +600,7 @@ export function checkPassivePerceptionForProps(options: {
           { id: prop.id, x: prop.x, y: prop.y, size: 'medium' },
         );
 
-        if (canSee && obs.passivePerception >= prop.detectionDc) {
+        if (canSee && obs.passivePerception + getRecallTrapBonus(obs, obs.roomId) >= prop.detectionDc) {
           prop.discovered = true;
           discoveredProps.push(prop);
           events.push({
@@ -620,7 +646,10 @@ export function resolveActiveSearch(options: {
   const perceptionBonus = getActorCheckBonus(actor, 'perception');
   const investigationBonus = getActorCheckBonus(actor, 'investigation');
   const useInvestigation = investigationBonus > perceptionBonus;
-  const searchBonus = Math.max(perceptionBonus, investigationBonus);
+  // SRD-1207: History trap bonuses (recall-trap-bonus scope markers) stack
+  // onto active searches in the matching room (or whole-dungeon scope).
+  const recallBonus = getRecallTrapBonus(actor, (actor as Combatant).roomId);
+  const searchBonus = Math.max(perceptionBonus, investigationBonus) + recallBonus;
   const checkType = useInvestigation ? 'investigation' : 'perception';
 
   const rollRes = rollD20(nextState.rngState, { modifier: searchBonus, mode: 'normal' });

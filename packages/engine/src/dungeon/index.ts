@@ -9,3 +9,4 @@ export * from './level-up-flow.js';
 export * from './generator.js';
 export * from './roguelite.js';
 export * from './theft.js';
+export * from './recall.js';
