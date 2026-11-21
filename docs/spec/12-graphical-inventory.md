@@ -128,10 +128,13 @@ targetId? }` reducer case with seeded resolution:
 End-state layout (single `InventoryView`, reachable from dungeon HUD, pause
 menu, and sheet equipment tab):
 
-- **Left: visual paperdoll** — 5 engine slots (armor, shield, main/off hand,
+- **Left: visual paperdoll** — the 5 engine slots (armor, shield, main/off hand,
   ranged) rendered as large icon slots with rarity borders; click to
   inspect (tooltip card), click-then-click or drag to unequip; attunement
-  pips on attuned items.
+  pips on attuned items. Deliberately *not* BG3's wider slot spread (no
+  helm/cloak/ring/boot slots in v1): rings, cloaks and other wondrous items
+  keep working passively from inventory while attuned, per current engine
+  behavior; extra body slots are future work, not this Epic.
 - **Right: backpack grid** — icon cells with stack counts, rarity borders,
   type filters (All / Weapons / Armor / Potions / Scrolls / Tools), text
   search; click = tooltip + action bar (Equip / Use / Attune / Drop-info);
@@ -140,7 +143,7 @@ menu, and sheet equipment tab):
 - **Compare view**: hovering/equipping a candidate shows delta vs equipped
   (`+1 AC`, `-1 to-hit`) inline in the tooltip.
 - Camp-supply / currency strip and encumbrance *display* (weight total;
-  enforcement stays out of scope — see Section 11).
+  enforcement stays out of scope — see §12).
 - Full keyboard + gamepad/Deck navigation parity: every grid action reachable
   by focus + Enter, mirroring existing HUD patterns.
 
@@ -149,7 +152,7 @@ menu, and sheet equipment tab):
 `USE_ITEM` already declared — implement per Section 6. No new commands for
 phases 1–2 (equip/attune paths unchanged; UI only). The grid phase reuses
 `EQUIP_LOADOUT` / `ATTUNE_ITEM` / `USE_ITEM`. Future trade/drop/give/identify
-commands are explicitly phase-4 stretch (Section 11).
+commands are explicitly phase-4 stretch (§10).
 
 ## 10. Phased Delivery Map
 
@@ -200,7 +203,8 @@ Corpses are lootable terrain, not creatures (5e/BG3 rules):
   corpses stay inert and unclickable, as today.
 - **Loot action**: reuse the prop-claim pipeline — corpses behave as
   `INTERACT_PROP` targets of a `corpse` kind claimed via the existing
-  `claimPropLoot` flow (recipient select, stacking, events). No new commands.
+  `claimPropLoot` flow, opening a per-corpse card with Take / Take All +
+  recipient select, stacking, and events. No new commands.
 - **Range (v1)**: any conscious party member may search any revealed corpse
   on the floor — party-level abstraction, consistent with the existing
   party-wide passive-perception checks in `EXPLORE_MOVE`. A proximity rule
@@ -230,4 +234,5 @@ players see the skill matter (extends the SRD-1211 badging philosophy):
 - Hand-drawn or AI-generated art (license risk + style drift).
 - DCSS tile adoption without per-tile license proof.
 - Weight/encumbrance *enforcement*, item durability, crafting, socketing.
-- Player-to-player trading UI (transport supports it later; out of scope).
+- Player-to-player trading UI beyond the SRD-1306 stretch basics (give/drop).
+- Extra paperdoll body slots (helm/cloak/rings/boots) — v1 mirrors the 5 engine slots.
