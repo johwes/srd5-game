@@ -6,6 +6,12 @@ import {
 import { generateDraftParty } from '@srd5/engine';
 import { computeDerivedCharacter } from '@srd5/engine';
 import { DEFAULT_WORLD_OPTIONS, type WorldOptions } from '@srd5/engine';
+import {
+  payVeteranHireCost,
+  veteranHireCost,
+  type VeteranRosterEntry,
+} from '@srd5/engine';
+import { VeteranHirePanel } from './VeteranHirePanel.js';
 import { WorldOptionsForm } from './WorldOptionsForm.js';
 import {
   getPartyCoverageHints,
@@ -36,6 +42,10 @@ export interface CampaignSetupWizardProps {
   initialParty?: CharacterBuildState[];
   initialSlotAssignments?: PartySlotAssignment[];
   availableRosterCharacters?: CharacterBuildState[];
+  /** SRD-1405: retired veterans available for gp hire at the campfire. */
+  availableVeterans?: VeteranRosterEntry[];
+  onHireVeteran?: (veteranId: string) => void;
+  onReleaseVeteran?: (veteranId: string) => void;
   onBackToMenu?: () => void;
   onLaunch: (config: CampaignLaunchConfig) => void;
   onRollNewHero?: (slotIndex: number) => void;
@@ -58,6 +68,9 @@ export function CampaignSetupWizard({
   initialParty,
   initialSlotAssignments,
   availableRosterCharacters = [],
+  availableVeterans = [],
+  onHireVeteran,
+  onReleaseVeteran,
   onBackToMenu,
   onLaunch,
   onRollNewHero,
@@ -177,6 +190,57 @@ export function CampaignSetupWizard({
       prev.map((s) => ({ ...s, character: null })),
     );
     setImportStatus(null);
+  };
+
+  // SRD-1405: hire a retired veteran into the first empty seat, paying the
+  // level-scaled gp cost from the seated party's pooled personal gold.
+  const handleHireVeteran = (veteranId: string) => {
+    const entry = availableVeterans.find((v) => v.veteranId === veteranId);
+    if (!entry) {
+      setImportStatus({
+        type: 'error',
+        message: `Veteran '${veteranId}' is no longer remembered.`,
+      });
+      return;
+    }
+    const seated = slotAssignments
+      .map((s) => s.character)
+      .filter((c): c is CharacterBuildState => c !== null);
+    const cost = veteranHireCost(entry.level);
+    const payment = payVeteranHireCost(seated, cost);
+    if (!payment.ok) {
+      setImportStatus({
+        type: 'error',
+        message: `Cannot hire ${entry.hero.name}: needs ${cost} gp but the seated party holds ${cost - payment.shortfall} gp.`,
+      });
+      return;
+    }
+    const emptyIdx = slotAssignments.findIndex((s) => s.character === null);
+    if (emptyIdx < 0) {
+      setImportStatus({
+        type: 'error',
+        message: `No empty campfire seat for ${entry.hero.name} — clear a slot first.`,
+      });
+      return;
+    }
+    const paidById = new Map(payment.party.map((c) => [c.id, c]));
+    setSlotAssignments((prev) =>
+      prev.map((s, idx) => {
+        if (idx === emptyIdx) {
+          return { ...s, character: structuredClone(entry.hero) };
+        }
+        if (s.character) {
+          const paid = paidById.get(s.character.id);
+          return paid ? { ...s, character: paid } : s;
+        }
+        return s;
+      }),
+    );
+    setImportStatus({
+      type: 'success',
+      message: `Hired veteran ${entry.hero.name} (level ${entry.level}) into Slot ${emptyIdx + 1} for ${cost} gp.`,
+    });
+    onHireVeteran?.(veteranId);
   };
 
   // Assign hero to specific slot
@@ -951,6 +1015,15 @@ export function CampaignSetupWizard({
                 ⚠️ You must have at least 1 hero in your party to embark.
               </p>
             )}
+
+            {/* SRD-1405: Retired Veterans hireable with level-scaled gp. */}
+            <VeteranHirePanel
+              veterans={availableVeterans}
+              seatedParty={activeParty}
+              hasEmptySeat={slotAssignments.some((s) => s.character === null)}
+              onHire={handleHireVeteran}
+              onRelease={(veteranId) => onReleaseVeteran?.(veteranId)}
+            />
 
             {/* Vault Selection Modal */}
             {vaultModalSlotIndex !== null && (

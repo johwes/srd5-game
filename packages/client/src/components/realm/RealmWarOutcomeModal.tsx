@@ -1,5 +1,7 @@
 import React from 'react';
-import type { WarState } from '@srd5/engine';
+import type { CharacterBuildState } from '@srd5/data';
+import type { VeteranRosterEntry, WarState } from '@srd5/engine';
+import { VeteranRetirementOffer } from '../campaign/VeteranRetirementOffer.js';
 
 /**
  * War campaign Victory / Defeat ending modal (SRD-1106, Spec 10 §1).
@@ -15,6 +17,10 @@ export interface RealmWarOutcomeModalProps {
   war: WarState | null;
   onReturnToTitle: () => void;
   onKeepExploring?: () => void;
+  /** SRD-1405: living heroes (level 3+) offered retirement on victory. */
+  retirementCandidates?: CharacterBuildState[];
+  veteranRoster?: VeteranRosterEntry[];
+  onRetireVeteran?: (heroId: string, confirmRelease: boolean) => void;
 }
 
 export function RealmWarOutcomeModal({
@@ -22,6 +28,9 @@ export function RealmWarOutcomeModal({
   war,
   onReturnToTitle,
   onKeepExploring,
+  retirementCandidates = [],
+  veteranRoster = [],
+  onRetireVeteran,
 }: RealmWarOutcomeModalProps) {
   if (!isOpen || !war || war.outcome === 'ongoing') return null;
   const victory = war.outcome === 'victory';
@@ -55,6 +64,17 @@ export function RealmWarOutcomeModal({
           <p className="text-xs text-slate-500">
             {player.name} · final War Power {player.power.military + player.power.economy + player.power.arcana + player.power.morale}/{war.dominanceTarget}
           </p>
+        )}
+        {/* SRD-1405: dominance victory concludes a campaign — offer retirement. */}
+        {victory && onRetireVeteran && retirementCandidates.length > 0 && (
+          <div className="text-left">
+            <VeteranRetirementOffer
+              candidates={retirementCandidates}
+              roster={veteranRoster}
+              onRetire={onRetireVeteran}
+              sourceLabel="Realm Victory"
+            />
+          </div>
         )}
         <div className="space-y-2">
           <button

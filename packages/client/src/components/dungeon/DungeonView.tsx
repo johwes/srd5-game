@@ -26,15 +26,18 @@ import {
   calculateGoldFromLoot,
   canAdvanceRealmDelve,
   checkRogueliteWipe,
+  collectVeteranCandidates,
   completeRealmDelve,
   endRogueliteRun,
   findPath,
   getAvailablePropInteractions,
   isLairFloorCleared,
   planAiTurn,
+  planVeteranRetirement,
   recordRunMonstersSlain,
   resolveRogueliteLongRest,
   truncatePathToBudget,
+  type VeteranRosterEntry,
 } from '@srd5/engine';
 import { LocalTransport, type PlayerViewProp, type PlayerViewState } from '@srd5/transport';
 import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
@@ -61,8 +64,10 @@ import {
   saveGraveyardEntry,
   defaultDungeonStorageAdapter,
   type DungeonStorageAdapter,
+  loadVeteranRoster,
   quickSaveDungeonGame,
   saveDungeonGameToSlot,
+  saveVeteranRoster,
 } from '../../persistence/index.js';
 import type { DungeonModalMode } from './types.js';
 
@@ -219,6 +224,43 @@ export function DungeonView({
   // Latest manual-targeting API for the Escape handler below (the hook
   // itself is instantiated after the active combatant is resolved).
   const [graveyardEntry, setGraveyardEntry] = useState<GraveyardEntry | null>(null);
+  // SRD-1405: living heroes (level 3+) offered retirement at run conclusion,
+  // plus the persisted veteran roster they retire into.
+  const [retirementCandidates, setRetirementCandidates] = useState<CharacterBuildState[]>([]);
+  const [veteranRoster, setVeteranRoster] = useState<VeteranRosterEntry[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void loadVeteranRoster().then((loaded) => {
+      if (active) setVeteranRoster(loaded);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // SRD-1405: retire a concluded run's hero into the persistent roster.
+  const handleRetireVeteran = useCallback(
+    (heroId: string, confirmRelease: boolean) => {
+      const hero = retirementCandidates.find((c) => c.id === heroId);
+      if (!hero) return;
+      const planned = planVeteranRetirement(veteranRoster, [hero], {
+        runId: graveyardEntry?.runId,
+        source: 'descent',
+        confirmRelease,
+      });
+      // The offer UI previews a full roster and asks for confirmation first,
+      // so a pending plan here means a stale roster — reload and bail out.
+      if (planned.requiresConfirmation) {
+        void loadVeteranRoster().then(setVeteranRoster);
+        return;
+      }
+      setVeteranRoster(planned.roster);
+      setRetirementCandidates((prev) => prev.filter((c) => c.id !== heroId));
+      void saveVeteranRoster(planned.roster);
+    },
+    [retirementCandidates, veteranRoster, graveyardEntry],
+  );
   const [campaignVictory, setCampaignVictory] = useState(false);
   const [selectedCombatantId, setSelectedCombatantId] = useState<string | null>(null);
 
@@ -352,6 +394,8 @@ export function DungeonView({
           if (completed.graveyardEntry) {
             saveGraveyardEntry(completed.graveyardEntry);
             setGraveyardEntry(completed.graveyardEntry);
+            // SRD-1405: offer retirement to surviving leveled heroes.
+            setRetirementCandidates(collectVeteranCandidates(auth.party));
           }
           setRogueliteState((prev) => (prev ? { ...prev, runState: completed } : null));
           setModalState('graveyard');
@@ -906,6 +950,7 @@ export function DungeonView({
     setTransport(sess.transport);
     setModalState(null);
     setGraveyardEntry(null);
+    setRetirementCandidates([]);
   };
 
   // Ascend stairs handler
@@ -1301,6 +1346,10 @@ export function DungeonView({
               } else if (restRes.nextRunState.graveyardEntry) {
                 saveGraveyardEntry(restRes.nextRunState.graveyardEntry);
                 setGraveyardEntry(restRes.nextRunState.graveyardEntry);
+                // SRD-1405: offer retirement to surviving leveled heroes.
+                setRetirementCandidates(
+                  collectVeteranCandidates(restRes.nextGameState.party),
+                );
                 setModalState('graveyard');
               }
             }
@@ -1574,6 +1623,9 @@ export function DungeonView({
         currentEntry={graveyardEntry}
         onStartNewRun={handleStartNewDescent}
         onExitToRoster={onExitToRoster}
+        retirementCandidates={retirementCandidates}
+        veteranRoster={veteranRoster}
+        onRetireVeteran={handleRetireVeteran}
       />
     </div>
   );

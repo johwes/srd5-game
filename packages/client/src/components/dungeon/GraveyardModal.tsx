@@ -1,13 +1,19 @@
 import React, { useMemo } from 'react';
-import type { GraveyardEntry } from '@srd5/engine';
+import type { CharacterBuildState } from '@srd5/data';
+import type { GraveyardEntry, VeteranRosterEntry } from '@srd5/engine';
 import { getWorldOptionsSummary } from '@srd5/engine';
 import { getGraveyardHighScores } from '../../persistence/roguelitePersistence.js';
+import { VeteranRetirementOffer } from '../campaign/VeteranRetirementOffer.js';
 
 export interface GraveyardModalProps {
   isOpen: boolean;
   currentEntry: GraveyardEntry | null;
   onStartNewRun: () => void;
   onExitToRoster: () => void;
+  /** SRD-1405: living heroes (level 3+) offered retirement at run conclusion. */
+  retirementCandidates?: CharacterBuildState[];
+  veteranRoster?: VeteranRosterEntry[];
+  onRetireVeteran?: (heroId: string, confirmRelease: boolean) => void;
 }
 
 export function GraveyardModal({
@@ -15,6 +21,9 @@ export function GraveyardModal({
   currentEntry,
   onStartNewRun,
   onExitToRoster,
+  retirementCandidates = [],
+  veteranRoster = [],
+  onRetireVeteran,
 }: GraveyardModalProps) {
   if (!isOpen) return null;
 
@@ -92,6 +101,16 @@ export function GraveyardModal({
               </div>
             </div>
           </div>
+        )}
+
+        {/* SRD-1405: retirement offer for surviving leveled heroes. */}
+        {onRetireVeteran && retirementCandidates.length > 0 && (
+          <VeteranRetirementOffer
+            candidates={retirementCandidates}
+            roster={veteranRoster}
+            onRetire={onRetireVeteran}
+            sourceLabel="The Descent Has Ended"
+          />
         )}
 
         {/* Hall of the Slain (Leaderboard) */}

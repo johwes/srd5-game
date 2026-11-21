@@ -8,15 +8,18 @@ import {
   type GeneratedOverworldBattle,
   type OverworldCoord,
   type RealmDelveState,
+  type VeteranRosterEntry,
   type WarPatrolApproach,
   type WaveReinforcementSpec,
   canLevelUpByXp,
+  collectVeteranCandidates,
   computeDerivedCharacter,
   findOverworldPath,
   getFactionByPoi,
   getNationThreat,
   getWarThreatTier,
   isSafeRestSite,
+  planVeteranRetirement,
 } from '@srd5/engine';
 import { LocalTransport } from '@srd5/transport';
 import { OverworldCanvasViewport } from '../../canvas/index.js';
@@ -25,8 +28,11 @@ import { DungeonView } from '../dungeon/index.js';
 import {
   type DungeonStorageAdapter,
   defaultDungeonStorageAdapter,
+  loadVeteranRoster,
   saveGraveyardEntry,
+  saveVeteranRoster,
 } from '../../persistence/index.js';
+import { VeteranRetirementOffer } from '../campaign/VeteranRetirementOffer.js';
 import { RealmHud } from './RealmHud.js';
 import { RealmBattleView, type RealmBattleOutcome } from './RealmBattleView.js';
 import { RealmCampModal } from './RealmCampModal.js';
@@ -92,6 +98,8 @@ export interface RealmViewProps {
   onExitToRoster: () => void;
   onOpenCharacterSheet?: (characterId: string, liveBuild?: CharacterBuildState) => void;
   onSyncPartyBuilds?: (updatedBuilds: CharacterBuildState[]) => void;
+  /** SRD-1405: removes retired veterans from the App roster. */
+  onRemovePartyBuilds?: (buildIds: string[]) => void;
   /** SRD-1403: Civ setup-screen session config. */
   worldOptions?: import('@srd5/engine').WorldOptions;
 }
@@ -119,6 +127,7 @@ export function RealmView({
   onExitToRoster,
   onOpenCharacterSheet,
   onSyncPartyBuilds,
+  onRemovePartyBuilds,
   worldOptions,
 }: RealmViewProps) {
   const [session, setSession] = useState<RealmSessionState>(() =>
@@ -141,6 +150,22 @@ export function RealmView({
   // Dismissible war-outcome ending (SRD-1106, Spec 10 §1): shown once per
   // verdict, "Keep Exploring" lets the party roam after the verdict.
   const [outcomeDismissed, setOutcomeDismissed] = useState(false);
+  // SRD-1405: persistent veteran roster + pending delve-clear retirement offer.
+  const [veteranRoster, setVeteranRoster] = useState<VeteranRosterEntry[]>([]);
+  const [delveRetirement, setDelveRetirement] = useState<{
+    candidates: CharacterBuildState[];
+    runId?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void loadVeteranRoster().then((loaded) => {
+      if (active) setVeteranRoster(loaded);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionRef = useRef(session);
@@ -258,6 +283,61 @@ export function RealmView({
     [onSyncPartyBuilds],
   );
 
+  // SRD-1405: retire a hero into the persistent veteran roster at a run
+  // conclusion (cleared delve, Realm dominance victory). The retiree leaves
+  // the live session party and the App roster; the last hero cannot retire.
+  const retireRealmHero = useCallback(
+    (
+      candidates: CharacterBuildState[],
+      heroId: string,
+      confirmRelease: boolean,
+      source: 'delve' | 'realm',
+      runId?: string,
+    ) => {
+      const hero = candidates.find((c) => c.id === heroId);
+      if (!hero) return;
+      const partySize = Object.keys(sessionRef.current.party).length;
+      if (partySize <= 1) {
+        showFeedback('Your last hero cannot retire — the company needs a leader.');
+        return;
+      }
+      const planned = planVeteranRetirement(veteranRoster, [hero], {
+        runId,
+        source,
+        confirmRelease,
+      });
+      if (planned.requiresConfirmation) {
+        void loadVeteranRoster().then(setVeteranRoster);
+        return;
+      }
+      setVeteranRoster(planned.roster);
+      void saveVeteranRoster(planned.roster);
+      setDelveRetirement((prev) =>
+        prev ? { ...prev, candidates: prev.candidates.filter((c) => c.id !== heroId) } : prev,
+      );
+      setSession((prev) => {
+        if (!prev.party[heroId]) return prev;
+        const nextParty = { ...prev.party };
+        delete nextParty[heroId];
+        return { ...prev, party: nextParty };
+      });
+      syncPartyBuilds(
+        Object.fromEntries(
+          Object.entries(sessionRef.current.party).filter(([id]) => id !== heroId),
+        ),
+      );
+      onRemovePartyBuilds?.([heroId]);
+      showFeedback(`${hero.name} retires into legend — rehirable at the campfire.`);
+    },
+    [veteranRoster, showFeedback, syncPartyBuilds, onRemovePartyBuilds],
+  );
+
+  // SRD-1405: living leveled heroes at a dominance victory may retire.
+  const warVictoryCandidates = useMemo<CharacterBuildState[]>(() => {
+    if (!session.war || session.war.outcome !== 'victory') return [];
+    return collectVeteranCandidates(session.party);
+  }, [session.war, session.party]);
+
   // Sync external character edits (e.g. LevelUpModal or CharacterSheetDrawer)
   // back into the active Realm session's party combatants.
   useEffect(() => {
@@ -328,6 +408,12 @@ export function RealmView({
           setModalState('defeat');
         } else {
           setDelveResult(resolved);
+          // SRD-1405: cleared delves conclude a run — surviving leveled
+          // heroes may retire (snapshots from the post-commit party).
+          setDelveRetirement({
+            candidates: collectVeteranCandidates(resolved.session.party),
+            runId: delve.runId,
+          });
           setModalState('delve_results');
         }
       } catch (err: unknown) {
@@ -885,12 +971,32 @@ export function RealmView({
                 ✓ {delveResult.completedQuestIds.length} quest(s) completed
               </p>
             )}
+            {/* SRD-1405: cleared delves conclude a run — offer retirement. */}
+            {delveRetirement && delveRetirement.candidates.length > 0 && (
+              <div className="text-left">
+                <VeteranRetirementOffer
+                  candidates={delveRetirement.candidates}
+                  roster={veteranRoster}
+                  onRetire={(heroId, confirmRelease) =>
+                    retireRealmHero(
+                      delveRetirement.candidates,
+                      heroId,
+                      confirmRelease,
+                      'delve',
+                      delveRetirement.runId,
+                    )
+                  }
+                  sourceLabel="Delve Cleared"
+                />
+              </div>
+            )}
             <button
               type="button"
               data-testid="realm-delve-results-return-btn"
               onClick={() => {
                 setModalState(null);
                 setDelveResult(null);
+                setDelveRetirement(null);
               }}
               className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-sm font-black min-h-[48px]"
             >
@@ -1019,6 +1125,11 @@ export function RealmView({
         war={session.war}
         onReturnToTitle={onExitToRoster}
         onKeepExploring={() => setOutcomeDismissed(true)}
+        retirementCandidates={warVictoryCandidates}
+        veteranRoster={veteranRoster}
+        onRetireVeteran={(heroId, confirmRelease) =>
+          retireRealmHero(warVictoryCandidates, heroId, confirmRelease, 'realm')
+        }
       />
     </div>
   );

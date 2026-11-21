@@ -697,6 +697,18 @@ export type GameEvent =
       rationsConsumed: number;
       rationsShort: number;
       exhaustionLevel: number;
+    }
+  | {
+      type: 'VETERAN_RETIRED';
+      heroId: string;
+      level: number;
+      runId?: string;
+      source?: 'descent' | 'delve' | 'realm';
+    }
+  | {
+      type: 'VETERAN_RECRUITED';
+      heroId: string;
+      hireCostGp: number;
     };
 
 /**

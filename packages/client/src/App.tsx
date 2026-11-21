@@ -29,6 +29,7 @@ import {
   type CampaignLaunchConfig,
   type WizardStageNumber,
 } from './components/campaign/index.js';
+import type { VeteranRosterEntry } from '@srd5/engine';
 import {
   MAX_PARTY_SIZE,
   type PersistedRosterData,
@@ -39,8 +40,10 @@ import {
   defaultDungeonStorageAdapter,
   formatSrd5Filename,
   loadStoredRosterIfPresent,
+  loadVeteranRoster,
   resetPersistedRosterToIconics,
   savePersistedRoster,
+  saveVeteranRoster,
   serializeCharacterToSrd5Json,
   triggerSrd5FileDownload,
   upsertRosterCharacter,
@@ -98,6 +101,8 @@ export function App({
     null,
   );
   const [isDailyDescentActive, setIsDailyDescentActive] = useState<boolean>(false);
+  // SRD-1405: persistent retired-veteran roster (Heroes Remembered, Spec 13 §7).
+  const [veterans, setVeterans] = useState<VeteranRosterEntry[]>([]);
   // SRD-1403: last New Game world options (Realm/Descent session config).
   const [launchWorldOptions, setLaunchWorldOptions] = useState<
     import('@srd5/engine').WorldOptions | undefined
@@ -119,10 +124,34 @@ export function App({
         setRoster(loaded);
       }
     });
+    // SRD-1405: retired veterans persist in the delve IndexedDB store.
+    void loadVeteranRoster(storageAdapter).then((loaded) => {
+      if (active) {
+        setVeterans(loaded);
+      }
+    });
     return () => {
       active = false;
     };
   }, [storageAdapter]);
+
+  // SRD-1405: hiring removes the veteran from the remembered roster.
+  const handleHireVeteran = (veteranId: string) => {
+    setVeterans((prev) => {
+      const next = prev.filter((v) => v.veteranId !== veteranId);
+      void saveVeteranRoster(next, storageAdapter);
+      return next;
+    });
+  };
+
+  // SRD-1405: releasing forgets a veteran (two-step confirmed in the UI).
+  const handleReleaseVeteran = (veteranId: string) => {
+    setVeterans((prev) => {
+      const next = prev.filter((v) => v.veteranId !== veteranId);
+      void saveVeteranRoster(next, storageAdapter);
+      return next;
+    });
+  };
 
   // Global keyboard shortcut ('C' or 'I') to toggle Character Sheet Drawer (`docs/spec/05-multiplayer-and-ui.md` Section 4.2)
   useEffect(() => {
@@ -296,6 +325,9 @@ export function App({
                 ].filter(Boolean))
           }
           availableRosterCharacters={roster.characters}
+          availableVeterans={veterans}
+          onHireVeteran={handleHireVeteran}
+          onReleaseVeteran={handleReleaseVeteran}
           onBackToMenu={() => {
             setWizardStage(1);
             setActiveView('title_menu');
@@ -629,6 +661,16 @@ export function App({
               if (changed) {
                 persistAndSetRoster(nextRoster);
               }
+            }}
+            onRemovePartyBuilds={(buildIds) => {
+              // SRD-1405: retired veterans leave the vault roster as well.
+              const removed = new Set(buildIds);
+              persistAndSetRoster({
+                ...roster,
+                characters: roster.characters.filter((c) => !removed.has(c.id)),
+                activePartyIds: roster.activePartyIds.filter((id) => !removed.has(id)),
+                updatedAt: new Date().toISOString(),
+              });
             }}
             onOpenCharacterSheet={(charId, liveBuild) => {
               if (liveBuild && !roster.characters.some((c) => c.id === charId)) {

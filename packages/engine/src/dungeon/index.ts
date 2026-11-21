@@ -16,3 +16,4 @@ export * from './use-item.js';
 export * from './inventory-management.js';
 export * from './champions.js';
 export * from './special-rooms.js';
+export * from './veterans.js';
