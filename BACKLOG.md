@@ -1,6 +1,6 @@
 # SRD 5.1 Tactical Dungeon Crawler — Implementation Backlog
 
-This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md), [11](file:///home/jwesterl/ai/srd5-game/docs/spec/11-tabletop-fidelity.md), [12](file:///home/jwesterl/ai/srd5-game/docs/spec/12-graphical-inventory.md)) into granular, dependency-ordered engineering tickets.
+This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md), [09](file:///home/jwesterl/ai/srd5-game/docs/spec/09-content-library.md), [10](file:///home/jwesterl/ai/srd5-game/docs/spec/10-realm-war-campaign.md), [11](file:///home/jwesterl/ai/srd5-game/docs/spec/11-tabletop-fidelity.md), [12](file:///home/jwesterl/ai/srd5-game/docs/spec/12-graphical-inventory.md), [13](file:///home/jwesterl/ai/srd5-game/docs/spec/13-run-variety.md)) into granular, dependency-ordered engineering tickets.
 
 ## Status Legend
 - `[ ]` Todo
@@ -30,6 +30,7 @@ flowchart LR
     E3 --> E12["Epic 12: Tabletop Fidelity —\nLanguages, Skills & Spells"]
     E5 --> E13["Epic 13: Graphical Inventory —\nBG3-Style Equipment"]
     E12 --> E13
+    E5 --> E14["Epic 14: Run Variety —\nEndless Uniqueness"]
 ```
 
 ---
@@ -335,3 +336,27 @@ End state: a Baldur's Gate 3-style graphical inventory (icon-grid backpack + vis
 - [x] **SRD-1305**: Grid + paperdoll fully operable by mouse, keyboard, and touch (Deck 1280×800 E2E); equip/compare/attune/use all function from the grid; loot-modal text rows and SRD-1307 corpse cards migrate onto grid cells, retiring the old text rows.
 - [x] **SRD-1306**: Stretch — trade/drop/give, identify, dungeon sell-back, stack splitting, weight/capacity display (no enforcement), equip proficiency/STR validation; engine + grid UI verified.
 - [x] **SRD-1307**: Clearing encounters yields CR-banded drops per slain monster (+ hoard rolls for elites/bosses, no stacking with war-battle awards); corpses don't block movement or end-of-move and open per-corpse loot cards on click (fully-looted stay inert), unclaimed drops sweep on floor exit; Investigation/Survival hooks grant attributed bonus rolls; seeds deterministic; 0 invariant violations headless; loot modal shows drop provenance.
+
+---
+
+## Epic 14: Endless Variety — Run Uniqueness
+**Spec Reference**: [13-run-variety.md](file:///home/jwesterl/ai/srd5-game/docs/spec/13-run-variety.md)
+
+Measured baseline (Nov 2026): 20 depth-1 seeds yield 39 distinct encounter compositions, but only 7 monsters exist at depths 1–3 (3–4 deeper), biomes are fixed bands, rooms are a fixed count per depth, the shrine catalog has 3 entries, and there are no elites, mutators, special rooms, or meta unlocks. Novelty budget ≈ 10–20 delves. End state: the full 61-monster roster deals into CR-banded tables, elites hunt parties, seeded mutators reshape runs, special rooms break floor routine, and graveyard bests unlock future runs — all deterministic, offline, independently shippable. Kaelen stays a fixed story module (non-goal).
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-1401** | `[ ]` | CR-banded biome encounter tables over the full 61-monster roster: audit (id → CR band → biomes, exclusion tags for misfits), weighted `pickFromBand(rng, depth)` in the generator, curated boss tables untouched, integrity gate (every id resolves) + distribution test (every table monster reachable within N seeds, no empty band); Arena waves / Realm delves may draw from the same bands | `@srd5/data`, `@srd5/engine` | SRD-1001, SRD-1002, SRD-1003 |
+| **SRD-1402** | `[ ]` | Elite packs: deterministic elite template (HP ×1.5, +2 hit, +25% damage, one affix — brutal/swift/warded — from run/floor seed), 8% + 2%/depth spawn chance capped at 25%, never depth 1, max 1 per encounter; skull token badge + tooltip + spawn headline; rewards hook into the SRD-1307 elite hoard path; headless math/rate tests + badge client test + E2E smoke | `@srd5/engine`, `@srd5/client` | SRD-1401 |
+| **SRD-1403** | `[ ]` | Seeded run mutators: 6-entry catalog (Dim Torches, Thin Rations, Blood Moon, Bountiful Crypt, Sealed Doors, Restless Dead), 0/1/2 drawn at run start from the run seed into `runState.mutators`, HUD banner + run-record display, daily seed rolls visibly; headless effect tests + draw-distribution test + HUD client test | `@srd5/engine`, `@srd5/client` | SRD-509 |
+| **SRD-1404** | `[ ]` | Special rooms & delve events (≤1 per floor, never depth 1, seeded pick): treasure vault (locked DC 15–20 room, magic-biased hoard chest, 50% trapped), cursed shrine (4th `shrineType`: pay 10 HP or 50 gp for a seeded blood/arcane boon, decline free), nest (3–5 same-band pack room, listenable per SRD-511, bonus XP via existing award path); prop-pipeline glyphs/cards/fog reuse, no new art; headless gen tests + card-flow client tests + vault E2E smoke | `@srd5/engine`, `@srd5/client` | SRD-508 |
+| **SRD-1405** | `[ ]` | Descent meta-progression on graveyard bests: depth ≥ 5 unlocks starting-boon draft (pick 1 of 3 seeded boons at launch — potion, antitoxin, 50 gp), score thresholds unlock 2–3 draft-party templates (existing draft machinery), persisted in delve IndexedDB store; unlock row on Endless Delve launch tile + first-unlock toast, all offline; headless threshold/persistence tests + launch-UI tests | `@srd5/engine`, `@srd5/client` | SRD-806 |
+| **SRD-1406** | `[ ]` | Variety verification gate: distributional tests (distinct encounter compositions ≥ threshold across 20 seeds; every table monster observed; mutator/elite/vault observation rates in band), soak runs mutator seeds with 0 invariant violations, E2E smoke (elite skull visible, vault opens, mutator banner shown) at 1280×800 | `@srd5/engine`, `@srd5/client` | SRD-1401, SRD-1402, SRD-1403, SRD-1404 |
+
+### Epic 14 Acceptance Criteria Details
+- [ ] **SRD-1401**: Depth bands deal CR 0–1 (27) / 1–3 (21) / 3–5 (13) / 5–9 (13) / 8+ (8); 20-seed probe shows ≥2× the distinct compositions of the 7-id baseline with zero invalid ids; boss rooms unchanged.
+- [ ] **SRD-1402**: Elites spawn in-band at the stated rates (never depth 1), affix math exact headless, skull badge + origin-tagged hoard visible in UI, E2E kill flow clean.
+- [ ] **SRD-1403**: Mutator draw matches the 15/60/25 split statistically; each of the 6 mutators changes its system headless; banner + run record render.
+- [ ] **SRD-1404**: ≤1 special room per floor (never depth 1); vault opens to a magic-biased hoard; cursed shrine costs then boons (decline free); nest listenable + bonus XP; E2E vault smoke clean.
+- [ ] **SRD-1405**: Fresh profile locks boons/templates with requirement text; qualifying graveyard bests unlock them persistently across reloads; boons stay launch-flat (no scaling power creep).
+- [ ] **SRD-1406**: Gate asserts measured variety (not vibes) + 0 invariant violations on mutator seeds + E2E smoke green.
