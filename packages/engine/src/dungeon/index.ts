@@ -8,6 +8,7 @@ export * from './loot.js';
 export * from './corpse-loot.js';
 export * from './level-up-flow.js';
 export * from './generator.js';
+export * from './encounter-tables.js';
 export * from './roguelite.js';
 export * from './theft.js';
 export * from './recall.js';

@@ -22,6 +22,7 @@ import {
   rollDie,
 } from '../dice/prng.js';
 import { generateFloorRecallTags } from './recall.js';
+import { pickFromBand } from './encounter-tables.js';
 
 /**
  * Procedural dungeon floor generator configuration (Spec 06 Section 3.1).
@@ -66,6 +67,12 @@ export interface GeneratedDungeonFloor {
 
 /**
  * Thematic definition of each biome tier.
+ *
+ * SRD-1401: regular encounters no longer draw from `monsters` — they draw
+ * from CR-banded tables (`encounter-tables.ts`) over the full 61-monster
+ * roster. `monsters` is retained as a legacy per-biome flavor hint and for
+ * backwards-compatible tests, while `bossMonsters` remains the curated
+ * authority for boss rooms (untouched).
  */
 export interface BiomeTheme {
   biome: BiomeTier;
@@ -1099,21 +1106,29 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
     }
   }
 
-  // 10. Themed Encounters
+  // 10. Themed Encounters (SRD-1401: regulars via CR-banded tables, bosses curated)
   const encounters: EncounterSpawnGroup[] = [];
 
   for (let i = 1; i < internalRooms.length; i++) {
     const room = internalRooms[i];
     const isBossRoom = i === furthestRoomIdx;
 
-    const monsterList = isBossRoom ? theme.bossMonsters : theme.monsters;
     const monsterCount = isBossRoom ? 1 + (nextFloat() < 0.5 ? 1 : 0) : 1 + Math.floor(nextFloat() * 2);
 
     const monsters = [];
     const usedMonsterPositions = new Set<string>();
 
     for (let m = 0; m < monsterCount; m++) {
-      const monsterId = monsterList[Math.floor(nextFloat() * monsterList.length)];
+      let monsterId: string;
+      if (isBossRoom) {
+        const bossList = theme.bossMonsters;
+        monsterId = bossList[Math.floor(nextFloat() * bossList.length)]!;
+      } else {
+        // Weighted CR-band pick, dice-driven via the shared seeded RNG.
+        const pick = pickFromBand(rngState, config.depth);
+        rngState = pick.nextState;
+        monsterId = pick.monsterId;
+      }
       // Find empty walkable cell in room
       let spawnPt: GridPoint | undefined;
       for (let attempt = 0; attempt < 15; attempt++) {

@@ -7,6 +7,7 @@ import {
   generateDungeonFloor,
   getBiomeForDepth,
   getBiomeTheme,
+  getTableForDepth,
   verifyDungeonConnectivity,
   findPathBfs,
 } from '../index.js';
@@ -298,27 +299,15 @@ describe('SRD-508: Procedural DungeonGenerator & Guaranteed BFS Connectivity', (
       );
       expect(waterCells.length).toBeGreaterThan(0);
 
-      // Check encounters
+      // Check encounters (SRD-1401: regulars from CR 1-3 band, bosses curated)
       expect(generated.floor.encounters.length).toBeGreaterThan(0);
       const allMonsterIds = generated.floor.encounters.flatMap((e) =>
         e.monsters.map((m) => m.monsterId),
       );
-      const tombsMonsters = [
-        'ghoul',
-        'giant-spider',
-        'giant-wolf-spider',
-        'shadow',
-        'mummy',
-        'ghost',
-        'cultist',
-        'wight',
-        'gelatinous-cube',
-        'specter',
-        'wraith',
-        'cult-fanatic',
-      ];
+      const bandIds = new Set(getTableForDepth(4).map((e) => e.monsterId));
+      const bossIds = new Set(getBiomeTheme('sunken_tombs').bossMonsters);
       for (const id of allMonsterIds) {
-        expect(tombsMonsters).toContain(id);
+        expect(bandIds.has(id) || bossIds.has(id), `unexpected monster ${id}`).toBe(true);
       }
 
       // Check poison traps
