@@ -1372,6 +1372,46 @@
     "description": "You contact your deity or a divine proxy and ask up to three questions that can be answered with a yes or no."
   },
   {
+    "id": "comprehend-languages",
+    "name": "Comprehend Languages",
+    "level": 1,
+    "school": "divination",
+    "castingTime": "action",
+    "ritual": true,
+    "concentration": false,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": true,
+      "material": true,
+      "materialDescription": "a pinch of soot and salt"
+    },
+    "classes": [
+      "bard",
+      "sorcerer",
+      "warlock",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "self",
+      "rangeFeet": 0
+    },
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "comprehend-languages-understanding",
+        "name": "Comprehend Languages",
+        "durationRounds": 600,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
+    "description": "For the duration, you understand the literal meaning of any spoken language that you hear. You also understand any written language that you see, but you must be touching the surface on which the words are written. It takes about 1 minute to read one page of text. This spell doesn't decode secret messages in a text or a glyph, such as an arcane sigil, that isn't part of a written language."
+  },
+  {
     "id": "cone-of-cold",
     "name": "Cone of Cold",
     "level": 5,
@@ -7847,6 +7887,48 @@
       }
     ],
     "description": "A 10-foot-radius immobile dome of force springs into existence around and above you and remains stationary for the duration."
+  },
+  {
+    "id": "tongues",
+    "name": "Tongues",
+    "level": 3,
+    "school": "divination",
+    "castingTime": "action",
+    "ritual": false,
+    "concentration": false,
+    "duration": {
+      "type": "hours",
+      "amount": 1
+    },
+    "components": {
+      "verbal": true,
+      "somatic": false,
+      "material": true,
+      "materialDescription": "a small clay model of a ziggurat"
+    },
+    "classes": [
+      "bard",
+      "cleric",
+      "sorcerer",
+      "warlock",
+      "wizard"
+    ],
+    "targeting": {
+      "type": "touch",
+      "rangeFeet": 5,
+      "targetFilter": "willing"
+    },
+    "effects": [
+      {
+        "step": "apply_active_effect",
+        "effectId": "tongues-understanding",
+        "name": "Tongues",
+        "durationRounds": 600,
+        "requiresConcentration": false,
+        "modifiers": []
+      }
+    ],
+    "description": "This spell grants the creature you touch the ability to understand any spoken language it hears. Moreover, when the target speaks, any creature that knows at least one language and can hear the target understands what it says."
   },
   {
     "id": "tree-stride",

@@ -2149,4 +2149,33 @@ export const SRD_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlaySpec>> = {
       },
     ],
   },
+  // --- SRD-1201: Tabletop Fidelity language comprehension buffs ---
+  // Same attach path as `bless` (apply_active_effect); consumed by the
+  // party-level language gate resolution (§2.2, SRD-1202).
+  "comprehend-languages": {
+    targeting: { type: "self", rangeFeet: 0 },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "comprehend-languages-understanding",
+        name: "Comprehend Languages",
+        durationRounds: 600,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
+  tongues: {
+    targeting: { type: "touch", rangeFeet: 5, targetFilter: "willing" },
+    effects: [
+      {
+        step: "apply_active_effect",
+        effectId: "tongues-understanding",
+        name: "Tongues",
+        durationRounds: 600,
+        requiresConcentration: false,
+        modifiers: [],
+      },
+    ],
+  },
 };
