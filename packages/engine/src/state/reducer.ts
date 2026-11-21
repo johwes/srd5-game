@@ -20,6 +20,7 @@ import { isCombatantEligibleForTurn } from '../combat/initiative.js';
 import { executeWeaponAttack, executeGrapple, executeShove } from '../combat/attack.js';
 import { executeMonsterAction } from '../combat/monster-actions.js';
 import { executeSpellCast } from '../combat/spellcasting.js';
+import { executeOutOfCombatSpellCast } from '../combat/out-of-combat-casting.js';
 import { executeActivatedAbility } from '../combat/features.js';
 import { resolveReactionPrompt } from '../combat/reactions.js';
 import { breakConcentration } from '../combat/concentration.js';
@@ -301,8 +302,28 @@ export function reduceGame(
     }
 
     case 'DECLARE_CAST_SPELL': {
+      // SRD-1203: out-of-combat (exploration/social) casting path for
+      // non-hostile utility, buff, and healing spells. Combat casts keep the
+      // initiative-bound resolver below.
       if (nextState.mode !== 'combat' || !nextState.combat) {
-        throw new Error('Cannot execute DECLARE_CAST_SPELL outside active combat');
+        const res = executeOutOfCombatSpellCast({
+          party: nextState.party,
+          monsters: nextState.monsters,
+          casterId: command.actorId,
+          spellId: command.spellId,
+          slotLevel: command.slotLevel,
+          targetIds: command.targetIds,
+          castAsRitual: command.castAsRitual,
+          rngState: nextState.rngState,
+          grid: nextState.grid,
+        });
+
+        nextState.party = res.party;
+        nextState.monsters = res.monsters;
+        nextState.rngState = res.rngState;
+
+        events.push(...res.events);
+        break;
       }
 
       const res = executeSpellCast({

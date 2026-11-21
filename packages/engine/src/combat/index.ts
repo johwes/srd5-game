@@ -9,6 +9,7 @@ export * from './combatant.js';
 export * from './state-machine.js';
 export * from './attack.js';
 export * from './spellcasting.js';
+export * from './out-of-combat-casting.js';
 export * from './damage.js';
 export * from './reactions.js';
 export * from './features.js';

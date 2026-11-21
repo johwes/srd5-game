@@ -197,10 +197,12 @@ export type GameCommand =
       type: 'DECLARE_CAST_SPELL';
       actorId: string;
       spellId: string;
-      slotLevel: number;
+      slotLevel?: number;
       targetIds?: string[];
       targetCell?: GridPoint;
       directionRad?: number;
+      /** SRD-1203: ritual casting out of combat (no slot, +10 min). */
+      castAsRitual?: boolean;
     }
   | {
       type: 'USE_CLASS_FEATURE';

@@ -282,7 +282,7 @@ flowchart LR
 | :--- | :---: | :--- | :--- | :--- |
 | **SRD-1201** | `[x]` | Author `comprehend-languages` + `tongues` executable overlays; resolve dangling draft-party spell id | `@srd5/data`, `@srd5/engine` | SRD-310 |
 | **SRD-1202** | `[x]` | Language-gated encounters (party-level resolution, gesture/hostile/translator fallbacks); Orc-tribe reference quest | `@srd5/engine`, `@srd5/data` | SRD-1201, SRD-1104 |
-| **SRD-1203** | `[ ]` | Out-of-combat casting path (exploration/social) incl. ritual time costs — MUST include out-of-combat healing (`cure-wounds` et al.); blocks knock/detect-magic/ritual value | `@srd5/engine`, `@srd5/transport` | SRD-306 |
+| **SRD-1203** | `[x]` | Out-of-combat casting path (exploration/social) incl. ritual time costs — MUST include out-of-combat healing (`cure-wounds` et al.); blocks knock/detect-magic/ritual value | `@srd5/engine`, `@srd5/transport` | SRD-306 |
 | **SRD-1204** | `[ ]` | Marker-spell enforcement: `detect-magic` sense, `knock` prop hook + alert tradeoff, `sanctuary` ward, `sleep` HP-pool, `shield` buff-id fix | `@srd5/engine` | SRD-1203, SRD-308 |
 | **SRD-1205** | `[ ]` | Hazard-zone `onEnter` step coverage (no silent drops) + shared-language preconditions on enchantments | `@srd5/engine` | SRD-308 |
 | **SRD-1206** | `[ ]` | Sleight of Hand theft verb (pickpocket/plant/lift, tools advantage, caught branches) + Fast Hands bonus-action tie-in | `@srd5/engine`, `@srd5/client` | SRD-502 |
