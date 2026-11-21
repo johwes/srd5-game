@@ -13,6 +13,7 @@ import {
   formatAbilityFullName,
   formatTitleCase,
 } from '../compendium/formatters.js';
+import { SkillTooltipCard } from '../compendium/SkillTooltipCard.js';
 import {
   getLanguageMechanicalInfo,
   getSkillMechanicalInfo,
@@ -198,14 +199,22 @@ export function ChoiceSpecSelector({
           );
           // SRD-1211: mechanical-status badging — every pick shows where it
           // matters (gate / verb / spell path) via the spell-card tooltip pattern.
+          // SRD-1215: skill options additionally resolve the SRD description +
+          // game-use benefits into a hover tooltip card.
+          const skillDef =
+            choice.type === 'skill' ? compendium.getSkill(canonical) : undefined;
+          const skillTipId = `${testIdPrefix}-tooltip-${choice.id}-${canonical}`;
+          const skillMech =
+            choice.type === 'skill'
+              ? getSkillMechanicalInfo(canonical)
+              : null;
           const mechBadge = (() => {
-            if (choice.type === 'skill') {
-              const info = getSkillMechanicalInfo(canonical);
+            if (skillMech) {
               return {
-                label: info.badge,
-                title: `Mechanical path — ${info.uses.join('; ')}`,
+                label: skillMech.badge,
+                title: `Mechanical path — ${skillMech.uses.join('; ')}`,
                 testId: `${testIdPrefix}-mech-${choice.id}-${canonical}`,
-                supported: info.status === 'supported',
+                supported: skillMech.status === 'supported',
               };
             }
             if (choice.type === 'language') {
@@ -230,14 +239,18 @@ export function ChoiceSpecSelector({
           })();
 
           return (
-            <button
+            <div
               key={canonical}
+              className={skillDef ? 'relative group' : 'contents'}
+            >
+            <button
               type="button"
               disabled={isDisabled}
               data-testid={`${testIdPrefix}-option-${choice.id}-${canonical}`}
               aria-pressed={isSelected}
+              aria-describedby={skillDef ? skillTipId : undefined}
               onClick={() => handleToggleOption(canonical)}
-              className={`text-left px-3 py-2 rounded-md border text-xs transition-colors flex flex-col justify-between gap-0.5 ${
+              className={`text-left px-3 py-2 rounded-md border text-xs transition-colors flex flex-col justify-between gap-0.5 ${skillDef ? 'w-full' : ''} ${
                 isSelected
                   ? 'bg-amber-500/15 border-amber-500 text-amber-200 font-medium'
                   : isDisabled
@@ -273,6 +286,17 @@ export function ChoiceSpecSelector({
                 </span>
               )}
             </button>
+            {skillDef && skillMech && (
+              <SkillTooltipCard
+                name={title}
+                abilityLabel={`${formatAbilityFullName(skillDef.ability)} (${formatAbilityAbbrev(skillDef.ability)})`}
+                description={skillDef.description}
+                badge={skillMech.badge}
+                uses={skillMech.uses}
+                testId={skillTipId}
+              />
+            )}
+            </div>
           );
         })}
       </div>

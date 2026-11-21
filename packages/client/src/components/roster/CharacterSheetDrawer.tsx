@@ -23,6 +23,7 @@ import {
   formatSignedNumber,
   formatTitleCase,
 } from '../compendium/formatters.js';
+import { getSkillMechanicalInfo } from '../builder/relevance.js';
 
 export type CharacterSheetTabId = 'overview' | 'equipment' | 'spells';
 
@@ -160,6 +161,11 @@ export function CharacterSheetDrawer({
 
   const handleInspectSkill = (skillId: SkillId) => {
     const sk = derived.skills[skillId];
+    // SRD-1215: the inspector doubles as the sheet's skill-benefit surface
+    // (hover tooltips would clip inside the scrollable skill column): SRD
+    // description + game-use relevance alongside the formula breakdown.
+    const skillDef = compendium.getSkill(skillId);
+    const skillMech = getSkillMechanicalInfo(skillId);
     setInspectedFormula({
       id: `skill-${skillId}`,
       label: `${formatTitleCase(skillId)} (${formatAbilityAbbrev(sk.ability)}) Check`,
@@ -167,6 +173,10 @@ export function CharacterSheetDrawer({
       formulaSummary: `1d20 + ${formatBreakdownInline(sk.breakdown)} = ${formatSignedNumber(sk.totalBonus)} (Passive: ${sk.passiveScore})`,
       contributions: sk.breakdown,
       extraNotes: [
+        ...(skillDef ? [`What it does: ${skillDef.description}`] : []),
+        ...(skillMech.status === 'supported' && skillMech.uses.length > 0
+          ? [`Used in this game for: ${skillMech.uses.join('; ')}`]
+          : []),
         `Tier: ${formatTitleCase(sk.proficiencyLevel)} | Passive Score: ${sk.passiveScore} | Roll Mode: ${formatTitleCase(sk.rollMode)}`,
       ],
     });

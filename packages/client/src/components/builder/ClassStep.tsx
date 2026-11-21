@@ -17,6 +17,8 @@ import {
   formatAbilityFullName,
   formatTitleCase,
 } from '../compendium/formatters.js';
+import { SkillTooltipCard } from '../compendium/SkillTooltipCard.js';
+import { getSkillMechanicalInfo } from './relevance.js';
 import { ChoiceSpecSelector } from './ChoiceSpecSelector.js';
 import {
   buildDefaultHpRollsForClass,
@@ -467,15 +469,27 @@ export function ClassStep({
                       const isSelected = selectedSet.has(optId);
                       const isDisabled =
                         !isSelected && prompt.selectedOptions.length >= prompt.count;
+                      // SRD-1215: skill-benefit hover tooltip (SRD description +
+                      // game-use relevance). Non-skill options (e.g. thieves'
+                      // tools) render without a tooltip.
+                      const skillDef = compendium.getSkill(optId);
+                      const skillMech = skillDef
+                        ? getSkillMechanicalInfo(optId)
+                        : null;
+                      const skillTipId = `builder-expertise-tooltip-l${prompt.level}-${optId}`;
                       return (
-                        <button
+                        <div
                           key={optId}
+                          className={skillDef ? 'relative group' : 'contents'}
+                        >
+                        <button
                           type="button"
                           disabled={isDisabled}
                           data-testid={`builder-expertise-option-l${prompt.level}-${optId}`}
                           aria-pressed={isSelected}
+                          aria-describedby={skillDef ? skillTipId : undefined}
                           onClick={() => toggleExpertise(optId)}
-                          className={`px-3 py-2 rounded-md border text-xs text-left transition-colors ${
+                          className={`px-3 py-2 rounded-md border text-xs text-left transition-colors ${skillDef ? 'w-full' : ''} ${
                             isSelected
                               ? 'bg-amber-500/15 border-amber-500 text-amber-200 font-medium'
                               : isDisabled
@@ -485,6 +499,18 @@ export function ClassStep({
                         >
                           {formatTitleCase(optId)}
                         </button>
+                        {skillDef && skillMech && (
+                          <SkillTooltipCard
+                            name={formatTitleCase(optId)}
+                            abilityLabel={`${formatAbilityFullName(skillDef.ability)} (${formatAbilityAbbrev(skillDef.ability)})`}
+                            description={skillDef.description}
+                            badge={skillMech.badge}
+                            uses={skillMech.uses}
+                            extraLine="Expertise doubles your proficiency bonus for this skill."
+                            testId={skillTipId}
+                          />
+                        )}
+                        </div>
                       );
                     })}
                   </div>

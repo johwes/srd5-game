@@ -9,8 +9,9 @@ import {
 import {
   applyDuplicateProficiencyReplacement,
 } from '@srd5/engine';
-import { formatTitleCase } from '../compendium/formatters.js';
+import { formatAbilityAbbrev, formatAbilityFullName, formatTitleCase } from '../compendium/formatters.js';
 import { ChoiceSpecSelector } from './ChoiceSpecSelector.js';
+import { getSkillMechanicalInfo } from './relevance.js';
 import {
   pruneStaleDuplicateReplacements,
   validateBackgroundStep,
@@ -369,6 +370,50 @@ export function BackgroundStep({
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* SRD-1215: benefit readout for the two selected skills.
+                Native <select> options cannot host hover tooltips, so the
+                SRD description + game-use relevance render live below. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[0, 1].map((idx) => {
+                const selected =
+                  buildState.customBackground?.skillProficiencies[idx];
+                const def = selected
+                  ? compendium.getSkill(selected)
+                  : undefined;
+                if (!selected || !def) return null;
+                const mech = getSkillMechanicalInfo(selected);
+                return (
+                  <div
+                    key={idx}
+                    data-testid={`builder-custom-bg-skill-detail-${idx}`}
+                    className="rounded-lg bg-slate-950/70 border border-amber-500/30 p-3 space-y-1 text-xs"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-100">
+                        {formatTitleCase(selected)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 capitalize shrink-0">
+                        {formatAbilityFullName(def.ability)} (
+                        {formatAbilityAbbrev(def.ability)})
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      {def.description}
+                    </p>
+                    {mech.status === 'supported' &&
+                      mech.uses.length > 0 && (
+                        <p className="text-[11px] leading-relaxed rounded bg-emerald-950/40 border border-emerald-800/50 px-2 py-1 text-emerald-200">
+                          <span className="font-semibold">
+                            ⚙ Used in this game:{' '}
+                          </span>
+                          {mech.uses.join('; ')}
+                        </p>
+                      )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* 2 Combined Languages or Tools */}

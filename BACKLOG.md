@@ -294,6 +294,7 @@ flowchart LR
 | **SRD-1212** | `[x]` | Relevance integrity gate: offered spell/skill/language must resolve or carry explicit tracking ticket | `@srd5/data`, `@srd5/engine` | SRD-1211 |
 | **SRD-1213** | `[x]` | Standing skill passives (prof/expert table) + generator recall-tag emission from seeded theme tables | `@srd5/engine`, `@srd5/data` | SRD-1207, SRD-1208 |
 | **SRD-1214** | `[x]` | War languages phase 1: nation profiles, dispatch intercepts, patrol/deal modifiers, interpreter hirelings | `@srd5/engine`, `@srd5/data`, `@srd5/client` | SRD-1202 |
+| **SRD-1215** | `[x]` | Skill benefit tooltips: SRD description + governing ability + game-use relevance on builder skill/expertise pickers, custom-background selects, and character-sheet skill inspector | `@srd5/client` | SRD-1211 |
 
 ### Epic 12 Acceptance Criteria Details
 - [ ] **SRD-1201..1202**: Compendium lookups for both new spells resolve; Orc-tribe chain playable with and without Orcish (gesture path verified E2E).
@@ -303,3 +304,4 @@ flowchart LR
 - [x] **SRD-1211..1212**: Builder shows status for every pick; integrity suite fails on new dangling offered content.
 - [x] **SRD-1213**: Passive bonuses apply at prof/expert tiers in headless tests; generated floors deterministically carry recall tags (bit-exact replay still green).
 - [x] **SRD-1214**: Intercepts readable with the right tongue/magic/translator; bluff/deal tiers and interpreter costs verified headless + in War Room UI.
+- [x] **SRD-1215**: Every builder skill/expertise option shows an SRD-description + ability + game-use tooltip; custom-background selects render live benefit readouts; the sheet skill inspector lists description + relevance uses alongside the formula.
