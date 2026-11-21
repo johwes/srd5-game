@@ -1,6 +1,6 @@
 # SRD 5.1 Tactical Dungeon Crawler — Implementation Backlog
 
-This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md), [11](file:///home/jwesterl/ai/srd5-game/docs/spec/11-tabletop-fidelity.md)) into granular, dependency-ordered engineering tickets.
+This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md), [11](file:///home/jwesterl/ai/srd5-game/docs/spec/11-tabletop-fidelity.md), [12](file:///home/jwesterl/ai/srd5-game/docs/spec/12-graphical-inventory.md)) into granular, dependency-ordered engineering tickets.
 
 ## Status Legend
 - `[ ]` Todo
@@ -26,6 +26,10 @@ flowchart LR
     E7 --> E9
     E1 --> E10["Epic 10: Content Library\nExpansion & Remix Modes"]
     E3 --> E10
+    E3 --> E11["Epic 11: Realm War &\nSpecial-Ops Campaign"]
+    E3 --> E12["Epic 12: Tabletop Fidelity —\nLanguages, Skills & Spells"]
+    E5 --> E13["Epic 13: Graphical Inventory —\nBG3-Style Equipment"]
+    E12 --> E13
 ```
 
 ---
@@ -305,3 +309,27 @@ flowchart LR
 - [x] **SRD-1213**: Passive bonuses apply at prof/expert tiers in headless tests; generated floors deterministically carry recall tags (bit-exact replay still green).
 - [x] **SRD-1214**: Intercepts readable with the right tongue/magic/translator; bluff/deal tiers and interpreter costs verified headless + in War Room UI.
 - [x] **SRD-1215**: Every builder skill/expertise option shows an SRD-description + ability + game-use tooltip; custom-background selects render live benefit readouts; the sheet skill inspector lists description + relevance uses alongside the formula.
+
+---
+
+## Epic 13: Graphical Inventory — BG3-Style Equipment Experience
+**Spec Reference**: [12-graphical-inventory.md](file:///home/jwesterl/ai/srd5-game/docs/spec/12-graphical-inventory.md)
+
+End state: a Baldur's Gate 3-style graphical inventory (icon-grid backpack + visual paperdoll) with zero hand-drawn art. Phased so every ticket ships independently: Phase 1 = icon + rarity layer (SRD-1301..1302), Phase 2 = items that work (SRD-1303..1304), Phase 3 = BG3 grid (SRD-1305), Phase 4 = stretch (SRD-1306).
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-1301** | `[ ]` | Licensed art pipeline + item-icon registry: `rpg-awesome` npm dep, vendored game-icons SVGs for gaps, credits-screen attribution line, `getItemIcon()` covering 100% of equipment + magic-item ids with category fallback; offline build/test green | `@srd5/client` | — |
+| **SRD-1302** | `[ ]` | Rarity visual language + `ItemTooltipCard` (SRD desc, effect summary, charges/attunement) applied to loot/shop/paperdoll rows; compendium detail renders modifiers + activated abilities; vitest coverage | `@srd5/client` | SRD-1301 |
+| **SRD-1303** | `[ ]` | `USE_ITEM` reducer case (seeded): potions/antitoxin/acid/alchemist-fire via ability overlays, scroll-cast consume, wand charge decrement + dawn recharge, `ITEM_CONSUMED`/`CHARGES_CHANGED` events; wire dungeon/arena/realm use buttons; headless soak tests | `@srd5/engine`, `@srd5/client` | — |
+| **SRD-1304** | `[ ]` | Revive dead entries (`flame-tongue`, `periapt-of-wound-closure`, `bag-of-holding`, `scroll-of-fireball`) + SRD-only items exercising unused DSL (`spell_save_dc`/`spell_attack`, `damage_mitigation`, `hp_per_level`/`grant_resource`); extend SRD-1212 gate to reject empty-modifier/no-ability magic items | `@srd5/data`, `@srd5/engine` | SRD-1303 |
+| **SRD-1305** | `[ ]` | `InventoryView`: icon-grid backpack (filters, search, stack counts) + visual paperdoll (5 slots, rarity borders, attunement pips), click/drag-equip incl. Deck-safe focus+Enter path, compare deltas in tooltip, replaces loot-modal rows; Playwright E2E | `@srd5/client` | SRD-1301, SRD-1302 |
+| **SRD-1306** | `[ ]` | Stretch: trade/drop/give commands, identification flow, dungeon sell-back, weight display vs enforcement, equip restriction enforcement (STR req, proficiency) | `@srd5/engine`, `@srd5/client` | SRD-1305 |
+
+### Epic 13 Acceptance Criteria Details
+- [ ] **SRD-1301**: `getItemIcon()` resolves every id in `equipment.json` + `magic-items.json` (exhaustiveness test); unknown ids render the category fallback with no broken images; `pnpm build`/`test`/`test:e2e` pass offline; credits screen carries the game-icons/RPG Awesome/Kenney attribution line.
+- [ ] **SRD-1302**: Every loot/shop/paperdoll/compendium item surface shows rarity borders + icon; hover tooltips show description, effect summary, charges, attunement; compendium magic-item view lists modifiers/abilities; no raw template vars in tooltips.
+- [ ] **SRD-1303**: Drinking a potion in dungeon/arena/realm heals via engine (no `Math.random`); wand refuses at 0 charges and recharges at dawn; scroll is consumed on cast; soak playtest casts/uses items with 0 invariant violations.
+- [ ] **SRD-1304**: All 4 revived entries have executable mechanics verified headless; ≥2 new SRD-only items cover previously-unused modifier targets; integrity suite fails on modifier-less/ability-less magic items.
+- [ ] **SRD-1305**: Grid + paperdoll fully operable by mouse, keyboard, and touch (Deck 1280×800 E2E); equip/compare/attune/use all function from the grid; loot modal text rows retired.
+- [ ] **SRD-1306**: Stretch — only if Phases 1–3 are green with no regressions.
