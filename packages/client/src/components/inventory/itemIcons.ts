@@ -246,7 +246,7 @@ export const ITEM_ICON_REGISTRY: Record<string, ItemIconRef> = {
   'dice-set': { ra: 'dice-six', fallback: 'tool' },
   'playing-card-set': { ra: 'spades-card', fallback: 'tool' },
 
-  // ── SRD magic items (26) ──
+  // ── SRD magic items (29) ──
   'amulet-of-health': { ra: 'heart-bottle', svg: 'heart-necklace.svg', fallback: 'gear' },
   'armor-plus-1': { ra: 'heavy-shield', svg: 'chest-armor.svg', fallback: 'armor' },
   'armor-plus-2': { ra: 'heavy-shield', svg: 'chest-armor.svg', fallback: 'armor' },
@@ -264,7 +264,10 @@ export const ITEM_ICON_REGISTRY: Record<string, ItemIconRef> = {
   'potion-of-greater-healing': { ra: 'potion', svg: 'health-potion.svg', fallback: 'potion' },
   'potion-of-superior-healing': { ra: 'heart-bottle', svg: 'magic-potion.svg', fallback: 'potion' },
   'potion-of-supreme-healing': { ra: 'bubbling-potion', svg: 'magic-potion.svg', fallback: 'potion' },
+  'pearl-of-power': { ra: 'gem-pendant', svg: 'magic-potion.svg', fallback: 'gear' },
+  'ring-of-fire-resistance': { ra: 'diamond', svg: 'fireball.svg', fallback: 'gear' },
   'ring-of-protection': { ra: 'diamond', svg: 'shield.svg', fallback: 'gear' },
+  'rod-of-the-pact-keeper-plus-1': { ra: 'crystal-wand', svg: 'wizard-staff.svg', fallback: 'gear' },
   'scroll-of-fireball': { ra: 'scroll-unfurled', svg: 'scroll-unfurled.svg', fallback: 'gear' },
   'shield-plus-1': { ra: 'shield', svg: 'shield.svg', fallback: 'armor' },
   'shield-plus-2': { ra: 'round-shield', svg: 'shield.svg', fallback: 'armor' },

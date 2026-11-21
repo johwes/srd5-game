@@ -55,6 +55,7 @@ import {
 } from './reactions.js';
 import { executeWeaponAttack } from './attack.js';
 import { isIncapacitated } from './turn-budget.js';
+import { PERIAPT_ITEM_ID, hasAttunedMagicItem } from '../items/magic-items-1304.js';
 
 export interface StartCombatEncounterOptions {
   encounterId: string;
@@ -271,6 +272,35 @@ export function startTurn(
       activeEffects: nextEffects,
       characterSheet: nextSheet,
     };
+  }
+
+  // SRD-1304: Periapt of Wound Closure — stabilize when dying at turn
+  // start (before the death-save roll below). Attuned + worn (v1: in
+  // inventory and attuned) auto-stabilizes with a STABILIZED event.
+  if (
+    updatedCombatant.currentHp === 0 &&
+    !updatedCombatant.isDead &&
+    !updatedCombatant.isStable &&
+    updatedCombatant.side === 'party' &&
+    hasAttunedMagicItem(updatedCombatant, PERIAPT_ITEM_ID)
+  ) {
+    const stabilizedSheet = updatedCombatant.characterSheet
+      ? {
+          ...updatedCombatant.characterSheet,
+          deathSaves: { successes: 0, failures: 0 } as const,
+        }
+      : undefined;
+    updatedCombatant = {
+      ...updatedCombatant,
+      isStable: true,
+      deathSaves: { successes: 0, failures: 0 },
+      characterSheet: stabilizedSheet,
+    };
+    events.push({
+      type: 'STABILIZED',
+      entityId: combatantId,
+      sourceName: 'Periapt of Wound Closure',
+    });
   }
 
   // If at 0 HP and not stable, roll start-of-turn Death Saving Throw

@@ -68,8 +68,16 @@
     "category": "wondrous",
     "rarity": "uncommon",
     "requiresAttunement": false,
-    "modifiers": [],
-    "description": "This bag has an interior space considerably larger than its outside dimensions, holding up to 500 pounds while always weighing 15 pounds."
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "bag-of-holding-capacity",
+        "name": "Bag of Holding Capacity (500 lb)",
+        "maxFormula": "500",
+        "recovery": "dawn"
+      }
+    ],
+    "description": "This bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter at the mouth and 4 feet deep. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet, while always weighing 15 pounds. Retrieving an item from the bag requires an action."
   },
   {
     "id": "belt-of-hill-giant-strength",
@@ -160,6 +168,28 @@
     "requiresAttunement": true,
     "baseEquipmentId": "longsword",
     "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "ignite-flame-tongue",
+        "name": "Ignite Flame Tongue",
+        "description": "You use a bonus action to speak the command word, causing flames to erupt from the blade (bright light 40 ft, dim light 40 ft). While ablaze, the sword deals an extra 2d6 fire damage to any target it hits. Use a bonus action to speak the command word again (or drop or sheathe the sword) to extinguish the flames.",
+        "actionCost": "bonus_action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "apply_active_effect",
+            "effectId": "flame-tongue-ablaze",
+            "name": "Flame Tongue Ablaze",
+            "durationRounds": 600,
+            "requiresConcentration": false,
+            "modifiers": []
+          }
+        ]
+      }
+    ],
     "description": "You can use a bonus action to speak this magic sword’s command word, causing flames to erupt from the blade and deal an extra 2d6 fire damage on a hit."
   },
   {
@@ -199,12 +229,50 @@
     "description": "You have a +1 bonus to attack and damage rolls made with this magic longsword."
   },
   {
+    "id": "pearl-of-power",
+    "name": "Pearl of Power",
+    "category": "wondrous",
+    "rarity": "uncommon",
+    "requiresAttunement": true,
+    "attunementRestriction": "spellcaster",
+    "modifiers": [
+      {
+        "type": "grant_resource",
+        "resourceId": "pearl-of-power",
+        "name": "Pearl of Power",
+        "maxFormula": "1",
+        "recovery": "dawn"
+      }
+    ],
+    "description": "While this pearl is on your person, you can use it to regain one expended spell slot as an action. The slot must be 3rd level or lower. Once used, the pearl can't be used again until the next dawn."
+  },
+  {
     "id": "periapt-of-wound-closure",
     "name": "Periapt of Wound Closure",
     "category": "wondrous",
     "rarity": "uncommon",
     "requiresAttunement": true,
     "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "periapt-wound-closure",
+        "name": "Wound Closure",
+        "description": "While you wear this pendant, you stabilize whenever you are dying at the start of your turn, and whenever you roll a Hit Die to regain hit points, double the number of hit points it restores. (Passive — no action required.)",
+        "actionCost": "action",
+        "targeting": {
+          "type": "self",
+          "rangeFeet": 0
+        },
+        "effects": [
+          {
+            "step": "manual_adjudication",
+            "adjudicationId": "periapt-wound-closure",
+            "title": "Wound Closure",
+            "guidance": "You stabilize at 0 HP (death saves reset, stable) at the start of your turn while dying, and you double Hit Die healing while attuned and wearing this pendant."
+          }
+        ]
+      }
+    ],
     "description": "While you wear this pendant, you stabilize whenever you are dying at the start of your turn. In addition, whenever you roll a Hit Die to regain hit points, double the number of hit points it restores."
   },
   {
@@ -289,6 +357,21 @@
     "description": "You regain 10d4 + 20 hit points when you drink this potion."
   },
   {
+    "id": "ring-of-fire-resistance",
+    "name": "Ring of Fire Resistance",
+    "category": "ring",
+    "rarity": "rare",
+    "requiresAttunement": true,
+    "modifiers": [
+      {
+        "type": "damage_mitigation",
+        "mitigation": "resistance",
+        "damageTypes": ["fire"]
+      }
+    ],
+    "description": "You have resistance to fire damage while wearing this ring. (Ring of Resistance, attuned to fire.)"
+  },
+  {
     "id": "ring-of-protection",
     "name": "Ring of Protection",
     "category": "ring",
@@ -309,12 +392,65 @@
     "description": "You gain a +1 bonus to AC and saving throws while wearing this ring."
   },
   {
+    "id": "rod-of-the-pact-keeper-plus-1",
+    "name": "Rod of the Pact Keeper, +1",
+    "category": "rod",
+    "rarity": "uncommon",
+    "requiresAttunement": true,
+    "attunementRestriction": "warlock",
+    "modifiers": [
+      {
+        "type": "flat_bonus",
+        "target": "spell_attack",
+        "value": 1
+      },
+      {
+        "type": "flat_bonus",
+        "target": "spell_save_dc",
+        "value": 1
+      }
+    ],
+    "description": "While holding this rod, you gain a +1 bonus to spell attack rolls and to the saving throw DCs of your warlock spells. In addition, you can regain one warlock spell slot as an action while holding the rod. This property can't be used again until you finish a long rest."
+  },
+  {
     "id": "scroll-of-fireball",
     "name": "Spell Scroll (Fireball)",
     "category": "scroll",
     "rarity": "uncommon",
     "requiresAttunement": false,
     "modifiers": [],
+    "activatedAbilities": [
+      {
+        "id": "cast-fireball-from-scroll",
+        "name": "Cast Fireball (Scroll)",
+        "description": "A spell scroll bearing the words of the fireball spell (Save DC 15). Casting from the scroll is slot-free and consumes the scroll.",
+        "actionCost": "action",
+        "targeting": {
+          "type": "point_aoe",
+          "rangeFeet": 150,
+          "aoe": {
+            "shape": "sphere",
+            "sizeFeet": 20
+          }
+        },
+        "effects": [
+          {
+            "step": "saving_throw",
+            "ability": "dex",
+            "dcFormula": "15",
+            "onFail": [
+              {
+                "step": "deal_damage",
+                "diceFormula": "8d6",
+                "damageType": "fire",
+                "halfOnSaveSuccess": true,
+                "isMagical": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "description": "A spell scroll bears the words of the fireball spell, written in a mystical cipher (Save DC 15)."
   },
   {

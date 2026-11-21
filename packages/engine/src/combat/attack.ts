@@ -58,6 +58,7 @@ import {
   resolveSanctuaryWardAttack,
   stripSanctuaryOnOffense,
 } from './marker-spells.js';
+import { isFlameTongueAblaze } from '../items/magic-items-1304.js';
 
 /**
  * Custom raw attack specification for testing or dynamic attacks.
@@ -1071,6 +1072,48 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     currentState = dmgAppliedRes.state.rngState;
     nextTarget = dmgAppliedRes.state.combatants[target.id]!;
     events.push(...dmgAppliedRes.events);
+
+    // SRD-1304: Flame Tongue ablaze rider — extra 2d6 fire on a melee hit.
+    // Resolved as a separate fire pipeline step so resistances apply.
+    if (
+      attack.attackType === 'melee_weapon' &&
+      isFlameTongueAblaze(attacker) &&
+      !nextTarget.isDead
+    ) {
+      const fireRes = rollDamage(currentState, '2d6', { critical: isCritical });
+      currentState = fireRes.nextState;
+      events.push({
+        type: 'DICE_ROLLED',
+        actorId: attacker.id,
+        rollPurpose: 'flame_tongue_fire',
+        notation: fireRes.record.formula,
+        rolls: fireRes.record.rolls,
+        kept: fireRes.record.kept,
+        modifier: fireRes.record.modifier,
+        total: fireRes.total,
+        mode: 'normal',
+      });
+      const fireAppliedRes = applyDamage({
+        state: {
+          ...currentCombatState,
+          rngState: currentState,
+          combatants: {
+            ...currentCombatState.combatants,
+            [target.id]: nextTarget,
+          },
+        },
+        targetId: nextTarget.id,
+        rawAmount: Math.max(0, fireRes.total),
+        damageType: 'fire',
+        isCritical,
+        attackerId: attacker.id,
+        sourceName: 'Flame Tongue (ablaze)',
+        isMagical: true,
+      });
+      currentState = fireAppliedRes.state.rngState;
+      nextTarget = fireAppliedRes.state.combatants[target.id]!;
+      events.push(...fireAppliedRes.events);
+    }
 
     // Secondary on-hit steps (e.g. monster saves vs prone, poison, or paralysis)
     if (attack.secondaryOnHit && attack.secondaryOnHit.length > 0 && !nextTarget.isDead) {

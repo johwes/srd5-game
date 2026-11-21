@@ -16,6 +16,7 @@ import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
 import { rechargeHeroCharges } from './use-item.js';
 import { computeDerivedCharacter } from '../character/derived.js';
 import { getMedicineHitDieBonusPerDieFor } from '../skills/skill-passives.js';
+import { PERIAPT_ITEM_ID, hasAttunedMagicItem } from '../items/magic-items-1304.js';
 
 export interface ResolveRestOptions {
   compendium?: SrdCompendium;
@@ -92,6 +93,10 @@ export function spendHitDiceForHero(
   // Hit-Die healing +1 per die (proficient and expert alike).
   const medicineBonusPerDie = getMedicineHitDieBonusPerDieFor(hero);
 
+  // SRD-1304: Periapt of Wound Closure — double Hit Die healing while
+  // attuned and wearing the pendant.
+  const periaptDoubles = hasAttunedMagicItem(hero, PERIAPT_ITEM_ID);
+
   if (typeof spendRequest === 'number') {
     let countToSpend = Math.max(0, Math.floor(spendRequest));
     while (countToSpend > 0) {
@@ -104,7 +109,7 @@ export function spendHitDiceForHero(
       const { roll, nextState } = rollDie(currentRng, availablePool.dieSize);
       currentRng = nextState;
 
-      const hpFromDie = Math.max(0, roll + conMod + medicineBonusPerDie);
+      const hpFromDie = Math.max(0, (roll + conMod + medicineBonusPerDie) * (periaptDoubles ? 2 : 1));
       const heal = Math.min(hpFromDie, hero.maxHp - hero.currentHp);
       hero.currentHp += heal;
       totalHpRegained += heal;
@@ -129,7 +134,7 @@ export function spendHitDiceForHero(
         const { roll, nextState } = rollDie(currentRng, pool.dieSize);
         currentRng = nextState;
 
-        const hpFromDie = Math.max(0, roll + conMod + medicineBonusPerDie);
+        const hpFromDie = Math.max(0, (roll + conMod + medicineBonusPerDie) * (periaptDoubles ? 2 : 1));
         const heal = Math.min(hpFromDie, hero.maxHp - hero.currentHp);
         hero.currentHp += heal;
         totalHpRegained += heal;

@@ -408,6 +408,12 @@ export type CombatEvent =
       currentHp: number;
     }
   | {
+      /** SRD-1304: Periapt of Wound Closure auto-stabilize at turn start. */
+      type: 'STABILIZED';
+      entityId: string;
+      sourceName: string;
+    }
+  | {
       type: 'CONDITION_ADDED';
       targetId: string;
       conditionId: ConditionId;

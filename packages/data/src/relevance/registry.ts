@@ -1018,5 +1018,20 @@ export function validateRelevanceCoverage(dataset: SrdIngestionInput): Relevance
     }
   }
 
+  // 8. SRD-1304: every magic item must carry executable mechanics — a
+  // non-empty `modifiers` array or at least one activated ability. Dead
+  // entries (empty modifiers + no abilities) fail the gate.
+  for (const item of dataset.magicItems) {
+    const hasModifiers = (item.modifiers?.length ?? 0) > 0;
+    const hasAbilities = (item.activatedAbilities?.length ?? 0) > 0;
+    if (!hasModifiers && !hasAbilities) {
+      err(
+        'magic-items',
+        `Magic item "${item.id}" has empty modifiers and no activated abilities (dead entry)`,
+        item.id,
+      );
+    }
+  }
+
   return errors;
 }

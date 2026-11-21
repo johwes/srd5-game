@@ -318,4 +318,125 @@ export const SRD_MAGIC_ITEM_OVERLAYS: Readonly<Record<string, MagicItemOverlaySp
       },
     ],
   },
+  'flame-tongue': {
+    requiresAttunement: true,
+    baseEquipmentId: 'longsword',
+    modifiers: [],
+    activatedAbilities: [
+      {
+        id: 'ignite-flame-tongue',
+        name: 'Ignite Flame Tongue',
+        description:
+          'You use a bonus action to speak the command word, causing flames to erupt from the blade (bright light 40 ft, dim light 40 ft). While ablaze, the sword deals an extra 2d6 fire damage to any target it hits. Use a bonus action to speak the command word again (or drop or sheathe the sword) to extinguish the flames.',
+        actionCost: 'bonus_action',
+        targeting: { type: 'self', rangeFeet: 0 },
+        effects: [
+          {
+            step: 'apply_active_effect',
+            effectId: 'flame-tongue-ablaze',
+            name: 'Flame Tongue Ablaze',
+            durationRounds: 600,
+            requiresConcentration: false,
+            modifiers: [],
+          },
+        ],
+      },
+    ],
+  },
+  'periapt-of-wound-closure': {
+    requiresAttunement: true,
+    modifiers: [],
+    activatedAbilities: [
+      {
+        id: 'periapt-wound-closure',
+        name: 'Wound Closure',
+        description:
+          'While you wear this pendant, you stabilize whenever you are dying at the start of your turn, and whenever you roll a Hit Die to regain hit points, double the number of hit points it restores. (Passive — no action required.)',
+        actionCost: 'action',
+        targeting: { type: 'self', rangeFeet: 0 },
+        effects: [
+          {
+            step: 'manual_adjudication',
+            adjudicationId: 'periapt-wound-closure',
+            title: 'Wound Closure',
+            guidance:
+              'You stabilize at 0 HP (death saves reset, stable) at the start of your turn while dying, and you double Hit Die healing while attuned and wearing this pendant.',
+          },
+        ],
+      },
+    ],
+  },
+  'bag-of-holding': {
+    requiresAttunement: false,
+    modifiers: [
+      {
+        type: 'grant_resource',
+        resourceId: 'bag-of-holding-capacity',
+        name: 'Bag of Holding Capacity (500 lb)',
+        maxFormula: '500',
+        recovery: 'dawn',
+      },
+    ],
+  },
+  'scroll-of-fireball': {
+    requiresAttunement: false,
+    modifiers: [],
+    activatedAbilities: [
+      {
+        id: 'cast-fireball-from-scroll',
+        name: 'Cast Fireball (Scroll)',
+        description:
+          'A spell scroll bearing the words of the fireball spell (Save DC 15). Casting from the scroll is slot-free and consumes the scroll.',
+        actionCost: 'action',
+        targeting: {
+          type: 'point_aoe',
+          rangeFeet: 150,
+          aoe: { shape: 'sphere', sizeFeet: 20 },
+        },
+        effects: [
+          {
+            step: 'saving_throw',
+            ability: 'dex',
+            dcFormula: '15',
+            onFail: [
+              {
+                step: 'deal_damage',
+                diceFormula: '8d6',
+                damageType: 'fire',
+                halfOnSaveSuccess: true,
+                isMagical: true,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  'rod-of-the-pact-keeper-plus-1': {
+    requiresAttunement: true,
+    attunementRestriction: 'warlock',
+    modifiers: [
+      { type: 'flat_bonus', target: 'spell_attack', value: 1 },
+      { type: 'flat_bonus', target: 'spell_save_dc', value: 1 },
+    ],
+  },
+  'ring-of-fire-resistance': {
+    requiresAttunement: true,
+    modifiers: [
+      { type: 'damage_mitigation', mitigation: 'resistance', damageTypes: ['fire'] },
+    ],
+  },
+  'pearl-of-power': {
+    requiresAttunement: true,
+    attunementRestriction: 'spellcaster',
+    modifiers: [
+      {
+        type: 'grant_resource',
+        resourceId: 'pearl-of-power',
+        name: 'Pearl of Power',
+        maxFormula: '1',
+        recovery: 'dawn',
+      },
+    ],
+  },
 };
