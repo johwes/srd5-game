@@ -183,6 +183,41 @@ export const EncounterSpawnGroupSchema = z.object({
 export type EncounterSpawnGroup = z.infer<typeof EncounterSpawnGroupSchema>;
 
 /**
+ * Knowledge recall tag attached to a room or floor (Spec 11 §3.2 + §3.5).
+ * Emitted by hand-authored modules (Kaelen, quest chains) and by the
+ * procedural generator from seeded theme tables. Structural mirror of the
+ * engine-side `KnowledgeRecallSpec` (packages/engine/src/dungeon/recall.ts);
+ * kept here so floor/room specs validate standalone in `@srd5/data`.
+ */
+export const RecallTagRewardSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('reveal_quest'),
+    questId: z.string().min(1),
+  }),
+  z.object({
+    kind: z.literal('trap_bonus'),
+    bonus: z.number().int().min(1).max(5),
+    scope: z.string().min(1),
+  }),
+  z.object({
+    kind: z.literal('ward_info'),
+    target: z.string().min(1),
+  }),
+  z.object({
+    kind: z.literal('lore_note'),
+    text: z.string().min(1),
+  }),
+]);
+export type RecallTagReward = z.infer<typeof RecallTagRewardSchema>;
+
+export const RecallTagSchema = z.object({
+  skill: z.enum(['history', 'religion', 'arcana', 'nature']),
+  dc: z.number().int().min(1).max(30),
+  reward: RecallTagRewardSchema,
+});
+export type RecallTag = z.infer<typeof RecallTagSchema>;
+
+/**
  * Logical room specification partitioning a floor (Spec 04 Section 2 & 6).
  */
 export const DungeonRoomSpecSchema = z.object({
@@ -199,6 +234,13 @@ export const DungeonRoomSpecSchema = z.object({
       height: z.number().int().positive(),
     })
     .optional(),
+  /**
+   * SRD-1213: standing recall lenses for this room (Spec 11 §3.2 + §3.5).
+   * Hand-tagged on authored modules; emitted deterministically by the
+   * procedural generator from seeded theme tables (undead → Religion ward,
+   * wizard lair → Arcana/History, wilds → Nature, else occasional History).
+   */
+  recallTags: z.array(RecallTagSchema).optional(),
 });
 export type DungeonRoomSpec = z.infer<typeof DungeonRoomSpecSchema>;
 

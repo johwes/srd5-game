@@ -61,6 +61,13 @@ import { resolveLanguageGate, resolveOrcTribeParley } from '../language/gates.js
 import { partyCanUnderstand } from '../language/comprehension.js';
 import { resolvePatrolEncounter } from '../overworld/war-patrols.js';
 import { resolveMissionApproach } from '../overworld/war-missions.js';
+import {
+  getSkillPassiveTier,
+  getReligionHealingReceivedBonusFor,
+  getMedicineHitDieBonusPerDieFor,
+  getPartyNatureForageBonus,
+  summarizePartyPassives,
+} from '../skills/skill-passives.js';
 import { generateDraftParty } from '../remix/draft-party.js';
 
 export interface EngineRelevanceError {
@@ -76,7 +83,7 @@ export interface EngineRelevanceError {
  */
 export const ENGINE_SKILL_CONSUMERS: Record<SkillId, string[]> = {
   acrobatics: ['combat/attack.ts:executeGrapple', 'combat/attack.ts:executeShove'],
-  'animal-handling': ['social/contests.ts:resolveAnimalHandlingAttempt'],
+  'animal-handling': ['social/contests.ts:resolveAnimalHandlingAttempt', 'skills/skill-passives.ts:attitude-shift+off-road+camp-perception'],
   arcana: [
     'dungeon/recall.ts:resolveRecallAttempt(arcana)',
     'dungeon/recall.ts:resolveArcanaSpellIdentification',
@@ -86,20 +93,20 @@ export const ENGINE_SKILL_CONSUMERS: Record<SkillId, string[]> = {
     'combat/attack.ts:executeShove',
     'overworld/war-missions.ts:resolveMissionApproach',
   ],
-  deception: ['social/diplomacy.ts:resolveDiplomaticParley', 'social/contests.ts:resolveInsightContest'],
-  history: ['dungeon/recall.ts:resolveRecallAttempt(history)', 'social/diplomacy.ts:history unlock'],
-  insight: ['social/contests.ts:resolveInsightContest', 'language/gates.ts:intent cues'],
-  intimidation: ['social/contests.ts:resolveIntimidationAttempt', 'social/diplomacy.ts:resolveDiplomaticParley'],
+  deception: ['social/diplomacy.ts:resolveDiplomaticParley', 'social/contests.ts:resolveInsightContest', 'skills/skill-passives.ts:intimidation-fallback'],
+  history: ['dungeon/recall.ts:resolveRecallAttempt(history)', 'social/diplomacy.ts:history unlock', 'skills/skill-passives.ts:free-recall+boss-reveal'],
+  insight: ['social/contests.ts:resolveInsightContest', 'language/gates.ts:intent cues', 'skills/skill-passives.ts:passive-cue+intent-band'],
+  intimidation: ['social/contests.ts:resolveIntimidationAttempt', 'social/diplomacy.ts:resolveDiplomaticParley', 'skills/skill-passives.ts:morale-threshold+deception-fallback'],
   investigation: ['dungeon/props.ts:checkPassivePerceptionForProps', 'dungeon/props.ts:resolvePropInteraction'],
-  medicine: ['combat/damage.ts:stabilizeCreature', 'social/contests.ts:resolveStabilizeAttempt'],
-  nature: ['social/contests.ts:resolveNatureLoreAttempt', 'dungeon/recall.ts:resolveRecallAttempt(nature)'],
+  medicine: ['combat/damage.ts:stabilizeCreature', 'social/contests.ts:resolveStabilizeAttempt', 'skills/skill-passives.ts:hit-die-bonus+diagnosis+stabilize-advantage'],
+  nature: ['social/contests.ts:resolveNatureLoreAttempt', 'dungeon/recall.ts:resolveRecallAttempt(nature)', 'skills/skill-passives.ts:forage-bonus+affliction-advantage+camp-safety'],
   perception: [
     'dungeon/props.ts:checkPassivePerceptionForProps',
     'dungeon/props.ts:listenAtDoor',
   ],
-  performance: ['social/contests.ts:resolvePerformanceAttempt'],
+  performance: ['social/contests.ts:resolvePerformanceAttempt', 'skills/skill-passives.ts:tavern-rewards+distract-help'],
   persuasion: ['social/diplomacy.ts:resolveDiplomaticParley', 'overworld/war-patrols.ts:resolvePatrolEncounter'],
-  religion: ['dungeon/recall.ts:resolveRecallAttempt(religion)'],
+  religion: ['dungeon/recall.ts:resolveRecallAttempt(religion)', 'skills/skill-passives.ts:healing-bonus+consecrated-save+shrine-extension'],
   'sleight-of-hand': ['dungeon/theft.ts:resolveTheftAttempt'],
   stealth: ['social/contests.ts:resolveCombatHide', 'overworld/war-patrols.ts:evasion'],
   survival: ['overworld/travel+expeditions:forage/evasion'],
@@ -146,6 +153,11 @@ const ENGINE_VERB_PROOF: Record<string, unknown> = {
   resolvePatrolEncounter,
   resolveMissionApproach,
   generateDraftParty,
+  getSkillPassiveTier,
+  getReligionHealingReceivedBonusFor,
+  getMedicineHitDieBonusPerDieFor,
+  getPartyNatureForageBonus,
+  summarizePartyPassives,
 };
 
 export function getEngineVerbProof(): Record<string, unknown> {

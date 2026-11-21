@@ -21,6 +21,7 @@ import {
   nextRandomFloat,
   rollDie,
 } from '../dice/prng.js';
+import { generateFloorRecallTags } from './recall.js';
 
 /**
  * Procedural dungeon floor generator configuration (Spec 06 Section 3.1).
@@ -1192,7 +1193,18 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
     }
   }
 
-  // 13. Room Specs
+  // 13. Room Specs (+ SRD-1213 recall tags from seeded theme tables).
+  // Recall tags are a pure function of (floorId, seed, room id, theme) via
+  // fnv1a hashing — they never consume the generation RNG, so bit-exact
+  // replay of `generateDungeonFloor` (including `nextRngState`) stays green.
+  const allEncounterMonsterIds = encounters.flatMap((e) => e.monsters.map((m) => m.monsterId));
+  const recallTagsByRoom = generateFloorRecallTags({
+    floorId,
+    seed: config.seed,
+    rooms: internalRooms.map((r) => ({ id: r.id, name: r.name })),
+    monsterIds: allEncounterMonsterIds,
+    depth: config.depth,
+  });
   const roomSpecs: DungeonRoomSpec[] = internalRooms.map((r, idx) => ({
     id: r.id,
     name: r.name,
@@ -1205,6 +1217,7 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
       width: r.bounds.width,
       height: r.bounds.height,
     },
+    ...(recallTagsByRoom[r.id] ? { recallTags: recallTagsByRoom[r.id] } : {}),
   }));
 
   const floor: DungeonFloorSpec = {

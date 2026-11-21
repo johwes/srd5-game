@@ -3,6 +3,7 @@ import { rollD20, resolveRollMode, type RollMode } from '../dice/evaluator.js';
 import type { DeathSavesState } from '../character/schemas.js';
 import type { CombatEvent, CombatState, Combatant, HazardZone } from './types.js';
 import { evaluateCombatVictory } from './state-machine.js';
+import { getReligionHealingReceivedBonusFor } from '../skills/skill-passives.js';
 
 export interface DamageMitigationOptions {
   isMagical?: boolean;
@@ -556,6 +557,12 @@ export interface ApplyHealingOptions {
   targetId: string;
   amount: number;
   sourceName?: string;
+  /**
+   * SRD-1213: set false to bypass the Religion standing passive (Spec 11
+   * §3.4). Default true — proficient recipients gain +1 HP (expert +2)
+   * whenever they receive magical healing, including potions.
+   */
+  applyPassiveBonus?: boolean;
 }
 
 export interface ApplyHealingResult {
@@ -584,9 +591,16 @@ export function applyHealing(options: ApplyHealingOptions): ApplyHealingResult {
     throw new Error(`Cannot heal dead creature "${target.name}"`);
   }
 
+  // SRD-1213: Religion standing passive — +1 HP when receiving magical
+  // healing (proficient) or +2 (expert). Applies to spell healing and
+  // potions alike; both flow through this helper.
+  const passiveBonus =
+    options.applyPassiveBonus === false ? 0 : getReligionHealingReceivedBonusFor(target);
+  const effectiveAmount = Math.max(0, amount + (amount > 0 ? passiveBonus : 0));
+
   const events: CombatEvent[] = [];
   const hpBefore = target.currentHp;
-  const hpAfter = Math.min(target.maxHp, target.currentHp + Math.max(0, amount));
+  const hpAfter = Math.min(target.maxHp, target.currentHp + effectiveAmount);
   const actualHealed = hpAfter - hpBefore;
   const revivedFromZero = hpBefore === 0 && hpAfter > 0;
 

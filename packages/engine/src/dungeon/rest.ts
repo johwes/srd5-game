@@ -14,6 +14,7 @@ import { triggerDungeonEncounter } from './encounters.js';
 import { type EncounterSpawnGroup } from './schemas.js';
 import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
 import { computeDerivedCharacter } from '../character/derived.js';
+import { getMedicineHitDieBonusPerDieFor } from '../skills/skill-passives.js';
 
 export interface ResolveRestOptions {
   compendium?: SrdCompendium;
@@ -86,6 +87,10 @@ export function spendHitDiceForHero(
     (hero as unknown as { constitutionModifier?: number }).constitutionModifier ??
     0;
 
+  // SRD-1213: Medicine standing passive (Spec 11 §3.4) — administered
+  // Hit-Die healing +1 per die (proficient and expert alike).
+  const medicineBonusPerDie = getMedicineHitDieBonusPerDieFor(hero);
+
   if (typeof spendRequest === 'number') {
     let countToSpend = Math.max(0, Math.floor(spendRequest));
     while (countToSpend > 0) {
@@ -98,7 +103,7 @@ export function spendHitDiceForHero(
       const { roll, nextState } = rollDie(currentRng, availablePool.dieSize);
       currentRng = nextState;
 
-      const hpFromDie = Math.max(0, roll + conMod);
+      const hpFromDie = Math.max(0, roll + conMod + medicineBonusPerDie);
       const heal = Math.min(hpFromDie, hero.maxHp - hero.currentHp);
       hero.currentHp += heal;
       totalHpRegained += heal;
@@ -123,7 +128,7 @@ export function spendHitDiceForHero(
         const { roll, nextState } = rollDie(currentRng, pool.dieSize);
         currentRng = nextState;
 
-        const hpFromDie = Math.max(0, roll + conMod);
+        const hpFromDie = Math.max(0, roll + conMod + medicineBonusPerDie);
         const heal = Math.min(hpFromDie, hero.maxHp - hero.currentHp);
         hero.currentHp += heal;
         totalHpRegained += heal;

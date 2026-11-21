@@ -17,6 +17,7 @@ import { isSummonTargetable } from './summon.js';
 import { isIncapacitated } from './turn-budget.js';
 import { getCombatantCasterLevel, getCasterSpellContext } from './spellcasting.js';
 import { WISH_BOON_IDS, resolveWishBoon } from './capstones.js';
+import { getReligionHealingReceivedBonusFor } from '../skills/skill-passives.js';
 
 let defaultCompendium: SrdCompendium | null = null;
 function getDefaultCompendium(): SrdCompendium {
@@ -568,7 +569,12 @@ export function executeOutOfCombatSpellCast(
         });
         const amount = Math.max(0, healRes.total);
         const hpBefore = target.currentHp;
-        const hpAfter = Math.min(target.maxHp, hpBefore + amount);
+        // SRD-1213: Religion standing passive (+1 prof / +2 expert) applies
+        // to out-of-combat magical healing exactly as in combat.
+        const hpAfter = Math.min(
+          target.maxHp,
+          hpBefore + amount + (amount > 0 ? getReligionHealingReceivedBonusFor(target) : 0),
+        );
         const revivedFromZero = hpBefore === 0 && hpAfter > 0;
         const nextConditions = revivedFromZero
           ? target.conditions.filter((c) => c !== 'unconscious')

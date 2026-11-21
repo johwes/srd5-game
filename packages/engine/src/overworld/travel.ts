@@ -449,6 +449,12 @@ export function travelAlongPath(
 export interface ForageOptions {
   /** Bonus from Survival proficiency / guide features (default 0). */
   survivalBonus?: number;
+  /**
+   * SRD-1213: Nature standing-passive bonus rations (Spec 11 §3.4 —
+   * proficient/expert foragers yield +1). Added to a successful forage;
+   * compute via `getPartyNatureForageBonus(party)` and pass in.
+   */
+  natureBonusRations?: number;
 }
 
 export interface ForageResult {
@@ -496,6 +502,8 @@ export function forageForRations(
     rngState = yieldResult.nextState;
     rationsFound = yieldResult.roll;
     if (total >= dc + 5) rationsFound += 1; // exceptional success
+    // SRD-1213: Nature standing passive — proficient/expert foragers yield +1.
+    rationsFound += Math.max(0, Math.floor(options.natureBonusRations ?? 0));
   }
 
   const remaining = round2(Math.max(0, state.travelPointsRemaining - FORAGE_POINT_COST));
