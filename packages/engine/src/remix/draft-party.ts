@@ -234,7 +234,7 @@ const CLASS_GEAR_TEMPLATES: Record<string, ClassGearTemplate> = {
     ],
     equippedSlots: { armorItemId: 'leather-armor', mainHandItemId: 'rapier' },
     cantrips: ['vicious-mockery', 'light'],
-    spellsKnown: ['cure-wounds', 'dissonant-whispers', 'faerie-fire', 'thunderwave'],
+    spellsKnown: ['cure-wounds', 'charm-person', 'faerie-fire', 'thunderwave'],
     skills: ['persuasion', 'performance', 'deception'],
   },
   sorcerer: {
@@ -259,7 +259,7 @@ const CLASS_GEAR_TEMPLATES: Record<string, ClassGearTemplate> = {
     ],
     equippedSlots: { armorItemId: 'leather-armor', mainHandItemId: 'quarterstaff' },
     cantrips: ['eldritch-blast', 'chill-touch'],
-    spellsKnown: ['hex', 'arms-of-hadar'],
+    spellsKnown: ['hellish-rebuke', 'charm-person'],
     skills: ['arcana', 'intimidation'],
   },
 };

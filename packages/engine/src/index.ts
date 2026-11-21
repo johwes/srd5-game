@@ -21,3 +21,4 @@ export * from './ai/index.js';
 export * from './remix/index.js';
 export * from './language/index.js';
 export * from './social/index.js';
+export * from './tabletop/index.js';

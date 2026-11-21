@@ -12,6 +12,7 @@ export * from './schemas/index.js';
 export * from './ingestion/index.js';
 export * from './overlays/index.js';
 export * from './validation/index.js';
+export * from './relevance/index.js';
 export * from './srd/index.js';
 export * from './compendium/index.js';
 export * from './pregens/index.js';

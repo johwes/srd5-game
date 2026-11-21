@@ -41,9 +41,10 @@ import {
   SubclassSchema,
   SubraceSchema,
 } from '../schemas/index.js';
+import { validateRelevanceCoverage } from '../relevance/index.js';
 
 export interface SrdValidationError {
-  category: 'schema' | 'duplicate_id' | 'cross_reference' | 'formula_syntax' | 'allowlist';
+  category: 'schema' | 'duplicate_id' | 'cross_reference' | 'formula_syntax' | 'allowlist' | 'relevance';
   collection: string;
   entityId?: string;
   message: string;
@@ -1303,6 +1304,13 @@ export function validateSrdDataset(
         checkFormula('monsters', monster.id, f, `legendaryAction(${legAction.id}).${ctx}`),
       );
     }
+  }
+
+  // 11. SRD-1212 relevance contract: every offered spell/skill/language must
+  // resolve or carry an explicit tracking ticket. Runs inside the shared
+  // validator so the integrity suite fails on new dangling offered content.
+  for (const relevanceError of validateRelevanceCoverage(dataset)) {
+    errors.push(relevanceError);
   }
 
   return {
