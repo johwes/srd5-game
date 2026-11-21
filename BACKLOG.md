@@ -285,7 +285,7 @@ flowchart LR
 | **SRD-1203** | `[x]` | Out-of-combat casting path (exploration/social) incl. ritual time costs — MUST include out-of-combat healing (`cure-wounds` et al.); blocks knock/detect-magic/ritual value | `@srd5/engine`, `@srd5/transport` | SRD-306 |
 | **SRD-1204** | `[x]` | Marker-spell enforcement: `detect-magic` sense, `knock` prop hook + alert tradeoff, `sanctuary` ward, `sleep` HP-pool, `shield` buff-id fix | `@srd5/engine` | SRD-1203, SRD-308 |
 | **SRD-1205** | `[x]` | Hazard-zone `onEnter` step coverage (no silent drops) + shared-language preconditions on enchantments | `@srd5/engine` | SRD-308 |
-| **SRD-1206** | `[ ]` | Sleight of Hand theft verb (pickpocket/plant/lift, tools advantage, caught branches) + Fast Hands bonus-action tie-in | `@srd5/engine`, `@srd5/client` | SRD-502 |
+| **SRD-1206** | `[x]` | Sleight of Hand theft verb (pickpocket/plant/lift, tools advantage, caught branches) + Fast Hands bonus-action tie-in | `@srd5/engine`, `@srd5/client` | SRD-502 |
 | **SRD-1207** | `[ ]` | Knowledge recall passives (`history`/`religion`/`arcana`/`nature` DC tags, trap/ward bonuses, counterspell identification) | `@srd5/engine`, `@srd5/data` | SRD-502, SRD-1103 |
 | **SRD-1208** | `[ ]` | Opposed Insight vs Deception; Medicine stabilize check; Intimidation/Animal Handling/Nature/Performance homes; real combat `hide` | `@srd5/engine` | SRD-304, SRD-305 |
 | **SRD-1209** | `[ ]` | Diplomacy template (History unlocks → Insight reads → triple-approach resolve, fail-forward) on tribe/envoy/truce missions | `@srd5/engine`, `@srd5/client` | SRD-1104, SRD-1208 |

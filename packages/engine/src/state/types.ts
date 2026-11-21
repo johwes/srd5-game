@@ -164,6 +164,15 @@ export type GameCommand =
       propId: string;
     }
   | {
+      type: 'ATTEMPT_THEFT';
+      actorId: string;
+      targetId: string;
+      kind: 'pickpocket' | 'plant' | 'lift';
+      liftWhat?: 'key' | 'pouch';
+      asBonusAction?: boolean;
+      dcOverride?: number;
+    }
+  | {
       type: 'START_REST';
       restType: 'short' | 'long';
       hitDiceToSpend?: Record<string, number | Record<number, number>>;
@@ -350,6 +359,7 @@ export type GameEvent =
         | 'perception'
         | 'investigation'
         | 'thieves_tools'
+        | 'sleight_of_hand'
         | 'athletics'
         | 'attack'
         | 'saving_throw';
@@ -362,6 +372,23 @@ export type GameEvent =
       triggered?: boolean;
       /** Human-readable finding (e.g. a Listen-at-door hint). */
       note?: string;
+    }
+  | {
+      type: 'THEFT_RESOLVED';
+      actorId: string;
+      targetId: string;
+      kind: 'pickpocket' | 'plant' | 'lift';
+      liftWhat?: 'key' | 'pouch';
+      success: boolean;
+      caught: boolean;
+      roll: number;
+      modifier: number;
+      total: number;
+      dc: number;
+      hadToolsAdvantage: boolean;
+      asBonusAction: boolean;
+      goldStolen?: number;
+      headline: string;
     }
   | {
       type: 'LOOT_ACQUIRED';

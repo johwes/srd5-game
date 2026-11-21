@@ -8,3 +8,4 @@ export * from './loot.js';
 export * from './level-up-flow.js';
 export * from './generator.js';
 export * from './roguelite.js';
+export * from './theft.js';

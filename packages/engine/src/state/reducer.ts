@@ -45,6 +45,7 @@ import {
   resolvePropInteraction,
   resolveKnockOnProp,
 } from '../dungeon/props.js';
+import { resolveTheftAttempt } from '../dungeon/theft.js';
 import { senseDetectMagic } from '../combat/marker-spells.js';
 import {
   checkDungeonEncounterTriggers,
@@ -971,6 +972,25 @@ export function reduceGame(
       });
       nextState = listenRes.nextState;
       events.push(...listenRes.events);
+      break;
+    }
+
+    case 'ATTEMPT_THEFT': {
+      const theftRes = resolveTheftAttempt({
+        state: nextState,
+        actorId: command.actorId,
+        targetId: command.targetId,
+        kind: command.kind,
+        liftWhat: command.liftWhat,
+        asBonusAction: command.asBonusAction,
+        dcOverride: command.dcOverride,
+      });
+      nextState = theftRes.nextState;
+      // Sync combat rng + mirrors (resolveTheftAttempt already mirrors).
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...theftRes.events);
       break;
     }
 
