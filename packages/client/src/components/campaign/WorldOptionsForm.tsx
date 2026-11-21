@@ -174,7 +174,7 @@ export function WorldOptionsForm({ value, onChange, showWarIntensity = true }: W
           </button>
         </div>
         <div data-testid="world-seed-preview" className="text-[11px] text-slate-400">
-          Rolled visibly: <span className="font-mono text-slate-200">{seedHex}</span>
+          Rolled visibly: <span className="font-mono text-slate-200">{value.seed} · {seedHex}</span>
           {value.seedSource === 'daily' && value.dailyDate ? (
             <span> · Daily {value.dailyDate}</span>
           ) : value.seedSource === 'manual' ? (
