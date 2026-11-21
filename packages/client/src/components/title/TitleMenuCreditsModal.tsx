@@ -80,10 +80,22 @@ export function TitleMenuCreditsModal({ isOpen, onClose }: TitleMenuModalProps) 
                 Lorc, Delapouite, Carl Olsen, and contributors, licensed under CC-BY 3.0.
               </li>
               <li>
+                <span className="font-medium text-amber-200">RPG Awesome</span> — Created by
+                Daniela Howe and contributors, font licensed under SIL OFL 1.1, CSS under
+                MIT.
+              </li>
+              <li>
                 <span className="font-medium text-amber-200">DawnLike 16x16 Tileset</span> — Created
                 by DragonDePlatino &amp; DawnBringer, licensed under CC-BY 4.0 / CC-BY-SA 3.0.
               </li>
             </ul>
+            <p
+              data-testid="credits-item-icons-line"
+              className="leading-relaxed text-slate-400 text-xs pt-1"
+            >
+              Item icons: game-icons.net contributors (CC BY 3.0); RPG Awesome (OFL/MIT);
+              UI frames: Kenney.nl (CC0).
+            </p>
           </section>
         </div>
 

@@ -289,8 +289,10 @@ describe('SRD-601: Title Screen & Main Menu (TitleMenuView)', () => {
       expect(screen.getByTestId('title-menu-credits-modal')).toBeDefined();
       expect(screen.getByText(SRD_LEGAL_ATTRIBUTION)).toBeDefined();
       expect(screen.getByText(/Kenney Tiny Dungeon/i)).toBeDefined();
-      expect(screen.getByText(/Game-Icons\.net/i)).toBeDefined();
+      // SRD-1301 added a second game-icons.net mention (item-icons line).
+      expect(screen.getAllByText(/Game-Icons\.net/i).length).toBeGreaterThanOrEqual(2);
       expect(screen.getByText(/DawnLike 16x16 Tileset/i)).toBeDefined();
+      expect(screen.getByTestId('credits-item-icons-line')).toBeDefined();
 
       fireEvent.click(screen.getByTestId('title-menu-credits-close-btn'));
       expect(onClose).toHaveBeenCalled();
