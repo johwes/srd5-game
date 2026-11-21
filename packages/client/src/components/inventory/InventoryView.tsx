@@ -1,0 +1,510 @@
+import React, { useMemo, useState } from 'react';
+import type { InventoryItemInstance, SrdCompendium } from '@srd5/data';
+import { ItemIcon } from './ItemIcon.js';
+import { ItemTooltipCard } from './ItemTooltipCard.js';
+import { InventoryGridCell } from './InventoryGridCell.js';
+import {
+  INVENTORY_FILTERS,
+  INVENTORY_FILTER_LABELS,
+  getInventoryFilterCategory,
+  getInventoryItemName,
+  getInventoryTotalWeightLb,
+  isInventoryItemAttunable,
+  isInventoryItemUsable,
+  type InventoryFilterKey,
+} from './inventoryCategories.js';
+import {
+  candidateSlotsForItem,
+  compareItemToEquipped,
+  suggestEquipSlot,
+} from './inventoryCompare.js';
+import {
+  formatRarityLabel,
+  getItemRarityForMagicItem,
+  getRarityBorderClass,
+  getRarityTextClass,
+} from './itemRarity.js';
+import { formatTitleCase } from '../compendium/formatters.js';
+
+/** The 5 engine paperdoll slots mirrored by the BG3-style grid (Spec 12 §8). */
+export type InventorySlotName = 'armor' | 'shield' | 'mainHand' | 'offHand' | 'ranged';
+
+export const PAPERDOLL_SLOTS: readonly InventorySlotName[] = [
+  'armor',
+  'shield',
+  'mainHand',
+  'offHand',
+  'ranged',
+] as const;
+
+export const PAPERDOLL_SLOT_LABELS: Record<InventorySlotName, string> = {
+  armor: 'Armor',
+  shield: 'Shield',
+  mainHand: 'Main Hand',
+  offHand: 'Off Hand',
+  ranged: 'Ranged',
+};
+
+/**
+ * Read one equipped instance id from either slot-key shape:
+ * - short UI form `{ armor: '<inst>' }` (used by `LootInventoryModal`), or
+ * - long engine form `{ armorInstanceId: '<inst>' }` (written by dispatches).
+ */
+export function resolveEquippedInstanceId(
+  slots: Record<string, string | undefined> | undefined | null,
+  slot: InventorySlotName,
+): string | undefined {
+  if (!slots) return undefined;
+  return slots[slot] ?? slots[`${slot}InstanceId`];
+}
+
+export interface InventoryViewCurrency {
+  cp?: number;
+  sp?: number;
+  ep?: number;
+  gp?: number;
+  pp?: number;
+}
+
+export interface InventoryViewProps {
+  /** Owning hero id (dispatched back on equip/attune/use). */
+  heroId: string;
+  /** Owning hero display name. */
+  heroName: string;
+  /** Full backpack incl. equipped instances. */
+  inventory: readonly InventoryItemInstance[];
+  /** Equipped slots (short or long key shape). */
+  equippedSlots: Record<string, string | undefined>;
+  /** Attuned instance ids (max 3). */
+  attunedItemInstanceIds: readonly string[];
+  /** Coin purse. */
+  currency?: InventoryViewCurrency;
+  /** Compendium for lookups. */
+  compendium: SrdCompendium;
+  /** Equip (or unequip when `instanceId` is `undefined`). */
+  onEquipItem: (slot: InventorySlotName, instanceId: string | undefined) => void;
+  /** Attune / unattune by instance id. */
+  onAttuneItem: (instanceId: string) => void;
+  onUnattuneItem: (instanceId: string) => void;
+  /** Optional Use action (potions, scrolls, wands). */
+  onUseItem?: (instanceId: string) => void;
+  /** Test id prefix. Defaults to `inventory`. */
+  testIdPrefix?: string;
+}
+
+/**
+ * SRD-1305 BG3-style graphical inventory (Spec 12 §8).
+ *
+ * Left: visual paperdoll — the 5 engine slots as large icon slots with
+ * rarity borders and attunement pips; click inspects, click-then-click with
+ * a selected backpack item equips it, drag-and-drop works the same, and
+ * every slot is a focusable button so focus + Enter (Steam Deck) has full
+ * parity with mouse/touch.
+ *
+ * Right: icon-grid backpack with stack counts, rarity borders, type
+ * filters, text search, and a selection action bar (Equip / Use / Attune)
+ * with `+1 AC`-style compare deltas in the tooltip and the action bar.
+ */
+export function InventoryView({
+  heroId,
+  heroName,
+  inventory,
+  equippedSlots,
+  attunedItemInstanceIds,
+  currency,
+  compendium,
+  onEquipItem,
+  onAttuneItem,
+  onUnattuneItem,
+  onUseItem,
+  testIdPrefix = 'inventory',
+}: InventoryViewProps) {
+  const prefix = `${testIdPrefix}-${heroId}`;
+  const [filter, setFilter] = useState<InventoryFilterKey>('all');
+  const [search, setSearch] = useState('');
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+
+  const instanceById = useMemo(() => {
+    const map = new Map<string, InventoryItemInstance>();
+    for (const inst of inventory) map.set(inst.instanceId, inst);
+    return map;
+  }, [inventory]);
+
+  const equippedInstanceBySlot = useMemo(() => {
+    const map = new Map<InventorySlotName, InventoryItemInstance>();
+    for (const slot of PAPERDOLL_SLOTS) {
+      const instId = resolveEquippedInstanceId(equippedSlots, slot);
+      const inst = instId ? instanceById.get(instId) : undefined;
+      if (inst) map.set(slot, inst);
+    }
+    return map;
+  }, [equippedSlots, instanceById]);
+
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return inventory.filter((inst) => {
+      if (filter !== 'all' && getInventoryFilterCategory(inst.itemId, compendium) !== filter) {
+        return false;
+      }
+      if (needle.length > 0) {
+        const name = getInventoryItemName(inst.itemId, compendium).toLowerCase();
+        if (!name.includes(needle) && !inst.itemId.toLowerCase().includes(needle)) return false;
+      }
+      return true;
+    });
+  }, [inventory, filter, search, compendium]);
+
+  const selected = selectedInstanceId ? (instanceById.get(selectedInstanceId) ?? null) : null;
+  const selectedSlots = selected ? candidateSlotsForItem(selected.itemId, compendium) : [];
+  const selectedSuggested = selected ? suggestEquipSlot(selected.itemId, compendium) : null;
+  const selectedUsable = selected ? isInventoryItemUsable(selected.itemId, compendium) : false;
+  const selectedAttunable = selected ? isInventoryItemAttunable(selected.itemId, compendium) : false;
+  const selectedIsAttuned = selected ? attunedItemInstanceIds.includes(selected.instanceId) : false;
+  const selectedCompare = selected
+    ? compareItemToEquipped(
+        selected.itemId,
+        selectedSuggested
+          ? (equippedInstanceBySlot.get(selectedSuggested)?.itemId ?? null)
+          : null,
+        compendium,
+      )
+    : [];
+
+  const totalWeightLb = getInventoryTotalWeightLb(inventory, compendium);
+  const totalGp =
+    (currency?.cp ?? 0) / 100 +
+    (currency?.sp ?? 0) / 10 +
+    (currency?.ep ?? 0) / 2 +
+    (currency?.gp ?? 0) +
+    (currency?.pp ?? 0) * 10;
+
+  const handleDropOnSlot = (event: React.DragEvent, slot: InventorySlotName) => {
+    event.preventDefault();
+    const instId =
+      event.dataTransfer.getData('text/inventory-instance-id') ||
+      event.dataTransfer.getData('text/plain');
+    const inst = instId ? instanceById.get(instId) : undefined;
+    if (!inst) return;
+    if (!candidateSlotsForItem(inst.itemId, compendium).includes(slot)) return;
+    onEquipItem(slot, inst.instanceId);
+    setSelectedInstanceId(inst.instanceId);
+  };
+
+  const handlePaperdollClick = (slot: InventorySlotName) => {
+    // Click-then-click equip: a selected backpack item that fits this slot
+    // equips here; otherwise the click inspects the current occupant.
+    if (selected && selectedSlots.includes(slot)) {
+      onEquipItem(slot, selected.instanceId);
+      return;
+    }
+    const occupant = equippedInstanceBySlot.get(slot);
+    setSelectedInstanceId(occupant ? occupant.instanceId : null);
+  };
+
+  return (
+    <div data-testid={`${prefix}-view`} className="flex flex-col gap-3">
+      {/* Currency + encumbrance-display strip (display only; no enforcement). */}
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <div data-testid={`${prefix}-currency`} className="font-medium text-slate-300">
+          💰 {totalGp.toFixed(1)} gp total
+          <span className="text-slate-500">
+            {' '}
+            ({currency?.cp ?? 0}cp {currency?.sp ?? 0}sp {currency?.ep ?? 0}ep {currency?.gp ?? 0}gp{' '}
+            {currency?.pp ?? 0}pp)
+          </span>
+        </div>
+        <div data-testid={`${prefix}-weight`} className="font-medium text-slate-400">
+          ⚖️ {totalWeightLb} lb. carried
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-3">
+        {/* ── Left: visual paperdoll ── */}
+        <div data-testid={`${prefix}-paperdoll`} aria-label={`${heroName} paperdoll`}>
+          <div className="text-[10px] font-semibold uppercase text-slate-400 mb-1.5">
+            🛡️ {heroName} — Equipped
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {PAPERDOLL_SLOTS.map((slot) => {
+              const occupant = equippedInstanceBySlot.get(slot);
+              const magic = occupant ? compendium.getMagicItem(occupant.itemId) : undefined;
+              const equip = occupant && !magic ? compendium.getEquipment(occupant.itemId) : undefined;
+              const rarity = getItemRarityForMagicItem(magic ?? null);
+              const name = occupant ? getInventoryItemName(occupant.itemId, compendium) : 'Empty';
+              const isAttuned = occupant ? attunedItemInstanceIds.includes(occupant.instanceId) : false;
+              return (
+                <div key={slot} className="flex flex-col gap-1">
+                  <div className="text-[10px] uppercase font-semibold text-slate-500">
+                    {PAPERDOLL_SLOT_LABELS[slot]}
+                  </div>
+                  <button
+                    type="button"
+                    data-testid={`${prefix}-paperdoll-slot-${slot}`}
+                    aria-label={`${PAPERDOLL_SLOT_LABELS[slot]} slot${occupant ? `: ${name}` : ' (empty)'}`}
+                    title={occupant ? name : `${PAPERDOLL_SLOT_LABELS[slot]} (empty)`}
+                    onClick={() => handlePaperdollClick(slot)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => handleDropOnSlot(event, slot)}
+                    className={`group relative flex flex-col items-center justify-center gap-0.5 min-h-20 rounded-xl bg-slate-900 border-2 p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 transition-colors ${getRarityBorderClass(rarity)} ${selected && selectedSlots.includes(slot) ? 'ring-2 ring-amber-400/70' : ''}`}
+                  >
+                    {occupant ? (
+                      <>
+                        <ItemIcon
+                          itemId={occupant.itemId}
+                          size={30}
+                          testId={`${prefix}-paperdoll-icon`}
+                        />
+                        <span
+                          className={`max-w-full truncate text-[10px] font-semibold ${getRarityTextClass(rarity)}`}
+                        >
+                          {name}
+                        </span>
+                        {isAttuned && (
+                          <span
+                            data-testid={`${prefix}-paperdoll-attuned-${slot}`}
+                            title="Attuned"
+                            className="absolute top-1 right-1 text-xs leading-none"
+                          >
+                            🟣
+                          </span>
+                        )}
+                        <ItemTooltipCard
+                          itemId={occupant.itemId}
+                          name={name}
+                          rarity={rarity}
+                          categoryLabel={
+                            magic
+                              ? formatTitleCase(magic.category)
+                              : equip
+                                ? formatTitleCase(equip.kind)
+                                : 'Item'
+                          }
+                          description={
+                            magic?.description ??
+                            (equip as { description?: string } | undefined)?.description ??
+                            'No description available.'
+                          }
+                          modifiers={magic?.modifiers ?? null}
+                          activatedAbilities={magic?.activatedAbilities ?? null}
+                          charges={
+                            magic?.charges
+                              ? {
+                                  max: magic.charges.max,
+                                  remaining: occupant.chargesRemaining,
+                                  rechargeFormula: magic.charges.rechargeFormula,
+                                  rechargeTiming: magic.charges.rechargeTiming ?? undefined,
+                                }
+                              : null
+                          }
+                          requiresAttunement={Boolean(magic?.requiresAttunement)}
+                          attunementState={isAttuned ? 'attuned' : 'unattuned'}
+                          testIdPrefix={`${prefix}-paperdoll-${slot}`}
+                        />
+                      </>
+                    ) : (
+                      <span className="text-[11px] text-slate-600 font-medium">Empty</span>
+                    )}
+                  </button>
+                  {occupant && (
+                    <button
+                      type="button"
+                      data-testid={`${prefix}-unequip-${slot}`}
+                      onClick={() => {
+                        onEquipItem(slot, undefined);
+                        if (selectedInstanceId === occupant.instanceId) setSelectedInstanceId(null);
+                      }}
+                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    >
+                      Unequip
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-1 text-[10px] text-purple-300/90" data-testid={`${prefix}-attunement-count`}>
+            🔮 Attuned {attunedItemInstanceIds.length} / 3 max
+          </div>
+        </div>
+
+        {/* ── Right: backpack grid ── */}
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 mb-1.5" role="group" aria-label="Backpack filters">
+            {INVENTORY_FILTERS.map((key) => (
+              <button
+                key={key}
+                type="button"
+                data-testid={`${prefix}-filter-${key}`}
+                aria-pressed={filter === key}
+                onClick={() => setFilter(key)}
+                className={`px-2 py-1 rounded-md text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${filter === key ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white'}`}
+              >
+                {INVENTORY_FILTER_LABELS[key]}
+              </button>
+            ))}
+            <input
+              type="search"
+              data-testid={`${prefix}-search`}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search items…"
+              aria-label="Search backpack"
+              className="ml-auto px-2 py-1 rounded-md bg-slate-950 border border-slate-700 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 w-36"
+            />
+          </div>
+
+          <div
+            data-testid={`${prefix}-grid`}
+            role="grid"
+            aria-label={`${heroName} backpack (${filtered.length} items)`}
+            className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800 max-h-72 overflow-y-auto"
+          >
+            {filtered.length === 0 ? (
+              <div
+                data-testid={`${prefix}-grid-empty`}
+                className="col-span-full p-4 text-center text-xs text-slate-500"
+              >
+                {inventory.length === 0 ? 'Backpack is empty.' : 'No items match this filter.'}
+              </div>
+            ) : (
+              filtered.map((inst) => {
+                const compareLines = compareItemToEquipped(
+                  inst.itemId,
+                  (() => {
+                    const suggested = suggestEquipSlot(inst.itemId, compendium);
+                    return suggested
+                      ? (equippedInstanceBySlot.get(suggested)?.itemId ?? null)
+                      : null;
+                  })(),
+                  compendium,
+                );
+                return (
+                  <InventoryGridCell
+                    key={inst.instanceId}
+                    itemId={inst.itemId}
+                    instanceId={inst.instanceId}
+                    quantity={inst.quantity}
+                    attunementState={
+                      isInventoryItemAttunable(inst.itemId, compendium)
+                        ? attunedItemInstanceIds.includes(inst.instanceId)
+                          ? 'attuned'
+                          : 'unattuned'
+                        : 'n/a'
+                    }
+                    chargesRemaining={inst.chargesRemaining}
+                    provenanceLine={compareLines.length > 0 ? compareLines.join('; ') : undefined}
+                    compendium={compendium}
+                    selected={selectedInstanceId === inst.instanceId}
+                    draggable={candidateSlotsForItem(inst.itemId, compendium).length > 0}
+                    testIdPrefix={prefix}
+                    onSelect={setSelectedInstanceId}
+                    onDragStartInstance={(event, dragId) => {
+                      event.dataTransfer.setData('text/inventory-instance-id', dragId);
+                      event.dataTransfer.effectAllowed = 'move';
+                    }}
+                  />
+                );
+              })
+            )}
+          </div>
+
+          {/* Selection action bar: Equip / Use / Attune + compare deltas. */}
+          {selected && (
+            <div
+              data-testid={`${prefix}-actions-${selected.instanceId}`}
+              className="mt-1.5 p-2 rounded-xl bg-slate-900 border border-amber-500/40 flex flex-col gap-1.5"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-slate-100 truncate">
+                  {getInventoryItemName(selected.itemId, compendium)}
+                  {selected.quantity > 1 && (
+                    <span className="text-slate-400"> ×{selected.quantity}</span>
+                  )}
+                  {magicRarityBadge(selected.itemId, compendium)}
+                </div>
+                <button
+                  type="button"
+                  data-testid={`${prefix}-deselect`}
+                  onClick={() => setSelectedInstanceId(null)}
+                  aria-label="Clear selection"
+                  className="text-slate-500 hover:text-white text-sm px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
+                >
+                  ✕
+                </button>
+              </div>
+              {selectedCompare.length > 0 ? (
+                <div
+                  data-testid={`${prefix}-compare-${selected.instanceId}`}
+                  className="text-[11px] text-emerald-300 font-medium"
+                >
+                  ⚖ {selectedCompare.join(' · ')}
+                </div>
+              ) : (
+                <div
+                  data-testid={`${prefix}-compare-${selected.instanceId}`}
+                  className="text-[11px] text-slate-500"
+                >
+                  {selectedSuggested ? 'No stat change vs equipped.' : 'Not equippable — works from the backpack.'}
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {selectedSlots.map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    data-testid={`${prefix}-equip-${selected.instanceId}-${slot}`}
+                    onClick={() => onEquipItem(slot, selected.instanceId)}
+                    className={`px-2 py-1 rounded text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${slot === selectedSuggested ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'}`}
+                  >
+                    Equip → {PAPERDOLL_SLOT_LABELS[slot]}
+                  </button>
+                ))}
+                {selectedUsable && onUseItem && (
+                  <button
+                    type="button"
+                    data-testid={`${prefix}-use-${selected.instanceId}`}
+                    onClick={() => onUseItem(selected.instanceId)}
+                    className="px-2 py-1 rounded bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-200 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                  >
+                    Use
+                  </button>
+                )}
+                {selectedAttunable &&
+                  (selectedIsAttuned ? (
+                    <button
+                      type="button"
+                      data-testid={`${prefix}-unattune-${selected.instanceId}`}
+                      onClick={() => onUnattuneItem(selected.instanceId)}
+                      className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    >
+                      Unattune
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      data-testid={`${prefix}-attune-${selected.instanceId}`}
+                      disabled={attunedItemInstanceIds.length >= 3}
+                      onClick={() => onAttuneItem(selected.instanceId)}
+                      className="px-2 py-1 rounded bg-purple-900/60 hover:bg-purple-800 border border-purple-700/60 text-purple-200 text-[11px] font-semibold disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                    >
+                      Attune{attunedItemInstanceIds.length >= 3 ? ' (3 max)' : ''}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function magicRarityBadge(itemId: string, compendium: SrdCompendium): React.ReactNode {
+  const magic = compendium.getMagicItem(itemId);
+  if (!magic) return null;
+  return (
+    <span className="ml-1.5 text-[10px] text-slate-400 font-normal">
+      {formatRarityLabel(getItemRarityForMagicItem(magic))}
+    </span>
+  );
+}

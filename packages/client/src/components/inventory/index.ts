@@ -4,3 +4,7 @@ export * from './itemRarity.js';
 export * from './itemEffectSummary.js';
 export * from './ItemTooltipCard.js';
 export * from './InventoryItemRow.js';
+export * from './InventoryGridCell.js';
+export * from './InventoryView.js';
+export * from './inventoryCategories.js';
+export * from './inventoryCompare.js';

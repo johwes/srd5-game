@@ -54,7 +54,7 @@ importers:
         specifier: ^19.0.0
         version: 19.3.1(react@19.3.1)
       rpg-awesome:
-        specifier: 0.2.0
+        specifier: ^0.2.0
         version: 0.2.0
       zustand:
         specifier: ^5.0.2

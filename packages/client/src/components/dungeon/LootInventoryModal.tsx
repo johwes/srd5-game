@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import type { InventoryItemInstance } from '@srd5/data';
 import type { LootInventoryModalProps } from './types.js';
-import { InventoryItemRow } from '../inventory/InventoryItemRow.js';
+import { InventoryGridCell } from '../inventory/InventoryGridCell.js';
+import { InventoryView } from '../inventory/InventoryView.js';
 
 export function LootInventoryModal({
   isOpen,
@@ -55,7 +56,7 @@ export function LootInventoryModal({
     buildState?.inventory ?? (sheet as any)?.inventory ?? [];
   const currency =
     buildState?.currency ?? (sheet as any)?.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
-  const equippedSlots =
+  const equippedSlots: Record<string, string | undefined> =
     buildState?.equippedSlots ?? (sheet as any)?.equippedSlots ?? {};
   const attunedIds: string[] =
     buildState?.attunedItemInstanceIds ?? (sheet as any)?.attunement?.attunedItemIds ?? [];
@@ -66,26 +67,6 @@ export function LootInventoryModal({
     setActiveTab('inventory');
   };
 
-  const getItemName = (itemId: string): string => {
-    const magic = compendium.magicItems?.find((m) => m.id === itemId);
-    if (magic) return magic.name;
-    const equip = compendium.equipment?.find((e) => e.id === itemId);
-    if (equip) return equip.name;
-    return itemId.replace(/[-_]/g, ' ');
-  };
-
-  const isMagicItemRequiringAttunement = (itemId: string): boolean => {
-    const magic = compendium.magicItems?.find((m) => m.id === itemId);
-    return Boolean(magic?.requiresAttunement);
-  };
-
-  const totalCurrencyGp =
-    (currency.cp ?? 0) / 100 +
-    (currency.sp ?? 0) / 10 +
-    (currency.ep ?? 0) / 2 +
-    (currency.gp ?? 0) +
-    (currency.pp ?? 0) * 10;
-
   return (
     <div
       role="dialog"
@@ -93,7 +74,7 @@ export function LootInventoryModal({
       aria-labelledby="loot-inventory-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
     >
-      <div className="w-full max-w-2xl rounded-xl border border-slate-700 bg-slate-900 shadow-2xl p-6 text-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-4xl rounded-xl border border-slate-700 bg-slate-900 shadow-2xl p-6 text-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
         <header className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
             <h2 id="loot-inventory-title" className="text-xl font-bold text-amber-400">
@@ -183,19 +164,23 @@ export function LootInventoryModal({
                 </div>
               </div>
 
-              {/* Items List */}
+              {/* Items Grid (SRD-1305: icon-grid cells replace text rows) */}
               {activeLoot.bundle.items && activeLoot.bundle.items.length > 0 && (
                 <div className="space-y-1.5 pt-2 border-t border-slate-800">
                   <div className="text-xs font-semibold text-slate-400 uppercase">
                     Items &amp; Relics:
                   </div>
-                  <div className="space-y-1">
+                  <div
+                    data-testid="discovered-loot-grid"
+                    className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800"
+                  >
                     {activeLoot.bundle.items.map((itemId, idx) => (
-                      <InventoryItemRow
+                      <InventoryGridCell
                         key={`${itemId}-${idx}`}
                         itemId={itemId}
+                        instanceId={`discovered-${itemId}-${idx}`}
                         compendium={compendium}
-                        testId={`discovered-loot-item-${itemId}-${idx}`}
+                        testIdPrefix="discovered-loot"
                       />
                     ))}
                   </div>
@@ -254,157 +239,21 @@ export function LootInventoryModal({
               ))}
             </div>
 
-            {/* Currency & Attunement Overview */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                <div className="font-semibold text-slate-400 uppercase text-[10px] mb-1">
-                  💰 Coin Purse ({totalCurrencyGp.toFixed(1)} GP Total)
-                </div>
-                <div className="flex justify-between font-medium text-slate-300">
-                  <span>{currency.cp ?? 0} cp</span>
-                  <span>{currency.sp ?? 0} sp</span>
-                  <span>{currency.ep ?? 0} ep</span>
-                  <span className="text-amber-300 font-bold">{currency.gp ?? 0} gp</span>
-                  <span>{currency.pp ?? 0} pp</span>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                <div className="font-semibold text-slate-400 uppercase text-[10px] mb-1">
-                  🔮 Magic Item Attunement ({attunedIds.length} / 3 Max)
-                </div>
-                <div className="text-xs text-purple-300 font-medium truncate">
-                  {attunedIds.length > 0
-                    ? attunedIds.map((id) => getItemName(id)).join(', ')
-                    : 'No items currently attuned.'}
-                </div>
-              </div>
-            </div>
-
-            {/* Equipped Slots */}
-            <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-              <div className="font-semibold text-slate-400 uppercase text-[10px]">
-                🛡️ Equipped Gear Loadout
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                {(['armor', 'shield', 'mainHand', 'offHand', 'ranged'] as const).map(
-                  (slot) => {
-                    const instId = equippedSlots[slot];
-                    const itemInst = inventory.find((it) => it.instanceId === instId);
-
-                    if (!itemInst) {
-                      return (
-                        <div
-                          key={slot}
-                          className="p-2 rounded bg-slate-900 border border-slate-800/80 flex flex-col justify-between"
-                        >
-                          <div className="text-[10px] text-slate-500 uppercase font-semibold">
-                            {slot}
-                          </div>
-                          <div className="text-xs font-medium text-slate-500 truncate mt-0.5">
-                            Empty
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={slot} className="flex flex-col gap-1">
-                        <div className="text-[10px] text-slate-500 uppercase font-semibold">
-                          {slot}
-                        </div>
-                        <InventoryItemRow
-                          itemId={itemInst.itemId}
-                          compendium={compendium}
-                          quantity={itemInst.quantity}
-                          attunementState={
-                            attunedIds.includes(itemInst.instanceId) ? 'attuned' : 'unattuned'
-                          }
-                          chargesRemaining={itemInst.chargesRemaining}
-                          testId={`equipped-slot-${slot}-${itemInst.instanceId}`}
-                          actions={
-                            <button
-                              type="button"
-                              data-testid={`unequip-btn-${slot}`}
-                              onClick={() => onEquipItem(selectedHeroId, slot, undefined)}
-                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold"
-                            >
-                              Unequip
-                            </button>
-                          }
-                        />
-                      </div>
-                    );
-                  },
-                )}
-              </div>
-            </div>
-
-            {/* Inventory Bag List */}
-            <div className="space-y-2">
-              <div className="font-semibold text-slate-400 uppercase text-[10px]">
-                🎒 Inventory Bag ({inventory.length} items)
-              </div>
-              {inventory.length === 0 ? (
-                <div className="p-4 rounded-lg bg-slate-950/40 border border-slate-800 text-center text-xs text-slate-500">
-                  Inventory is currently empty.
-                </div>
-              ) : (
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                  {inventory.map((item) => {
-                    const isAttunable = isMagicItemRequiringAttunement(item.itemId);
-                    const isAttuned = attunedIds.includes(item.instanceId);
-
-                    return (
-                      <InventoryItemRow
-                        key={item.instanceId}
-                        itemId={item.itemId}
-                        compendium={compendium}
-                        quantity={item.quantity}
-                        attunementState={isAttunable ? (isAttuned ? 'attuned' : 'unattuned') : 'n/a'}
-                        chargesRemaining={item.chargesRemaining}
-                        testId={`inventory-item-row-${item.instanceId}`}
-                        actions={
-                          <>
-                            {isAttunable && !isAttuned && attunedIds.length < 3 && (
-                              <button
-                                type="button"
-                                data-testid={`attune-btn-${item.instanceId}`}
-                                onClick={() => onAttuneItem(selectedHeroId, item.instanceId)}
-                                className="px-2 py-1 rounded bg-purple-900/60 hover:bg-purple-800 border border-purple-700/60 text-purple-200 text-[10px] font-semibold"
-                              >
-                                Attune
-                              </button>
-                            )}
-                            {isAttuned && (
-                              <button
-                                type="button"
-                                data-testid={`unattune-btn-${item.instanceId}`}
-                                onClick={() => onUnattuneItem(selectedHeroId, item.instanceId)}
-                                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold"
-                              >
-                                Unattune
-                              </button>
-                            )}
-                            {onUseItem &&
-                              (item.itemId.startsWith('potion') || item.itemId === 'antitoxin') && (
-                                <button
-                                  type="button"
-                                  data-testid={`use-item-btn-${item.instanceId}`}
-                                  onClick={() => onUseItem(selectedHeroId, item.instanceId)}
-                                  className="px-2 py-1 rounded bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-200 text-[10px] font-semibold"
-                                >
-                                  Use
-                                </button>
-                              )}
-                          </>
-                        }
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            {/* SRD-1305: BG3-style graphical inventory (grid + paperdoll). */}
+            <InventoryView
+              heroId={currentHero.id}
+              heroName={currentHero.name}
+              inventory={inventory}
+              equippedSlots={equippedSlots}
+              attunedItemInstanceIds={attunedIds}
+              currency={currency}
+              compendium={compendium}
+              onEquipItem={(slot, instanceId) => onEquipItem(selectedHeroId, slot, instanceId)}
+              onAttuneItem={(instanceId) => onAttuneItem(selectedHeroId, instanceId)}
+              onUnattuneItem={(instanceId) => onUnattuneItem(selectedHeroId, instanceId)}
+              onUseItem={onUseItem ? (instanceId) => onUseItem(selectedHeroId, instanceId) : undefined}
+              testIdPrefix="inventory"
+            />
           </div>
         )}
 

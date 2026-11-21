@@ -325,9 +325,12 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
         />,
       );
 
-      expect(screen.getByText(/Equipped Gear Loadout/i)).toBeDefined();
-      expect(screen.getByText(/Coin Purse/i)).toBeDefined();
-      expect(screen.getAllByText(/Magic Item Attunement/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Equipped/i)).toBeDefined();
+      expect(screen.getByText(/carried/i)).toBeDefined();
+      expect(screen.getAllByText(/Attuned .*\/ 3 max/i).length).toBeGreaterThan(0);
+      // SRD-1305: five paperdoll slots + icon-grid backpack replace text rows.
+      expect(screen.getAllByTestId(/-paperdoll-slot-/)).toHaveLength(5);
+      expect(screen.getAllByTestId(/-grid$/).length).toBeGreaterThan(0);
     });
   });
 
