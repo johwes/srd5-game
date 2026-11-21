@@ -7,7 +7,10 @@ import {
 import {
   formatAbilityAbbrev,
   formatSignedNumber,
+  formatSpellComponents,
+  formatSpellDuration,
   formatSpellLevel,
+  formatSpellRange,
   formatTitleCase,
 } from '../compendium/formatters.js';
 import { getBuilderSpellcastingRequirements } from './builderState.js';
@@ -177,33 +180,78 @@ export function SpellsStep({
     onToggle: () => void,
     testIdPrefix: string,
   ) => (
-    <button
-      key={spell.id}
-      type="button"
-      disabled={isDisabled}
-      data-testid={`${testIdPrefix}-${spell.id}`}
-      aria-pressed={isSelected}
-      onClick={onToggle}
-      className={`text-left p-2.5 rounded-lg border text-xs transition-colors flex flex-col justify-between gap-1 ${
-        isSelected
-          ? 'bg-purple-500/20 border-purple-400 text-purple-100 font-medium'
-          : isDisabled
-            ? 'bg-slate-950/40 border-slate-800/60 text-slate-600 cursor-not-allowed'
-            : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-      }`}
-    >
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="truncate font-semibold">{spell.name}</span>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 shrink-0">
-          {spell.level === 0 ? 'Cantrip' : `L${spell.level}`}
-        </span>
+    <div key={spell.id} className="relative group">
+      <button
+        type="button"
+        disabled={isDisabled}
+        data-testid={`${testIdPrefix}-${spell.id}`}
+        aria-pressed={isSelected}
+        aria-describedby={`${testIdPrefix}-tooltip-${spell.id}`}
+        onClick={onToggle}
+        className={`w-full text-left p-2.5 rounded-lg border text-xs transition-colors flex flex-col justify-between gap-1 ${
+          isSelected
+            ? 'bg-purple-500/20 border-purple-400 text-purple-100 font-medium'
+            : isDisabled
+              ? 'bg-slate-950/40 border-slate-800/60 text-slate-600 cursor-not-allowed'
+              : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+        }`}
+      >
+        <div className="flex items-center justify-between gap-1.5">
+          <span className="truncate font-semibold">{spell.name}</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 shrink-0">
+            {spell.level === 0 ? 'Cantrip' : `L${spell.level}`}
+          </span>
+        </div>
+        <div className="text-[11px] text-slate-400">
+          {formatTitleCase(spell.school)}
+          {spell.concentration ? ' · Conc.' : ''}
+          {spell.ritual ? ' · Ritual' : ''}
+        </div>
+      </button>
+      {/* BG3-style hover tooltip: full SRD description + Range/Duration/Components */}
+      <div
+        role="tooltip"
+        id={`${testIdPrefix}-tooltip-${spell.id}`}
+        data-testid={`${testIdPrefix}-tooltip-${spell.id}`}
+        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-950/95 border border-purple-500/40 rounded-xl shadow-2xl backdrop-blur-md text-left flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 pointer-events-none transition-opacity z-50"
+      >
+        <div className="flex items-center justify-between gap-1 border-b border-slate-800 pb-1.5">
+          <span className="font-bold text-slate-100 text-xs truncate">{spell.name}</span>
+          <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-semibold text-slate-300 shrink-0">
+            {spell.level === 0 ? 'Cantrip' : formatSpellLevel(spell.level)}
+          </span>
+        </div>
+        <div className="text-[11px] text-slate-400 capitalize">
+          {formatTitleCase(spell.school)} · {formatTitleCase(spell.castingTime)}
+          {spell.ritual ? ' · Ritual' : ''}
+        </div>
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
+          <div>
+            <span className="block text-[10px] uppercase tracking-wider text-slate-500">Range</span>
+            <span className="text-slate-200 font-medium">{formatSpellRange(spell.targeting)}</span>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase tracking-wider text-slate-500">Duration</span>
+            <span className="text-slate-200 font-medium">
+              {formatSpellDuration(spell.duration, spell.concentration)}
+            </span>
+          </div>
+          <div className="col-span-2">
+            <span className="block text-[10px] uppercase tracking-wider text-slate-500">Components</span>
+            <span className="text-slate-200 font-medium">{formatSpellComponents(spell.components)}</span>
+          </div>
+        </div>
+        <div className="text-[11px] text-slate-300 leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto">
+          {spell.description}
+        </div>
+        {spell.higherLevelDescription && (
+          <div className="text-[11px] text-slate-400 leading-relaxed">
+            <span className="font-semibold text-amber-300/90">At Higher Levels: </span>
+            {spell.higherLevelDescription}
+          </div>
+        )}
       </div>
-      <div className="text-[11px] text-slate-400">
-        {formatTitleCase(spell.school)}
-        {spell.concentration ? ' · Conc.' : ''}
-        {spell.ritual ? ' · Ritual' : ''}
-      </div>
-    </button>
+    </div>
   );
 
   return (

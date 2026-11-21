@@ -1,0 +1,145 @@
+# Specification Module 11: Tabletop Fidelity — Languages, Skills & Spells
+
+> **Packages**: `@srd5/data`, `@srd5/engine`, `@srd5/client`
+> **Backlog Epic**: Epic 12 (`SRD-1201` – `SRD-1212`)
+> **Parent Specs**: [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md) (reactions, conditions), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md) (exploration verbs, props), [10](file:///home/jwesterl/ai/srd5-game/docs/spec/10-realm-war-campaign.md) (approach dialogue, diplomacy)
+
+---
+
+## 1. Premise & Relevance Contract
+
+Tabletop play works because a human DM improvises relevance for any language, skill, or spell. This game must *systematize* that, or the content is decoration. Module 11 states the rule and builds the verbs:
+
+- **Relevance contract**: every language, skill, and spell offered in the builder (or cast by AI) must have **at least one implemented mechanical path** — a gate, check, bonus, or effect that changes an outcome. Pure display text is not enough.
+- **Add over cut**: where a skill/spell lacks a home, the default is to *add the verb* (theft, recall, identification, diplomacy lever, out-of-combat cast) rather than remove the content. Removal (or explicit "unsupported" badging) is the last resort, decided per item in `§7`.
+- **Fail-forward**: knowledge and social mechanics add bonuses or unlock *better* paths; they never hard-block progression. A failed History check means no bonus, not no quest.
+
+Status established by the 2026-11-21 audit (data vs. mechanics):
+
+- **Languages**: all 18 data-only. No gate, no comprehension check. `comprehend-languages` / `tongues` absent from `spells.json`; `draft-party.ts` references a nonexistent `comprehend-languages` id (dangling).
+- **Skills**: 6 of 18 with zero call sites (Animal Handling, Intimidation, Medicine, Nature, Performance, Sleight of Hand — lockpicking uses `thieves_tools`, never the skill). `passiveInsight` computed, never read. Combat `hide`/`search` and stabilize are stubs/auto.
+- **Spells**: combat core is real (attack/save/damage/heal/condition/hazard/summon/teleport all resolve). `detect-magic`, `knock`, `sanctuary` are marker-only; `sleep` ignores the HP pool; `shield` buff id mismatches (`shield_ac_buff` vs spell data); hazard-zone `onEnter` drops 8 of 13 step types; `DECLARE_CAST_SPELL` throws outside combat, so all utility/ritual/social use is unreachable.
+
+---
+
+## 2. Languages — From Display to Gate
+
+### 2.1 Data additions (`@srd5/data`)
+
+- Author `comprehend-languages` (L1 ritual) and `tongues` (L3) as executable overlays: comprehension buff with duration + concentration linkage (same attach path as `bless`), consumed by `§2.2` resolution.
+- Remove or resolve the dangling `comprehend-languages` reference in draft-party generation (it must resolve in the compendium once the spell exists).
+- Optional follow-up: `disguise-self`, `speak-with-animals` (referenced by mission approaches in Spec 10; currently dataset-absent).
+
+### 2.2 Language-gated encounters
+
+```ts
+export interface LanguageGateSpec {
+  requiredLanguage: string;        // e.g. 'orc'
+  fallback: 'gesture' | 'hostile' | 'fetch_translator';
+  // gesture: intent-only cues (attitude, Insight-readable), trade at penalty
+  // hostile: encounter starts unfriendly; combat/stealth/bribe remain
+  // fetch_translator: quest redirects to a translator NPC/hireling
+}
+```
+
+- Resolution is **party-level**: if any conscious party member in the scene speaks the language (or is under `comprehend-languages`/`tongues`/Tongue-of-the-Sun-and-Moon), the gate opens.
+- Monster/NPC `languages[]` (stored today, never read) become the counterparty. No shared language → dialogue tree replaced by intent cues + `Insight` read (attitude, fear, demand), never a soft-lock: gesture trade, bribe, stealth, or combat always remain.
+- SRD language-dependent enchantments (`command`, `suggestion`, `charm-person`, `hideous-laughter`, `vicious-mockery`, `divine-word`) regain their shared-language precondition: target that cannot understand the caster is unaffected (before the save).
+
+### 2.3 Reference quest: Orc tribe
+
+The Local Orc Tribe chain (Spec 10 §6) becomes the reference implementation: no Orcish speaker → gesture/intent path with trade penalty and Intimidation/Persuasion alternatives; Orcish speaker (or magic) → full negotiation, History unlocks (§4.2), alliance → guerrilla warfare as today.
+
+---
+
+## 3. Skills — Every Skill Gets a Verb
+
+### 3.1 Sleight of Hand + tools (thief signature)
+
+New exploration/realm verb keyed off the **skill**, with tools as bonus:
+
+- **Pickpocket / plant / lift**: `DEX (Sleight of Hand)` vs. target DC; `thieves_tools` proficiency grants advantage (or +2) rather than gating. Distinct payloads: lift key/purse, plant evidence, snip component pouch.
+- Failure branches: caught → attitude drop, patrol threat, or combat — never silent nothing.
+- **Fast Hands**: Sleight attempts as a bonus action (thief combat-adjacent role).
+
+`thieves_tools` keeps locks/traps; the skill owns social/exploration theft. No overlap.
+
+### 3.2 Knowledge passives — always-on lenses, never blocks
+
+Each tagged location/quest/NPC carries an optional recall spec:
+
+```ts
+export interface KnowledgeRecallSpec {
+  skill: 'history' | 'religion' | 'arcana' | 'nature';
+  dc: number;
+  reward:
+    | { kind: 'reveal_quest'; questId: string }          // History: artifact Z at X/Y
+    | { kind: 'trap_bonus'; bonus: number; scope: string } // History: Red Wizard's pit traps → +2 detect here
+    | { kind: 'ward_info'; target: string }              // Religion/Arcana: identify consecration/ward before trigger
+    | { kind: 'lore_note'; text: string };
+}
+```
+
+- **History**: unlocks quests (old battlefield, forgotten cache), grants dungeon-scoped bonuses (trap detection, ambush warning). Fail = no bonus.
+- **Religion**: shrine outcomes, unhallowed-ground warnings, cleanse-cursed-mine ward identification (promote today's mission-alt to a real dungeon verb).
+- **Arcana**: spell identification — pass to see a spell being cast (name/level) before deciding to counterspell; blind counter otherwise. Ward/decipher uses as today.
+- **Nature**: forage/identify split with Survival (Nature: what is it / is it safe; Survival: find enough of it).
+
+### 3.3 Contested and missing rolls
+
+- **Insight**: opposed vs. Deception in social reads (patrol bluff, tribe intent, envoy missions). `passiveInsight` becomes the floor.
+- **Medicine**: stabilize becomes a real check (DC 10, healer's kit advantage); diagnose disease/poison branches.
+- **Intimidation**: social third leg alongside Persuasion/Deception with distinct consequences (fear: compliance + attitude cost).
+- **Animal Handling**: mounts/beasts/pack animals, sub-faction beast encounters.
+- **Performance**: tavern/distraction/cover-identity verb (earn coin, distract guards, blend into crowds) — the alternative to cutting it.
+- Combat `hide` graduates from stub to a real Stealth-vs-passive-Perception roll granting `hidden` (unseen attacker) per Spec 03 §4.3 item 7.
+
+---
+
+## 4. Spells — Utility Reaches Parity With Combat
+
+### 4.1 Out-of-combat casting
+
+New command path (exploration/social) for non-hostile casts: `DECLARE_CAST_SPELL` outside combat resolves buffs, comprehension, detection, and ritual tags without an initiative context. Rituals (10-minute tag) cost time/rations rather than slots where the fiction demands it. This unlocks `knock` (prop hook alongside tools/Athletics), `detect-magic` (sense active effects/wards within range — real sense, not a marker), and all touch/utility buffs.
+
+### 4.2 Marker-spell enforcement (correctness fixes)
+
+- `detect-magic`: real sense mechanic (reveals magical props/effects/concentrations in range).
+- `knock`: engine prop hook (unlock + loud noise → adjacent-room alert, the classic tradeoff).
+- `sanctuary`: enforce ward (attackers must pass WIS save or redirect) — today only `charmed` is checked on attack.
+- `sleep`: HP-pool resolution per SRD (roll pool, lowest-HP creatures fall unconscious first) instead of unconditional `unconscious`.
+- `shield` buff id: reconcile `shield_ac_buff` with spell data id.
+- Hazard-zone `onEnterOrStartTurn`: handle the dropped step types or explicitly mark unsupported (no silent drops).
+- Shared-language preconditions on enchantments (§2.2).
+
+### 4.3 Capstones: Wish and Time Stop (bounded, BG2-style)
+
+- **Wish (L9)**: fixed menu of ~6 boons (restore party, grant resistance, supply cache, full rest, mass heal, one free resurrection), each an explicit effect bundle with a real cost (exhaustion + conduit closes / once-per-campaign). No open-ended parsing.
+- **Time Stop (L9)**: caster gains 2–3 consecutive solo turns (others frozen: no reactions, no hazard ticks against them); ends early on the standard SRD condition. Implemented as initiative manipulation, then resume.
+
+---
+
+## 5. Diplomacy Template — Skills as Keys and Levers
+
+Reference flow for tribe/envoy/truce missions (extends Spec 10 §5–6 approach dialogue):
+
+1. **History unlocks** the engagement (treaty knowledge, insult to avoid, artifact leverage).
+2. **Insight reads** the room (opposed vs. Deception; passive as floor).
+3. **Persuasion / Deception / Intimidation resolve** with distinct outcomes: alliance + fair terms / trick + later fallout / compliance + attitude cost.
+4. **Fail-forward**: failure degrades the deal (tribute, ambush on exit, militia penalty) — never a dead end.
+
+---
+
+## 6. Builder UX — No Silent Dead Picks
+
+- Each language/skill/spell option shows its **mechanical status**: where it matters (quest tag, verb, gate) via the same tooltip pattern as the spell cards.
+- Party-aware hints: "No party member speaks Orcish — Comprehend Languages recommended" when a queued quest gates on it.
+- Campaign setup may surface the relevance matrix (which skills the current content actually exercises) so parties can cover the space deliberately.
+
+---
+
+## 7. Acceptance & Test Plan
+
+- Integrity test: every builder-offered spell id resolves in the compendium (kills dangling refs permanently); every offered skill/language has ≥1 tagged consumer or an explicit `unsupported` badge with a tracking ticket.
+- Headless tests: language gate open/closed/fallback; recall rewards; theft success/caught branches; counterspell identification pass/fail; knock alert tradeoff; sleep HP-pool ordering; Wish boons; Time Stop turn sequencing; diplomacy fail-forward outcomes.
+- E2E: Orc-tribe chain played without Orcish (gesture path) and with Orcish/magic (full negotiation).

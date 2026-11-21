@@ -1,6 +1,6 @@
 # SRD 5.1 Tactical Dungeon Crawler — Implementation Backlog
 
-This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md)) into granular, dependency-ordered engineering tickets.
+This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md), [11](file:///home/jwesterl/ai/srd5-game/docs/spec/11-tabletop-fidelity.md)) into granular, dependency-ordered engineering tickets.
 
 ## Status Legend
 - `[ ]` Todo
@@ -272,3 +272,30 @@ flowchart LR
 - [x] **SRD-1104**: Temporary Truces pause attacks & patrol hostility from the truce nation until expiry; hiring Mercenaries or Thieves' Guild applies gold/CHA checks and strategic effects; Local Orc Tribe (3-quest chain -> ongoing guerrilla warfare drain) and Local Druid Circle (2-quest chain -> Power + blessing) work end-to-end; enemy territory travel rolls road vs. off-road patrols (mitigated by Survival/Stealth), offers Bluff/Evade/Bribe/Fight options, escalates Threat (`+20` per killed patrol -> Hunter-Killer pursuit at `>= 55`), and naturally decays Threat over time (`-6/day` outside that nation's territory, `-2/day` undetected inside, clearing pursuit below `55`).
 - [x] **SRD-1105**: `realmEngine.ts` exposes `SELECT_PLAYER_NATION`, `ACCEPT_WAR_MISSION`, `RESOLVE_MISSION_APPROACH`, `COMPLETE_WAR_MISSION`, `RESOLVE_PATROL_ENCOUNTER`, `NEGOTIATE_TRUCE`, and `HIRE_COVERT_ASSET`; `OverworldMapLayer` renders strategic POI icons and status badges (`cursed`, `destroyed`, `sabotaged`, `under_attack`); `RealmBattleView` spawns multi-wave reinforcements on schedule.
 - [x] **SRD-1106**: New Realm campaigns launch with `RealmNationSelectModal`; `RealmHud` displays the War Power dominance strip, enemy territory Threat badge (with cooldown tooltip), and War Room toggle; `RealmWarRoomModal` covers War Ledger, Special-Ops Missions, and Diplomacy/Sub-Factions; `RealmMissionApproachModal` and `RealmPatrolModal` display hero skill/spell odds and d20 roll feedback; automated tests verify all flows with zero console errors.
+
+---
+
+## Epic 12: Tabletop Fidelity — Languages, Skills & Spells
+**Spec Reference**: [11-tabletop-fidelity.md](file:///home/jwesterl/ai/srd5-game/docs/spec/11-tabletop-fidelity.md)
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-1201** | `[ ]` | Author `comprehend-languages` + `tongues` executable overlays; resolve dangling draft-party spell id | `@srd5/data`, `@srd5/engine` | SRD-310 |
+| **SRD-1202** | `[ ]` | Language-gated encounters (party-level resolution, gesture/hostile/translator fallbacks); Orc-tribe reference quest | `@srd5/engine`, `@srd5/data` | SRD-1201, SRD-1104 |
+| **SRD-1203** | `[ ]` | Out-of-combat casting path (exploration/social) incl. ritual time costs | `@srd5/engine`, `@srd5/transport` | SRD-306 |
+| **SRD-1204** | `[ ]` | Marker-spell enforcement: `detect-magic` sense, `knock` prop hook + alert tradeoff, `sanctuary` ward, `sleep` HP-pool, `shield` buff-id fix | `@srd5/engine` | SRD-1203, SRD-308 |
+| **SRD-1205** | `[ ]` | Hazard-zone `onEnter` step coverage (no silent drops) + shared-language preconditions on enchantments | `@srd5/engine` | SRD-308 |
+| **SRD-1206** | `[ ]` | Sleight of Hand theft verb (pickpocket/plant/lift, tools advantage, caught branches) + Fast Hands bonus-action tie-in | `@srd5/engine`, `@srd5/client` | SRD-502 |
+| **SRD-1207** | `[ ]` | Knowledge recall passives (`history`/`religion`/`arcana`/`nature` DC tags, trap/ward bonuses, counterspell identification) | `@srd5/engine`, `@srd5/data` | SRD-502, SRD-1103 |
+| **SRD-1208** | `[ ]` | Opposed Insight vs Deception; Medicine stabilize check; Intimidation/Animal Handling/Nature/Performance homes; real combat `hide` | `@srd5/engine` | SRD-304, SRD-305 |
+| **SRD-1209** | `[ ]` | Diplomacy template (History unlocks → Insight reads → triple-approach resolve, fail-forward) on tribe/envoy/truce missions | `@srd5/engine`, `@srd5/client` | SRD-1104, SRD-1208 |
+| **SRD-1210** | `[ ]` | Bounded *Wish* menu (BG2-style boons + cost) and *Time Stop* solo-turn sequencing | `@srd5/engine`, `@srd5/data` | SRD-1203 |
+| **SRD-1211** | `[ ]` | Builder mechanical-status badging + party-aware hints (missing language/skill coverage) | `@srd5/client` | SRD-1202, SRD-1207 |
+| **SRD-1212** | `[ ]` | Relevance integrity gate: offered spell/skill/language must resolve or carry explicit tracking ticket | `@srd5/data`, `@srd5/engine` | SRD-1211 |
+
+### Epic 12 Acceptance Criteria Details
+- [ ] **SRD-1201..1202**: Compendium lookups for both new spells resolve; Orc-tribe chain playable with and without Orcish (gesture path verified E2E).
+- [ ] **SRD-1203..1205**: Utility casts resolve outside combat; knock alerts adjacent rooms; sleep follows the HP pool; no hazard step is silently dropped.
+- [ ] **SRD-1206..1208**: Theft success/caught branches; recall rewards apply; Insight opposes Deception; stabilize requires the check; `hide` grants `hidden`.
+- [ ] **SRD-1209..1210**: Diplomacy failures degrade the deal, never dead-end; Wish/Time Stop behave as bounded capstones with costs.
+- [ ] **SRD-1211..1212**: Builder shows status for every pick; integrity suite fails on new dangling offered content.
