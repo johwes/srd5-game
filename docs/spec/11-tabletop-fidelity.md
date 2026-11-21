@@ -1,7 +1,7 @@
 # Specification Module 11: Tabletop Fidelity — Languages, Skills & Spells
 
 > **Packages**: `@srd5/data`, `@srd5/engine`, `@srd5/client`
-> **Backlog Epic**: Epic 12 (`SRD-1201` – `SRD-1213`)
+> **Backlog Epic**: Epic 12 (`SRD-1201 – SRD-1214`)
 > **Parent Specs**: [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md) (reactions, conditions), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md) (exploration verbs, props), [10](file:///home/jwesterl/ai/srd5-game/docs/spec/10-realm-war-campaign.md) (approach dialogue, diplomacy)
 
 ---
@@ -49,6 +49,33 @@ export interface LanguageGateSpec {
 ### 2.3 Reference quest: Orc tribe
 
 The Local Orc Tribe chain (Spec 10 §6) becomes the reference implementation: no Orcish speaker → gesture/intent path with trade penalty and Intimidation/Persuasion alternatives; Orcish speaker (or magic) → full negotiation, History unlocks (§4.2), alliance → guerrilla warfare as today.
+
+### 2.4 War languages — every nation gets a voice (phased)
+
+Each of the 8 nation archetypes (Spec 10 §2) speaks a command tongue from the existing 18-language list — no new languages, no ninth faction:
+
+| Nation | Tongue | Notes |
+| :--- | :--- | :--- |
+| Bloodtusk Horde | Orcish | Orders, war-chants; broken Common for threats |
+| Iron Covenant | Dwarvish | Clan cant in mine/forge traffic |
+| Emerald Circle | Elvish (+ Sylvan rites) | Court speech; rites unintelligible without Sylvan |
+| Ashen Spire | Infernal (officers), Draconic (battle) | Orders naturally encrypted; battle-cast callouts |
+| Dawn Crown / Silver Bastion | Common (+ liturgical Celestial) | Celestial seals on writs and shrine orders |
+| Gilded League | Common (deliberately) | Merchants speak everything — itself a tell |
+| Frostbound Clan | Giant | Saga-tongue among raiders; giant-kin auxiliaries |
+| Sub-factions | Orcish (tribe), Druidic (circle) | Already granted via race/class |
+
+Planar flavor (celestial / infernal / abyssal / draconic assets, cult auxiliaries, summoned casters) enters as **officers, intercepts, and loot** — never as new nations.
+
+**Phase 1 (this epic — ships independently):**
+
+- **Nation language profiles**: 8 data rows (`commandLanguage`, `liturgicalLanguage?`). Resolution reuses the `§2.2` party-level gate.
+- **Dispatch intercepts**: patrols, couriers, and dead drops yield sealed orders (attack warnings, patrol routes, tribute schedules) as loot. Right tongue (or Comprehend/Tongues/translator) → read and act (ambush the ambush, evacuate the POI). Wrong tongue → sealed prop in inventory until translated.
+- **Patrol interaction matrix**: evasion never gates on language. Bluff (Persuasion/Deception) requires a shared tongue, magic, or interpreter — without it, gesture caps at pass-with-Threat, never clean. Stealth/Survival evade, gold bribe (small tourist-price surcharge without patter), and combat work exactly as today.
+- **Deal tiers**: direct parley in their tongue **+2** on the negotiation check and unlocks the top deal tier (best tribute, longest truce); via magic = baseline; via interpreter hireling = baseline + gold-per-parley cost; gestures/broken Common **−2**, top tier locked. Modifiers render in the existing odds rows before commit.
+- **Interpreter hirelings**: one War Room row (gold cost, per-parley fee). Compromise/double-agent behavior is a data hook only (deferred).
+
+**Explicitly deferred (hooks reserved, not implemented):** forged-dispatch misdirection missions, prisoner interrogation trees, code-talker coordination bonuses. The `LanguageGateSpec` and dispatch-loot shapes already admit them; each ships as its own ticket later.
 
 ---
 

@@ -293,6 +293,7 @@ flowchart LR
 | **SRD-1211** | `[ ]` | Builder mechanical-status badging + party-aware hints (missing language/skill coverage) | `@srd5/client` | SRD-1202, SRD-1207 |
 | **SRD-1212** | `[ ]` | Relevance integrity gate: offered spell/skill/language must resolve or carry explicit tracking ticket | `@srd5/data`, `@srd5/engine` | SRD-1211 |
 | **SRD-1213** | `[ ]` | Standing skill passives (prof/expert table) + generator recall-tag emission from seeded theme tables | `@srd5/engine`, `@srd5/data` | SRD-1207, SRD-1208 |
+| **SRD-1214** | `[ ]` | War languages phase 1: nation profiles, dispatch intercepts, patrol/deal modifiers, interpreter hirelings | `@srd5/engine`, `@srd5/data`, `@srd5/client` | SRD-1202 |
 
 ### Epic 12 Acceptance Criteria Details
 - [ ] **SRD-1201..1202**: Compendium lookups for both new spells resolve; Orc-tribe chain playable with and without Orcish (gesture path verified E2E).
@@ -301,3 +302,4 @@ flowchart LR
 - [ ] **SRD-1209..1210**: Diplomacy failures degrade the deal, never dead-end; Wish/Time Stop behave as bounded capstones with costs.
 - [ ] **SRD-1211..1212**: Builder shows status for every pick; integrity suite fails on new dangling offered content.
 - [ ] **SRD-1213**: Passive bonuses apply at prof/expert tiers in headless tests; generated floors deterministically carry recall tags (bit-exact replay still green).
+- [ ] **SRD-1214**: Intercepts readable with the right tongue/magic/translator; bluff/deal tiers and interpreter costs verified headless + in War Room UI.
