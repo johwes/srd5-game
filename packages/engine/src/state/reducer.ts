@@ -65,6 +65,14 @@ import {
 } from '../dungeon/encounters.js';
 import { resolveRest } from '../dungeon/rest.js';
 import { claimPropLoot, awardLootToCharacter } from '../dungeon/loot.js';
+import {
+  dropInventoryItem,
+  identifyInventoryItem,
+  sellInventoryItem,
+  splitInventoryStack,
+  transferInventoryItem,
+  validateEquipLoadout,
+} from '../dungeon/inventory-management.js';
 import { resolveUseItem } from '../dungeon/use-item.js';
 import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
 import { activateShrine } from '../dungeon/roguelite.js';
@@ -1291,6 +1299,18 @@ export function reduceGame(
     case 'EQUIP_LOADOUT': {
       const hero = nextState.party[command.characterId];
       if (hero?.buildState) {
+        // SRD-1306: enforce armor/shield proficiency + slot fit; STR and
+        // weapon proficiency surface as warnings (penalties, not blocks).
+        const validation = validateEquipLoadout(
+          hero.buildState,
+          command.equippedSlots as Record<string, string | undefined>,
+          options?.compendium,
+        );
+        if (!validation.ok) {
+          throw new Error(
+            `Invalid loadout: ${validation.errors.map((e) => e.message).join('; ')}`,
+          );
+        }
         const nextBuild = {
           ...hero.buildState,
           equippedSlots: { ...command.equippedSlots },
@@ -1309,6 +1329,150 @@ export function reduceGame(
           },
         };
       }
+      break;
+    }
+
+    case 'TRANSFER_ITEM': {
+      const transferRes = transferInventoryItem(
+        nextState,
+        command.fromCharacterId,
+        command.toCharacterId,
+        command.itemInstanceId,
+        command.quantity,
+        options?.compendium,
+      );
+      nextState = transferRes.nextState;
+      events.push(...transferRes.events);
+      const movedHero = nextState.party[command.toCharacterId];
+      const movedInst = movedHero?.buildState?.inventory.find(
+        (i) => i.instanceId === transferRes.movedInstanceId,
+      );
+      events.push({
+        type: 'ITEM_TRANSFERRED',
+        fromCharacterId: command.fromCharacterId,
+        toCharacterId: command.toCharacterId,
+        itemInstanceId: transferRes.movedInstanceId,
+        itemId: movedInst?.itemId ?? command.itemInstanceId,
+        quantity: transferRes.movedQuantity,
+      });
+      break;
+    }
+
+    case 'DROP_ITEM': {
+      const dropRes = dropInventoryItem(
+        nextState,
+        command.characterId,
+        command.itemInstanceId,
+        command.quantity,
+        options?.compendium,
+      );
+      nextState = dropRes.nextState;
+      events.push(...dropRes.events);
+      events.push({
+        type: 'ITEM_DROPPED',
+        characterId: command.characterId,
+        itemInstanceId: command.itemInstanceId,
+        itemId: dropRes.droppedItemId,
+        quantity: dropRes.droppedQuantity,
+      });
+      // Mirror the refreshed sheet/AC onto the combatant copy.
+      {
+        const hero = nextState.party[command.characterId];
+        if (hero?.buildState) {
+          const sheet = computeDerivedCharacter(hero.buildState, options?.compendium);
+          nextState = {
+            ...nextState,
+            party: {
+              ...nextState.party,
+              [hero.id]: { ...hero, characterSheet: sheet, armorClass: sheet.armorClass.totalAc },
+            },
+          };
+        }
+      }
+      break;
+    }
+
+    case 'SPLIT_ITEM_STACK': {
+      const hero = nextState.party[command.characterId];
+      if (!hero?.buildState) throw new Error(`Character '${command.characterId}' not found in party`);
+      const { nextInventory, splitInstance } = splitInventoryStack(
+        hero.buildState.inventory,
+        command.itemInstanceId,
+        command.quantity,
+      );
+      const nextBuild = { ...hero.buildState, inventory: nextInventory };
+      const nextSheet = computeDerivedCharacter(nextBuild, options?.compendium);
+      nextState = {
+        ...nextState,
+        party: {
+          ...nextState.party,
+          [hero.id]: {
+            ...hero,
+            buildState: nextBuild,
+            characterSheet: nextSheet,
+            armorClass: nextSheet.armorClass.totalAc,
+          },
+        },
+      };
+      events.push({
+        type: 'INVENTORY_UPDATED',
+        characterId: hero.id,
+        inventory: nextInventory,
+        currency: nextBuild.currency,
+      });
+      events.push({
+        type: 'ITEM_STACK_SPLIT',
+        characterId: hero.id,
+        sourceInstanceId: command.itemInstanceId,
+        newInstanceId: splitInstance.instanceId,
+        itemId: splitInstance.itemId,
+        splitQuantity: command.quantity,
+      });
+      break;
+    }
+
+    case 'IDENTIFY_ITEM': {
+      const idRes = identifyInventoryItem(
+        nextState,
+        command.characterId,
+        command.itemInstanceId,
+        options?.compendium,
+      );
+      nextState = idRes.nextState;
+      events.push(...idRes.events);
+      const inst = nextState.party[command.characterId]?.buildState?.inventory.find(
+        (i) => i.instanceId === command.itemInstanceId,
+      );
+      events.push({
+        type: 'ITEM_IDENTIFIED',
+        characterId: command.characterId,
+        itemInstanceId: command.itemInstanceId,
+        itemId: inst?.itemId ?? command.itemInstanceId,
+      });
+      break;
+    }
+
+    case 'SELL_ITEM': {
+      const preSaleInst = nextState.party[command.characterId]?.buildState?.inventory.find(
+        (i) => i.instanceId === command.itemInstanceId,
+      );
+      const saleRes = sellInventoryItem(
+        nextState,
+        command.characterId,
+        command.itemInstanceId,
+        command.quantity,
+        options?.compendium,
+      );
+      nextState = saleRes.nextState;
+      events.push(...saleRes.events);
+      events.push({
+        type: 'ITEM_SOLD',
+        characterId: command.characterId,
+        itemInstanceId: command.itemInstanceId,
+        itemId: preSaleInst?.itemId ?? command.itemInstanceId,
+        quantity: command.quantity ?? preSaleInst?.quantity ?? 1,
+        goldEarned: saleRes.goldEarned,
+      });
       break;
     }
 

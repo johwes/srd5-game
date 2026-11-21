@@ -384,6 +384,36 @@ export type GameCommand =
       itemInstanceId: string;
     }
   | {
+      type: 'TRANSFER_ITEM';
+      fromCharacterId: string;
+      toCharacterId: string;
+      itemInstanceId: string;
+      quantity?: number;
+    }
+  | {
+      type: 'DROP_ITEM';
+      characterId: string;
+      itemInstanceId: string;
+      quantity?: number;
+    }
+  | {
+      type: 'SPLIT_ITEM_STACK';
+      characterId: string;
+      itemInstanceId: string;
+      quantity: number;
+    }
+  | {
+      type: 'IDENTIFY_ITEM';
+      characterId: string;
+      itemInstanceId: string;
+    }
+  | {
+      type: 'SELL_ITEM';
+      characterId: string;
+      itemInstanceId: string;
+      quantity?: number;
+    }
+  | {
       type: 'LEVEL_UP_CHARACTER';
       characterId: string;
       levelUpRequest: LevelUpRequest;
@@ -590,6 +620,43 @@ export type GameEvent =
       characterId: string;
       inventory: InventoryItemInstance[];
       currency?: CharacterCurrency;
+    }
+  | {
+      type: 'ITEM_TRANSFERRED';
+      fromCharacterId: string;
+      toCharacterId: string;
+      itemInstanceId: string;
+      itemId: string;
+      quantity: number;
+    }
+  | {
+      type: 'ITEM_DROPPED';
+      characterId: string;
+      itemInstanceId: string;
+      itemId: string;
+      quantity: number;
+    }
+  | {
+      type: 'ITEM_STACK_SPLIT';
+      characterId: string;
+      sourceInstanceId: string;
+      newInstanceId: string;
+      itemId: string;
+      splitQuantity: number;
+    }
+  | {
+      type: 'ITEM_IDENTIFIED';
+      characterId: string;
+      itemInstanceId: string;
+      itemId: string;
+    }
+  | {
+      type: 'ITEM_SOLD';
+      characterId: string;
+      itemInstanceId: string;
+      itemId: string;
+      quantity: number;
+      goldEarned: number;
     }
   | {
       type: 'ITEM_CONSUMED';

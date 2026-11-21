@@ -90,6 +90,23 @@ export interface InventoryViewProps {
   onUseItem?: (instanceId: string) => void;
   /** Test id prefix. Defaults to `inventory`. */
   testIdPrefix?: string;
+  // ── SRD-1306 stretch actions (all optional; hidden when unset) ──
+  /** Party heroes available as give/trade targets (excluding self). */
+  partyHeroes?: ReadonlyArray<{ id: string; name: string }>;
+  /** STR score for the carrying-capacity readout (capacity = STR × 15). */
+  strScore?: number;
+  /** Precomputed equip-restriction messages (errors block, warnings inform). */
+  equipIssues?: ReadonlyArray<{ slot: string; message: string; severity: 'error' | 'warning' }>;
+  /** Give/trade the selected stack to another hero. */
+  onTransferItem?: (instanceId: string, toHeroId: string) => void;
+  /** Drop/discard the selected stack. */
+  onDropItem?: (instanceId: string) => void;
+  /** Split `quantity` units off the selected stack. */
+  onSplitStack?: (instanceId: string, quantity: number) => void;
+  /** Identify an unidentified magic item (free dungeon handling). */
+  onIdentifyItem?: (instanceId: string) => void;
+  /** Dungeon sell-back at half value. */
+  onSellItem?: (instanceId: string) => void;
 }
 
 /**
@@ -118,11 +135,21 @@ export function InventoryView({
   onUnattuneItem,
   onUseItem,
   testIdPrefix = 'inventory',
+  partyHeroes,
+  strScore,
+  equipIssues,
+  onTransferItem,
+  onDropItem,
+  onSplitStack,
+  onIdentifyItem,
+  onSellItem,
 }: InventoryViewProps) {
   const prefix = `${testIdPrefix}-${heroId}`;
   const [filter, setFilter] = useState<InventoryFilterKey>('all');
   const [search, setSearch] = useState('');
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+  const [splitQuantity, setSplitQuantity] = useState(1);
+  const [giveTargetId, setGiveTargetId] = useState('');
 
   const instanceById = useMemo(() => {
     const map = new Map<string, InventoryItemInstance>();
@@ -215,8 +242,26 @@ export function InventoryView({
         </div>
         <div data-testid={`${prefix}-weight`} className="font-medium text-slate-400">
           ⚖️ {totalWeightLb} lb. carried
+          {strScore !== undefined && (
+            <span
+              data-testid={`${prefix}-capacity`}
+              className={totalWeightLb > strScore * 15 ? 'text-red-300 font-semibold' : 'text-slate-500'}
+            >
+              {' '}
+              / {strScore * 15} lb. cap{totalWeightLb > strScore * 15 ? ' — encumbered (display only)' : ''}
+            </span>
+          )}
         </div>
       </div>
+      {equipIssues && equipIssues.length > 0 && (
+        <div data-testid={`${prefix}-equip-issues`} className="rounded-lg border border-red-500/40 bg-red-950/40 p-2 text-[11px] text-red-200">
+          {equipIssues.map((issue, idx) => (
+            <div key={`${issue.slot}-${idx}`} data-testid={`${prefix}-equip-issue-${idx}`}>
+              {issue.severity === 'error' ? '⛔' : '⚠️'} {issue.slot}: {issue.message}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-3">
         {/* ── Left: visual paperdoll ── */}
@@ -491,6 +536,100 @@ export function InventoryView({
                     </button>
                   ))}
               </div>
+              {/* SRD-1306 stretch: identify / give / drop / split / sell. */}
+              {(onIdentifyItem || onTransferItem || onDropItem || onSplitStack || onSellItem) && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800">
+                  {selected.identified === false && onIdentifyItem && (
+                    <button
+                      type="button"
+                      data-testid={`${prefix}-identify-${selected.instanceId}`}
+                      onClick={() => onIdentifyItem(selected.instanceId)}
+                      className="px-2 py-1 rounded bg-sky-900/60 hover:bg-sky-800 border border-sky-700/60 text-sky-200 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                    >
+                      🔍 Identify
+                    </button>
+                  )}
+                  {selected.identified === false && (
+                    <span
+                      data-testid={`${prefix}-unidentified-${selected.instanceId}`}
+                      className="text-[11px] text-sky-300/80 italic"
+                    >
+                      Unidentified — properties masked until identified.
+                    </span>
+                  )}
+                  {onDropItem && (
+                    <button
+                      type="button"
+                      data-testid={`${prefix}-drop-${selected.instanceId}`}
+                      onClick={() => onDropItem(selected.instanceId)}
+                      className="px-2 py-1 rounded bg-slate-800 hover:bg-red-900/60 border border-slate-700 text-slate-300 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    >
+                      Drop
+                    </button>
+                  )}
+                  {onSellItem && (
+                    <button
+                      type="button"
+                      data-testid={`${prefix}-sell-${selected.instanceId}`}
+                      onClick={() => onSellItem(selected.instanceId)}
+                      className="px-2 py-1 rounded bg-yellow-900/60 hover:bg-yellow-800 border border-yellow-700/60 text-yellow-200 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                    >
+                      Sell (½ value)
+                    </button>
+                  )}
+                  {onSplitStack && selected.quantity > 1 && (
+                    <span className="inline-flex items-center gap-1">
+                      <input
+                        type="number"
+                        min={1}
+                        max={selected.quantity - 1}
+                        value={splitQuantity}
+                        onChange={(event) => setSplitQuantity(Number(event.target.value))}
+                        data-testid={`${prefix}-split-qty-${selected.instanceId}`}
+                        aria-label="Split quantity"
+                        className="w-14 px-1 py-1 rounded bg-slate-950 border border-slate-700 text-[11px] text-slate-200"
+                      />
+                      <button
+                        type="button"
+                        data-testid={`${prefix}-split-${selected.instanceId}`}
+                        onClick={() => onSplitStack(selected.instanceId, splitQuantity)}
+                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                      >
+                        Split stack
+                      </button>
+                    </span>
+                  )}
+                  {onTransferItem && partyHeroes && partyHeroes.filter((h) => h.id !== heroId).length > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <select
+                        data-testid={`${prefix}-give-target-${selected.instanceId}`}
+                        value={giveTargetId}
+                        onChange={(event) => setGiveTargetId(event.target.value)}
+                        aria-label="Give to hero"
+                        className="px-1 py-1 rounded bg-slate-950 border border-slate-700 text-[11px] text-slate-200"
+                      >
+                        <option value="">Give to…</option>
+                        {partyHeroes
+                          .filter((h) => h.id !== heroId)
+                          .map((h) => (
+                            <option key={h.id} value={h.id}>
+                              {h.name}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        type="button"
+                        data-testid={`${prefix}-give-${selected.instanceId}`}
+                        disabled={!giveTargetId}
+                        onClick={() => giveTargetId && onTransferItem(selected.instanceId, giveTargetId)}
+                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                      >
+                        Give
+                      </button>
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

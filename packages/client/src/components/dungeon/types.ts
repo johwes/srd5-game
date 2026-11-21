@@ -71,6 +71,12 @@ export interface LootInventoryModalProps {
   onAttuneItem: (characterId: string, instanceId: string) => void;
   onUnattuneItem: (characterId: string, instanceId: string) => void;
   onUseItem?: (characterId: string, instanceId: string) => void;
+  /** SRD-1306 stretch actions (optional; wired by DungeonView). */
+  onTransferItem?: (fromCharacterId: string, instanceId: string, toCharacterId: string) => void;
+  onDropItem?: (characterId: string, instanceId: string) => void;
+  onSplitStack?: (characterId: string, instanceId: string, quantity: number) => void;
+  onIdentifyItem?: (characterId: string, instanceId: string) => void;
+  onSellItem?: (characterId: string, instanceId: string) => void;
 }
 
 export interface SaveLoadModalProps {

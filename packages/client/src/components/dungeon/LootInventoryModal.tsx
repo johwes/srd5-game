@@ -16,6 +16,11 @@ export function LootInventoryModal({
   onAttuneItem,
   onUnattuneItem,
   onUseItem,
+  onTransferItem,
+  onDropItem,
+  onSplitStack,
+  onIdentifyItem,
+  onSellItem,
 }: LootInventoryModalProps) {
   const partyList = Object.values(party);
   const [selectedHeroId, setSelectedHeroId] = useState<string>(
@@ -248,10 +253,17 @@ export function LootInventoryModal({
               attunedItemInstanceIds={attunedIds}
               currency={currency}
               compendium={compendium}
+              partyHeroes={partyList.map((h) => ({ id: h.id, name: h.name }))}
+              strScore={(currentHero as unknown as { strengthScore?: number }).strengthScore}
               onEquipItem={(slot, instanceId) => onEquipItem(selectedHeroId, slot, instanceId)}
               onAttuneItem={(instanceId) => onAttuneItem(selectedHeroId, instanceId)}
               onUnattuneItem={(instanceId) => onUnattuneItem(selectedHeroId, instanceId)}
               onUseItem={onUseItem ? (instanceId) => onUseItem(selectedHeroId, instanceId) : undefined}
+              onTransferItem={onTransferItem ? (instanceId, toHeroId) => onTransferItem(selectedHeroId, instanceId, toHeroId) : undefined}
+              onDropItem={onDropItem ? (instanceId) => onDropItem(selectedHeroId, instanceId) : undefined}
+              onSplitStack={onSplitStack ? (instanceId, qty) => onSplitStack(selectedHeroId, instanceId, qty) : undefined}
+              onIdentifyItem={onIdentifyItem ? (instanceId) => onIdentifyItem(selectedHeroId, instanceId) : undefined}
+              onSellItem={onSellItem ? (instanceId) => onSellItem(selectedHeroId, instanceId) : undefined}
               testIdPrefix="inventory"
             />
           </div>

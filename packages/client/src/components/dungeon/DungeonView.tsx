@@ -1322,6 +1322,43 @@ export function DungeonView({
             itemInstanceId: instId,
           })
         }
+        onTransferItem={(fromCharId, instId, toCharId) =>
+          handleDispatch({
+            type: 'TRANSFER_ITEM',
+            fromCharacterId: fromCharId,
+            toCharacterId: toCharId,
+            itemInstanceId: instId,
+          })
+        }
+        onDropItem={(charId, instId) =>
+          handleDispatch({
+            type: 'DROP_ITEM',
+            characterId: charId,
+            itemInstanceId: instId,
+          })
+        }
+        onSplitStack={(charId, instId, qty) =>
+          handleDispatch({
+            type: 'SPLIT_ITEM_STACK',
+            characterId: charId,
+            itemInstanceId: instId,
+            quantity: qty,
+          })
+        }
+        onIdentifyItem={(charId, instId) =>
+          handleDispatch({
+            type: 'IDENTIFY_ITEM',
+            characterId: charId,
+            itemInstanceId: instId,
+          })
+        }
+        onSellItem={(charId, instId) =>
+          handleDispatch({
+            type: 'SELL_ITEM',
+            characterId: charId,
+            itemInstanceId: instId,
+          })
+        }
       />
 
       {/* Save & Load Modal */}

@@ -11,3 +11,4 @@ export * from './roguelite.js';
 export * from './theft.js';
 export * from './recall.js';
 export * from './use-item.js';
+export * from './inventory-management.js';
