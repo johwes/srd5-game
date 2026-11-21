@@ -92,6 +92,8 @@ export interface RealmViewProps {
   onExitToRoster: () => void;
   onOpenCharacterSheet?: (characterId: string, liveBuild?: CharacterBuildState) => void;
   onSyncPartyBuilds?: (updatedBuilds: CharacterBuildState[]) => void;
+  /** SRD-1403: Civ setup-screen session config. */
+  worldOptions?: import('@srd5/engine').WorldOptions;
 }
 
 interface ActiveBattle {
@@ -117,9 +119,10 @@ export function RealmView({
   onExitToRoster,
   onOpenCharacterSheet,
   onSyncPartyBuilds,
+  worldOptions,
 }: RealmViewProps) {
   const [session, setSession] = useState<RealmSessionState>(() =>
-    createRealmSession({ partyCharacters, compendium, seed }),
+    createRealmSession({ partyCharacters, compendium, seed, ...(worldOptions ? { worldOptions } : {}) }),
   );
   const [battle, setBattle] = useState<ActiveBattle | null>(null);
   const [activeDelve, setActiveDelve] = useState<ActiveDelve | null>(null);

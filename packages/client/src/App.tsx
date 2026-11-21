@@ -98,6 +98,10 @@ export function App({
     null,
   );
   const [isDailyDescentActive, setIsDailyDescentActive] = useState<boolean>(false);
+  // SRD-1403: last New Game world options (Realm/Descent session config).
+  const [launchWorldOptions, setLaunchWorldOptions] = useState<
+    import('@srd5/engine').WorldOptions | undefined
+  >(undefined);
 
   const transportInfo = getTransportInfo();
 
@@ -304,6 +308,8 @@ export function App({
           onLaunch={(config: CampaignLaunchConfig) => {
             setLoadedGameState(undefined);
             setMultiplayerCharacterIds(null);
+            // SRD-1403: persist the Civ setup-screen session config for Realm/Descent.
+            setLaunchWorldOptions(config.worldOptions);
             if (config.party.length > 0) {
               const nextRoster = {
                 ...roster,
@@ -608,6 +614,7 @@ export function App({
             partyCharacters={missionPartyCharacters}
             compendium={defaultCompendium}
             storageAdapter={dungeonStorageAdapter}
+            worldOptions={launchWorldOptions}
             onSyncPartyBuilds={(updatedBuilds) => {
               let nextRoster = roster;
               let changed = false;
@@ -649,6 +656,7 @@ export function App({
             gameMode="roguelite"
             storageAdapter={dungeonStorageAdapter}
             isDaily={isDailyDescentActive}
+            worldOptions={launchWorldOptions}
             onOpenCharacterSheet={(charId) => {
               const char =
                 roster.characters.find((c) => c.id === charId) ??

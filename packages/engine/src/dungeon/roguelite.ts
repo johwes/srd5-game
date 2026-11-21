@@ -33,6 +33,13 @@ import { sweepUnclaimedCorpseLoot } from './corpse-loot.js';
 export const STARTING_ROGUELITE_RATIONS = 10;
 export const RATIONS_PER_LONG_REST = 4;
 
+import {
+  type WorldOptions,
+  resolveWorldOptions,
+  scaleRationRequirement,
+  scaleStartingRations,
+} from '../world-options.js';
+
 /**
  * Historical record of a completed or failed roguelite run (Spec 06 Section 3.1 & 3.2).
  */
@@ -51,6 +58,8 @@ export interface GraveyardEntry {
   isDaily?: boolean;
   dailyDate?: string;
   mode?: string;
+  /** SRD-1403: persisted world options so scores compare like-for-like. */
+  worldOptions?: WorldOptions;
 }
 
 /**
@@ -78,6 +87,8 @@ export interface DeepDescentRunState {
   isDaily?: boolean;
   dailyDate?: string;
   mode?: string;
+  /** SRD-1403: Civ setup-screen session config (chosen pre-launch, never mid-run). */
+  worldOptions?: WorldOptions;
 }
 
 export interface RogueliteScoreFactors {
@@ -140,6 +151,8 @@ export interface CreateRogueliteRunOptions {
   isDaily?: boolean;
   dailyDate?: string;
   mode?: string;
+  /** SRD-1403: Civ setup-screen session config (defaults reproduce today). */
+  worldOptions?: Partial<WorldOptions>;
 }
 
 export interface RogueliteRunSession {
@@ -153,7 +166,11 @@ export interface RogueliteRunSession {
  */
 export function startRogueliteRun(options: CreateRogueliteRunOptions = {}): RogueliteRunSession {
   const runId = options.runId ?? `descent_${Date.now()}`;
-  const seed = options.seed ?? 1337;
+  const worldOptions: WorldOptions = options.worldOptions
+    ? resolveWorldOptions({ ...options.worldOptions, seed: options.worldOptions.seed ?? options.seed ?? 1337 })
+    : resolveWorldOptions({ seed: options.seed ?? 1337 });
+  const seed = options.seed ?? worldOptions.seed ?? 1337;
+  const resolvedWorld: WorldOptions = { ...worldOptions, seed };
   const depth = 1;
   const compendium = options.compendium ?? defaultCompendium;
   const characters =
@@ -168,6 +185,7 @@ export function startRogueliteRun(options: CreateRogueliteRunOptions = {}): Rogu
     targetRoomCount: 5,
     trapDensity: 0.25,
     shrineProbability: 0.8,
+    ...(options.worldOptions ? { worldOptions: resolvedWorld } : {}),
   });
 
   const partyCombatants: Record<string, Combatant> = {};
@@ -195,7 +213,7 @@ export function startRogueliteRun(options: CreateRogueliteRunOptions = {}): Rogu
     rngState: generatedFloor.nextRngState,
   });
 
-  const suppliesRemaining = options.startingRations ?? STARTING_ROGUELITE_RATIONS;
+  const suppliesRemaining = options.startingRations ?? scaleStartingRations(STARTING_ROGUELITE_RATIONS, resolvedWorld.scarcity);
 
   const runState: DeepDescentRunState = {
     runId,
@@ -223,6 +241,7 @@ export function startRogueliteRun(options: CreateRogueliteRunOptions = {}): Rogu
     ...(options.isDaily !== undefined ? { isDaily: options.isDaily } : {}),
     ...(options.dailyDate ? { dailyDate: options.dailyDate } : {}),
     ...(options.mode ? { mode: options.mode } : {}),
+    ...(options.worldOptions ? { worldOptions: resolvedWorld } : {}),
   };
 
   return { runState, gameState, generatedFloor };
@@ -254,6 +273,7 @@ export function advanceRogueliteFloor(
     targetRoomCount,
     shrineProbability: 0.75,
     lockedStairsDoor: nextDepth >= 3,
+    ...(runState.worldOptions ? { worldOptions: runState.worldOptions } : {}),
   });
 
   // Preserve existing party state across floor transitions.
@@ -347,7 +367,11 @@ export function resolveRogueliteLongRest(
   const livingHeroes = Object.values(nextGameState.party).filter(
     (c) => !c.isDead && c.currentHp > 0,
   );
-  const requiredRations = Math.max(1, livingHeroes.length);
+  // SRD-1403 scarcity: abundant halves the ration ticket, scarce doubles it.
+  const requiredRations = scaleRationRequirement(
+    Math.max(1, livingHeroes.length),
+    nextRunState.worldOptions?.scarcity ?? 'standard',
+  );
 
   if (nextRunState.suppliesRemaining >= requiredRations) {
     // Satiated Long Rest: consume rations and execute full rest
@@ -669,6 +693,7 @@ export function endRogueliteRun(
     ...(nextRunState.isDaily !== undefined ? { isDaily: nextRunState.isDaily } : {}),
     ...(nextRunState.dailyDate ? { dailyDate: nextRunState.dailyDate } : {}),
     ...(nextRunState.mode ? { mode: nextRunState.mode } : {}),
+    ...(nextRunState.worldOptions ? { worldOptions: { ...nextRunState.worldOptions } } : {}),
   };
 
   nextRunState.graveyardEntry = graveyardEntry;

@@ -14,6 +14,7 @@ import {
 } from './loot.js';
 import { computeDerivedCharacter } from '../character/derived.js';
 import { getActorCheckBonus, isAdjacent } from './props.js';
+import { scaleLootForScarcity, type Scarcity } from '../world-options.js';
 
 // ============================================================================
 // SRD-1307: CR-scaled monster loot drops + corpse looting + skill-influenced
@@ -86,6 +87,7 @@ export function rollCorpseLoot(
     Partial<Pick<Combatant, 'id' | 'position' | 'isDead' | 'currentHp'>>,
   rngState: number,
   compendium: SrdCompendium = defaultCompendium,
+  scarcity: Scarcity = 'standard',
 ): { loot: LootBundleSpec; nextRng: number } {
   if (monster.isSummon) {
     return { loot: {}, nextRng: rngState };
@@ -100,6 +102,10 @@ export function rollCorpseLoot(
     const hoard = rollTreasureHoard(cr, rng, compendium);
     rng = hoard.nextRng;
     loot = mergeLootBundles(loot, hoard.loot);
+  }
+  // SRD-1403 scarcity: standard is identity (bit-exact).
+  if (scarcity !== 'standard') {
+    loot = { ...scaleLootForScarcity(loot, scarcity) };
   }
   if (hasClaimableLoot(loot)) {
     loot.origin = MONSTER_DROP_ORIGIN;

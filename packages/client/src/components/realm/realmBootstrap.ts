@@ -43,6 +43,8 @@ export interface CreateRealmSessionOptions {
   startingRations?: number;
   /** Shared party purse for overworld trade (character gp stays on sheets). */
   startingGold?: number;
+  /** SRD-1403: Civ setup-screen session config (scope/wildness/scarcity/seed). */
+  worldOptions?: import('@srd5/engine').WorldOptions;
 }
 
 export const DEFAULT_REALM_SEED = 805;
@@ -77,12 +79,13 @@ export function createRealmSession(
   options: CreateRealmSessionOptions = {},
 ): RealmSessionState {
   const compendium = options.compendium ?? defaultCompendium;
-  const seed = options.seed ?? DEFAULT_REALM_SEED;
+  const seed = options.worldOptions?.seed ?? options.seed ?? DEFAULT_REALM_SEED;
 
   const generated = generateOverworldMap({
     seed,
     width: options.width ?? DEFAULT_REALM_SIZE,
     height: options.height ?? DEFAULT_REALM_SIZE,
+    ...(options.worldOptions ? { worldOptions: options.worldOptions } : {}),
   });
   const settled = populateSettlements(generated.map, generated.settlementSites);
   const map = settled.map;
@@ -91,6 +94,7 @@ export function createRealmSession(
     pace: options.pace ?? 'normal',
     startingRations: options.startingRations ?? 10,
     startingGold: options.startingGold ?? DEFAULT_REALM_STARTING_GOLD,
+    ...(options.worldOptions ? { worldOptions: options.worldOptions } : {}),
   });
 
   const characters =

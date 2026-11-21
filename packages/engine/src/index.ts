@@ -11,6 +11,7 @@ export function getEngineMetadata() {
 }
 
 export * from './dice/index.js';
+export * from './world-options.js';
 export * from './character/index.js';
 export * from './grid/index.js';
 export * from './combat/index.js';

@@ -1,4 +1,5 @@
 import type { CharacterBuildState } from '@srd5/data';
+import type { WorldOptions } from '@srd5/engine';
 
 export type CampaignModeId = 'campaign_kaelen' | 'deep_descent' | 'realm' | 'arena';
 
@@ -41,6 +42,8 @@ export interface CampaignLaunchConfig {
   difficulty: CampaignDifficultyConfig;
   party: CharacterBuildState[];
   slotAssignments?: PartySlotAssignment[];
+  /** SRD-1403: Civ setup-screen session config (Realm/Descent; Kaelen stays fixed). */
+  worldOptions?: WorldOptions;
 }
 
 export type SlotRoleSuggestion = 'frontline' | 'striker' | 'controller' | 'support';

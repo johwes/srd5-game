@@ -24,6 +24,12 @@ import {
 import { generateFloorRecallTags } from './recall.js';
 import { pickFromBand } from './encounter-tables.js';
 import { rollChampionForEncounter } from './champions.js';
+import {
+  WorldOptionsSchema,
+  applyScopeToFloorSize,
+  applyWildnessToMonsterCount,
+  scaleLootForScarcity,
+} from '../world-options.js';
 
 /**
  * Procedural dungeon floor generator configuration (Spec 06 Section 3.1).
@@ -44,6 +50,8 @@ export const ProceduralFloorConfigSchema = z.object({
   furnitureDensity: z.number().min(0).max(1).default(0.65),
   doorProbability: z.number().min(0).max(1).default(0.8),
   lockedStairsDoor: z.boolean().optional(),
+  /** SRD-1403 world options (Civ setup screen). Defaults reproduce today's generation bit-exact. */
+  worldOptions: WorldOptionsSchema.optional(),
 });
 export type ProceduralFloorConfigInput = z.input<typeof ProceduralFloorConfigSchema>;
 export type ProceduralFloorConfig = z.output<typeof ProceduralFloorConfigSchema>;
@@ -382,6 +390,12 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
   const config = ProceduralFloorConfigSchema.parse(rawConfig);
   let rngState = normalizeSeed(config.seed);
 
+  // SRD-1403: world options are replay-safe — standard/default takes the exact
+  // historical code path (no extra RNG, no scaling).
+  const worldScope = config.worldOptions?.scope ?? 'standard';
+  const wildness = config.worldOptions?.wildness ?? 'standard';
+  const scarcity = config.worldOptions?.scarcity ?? 'standard';
+
   function nextFloat(): number {
     const res = nextRandomFloat(rngState);
     rngState = res.nextState;
@@ -397,9 +411,19 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
   const biome: BiomeTier = config.biome ?? getBiomeForDepth(config.depth);
   const theme = getBiomeTheme(biome);
 
-  const targetRooms =
-    config.targetRoomCount ??
-    Math.min(10, Math.max(5, Math.floor(4 + config.depth * 0.4)));
+  const scopedSize = applyScopeToFloorSize(
+    {
+      width: config.width,
+      height: config.height,
+      targetRoomCount:
+        config.targetRoomCount ??
+        Math.min(10, Math.max(5, Math.floor(4 + config.depth * 0.4))),
+    },
+    worldScope,
+  );
+  const floorWidth = scopedSize.width;
+  const floorHeight = scopedSize.height;
+  const targetRooms = scopedSize.targetRoomCount;
 
   const minPartitionSize = config.minRoomDimension + 4; // e.g. 5 + 4 = 9
   const minSplitThreshold = minPartitionSize * 2; // e.g. 18
@@ -410,8 +434,8 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
       id: 0,
       x: 1,
       y: 1,
-      width: config.width - 2,
-      height: config.height - 2,
+      width: floorWidth - 2,
+      height: floorHeight - 2,
     },
   ];
 
@@ -984,6 +1008,13 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
       };
       const key = `${cornerCandidate.x},${cornerCandidate.y}`;
       if (!propOccupied.has(key)) {
+        const chestLoot = scaleLootForScarcity(
+          {
+            gp: nextDie(20) * config.depth,
+            sp: nextDie(50) * config.depth,
+          },
+          scarcity,
+        );
         props.push({
           id: `chest_${config.depth}_${++chestCount}`,
           x: cornerCandidate.x,
@@ -993,8 +1024,7 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
           blocksMovement: false,
           blocksSight: false,
           lootTable: {
-            gp: nextDie(20) * config.depth,
-            sp: nextDie(50) * config.depth,
+            ...chestLoot,
             items: ['potion_of_healing'],
           },
         });
@@ -1114,7 +1144,9 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
     const room = internalRooms[i];
     const isBossRoom = i === furthestRoomIdx;
 
-    const monsterCount = isBossRoom ? 1 + (nextFloat() < 0.5 ? 1 : 0) : 1 + Math.floor(nextFloat() * 2);
+    const baseMonsterCount = isBossRoom ? 1 + (nextFloat() < 0.5 ? 1 : 0) : 1 + Math.floor(nextFloat() * 2);
+    // SRD-1403 wildness: pure count scaling, standard is identity (bit-exact).
+    const monsterCount = applyWildnessToMonsterCount(baseMonsterCount, wildness);
 
     const monsters = [];
     const usedMonsterPositions = new Set<string>();
@@ -1179,6 +1211,29 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
     }
   }
 
+  // SRD-1403 grand scope: +1 encounter monster per floor budget. Applied to the
+  // first non-boss encounter (boss rooms stay curated); consumes RNG only for
+  // grand scope so standard replays stay bit-exact.
+  if (worldScope === 'grand' && encounters.length > 0) {
+    const target = encounters.find((e) => e.roomId !== descentRoom.id) ?? encounters[0]!;
+    const pick = pickFromBand(rngState, config.depth);
+    rngState = pick.nextState;
+    const hostRoom = internalRooms.find((r) => r.id === target.roomId);
+    if (hostRoom) {
+      let spawnPt: GridPoint | undefined;
+      for (let attempt = 0; attempt < 15 && !spawnPt; attempt++) {
+        const cx = hostRoom.bounds.x + 1 + Math.floor(nextFloat() * Math.max(1, hostRoom.bounds.width - 2));
+        const cy = hostRoom.bounds.y + 1 + Math.floor(nextFloat() * Math.max(1, hostRoom.bounds.height - 2));
+        const posKey = `${cx},${cy}`;
+        const occupied = target.monsters.some((m) => m.spawnX === cx && m.spawnY === cy);
+        if (!propOccupied.has(posKey) && !occupied) spawnPt = { x: cx, y: cy };
+      }
+      if (spawnPt) {
+        target.monsters.push({ monsterId: pick.monsterId, spawnX: spawnPt.x, spawnY: spawnPt.y });
+      }
+    }
+  }
+
   // 11. Biome Hazards & Decorative Tiles
   if (theme.hazardTerrain) {
     for (let i = 1; i < internalRooms.length; i++) {
@@ -1205,8 +1260,8 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
 
   // 12. Full Dense Grid Generation (Filling uncarved void cells with wall_solid)
   const fullCells: DungeonCellSpec[] = [];
-  for (let y = 0; y < config.height; y++) {
-    for (let x = 0; x < config.width; x++) {
+  for (let y = 0; y < floorHeight; y++) {
+    for (let x = 0; x < floorWidth; x++) {
       const key = `${x},${y}`;
       const existing = cellMap.get(key);
       if (existing) {
@@ -1253,8 +1308,8 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
   const floor: DungeonFloorSpec = {
     id: floorId,
     name: `${theme.name} — Depth ${config.depth}`,
-    width: config.width,
-    height: config.height,
+    width: floorWidth,
+    height: floorHeight,
     partySpawnCells,
     cells: fullCells,
     props,

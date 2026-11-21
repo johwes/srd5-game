@@ -87,6 +87,8 @@ export interface DungeonViewProps {
   isDaily?: boolean;
   dailyDate?: string;
   seed?: number;
+  /** SRD-1403: Civ setup-screen session config. */
+  worldOptions?: import('@srd5/engine').WorldOptions;
 }
 
 export function DungeonView({
@@ -104,6 +106,7 @@ export function DungeonView({
   isDaily,
   dailyDate,
   seed,
+  worldOptions,
 }: DungeonViewProps) {
   const campaignModule = getSunkenCryptModule();
   const [dungeonMode, setDungeonMode] = useState<DungeonGameMode>(gameMode);
@@ -119,9 +122,10 @@ export function DungeonView({
       return { runState: initialDelveState, floor: initialFloorSpec };
     }
     if (gameMode === 'roguelite') {
-      const sess = buildRogueliteSession(partyCharacters, compendium, seed, {
+      const sess = buildRogueliteSession(partyCharacters, compendium, seed ?? worldOptions?.seed, {
         isDaily,
         dailyDate,
+        ...(worldOptions ? { worldOptions } : {}),
       });
       return {
         runState: sess.session.runState,
@@ -171,9 +175,10 @@ export function DungeonView({
       });
     }
     if (gameMode === 'roguelite') {
-      const sess = buildRogueliteSession(partyCharacters, compendium, seed, {
+      const sess = buildRogueliteSession(partyCharacters, compendium, seed ?? worldOptions?.seed, {
         isDaily,
         dailyDate,
+        ...(worldOptions ? { worldOptions } : {}),
       });
       return sess.transport;
     }
@@ -887,9 +892,10 @@ export function DungeonView({
 
   // Start new roguelite descent from Graveyard
   const handleStartNewDescent = () => {
-    const sess = buildRogueliteSession(partyCharacters, compendium, seed, {
+    const sess = buildRogueliteSession(partyCharacters, compendium, seed ?? worldOptions?.seed, {
       isDaily,
       dailyDate,
+      ...(worldOptions ? { worldOptions } : {}),
     });
     setRogueliteState({
       runState: sess.session.runState,

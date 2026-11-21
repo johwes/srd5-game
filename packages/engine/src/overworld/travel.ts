@@ -19,6 +19,7 @@ import {
 } from './schemas.js';
 import { findOverworldPath } from './generator.js';
 import { normalizeSeed, nextRandomFloat, rollDie } from '../dice/prng.js';
+import { scaleRationRequirement, scaleStartingRations } from '../world-options.js';
 import { type Combatant } from '../combat/types.js';
 import { applyConditionToCombatant } from '../combat/conditions.js';
 import {
@@ -295,12 +296,13 @@ export function createOverworldTravelState(
     partyPosition: { q: start.q, r: start.r },
     travelPace: config.pace,
     travelPointsRemaining: getDailyTravelPoints(config.pace),
-    rations: config.startingRations,
+    rations: scaleStartingRations(config.startingRations, config.worldOptions?.scarcity ?? 'standard'),
     gold: config.startingGold,
     milesTraveled: 0,
     foragedRations: 0,
     weatherEnabled: config.weatherEnabled,
     rngState,
+    ...(config.worldOptions ? { worldOptions: config.worldOptions } : {}),
   });
 }
 
@@ -619,7 +621,11 @@ export function campOverworld(
     }
   } else {
     const living = Object.values(nextParty).filter((c) => !c.isDead && c.currentHp > 0);
-    const required = Math.max(1, living.length);
+    // SRD-1403 scarcity: abundant halves the ration ticket, scarce doubles it.
+    const required = scaleRationRequirement(
+      Math.max(1, living.length),
+      state.worldOptions?.scarcity ?? 'standard',
+    );
 
     if (safe || rations >= required) {
       if (!safe) {

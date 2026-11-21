@@ -4,6 +4,7 @@ import type { OverworldPOI, TravelPace, WarDiplomacyState, WarState } from '@srd
 import {
   TRAVEL_PACE_PROFILES,
   WEATHER_PROFILES,
+  formatWorldOptionsBanner,
   getFactionByPoi,
   getNationThreat,
   getReputationTierProfile,
@@ -178,6 +179,16 @@ export function RealmHud({
           >
             {travel.milesTraveled} mi
           </span>
+          {/* SRD-1403 world options banner (session config). */}
+          {travel.worldOptions && (
+            <span
+              data-testid="world-options-banner"
+              title={formatWorldOptionsBanner(travel.worldOptions)}
+              className="px-2 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 truncate max-w-[280px]"
+            >
+              🌍 {formatWorldOptionsBanner(travel.worldOptions)}
+            </span>
+          )}
         </div>
       </header>
 

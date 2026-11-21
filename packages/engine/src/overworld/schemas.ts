@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WorldOptionsSchema } from '../world-options.js';
 
 /**
  * The Realm — strategic overworld map model (Spec 06 Section 4.1).
@@ -244,6 +245,8 @@ export const OverworldGenerationConfigSchema = z.object({
   temperatureBias: z.number().min(-1).max(1).default(0),
   moistureBias: z.number().min(-1).max(1).default(0),
   roadsEnabled: z.boolean().default(true),
+  /** SRD-1403 world options (Civ setup screen). Defaults reproduce today's generation bit-exact. */
+  worldOptions: WorldOptionsSchema.optional(),
 });
 export type OverworldGenerationConfigInput = z.input<typeof OverworldGenerationConfigSchema>;
 export type OverworldGenerationConfig = z.output<typeof OverworldGenerationConfigSchema>;
@@ -341,6 +344,8 @@ export const OverworldTravelStateSchema = z.object({
   /** Persisted so day rollover knows whether to reroll the weather. */
   weatherEnabled: z.boolean(),
   rngState: z.number().int(),
+  /** SRD-1403: persisted session config for HUD banner + scarcity rules. */
+  worldOptions: WorldOptionsSchema.optional(),
 });
 export type OverworldTravelState = z.infer<typeof OverworldTravelStateSchema>;
 
@@ -355,6 +360,8 @@ export const OverworldTravelConfigSchema = z.object({
   initialWeather: WeatherTypeSchema.optional(),
   /** When false the weather stays fixed at `initialWeather` (or 'clear'). */
   weatherEnabled: z.boolean().default(true),
+  /** SRD-1403: session config for scarcity + banner (defaults = standard). */
+  worldOptions: WorldOptionsSchema.optional(),
 });
 export type OverworldTravelConfigInput = z.input<typeof OverworldTravelConfigSchema>;
 export type OverworldTravelConfig = z.output<typeof OverworldTravelConfigSchema>;

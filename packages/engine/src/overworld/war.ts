@@ -11,6 +11,11 @@ import {
 } from './schemas.js';
 import { normalizeSeed, nextRandomFloat, nextRandomUint32 } from '../dice/prng.js';
 import { RealmError } from './realm-error.js';
+import {
+  WarIntensitySchema,
+  resolveWarNationCountForIntensity,
+  resolveWarTickIntervalForIntensity,
+} from '../world-options.js';
 
 /**
  * SRD-1101 — War Core: nation archetypes, strategic POIs, living war tick
@@ -365,13 +370,17 @@ function shuffled<T>(items: readonly T[], rngState: number): { items: T[]; nextR
 export const InitializeWarStateOptionsSchema = z.object({
   seed: z.number().int().optional(),
   /** Force 3 or 4 nations; otherwise rolled deterministically (≈50/50). */
-  nationCount: z.union([z.literal(3), z.literal(4)]).optional(),
+  nationCount: z.union([z.literal(3), z.literal(4), z.literal(6)]).optional(),
   /** Force the player nation; defaults to the first Good nation selected. */
   playerNationArchetypeId: z.string().min(1).optional(),
   /** Strategic POIs placed per nation (fortress/mine/depot/bridge cycle). */
   strategicPoisPerNation: z.number().int().min(1).max(6).default(4),
   /** Extra unclaimed mines open to contests (default 2, Spec 10 §3). */
   neutralMineCount: z.number().int().min(0).max(6).default(2),
+  /** SRD-1403 Civ setup-screen war intensity (drives nation count + tick). */
+  warIntensity: WarIntensitySchema.optional(),
+  /** Override days per living-world tick (default 3, Spec 10 §3). */
+  tickIntervalDays: z.number().int().min(1).max(30).optional(),
 });
 export type InitializeWarStateOptions = z.infer<typeof InitializeWarStateOptionsSchema>;
 
@@ -383,7 +392,7 @@ export interface InitializeWarStateResult {
 
 function resolveNationSelection(
   rngState: number,
-  nationCount: 3 | 4,
+  nationCount: 3 | 4 | 6,
   requiredArchetypeId?: string,
 ): { selected: WarNationArchetype[]; nextRng: number } {
   const required = requiredArchetypeId
@@ -473,7 +482,17 @@ export function initializeWarState(
 
   const countDraw = nextRandomFloat(rngState);
   rngState = countDraw.nextState;
-  const nationCount = options.nationCount ?? (countDraw.value < 0.5 ? 3 : 4);
+  // SRD-1403: war intensity forces the nation count; standard keeps the
+  // historical 3–4 roll (bit-exact). The count draw is always consumed so the
+  // downstream RNG stream stays aligned across intensities.
+  const intensityCount = options.warIntensity
+    ? resolveWarNationCountForIntensity(options.warIntensity)
+    : undefined;
+  const rolledCount = (countDraw.value < 0.5 ? 3 : 4) as 3 | 4;
+  const nationCount: 3 | 4 | 6 = options.nationCount ?? intensityCount ?? rolledCount;
+  const tickIntervalDays =
+    options.tickIntervalDays ??
+    (options.warIntensity ? resolveWarTickIntervalForIntensity(options.warIntensity) : 3);
 
   const selection = resolveNationSelection(rngState, nationCount, options.playerNationArchetypeId);
   rngState = selection.nextRng;
@@ -639,7 +658,7 @@ export function initializeWarState(
     seed: options.seed ?? map.worldSeed,
     currentDay: 1,
     tickCount: 0,
-    tickIntervalDays: 3,
+    tickIntervalDays,
     dominanceTarget: 100,
     nations,
     nationOrder: selected.map((a) => a.id),

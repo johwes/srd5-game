@@ -2,6 +2,7 @@ import React from 'react';
 import { GameIcon } from '../../canvas/assets/index.js';
 import type { DeepDescentRunState } from '@srd5/engine';
 import { getBiomeForDepth, getBiomeTheme } from '@srd5/engine';
+import { WorldOptionsBanner } from '../campaign/WorldOptionsForm.js';
 
 export interface RogueliteHudProps {
   runState: DeepDescentRunState;
@@ -66,6 +67,8 @@ export function RogueliteHud({ runState, onOpenRestCamp, layout = 'bar' }: Rogue
 
       {/* Stats counters */}
       <div className="flex items-center gap-3">
+        {/* SRD-1403 world options banner (session config, run record). */}
+        {runState.worldOptions && <WorldOptionsBanner options={runState.worldOptions} />}
         {/* Rations */}
         <div
           title={

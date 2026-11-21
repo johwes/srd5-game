@@ -9,6 +9,7 @@ import { rollDie, rollMultipleDice } from '../dice/prng.js';
 import { computeDerivedCharacter } from '../character/derived.js';
 import { type GameEvent, type GameState, type InteractiveProp } from '../state/types.js';
 import { type LootBundleSpec } from './schemas.js';
+import { scaleLootForScarcity, type Scarcity } from '../world-options.js';
 
 // ============================================================================
 // 1. SRD 5.1 Magic Item Tables & Curated Drop Pools
@@ -378,6 +379,31 @@ export function rollTreasureHoard(
   }
 
   return { loot, nextRng: currentRng };
+}
+
+/**
+ * SRD-1403 scarcity wrappers: standard is the identity (bit-exact); abundant
+ * scales coin fields ×1.5, scarce ×0.5. Magic-item bias is untouched.
+ */
+export function rollIndividualTreasureWithScarcity(
+  cr: number,
+  rngState: number,
+  scarcity: Scarcity = 'standard',
+): { loot: LootBundleSpec; nextRng: number } {
+  const rolled = rollIndividualTreasure(cr, rngState);
+  if (scarcity === 'standard') return rolled;
+  return { loot: scaleLootForScarcity(rolled.loot, scarcity), nextRng: rolled.nextRng };
+}
+
+export function rollTreasureHoardWithScarcity(
+  cr: number,
+  rngState: number,
+  compendium: SrdCompendium = defaultCompendium,
+  scarcity: Scarcity = 'standard',
+): { loot: LootBundleSpec; nextRng: number } {
+  const rolled = rollTreasureHoard(cr, rngState, compendium);
+  if (scarcity === 'standard') return rolled;
+  return { loot: scaleLootForScarcity(rolled.loot, scarcity), nextRng: rolled.nextRng };
 }
 
 // ============================================================================

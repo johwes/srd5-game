@@ -195,7 +195,7 @@ export function buildRogueliteSession(
   partyCharacters: CharacterBuildState[] = [],
   compendium: SrdCompendium = defaultCompendium,
   seed?: number,
-  options?: { isDaily?: boolean; dailyDate?: string },
+  options?: { isDaily?: boolean; dailyDate?: string; worldOptions?: import('@srd5/engine').WorldOptions },
 ): {
   transport: LocalTransport;
   initialState: GameState;
@@ -207,11 +207,13 @@ export function buildRogueliteSession(
         compendium,
         seed,
         date: options.dailyDate,
+        ...(options.worldOptions ? { worldOptions: options.worldOptions } : {}),
       })
     : startRogueliteRun({
         partyCharacters,
         compendium,
-        seed: seed ?? 1337,
+        seed: seed ?? options?.worldOptions?.seed ?? 1337,
+        ...(options?.worldOptions ? { worldOptions: options.worldOptions } : {}),
       });
 
   const transport = new LocalTransport({

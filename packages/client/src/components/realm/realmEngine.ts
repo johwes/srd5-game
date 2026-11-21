@@ -553,6 +553,10 @@ export function reduceRealm(
       const founded = initializeWarState(next.map, {
         seed: next.map.worldSeed,
         ...(command.archetypeId ? { playerNationArchetypeId: command.archetypeId } : {}),
+        // SRD-1403: war intensity rides the session config (Realm setup screen).
+        ...(next.travel.worldOptions?.warIntensity
+          ? { warIntensity: next.travel.worldOptions.warIntensity }
+          : {}),
       });
       next.war = founded.war;
       next.map = founded.map;

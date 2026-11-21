@@ -15,6 +15,7 @@ import {
   overworldTileKey,
 } from './schemas.js';
 import { normalizeSeed, nextRandomFloat, nextRandomUint32 } from '../dice/prng.js';
+import { applyScopeToOverworldSize } from '../world-options.js';
 
 /**
  * Procedural Overworld Map Generator (`OverworldMap`, Spec 06 Section 4.1).
@@ -372,6 +373,12 @@ export function generateOverworldMap(
   const config: OverworldGenerationConfig = OverworldGenerationConfigSchema.parse(rawConfig);
   let rngState = normalizeSeed(config.seed);
 
+  // SRD-1403: grand scope widens the map; standard is bit-exact.
+  const scoped = applyScopeToOverworldSize(
+    { width: config.width, height: config.height },
+    config.worldOptions?.scope ?? 'standard',
+  );
+
   function nextFloat(): number {
     const res = nextRandomFloat(rngState);
     rngState = res.nextState;
@@ -384,7 +391,9 @@ export function generateOverworldMap(
     return res.value;
   }
 
-  const { width, height, seaLevel } = config;
+  const { seaLevel } = config;
+  const width = scoped.width;
+  const height = scoped.height;
   const tileCount = width * height;
 
   const elevationSeed = nextUint32();

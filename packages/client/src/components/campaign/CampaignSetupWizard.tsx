@@ -5,6 +5,8 @@ import {
 } from '@srd5/data';
 import { generateDraftParty } from '@srd5/engine';
 import { computeDerivedCharacter } from '@srd5/engine';
+import { DEFAULT_WORLD_OPTIONS, type WorldOptions } from '@srd5/engine';
+import { WorldOptionsForm } from './WorldOptionsForm.js';
 import {
   getPartyCoverageHints,
   type PartyCoverageInput,
@@ -70,6 +72,8 @@ export function CampaignSetupWizard({
     return { ...DEFAULT_CAMPAIGN_DIFFICULTY };
   });
   const [showCustomRulesDrawer, setShowCustomRulesDrawer] = useState<boolean>(false);
+  // SRD-1403: Civ setup-screen world options (Realm/Descent; Kaelen stays fixed).
+  const [worldOptions, setWorldOptions] = useState<WorldOptions>({ ...DEFAULT_WORLD_OPTIONS });
 
   // Vault Selection Modal state
   const [vaultModalSlotIndex, setVaultModalSlotIndex] = useState<number | null>(null);
@@ -286,6 +290,10 @@ export function CampaignSetupWizard({
       difficulty: difficultyConfig,
       party: activeParty,
       slotAssignments,
+      // SRD-1403: Kaelen stays a fixed story module — only Realm/Descent carry options.
+      ...(selectedMode === 'realm' || selectedMode === 'deep_descent'
+        ? { worldOptions: { ...worldOptions } }
+        : {}),
     });
   };
 
@@ -721,6 +729,15 @@ export function CampaignSetupWizard({
                 </div>
               )}
             </div>
+
+            {/* SRD-1403: Civ setup-screen world options (Realm/Descent only; Kaelen fixed). */}
+            {(selectedMode === 'realm' || selectedMode === 'deep_descent') && (
+              <WorldOptionsForm
+                value={worldOptions}
+                onChange={setWorldOptions}
+                showWarIntensity={selectedMode === 'realm'}
+              />
+            )}
           </section>
         )}
 
@@ -1115,6 +1132,19 @@ export function CampaignSetupWizard({
                 </div>
               </div>
             </div>
+
+            {/* SRD-1403: world options recap on the embark screen. */}
+            {(selectedMode === 'realm' || selectedMode === 'deep_descent') && (
+              <div
+                data-testid="wizard-world-summary"
+                className="rounded-xl border border-sky-800/60 bg-sky-950/30 p-3 text-xs text-sky-200"
+              >
+                🌍 World: {worldOptions.scope} · {worldOptions.wildness} density · {worldOptions.scarcity}
+                {selectedMode === 'realm' ? ` · war ${worldOptions.warIntensity}` : ''} · seed{' '}
+                {worldOptions.seed} ({worldOptions.seedSource}
+                {worldOptions.dailyDate ? ` ${worldOptions.dailyDate}` : ''})
+              </div>
+            )}
           </section>
         )}
       </main>

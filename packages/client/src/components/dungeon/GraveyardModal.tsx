@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type { GraveyardEntry } from '@srd5/engine';
+import { getWorldOptionsSummary } from '@srd5/engine';
 import { getGraveyardHighScores } from '../../persistence/roguelitePersistence.js';
 
 export interface GraveyardModalProps {
@@ -56,6 +57,12 @@ export function GraveyardModal({
               <span className="text-3xl sm:text-4xl font-black text-amber-300">
                 ★ {currentEntry.score.toLocaleString()}
               </span>
+              {/* SRD-1403 run record: persisted world options, like-for-like scores. */}
+              {currentEntry.worldOptions && (
+                <span data-testid="graveyard-world-options" className="text-[11px] text-sky-300 mt-1">
+                  🌍 {getWorldOptionsSummary(currentEntry.worldOptions)}
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
