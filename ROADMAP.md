@@ -16,7 +16,7 @@ furniture, Realm journeys). A brilliant director cannot save a shaky table.
 **The idea.** An LLM acts as Dungeon Master: narrates, voices NPCs, spawns
 encounters, places loot/props, generates quests, and adjudicates the gaps the
 rules engine explicitly punts on (`manual_adjudication` cards). Think co-op
-D&D night where the computer runs the module.
+tabletop night where the computer runs the module.
 
 **Why this codebase is unusually ready for it:**
 - The engine is authoritative and deterministic, and *everything* crosses one

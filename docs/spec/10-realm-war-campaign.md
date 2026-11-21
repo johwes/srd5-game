@@ -21,6 +21,8 @@
   - **Defeat**: The player's nation's War Power collapses to `0`.
 - **Bidirectional Special-Ops Leverage**: Operations either **boost your nation's War Power** (e.g., capturing a neutral mine, cleansing a cursed domestic mine, defending an attacked POI, recovering a war artifact, winning Druid Circle support) **and/or drain an enemy nation's War Power** (e.g., poisoning a city/garrison water supply, destroying a bridge, assassinating a general, sabotaging a mine, inciting Orc guerrilla warfare).
 
+**Scope boundary (party-scale, no management sim).** The war is backdrop that generates adventures, never a second game about administering it: the player commands 1–4 heroes whose verbs stay heroic (the mission catalog above), never builds cities, raises armies, or manages supply lines. War Power, Threat, patrols, and the simulation tick are world-simulation the party *exploits*, not resources the player *administers*. Known tension, flagged not fixed: hiring a mercenary company currently buys +Military War Power directly (gold → strategic points). A future pass should resolve this into party-scale terms (swords beside you in battle, or cut it) — new war-economy features must not deepen the points-purchase pattern.
+
 ---
 
 ## 2. Randomized Nation Archetypes (3 Good · 3 Neutral · 2 Evil)

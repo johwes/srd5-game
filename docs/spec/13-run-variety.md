@@ -2,7 +2,7 @@
 
 ## 0. Design Identity (read first)
 
-This game is **not** a roguelike wearing D&D clothes, and it is **not** BG3.
+This game is **not** a roguelike in borrowed clothes, and it is **not** BG3.
 Its identity: **BG3's interaction language** (hotbar, tooltips, paperdoll
 inventory, camp rhythm) + **real 5e rules feel** + **strictly SRD 5.1 content**
 + **a Civilization / Master of Magic strategic overland** + something of its

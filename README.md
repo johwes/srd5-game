@@ -1,6 +1,6 @@
 # SRD 5.1 Tactical Turn-Based Dungeon Crawler
 
-A browser-based, turn-based tactical CRPG dungeon crawler built on the **System Reference Document 5.1 (D&D 5e SRD)** under Creative Commons Attribution 4.0 International (CC-BY-4.0).
+A browser-based, turn-based tactical CRPG dungeon crawler built on the **System Reference Document 5.1 (5e SRD)** under Creative Commons Attribution 4.0 International (CC-BY-4.0).
 
 Featuring a pure deterministic rules engine, modern Baldur's Gate 3-inspired tactical interface, Steam Deck handheld ergonomics (1280×800), and a clean modular monorepo architecture.
 
