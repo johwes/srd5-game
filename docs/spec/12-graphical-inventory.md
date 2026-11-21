@@ -177,14 +177,39 @@ passives, diplomacy deal tiers).
   CR bands (0–4 / 5–10 / 11–16 / 17+); elites/bosses additionally roll on
   `rollTreasureHoard` at a CR-derived tier.
 - Deterministic: seeds thread from the combat/encounter seed (never UI-side
-  randomness). Drops aggregate into the existing loot-claim flow — no new
-  commands; reuse `awardLootToCharacter` and the loot-modal UI — with per-
-  monster provenance in the Combat Log.
+  randomness). Each drop list attaches to the slain monster's corpse record
+  (see §11.2) — never into an anonymous pool — with per-monster provenance in
+  the Combat Log.
 - No double-dip: the war-battle award path stays authoritative for war
   missions; drops carry an origin tag so both paths never stack on the same
   kill.
 
-### 11.2 Skill-influenced loot
+### 11.2 Looting corpses: movement, occupancy & clicks
+
+Corpses are lootable terrain, not creatures (5e/BG3 rules):
+
+- **Occupancy**: add `isDead?: boolean` to `GridCreature`; dead creatures are
+  non-blocking for traversal *and* for end-of-move in `canEndMoveAt` /
+  `findPath`, in combat and exploration alike. A hero may stand on, end a
+  turn on, and path through corpse cells at normal cost. (Status quo this
+  fixes: `GridCreature` has no dead flag, so fallen bodies block like walls.)
+- **Click priority**: living tokens render above corpses (already true) and
+  keep click priority — clicking a stacked cell selects/moves the hero.
+  Clicking the corpse token itself (which stops swallowing the event only
+  when it holds unclaimed loot) opens the per-corpse loot card. Fully-looted
+  corpses stay inert and unclickable, as today.
+- **Loot action**: reuse the prop-claim pipeline — corpses behave as
+  `INTERACT_PROP` targets of a `corpse` kind claimed via the existing
+  `claimPropLoot` flow (recipient select, stacking, events). No new commands.
+- **Range (v1)**: any conscious party member may search any revealed corpse
+  on the floor — party-level abstraction, consistent with the existing
+  party-wide passive-perception checks in `EXPLORE_MOVE`. A proximity rule
+  (adjacent looter, auto-walk-into-range) is an explicit follow-up, not v1.
+- **Sweep**: corpses persist across encounters as battlefield remains, so
+  leaving the floor (or a "loot all nearby" action) auto-collects unclaimed
+  drops into the party — loot is never silently lost on forgotten bodies.
+
+### 11.3 Skill-influenced loot
 
 Loot-time skill hooks, resolved deterministically and attributed in the UI so
 players see the skill matter (extends the SRD-1211 badging philosophy):
