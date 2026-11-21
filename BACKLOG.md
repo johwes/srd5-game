@@ -288,7 +288,7 @@ flowchart LR
 | **SRD-1206** | `[x]` | Sleight of Hand theft verb (pickpocket/plant/lift, tools advantage, caught branches) + Fast Hands bonus-action tie-in | `@srd5/engine`, `@srd5/client` | SRD-502 |
 | **SRD-1207** | `[x]` | Knowledge recall passives (`history`/`religion`/`arcana`/`nature` DC tags, trap/ward bonuses, counterspell identification) | `@srd5/engine`, `@srd5/data` | SRD-502, SRD-1103 |
 | **SRD-1208** | `[x]` | Opposed Insight vs Deception; Medicine stabilize check; Intimidation/Animal Handling/Nature/Performance homes; real combat `hide` | `@srd5/engine` | SRD-304, SRD-305 |
-| **SRD-1209** | `[ ]` | Diplomacy template (History unlocks → Insight reads → triple-approach resolve, fail-forward) on tribe/envoy/truce missions | `@srd5/engine`, `@srd5/client` | SRD-1104, SRD-1208 |
+| **SRD-1209** | `[x]` | Diplomacy template (History unlocks → Insight reads → triple-approach resolve, fail-forward) on tribe/envoy/truce missions | `@srd5/engine`, `@srd5/client` | SRD-1104, SRD-1208 |
 | **SRD-1210** | `[ ]` | Bounded *Wish* menu (BG2-style boons + cost) and *Time Stop* solo-turn sequencing | `@srd5/engine`, `@srd5/data` | SRD-1203 |
 | **SRD-1211** | `[ ]` | Builder mechanical-status badging + party-aware hints (missing language/skill coverage) | `@srd5/client` | SRD-1202, SRD-1207 |
 | **SRD-1212** | `[ ]` | Relevance integrity gate: offered spell/skill/language must resolve or carry explicit tracking ticket | `@srd5/data`, `@srd5/engine` | SRD-1211 |
