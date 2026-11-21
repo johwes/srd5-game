@@ -1250,6 +1250,32 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     rngState: currentState,
   };
 
+  // SRD-1210: weapon attacks affecting another creature breach Time Stop.
+  const tsWindow = (nextState as CombatState & { timeStop?: { casterId: string } }).timeStop;
+  if (tsWindow && tsWindow.casterId === attackerId && targetId !== attackerId) {
+    const { timeStop: _dropped, ...rest } = nextState as CombatState & { timeStop?: unknown };
+    const cleared: CombatState = { ...(rest as CombatState) };
+    events.push({
+      type: 'TIME_STOP_ENDED',
+      casterId: tsWindow.casterId,
+      reason: 'breach',
+      totalTurns: tsWindow.totalTurns,
+    });
+    return {
+      state: cleared,
+      events,
+      outcome,
+      rollMode: mode,
+      advantageSources,
+      disadvantageSources,
+      attackRollRecord: attackRollRes.record,
+      targetEffectiveAc,
+      cover,
+      damageRollRecord,
+      damageDealt: damageDealt > 0 ? damageDealt : undefined,
+    };
+  }
+
   return {
     state: nextState,
     events,

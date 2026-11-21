@@ -73,6 +73,14 @@ import {
   resolveSleepHpPool,
   senseDetectMagic,
 } from './marker-spells.js';
+import {
+  WISH_BOON_IDS,
+  endTimeStop,
+  maybeBreachTimeStopOnTargets,
+  resolveWishBoon,
+  startTimeStop,
+  type WishBoonId,
+} from './capstones.js';
 
 let defaultCompendium: SrdCompendium | null = null;
 function getDefaultCompendium(): SrdCompendium {
@@ -420,6 +428,12 @@ export interface ExecuteSpellCastOptions {
   compendium?: SrdCompendium;
   skipReactionPrompts?: boolean;
   friendlyFireEnabled?: boolean;
+  /** SRD-1210: bounded Wish boon selection (omitted = legacy adjudication card). */
+  wishBoonId?: string;
+  /** SRD-1210: damage type for the grant-resistance Wish boon (default fire). */
+  wishResistanceType?: string;
+  /** SRD-1210: explicit dead-ally target for the resurrection Wish boon. */
+  wishResurrectionTargetId?: string;
 }
 
 /**
@@ -1006,6 +1020,56 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     resolvedTargetIds = kept;
   }
 
+  // SRD-1210: Bounded Wish menu. When a boon is selected, resolve the explicit
+  // effect bundle + SRD 5.1 stress instead of the open-ended adjudication card.
+  // Omitted boon preserves the legacy adjudication path (backward compatible).
+  if (spell.id === 'wish' && options.wishBoonId) {
+    const boonId = options.wishBoonId as WishBoonId;
+    if (!(WISH_BOON_IDS as readonly string[]).includes(boonId)) {
+      throw new Error(`Unknown Wish boon "${options.wishBoonId}" (expected one of ${WISH_BOON_IDS.join(', ')})`);
+    }
+    if ((nextCaster.wishLost ?? false)) {
+      throw new Error(`${nextCaster.name} has lost the ability to cast Wish (33% stress)`);
+    }
+    const interim: CombatState = {
+      ...state,
+      turnBudget: nextBudget,
+      combatants: { ...combatantsMap, [nextCaster.id]: nextCaster },
+      hazardZones: currentHazardZones,
+      rngState: currentState,
+    };
+    const wishRes = resolveWishBoon({
+      state: interim,
+      casterId: nextCaster.id,
+      boonId,
+      resistanceType: (options.wishResistanceType as never) ?? undefined,
+      resurrectionTargetId: options.wishResurrectionTargetId,
+    });
+    // Wish affecting allies breaches an active Time Stop window.
+    const breach = maybeBreachTimeStopOnTargets(
+      wishRes.state,
+      nextCaster.id,
+      [...wishRes.healedIds, ...wishRes.buffedIds, ...(wishRes.revivedId ? [wishRes.revivedId] : [])],
+    );
+    const finalState: CombatState = {
+      ...breach.state,
+      turnBudget: nextBudget,
+    };
+    return {
+      state: finalState,
+      events: [...events, ...wishRes.events, ...breach.events],
+      spell,
+      effectiveSlotLevel,
+      targetsHit: [...wishRes.healedIds, ...wishRes.buffedIds],
+      targetsMissed: [],
+      targetsSaved: [],
+      targetsFailedSave: [],
+      targetsUnaffectedByLanguage: [],
+      totalDamageByTarget: {},
+      totalHealingByTarget: { ...wishRes.totalHealingByTarget },
+    };
+  }
+
   // 5. Higher-Level Scaling Preparation
   const casterLevel = getCombatantCasterLevel(caster);
   const casterCtx = getCasterSpellContext(caster);
@@ -1574,7 +1638,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     });
   }
 
-  const nextState: CombatState = {
+  let nextState: CombatState = {
     ...state,
     turnBudget: nextBudget,
     combatants: combatantsMap,
@@ -1583,6 +1647,21 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     outcome,
     rngState: currentState,
   };
+
+  // SRD-1210: Time Stop opens the solo-turn window after the adjudication
+  // card resolves (self-targeted, so it never breaches on open).
+  if (spell.id === 'time-stop') {
+    const tsRes = startTimeStop(nextState, nextCaster.id);
+    nextState = tsRes.state;
+    events.push(...tsRes.events);
+  } else {
+    // SRD-1210: any other spell affecting another creature breaches Time Stop.
+    const breach = maybeBreachTimeStopOnTargets(nextState, nextCaster.id, effectTargetIds);
+    if (breach.ended) {
+      nextState = breach.state;
+      events.push(...breach.events);
+    }
+  }
 
   return {
     state: nextState,

@@ -74,6 +74,17 @@ export function canCombatantTakeReaction(combatant: Combatant): boolean {
 }
 
 /**
+ * SRD-1210: Time Stop freeze — non-caster combatants cannot take reactions
+ * while the solo-turn window holds. Central helper so every detector honors
+ * the freeze without a capstones import cycle.
+ */
+export function isFrozenByTimeStop(state: CombatState, entityId: string): boolean {
+  const ts = (state as CombatState & { timeStop?: { casterId: string } }).timeStop;
+  if (!ts) return false;
+  return entityId !== ts.casterId;
+}
+
+/**
  * Checks whether the reactor can perceive the target (sight check).
  * Reactions requiring sight (Opportunity Attack, Protection, Uncanny Dodge, Counterspell)
  * fail if the reactor is blinded, target is invisible, or line of sight is obstructed.
@@ -400,6 +411,7 @@ export function detectOpportunityAttackTrigger(
   for (const other of Object.values(state.combatants)) {
     if (other.id === mover.id) continue;
     if (!areHostile(mover, other, state.dispositionMatrix)) continue; // Must be hostile
+    if (isFrozenByTimeStop(state, other.id)) continue; // SRD-1210: frozen, no reactions
     if (!canCombatantTakeReaction(other)) continue;
     if (!combatantCanSee(other, mover, from, grid)) continue;
 
@@ -445,6 +457,7 @@ export function detectProtectionTrigger(
   for (const other of Object.values(state.combatants)) {
     if (other.id === attacker.id || other.id === target.id) continue;
     if (!areAllied(other, target, state.dispositionMatrix)) continue; // Must be ally of target
+    if (isFrozenByTimeStop(state, other.id)) continue; // SRD-1210: frozen, no reactions
     if (!canCombatantTakeReaction(other)) continue;
     if (!hasProtectionFightingStyle(other)) continue;
     if (!combatantCanSee(other, attacker, undefined, grid)) continue;
@@ -487,6 +500,7 @@ export function detectAttackHitReactions(
   const attacker = state.combatants[attackerId];
   const target = state.combatants[targetId];
   if (!attacker || !target) return null;
+  if (isFrozenByTimeStop(state, target.id)) return null; // SRD-1210: frozen, no reactions
   if (!canCombatantTakeReaction(target)) return null;
 
   const availableReactions: AvailableReaction[] = [];
@@ -546,6 +560,7 @@ export function detectCounterspellTrigger(
   for (const other of Object.values(state.combatants)) {
     if (other.id === caster.id) continue;
     if (!areHostile(other, caster, state.dispositionMatrix)) continue; // Must be hostile
+    if (isFrozenByTimeStop(state, other.id)) continue; // SRD-1210: frozen, no reactions
     if (!canCombatantTakeReaction(other)) continue;
     if (!combatantCanSee(other, caster, undefined, grid)) continue;
 

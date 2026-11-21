@@ -513,6 +513,126 @@ export function endTurn(
     };
   }
 
+  // SRD-1210: Time Stop solo-turn sequencing (initiative manipulation, then resume).
+  // While the window holds, only the caster acts: ending the caster's turn
+  // chains another caster turn until the pool drains or a breach clears it.
+  // Frozen combatants never advance, never tick hazards, never react.
+  const tsWindow = (state as CombatState & { timeStop?: { casterId: string; remainingTurns: number; totalTurns: number } }).timeStop;
+  if (tsWindow) {
+    const casterAlive =
+      nextCombatants[tsWindow.casterId] &&
+      !nextCombatants[tsWindow.casterId]!.isDead &&
+      (nextCombatants[tsWindow.casterId]!.deathSaves.failures ?? 0) < 3;
+    if (!casterAlive) {
+      const { timeStop: _dropped, ...rest } = state as CombatState & { timeStop?: unknown };
+      const cleared: CombatState = {
+        ...(rest as CombatState),
+        combatants: nextCombatants,
+        hazardZones: nextHazardZones,
+        rngState: currentState,
+        turnBudget: null,
+      };
+      events.push({
+        type: 'TIME_STOP_ENDED',
+        casterId: tsWindow.casterId,
+        reason: 'caster_down',
+        totalTurns: tsWindow.totalTurns,
+      });
+      // Fall through to normal advancement from the cleared state.
+      const clearedNext = findNextActiveCombatantIndex(
+        cleared.initiativeOrder,
+        nextCombatants,
+        cleared.activeCombatantIndex,
+      );
+      if (!clearedNext) {
+        return {
+          state: { ...cleared, phase: 'combat_ended', outcome: 'draw' },
+          events,
+        };
+      }
+      let nextRound2 = cleared.round;
+      if (clearedNext.wrapped) {
+        nextRound2 += 1;
+        events.push({ type: 'ROUND_STARTED', round: nextRound2 });
+      }
+      const nextEntry2 = cleared.initiativeOrder[clearedNext.nextIndex]!;
+      return startTurn(
+        {
+          ...cleared,
+          round: nextRound2,
+          activeCombatantIndex: clearedNext.nextIndex,
+          activeCombatantId: nextEntry2.entityId,
+        },
+        nextEntry2.entityId,
+        events,
+      );
+    }
+    if (activeId === tsWindow.casterId) {
+      if (tsWindow.remainingTurns <= 0) {
+        // Final solo turn completed — resume normal initiative.
+        const { timeStop: _dropped, ...rest } = state as CombatState & { timeStop?: unknown };
+        const resumed: CombatState = {
+          ...(rest as CombatState),
+          combatants: nextCombatants,
+          hazardZones: nextHazardZones,
+          rngState: currentState,
+          turnBudget: null,
+        };
+        events.push({
+          type: 'TIME_STOP_ENDED',
+          casterId: tsWindow.casterId,
+          reason: 'completed',
+          totalTurns: tsWindow.totalTurns,
+        });
+        const nextInfo2 = findNextActiveCombatantIndex(
+          resumed.initiativeOrder,
+          nextCombatants,
+          resumed.activeCombatantIndex,
+        );
+        if (!nextInfo2) {
+          return { state: { ...resumed, phase: 'combat_ended', outcome: 'draw' }, events };
+        }
+        let nextRound3 = resumed.round;
+        if (nextInfo2.wrapped) {
+          nextRound3 += 1;
+          events.push({ type: 'ROUND_STARTED', round: nextRound3 });
+        }
+        const nextEntry3 = resumed.initiativeOrder[nextInfo2.nextIndex]!;
+        return startTurn(
+          {
+            ...resumed,
+            round: nextRound3,
+            activeCombatantIndex: nextInfo2.nextIndex,
+            activeCombatantId: nextEntry3.entityId,
+          },
+          nextEntry3.entityId,
+          events,
+        );
+      }
+      // Chain another solo turn in the same round (no round increment).
+      const remaining = tsWindow.remainingTurns - 1;
+      const chained: CombatState = {
+        ...state,
+        combatants: nextCombatants,
+        hazardZones: nextHazardZones,
+        rngState: currentState,
+        turnBudget: null,
+        timeStop: { ...tsWindow, remainingTurns: remaining },
+      };
+      return startTurn(chained, tsWindow.casterId, events);
+    }
+    // A frozen combatant ended a turn (should not happen via normal flow) —
+    // immediately return the spotlight to the caster without advancing order.
+    const frozenChained: CombatState = {
+      ...state,
+      combatants: nextCombatants,
+      hazardZones: nextHazardZones,
+      rngState: currentState,
+      turnBudget: null,
+    };
+    return startTurn(frozenChained, tsWindow.casterId, events);
+  }
+
   // Find next eligible combatant
   const nextInfo = findNextActiveCombatantIndex(
     state.initiativeOrder,

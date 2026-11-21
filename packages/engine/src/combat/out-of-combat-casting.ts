@@ -16,6 +16,7 @@ import type {
 import { isSummonTargetable } from './summon.js';
 import { isIncapacitated } from './turn-budget.js';
 import { getCombatantCasterLevel, getCasterSpellContext } from './spellcasting.js';
+import { WISH_BOON_IDS, resolveWishBoon } from './capstones.js';
 
 let defaultCompendium: SrdCompendium | null = null;
 function getDefaultCompendium(): SrdCompendium {
@@ -66,6 +67,12 @@ export interface OutOfCombatCastOptions {
   rngState: number;
   grid?: TacticalGrid;
   compendium?: SrdCompendium;
+  /** SRD-1210: bounded Wish boon selection out of combat. */
+  wishBoonId?: string;
+  /** SRD-1210: damage type for the grant-resistance Wish boon. */
+  wishResistanceType?: string;
+  /** SRD-1210: explicit dead-ally target for the resurrection Wish boon. */
+  wishResurrectionTargetId?: string;
 }
 
 export interface OutOfCombatCastResult {
@@ -417,6 +424,59 @@ export function executeOutOfCombatSpellCast(
     slotExpended: ritualCast || effectiveSlotLevel === 0 ? undefined : effectiveSlotLevel,
     targetEntityIds: [...resolvedTargetIds],
   });
+
+  // SRD-1210: Bounded Wish boons out of combat (full-rest/mass-heal/etc).
+  if (spell.id === 'wish' && options.wishBoonId) {
+    const boonId = options.wishBoonId as never;
+    if (!(WISH_BOON_IDS as readonly string[]).includes(options.wishBoonId)) {
+      throw new Error(`Unknown Wish boon "${options.wishBoonId}"`);
+    }
+    const liveCaster = nextParty[casterId] ?? nextMonsters[casterId]!;
+    if (liveCaster.wishLost) {
+      throw new Error(`${liveCaster.name} has lost the ability to cast Wish (33% stress)`);
+    }
+    const tmpCombatants: Record<string, Combatant> = { ...nextParty, ...nextMonsters };
+    const tmpState = {
+      encounterId: 'out-of-combat-wish',
+      round: 1,
+      phase: 'active_turn' as const,
+      initiativeOrder: [],
+      activeCombatantIndex: 0,
+      activeCombatantId: casterId,
+      turnBudget: null,
+      combatants: tmpCombatants,
+      surprisedCombatantIds: [],
+      outcome: 'in_progress' as const,
+      rngState: currentRng,
+    };
+    const wishRes = resolveWishBoon({
+      state: tmpState,
+      casterId,
+      boonId,
+      resistanceType: (options.wishResistanceType as never) ?? undefined,
+      resurrectionTargetId: options.wishResurrectionTargetId,
+      rngState: currentRng,
+    });
+    const outParty: Record<string, Combatant> = { ...nextParty };
+    const outMonsters: Record<string, Combatant> = { ...nextMonsters };
+    for (const [cid, comb] of Object.entries(wishRes.state.combatants)) {
+      if (nextParty[cid] !== undefined || party[cid] !== undefined) outParty[cid] = comb;
+      else outMonsters[cid] = comb;
+    }
+    return {
+      party: outParty,
+      monsters: outMonsters,
+      rngState: wishRes.state.rngState,
+      events: [...events, ...wishRes.events],
+      spell,
+      effectiveSlotLevel,
+      ritualCast,
+      timeSpentMinutes,
+      targetsHealed: [...wishRes.healedIds],
+      targetsBuffed: [...wishRes.buffedIds],
+      totalHealingByTarget: { ...wishRes.totalHealingByTarget },
+    };
+  }
 
   // Scaling + formula context mirrors combat (upcast dice, cantrip tiers).
   const casterLevel = getCombatantCasterLevel(caster);

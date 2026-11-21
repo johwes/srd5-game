@@ -756,7 +756,7 @@ export const SRD_HIGH_TIER_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlayS
   'time-stop': adjudicatedSpell(
     'time-stop-boon',
     'Time Stop — Take Extra Turns',
-    'You take 1d4 + 1 turns in a row before other creatures act again. Other creatures are effectively inactive and cannot react during this window.',
+    'Bounded capstone (SRD-1210): roll 1d4+1 for consecutive solo turns. Others are frozen (no turns, no reactions, no hazard ticks against them); the window ends early if you affect another creature, then initiative resumes.',
     '1d4 + 1',
   ),
   'true-resurrection': adjudicatedSpell(
@@ -766,8 +766,8 @@ export const SRD_HIGH_TIER_SPELL_OVERLAYS: Readonly<Record<string, SpellOverlayS
   ),
   wish: adjudicatedSpell(
     'wish-adjudicate',
-    'Wish — Adjudicate the Request',
-    'Wish can duplicate any spell of level 8 or lower (no costly component), or produce an effect beyond normal spellcasting. If used for anything other than duplicating a spell, there is a 33% chance of never being able to cast Wish again and the stress may incapacitate you.',
+    'Wish — Choose a Bounded Boon',
+    'Bounded capstone (SRD-1210, BG2-style): pick one of restore-party, grant-resistance, supply-cache, full-rest, mass-heal, resurrection. Every boon triggers SRD 5.1 stress — STR falls to 3 for 2d4 days, 33% chance of losing Wish forever, plus a 1-round collapse. Duplicating a spell of 8th level or lower (cast that spell directly) avoids stress. No open-ended parsing.',
   ),
 
   // ---------------------------------- SRD-1004: Expanded L5–L9 SRD 5.1 Spell Overlays

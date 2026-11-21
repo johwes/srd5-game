@@ -186,6 +186,10 @@ export const CombatantStateSchema = z.object({
   summonTriggeredCreaturesThisTurn: z.array(z.string()).optional(),
   summonDismissible: z.boolean().optional(),
   summonConcentrationLinked: z.boolean().optional(),
+  // --- SRD-1210 Wish stress state (Spec 11 §4.3) ---
+  wishLost: z.boolean().optional(),
+  wishStressActive: z.boolean().optional(),
+  wishStressDaysRemaining: z.number().int().nonnegative().optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
@@ -702,6 +706,32 @@ export type CombatEvent =
       guidance: string;
       suggestedRoll?: string | undefined;
       targetId?: string | undefined;
+    }
+  /** SRD-1210: bounded Wish boon resolved with SRD 5.1 stress. */
+  | {
+      type: 'WISH_BOON_RESOLVED';
+      actorId: string;
+      spellId: string;
+      boonId: string;
+      healedIds: string[];
+      buffedIds: string[];
+      revivedId?: string | undefined;
+      stressDays: number;
+      wishLost: boolean;
+    }
+  /** SRD-1210: Time Stop solo-turn window opened (1d4+1 turns). */
+  | {
+      type: 'TIME_STOP_STARTED';
+      casterId: string;
+      totalTurns: number;
+      formula: string;
+    }
+  /** SRD-1210: Time Stop window closed (completed, breach, caster down). */
+  | {
+      type: 'TIME_STOP_ENDED';
+      casterId: string;
+      reason: 'completed' | 'breach' | 'caster_down' | 'manual';
+      totalTurns: number;
     };
 
 /**
@@ -725,4 +755,6 @@ export interface CombatState {
   pendingReactionPrompt?: PendingReactionPrompt | null;
   reactionInterruptContext?: ReactionInterruptContext | null;
   friendlyFireEnabled?: boolean;
+  /** SRD-1210 Time Stop solo-turn window (initiative manipulation, then resume). */
+  timeStop?: { casterId: string; remainingTurns: number; totalTurns: number };
 }

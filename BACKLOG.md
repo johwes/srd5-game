@@ -289,7 +289,7 @@ flowchart LR
 | **SRD-1207** | `[x]` | Knowledge recall passives (`history`/`religion`/`arcana`/`nature` DC tags, trap/ward bonuses, counterspell identification) | `@srd5/engine`, `@srd5/data` | SRD-502, SRD-1103 |
 | **SRD-1208** | `[x]` | Opposed Insight vs Deception; Medicine stabilize check; Intimidation/Animal Handling/Nature/Performance homes; real combat `hide` | `@srd5/engine` | SRD-304, SRD-305 |
 | **SRD-1209** | `[x]` | Diplomacy template (History unlocks → Insight reads → triple-approach resolve, fail-forward) on tribe/envoy/truce missions | `@srd5/engine`, `@srd5/client` | SRD-1104, SRD-1208 |
-| **SRD-1210** | `[ ]` | Bounded *Wish* menu (BG2-style boons + cost) and *Time Stop* solo-turn sequencing | `@srd5/engine`, `@srd5/data` | SRD-1203 |
+| **SRD-1210** | `[x]` | Bounded *Wish* menu (BG2-style boons + cost) and *Time Stop* solo-turn sequencing | `@srd5/engine`, `@srd5/data` | SRD-1203 |
 | **SRD-1211** | `[ ]` | Builder mechanical-status badging + party-aware hints (missing language/skill coverage) | `@srd5/client` | SRD-1202, SRD-1207 |
 | **SRD-1212** | `[ ]` | Relevance integrity gate: offered spell/skill/language must resolve or carry explicit tracking ticket | `@srd5/data`, `@srd5/engine` | SRD-1211 |
 | **SRD-1213** | `[ ]` | Standing skill passives (prof/expert table) + generator recall-tag emission from seeded theme tables | `@srd5/engine`, `@srd5/data` | SRD-1207, SRD-1208 |
@@ -299,7 +299,7 @@ flowchart LR
 - [ ] **SRD-1201..1202**: Compendium lookups for both new spells resolve; Orc-tribe chain playable with and without Orcish (gesture path verified E2E).
 - [x] **SRD-1203..1205**: Utility casts resolve outside combat — healing (`cure-wounds`) is required acceptance, not optional; knock alerts adjacent rooms; sleep follows the HP pool; no hazard step is silently dropped.
 - [ ] **SRD-1206..1208**: Theft success/caught branches; recall rewards apply; Insight opposes Deception; stabilize requires the check; `hide` grants `hidden`.
-- [ ] **SRD-1209..1210**: Diplomacy failures degrade the deal, never dead-end; Wish/Time Stop behave as bounded capstones with costs.
+- [x] **SRD-1209..1210**: Diplomacy failures degrade the deal, never dead-end; Wish/Time Stop behave as bounded capstones with costs.
 - [ ] **SRD-1211..1212**: Builder shows status for every pick; integrity suite fails on new dangling offered content.
 - [ ] **SRD-1213**: Passive bonuses apply at prof/expert tiers in headless tests; generated floors deterministically carry recall tags (bit-exact replay still green).
 - [ ] **SRD-1214**: Intercepts readable with the right tongue/magic/translator; bluff/deal tiers and interpreter costs verified headless + in War Room UI.

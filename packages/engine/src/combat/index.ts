@@ -17,3 +17,4 @@ export * from './monster-actions.js';
 export * from './allegiance.js';
 export * from './summon.js';
 export * from './marker-spells.js';
+export * from './capstones.js';
