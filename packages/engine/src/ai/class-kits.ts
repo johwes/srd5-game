@@ -1,12 +1,11 @@
 import type { GridPoint, TacticalGrid } from '../grid/model.js';
 import { getFootprintDistanceFeet } from '../grid/footprints.js';
 import { findPath, type GridCreature, type PathfindingResult } from '../grid/pathfinding.js';
-import type { Combatant, CombatState } from '../combat/types.js';
+import type { Combatant, CombatState, HazardZone } from '../combat/types.js';
 import type { DispositionMatrix } from '../combat/allegiance.js';
 import { areAllied, areHostile } from '../combat/allegiance.js';
 import type { GameCommand } from '../state/types.js';
 import type { AiPlan } from './types.js';
-import type { HazardZone } from '../combat/hazard-zone.js';
 import { truncatePathToExecutionBudget, getAdjacentCells } from './planner.js';
 
 /**

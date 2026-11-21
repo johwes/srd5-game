@@ -4,8 +4,8 @@ import { getFootprintDistanceFeet, isWithinMeleeReach } from '../grid/footprints
 import { computeCover, hasLineOfSight } from '../grid/vision.js';
 import { rasterizeSphere, rasterizeCone, rasterizeLine } from '../grid/aoe.js';
 import { findPath, canEndMoveAt, isFootprintStepDifficultTerrain, computeStepCostFeet, type GridCreature, type PathfindingResult } from '../grid/pathfinding.js';
-import { isCellInHazardDifficultTerrain, type HazardZone } from '../combat/hazard-zone.js';
-import type { Combatant, CombatState } from '../combat/types.js';
+import { isCellInHazardDifficultTerrain } from '../combat/hazard-zone.js';
+import type { Combatant, CombatState, HazardZone } from '../combat/types.js';
 import { areAllied, areHostile, type DispositionMatrix } from '../combat/allegiance.js';
 import { isIncapacitated } from '../combat/conditions.js';
 import type { GameCommand, GameEvent, GameState } from '../state/types.js';
