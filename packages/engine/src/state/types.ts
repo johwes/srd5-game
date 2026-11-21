@@ -185,6 +185,59 @@ export type GameCommand =
       roomId?: string;
     }
   | {
+      type: 'CONTEST_INSIGHT';
+      actorId: string;
+      targetId: string;
+      speakerDeceptionTotal?: number;
+      speakerDeceptionModifierOverride?: number;
+      asBonusAction?: boolean;
+    }
+  | {
+      type: 'ATTEMPT_STABILIZE';
+      actorId: string;
+      targetId: string;
+      asBonusAction?: boolean;
+      hasHealersKitOverride?: boolean;
+      dcOverride?: number;
+    }
+  | {
+      type: 'DIAGNOSE_AILMENT';
+      actorId: string;
+      targetId: string;
+      dcOverride?: number;
+    }
+  | {
+      type: 'ATTEMPT_INTIMIDATION';
+      actorId: string;
+      targetId: string;
+      asBonusAction?: boolean;
+      dcOverride?: number;
+    }
+  | {
+      type: 'ATTEMPT_ANIMAL_HANDLING';
+      actorId: string;
+      targetId: string;
+      intent?: 'calm' | 'befriend' | 'command';
+      asBonusAction?: boolean;
+      dcOverride?: number;
+    }
+  | {
+      type: 'ATTEMPT_NATURE_LORE';
+      actorId: string;
+      subject?: string;
+      dc?: number;
+      dcOverride?: number;
+    }
+  | {
+      type: 'ATTEMPT_PERFORMANCE';
+      actorId: string;
+      targetId?: string;
+      intent?: 'earn' | 'distract' | 'cover';
+      asBonusAction?: boolean;
+      dc?: number;
+      dcOverride?: number;
+    }
+  | {
       type: 'START_REST';
       restType: 'short' | 'long';
       hitDiceToSpend?: Record<string, number | Record<number, number>>;
@@ -378,7 +431,16 @@ export type GameEvent =
         | 'history'
         | 'religion'
         | 'arcana'
-        | 'nature';
+        | 'nature'
+        | 'insight'
+        | 'deception'
+        | 'medicine'
+        | 'intimidation'
+        | 'animal_handling'
+        | 'performance'
+        | 'persuasion'
+        | 'stealth'
+        | 'survival';
       targetId?: string;
       dc?: number;
       roll: number;

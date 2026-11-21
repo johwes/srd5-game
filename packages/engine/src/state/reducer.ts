@@ -47,6 +47,16 @@ import {
 } from '../dungeon/props.js';
 import { resolveTheftAttempt } from '../dungeon/theft.js';
 import { resolveRecallAttempt } from '../dungeon/recall.js';
+import {
+  resolveAnimalHandlingAttempt,
+  resolveCombatHide,
+  resolveDiagnoseAttempt,
+  resolveInsightContest,
+  resolveIntimidationAttempt,
+  resolveNatureLoreAttempt,
+  resolvePerformanceAttempt,
+  resolveStabilizeAttempt,
+} from '../social/contests.js';
 import { senseDetectMagic } from '../combat/marker-spells.js';
 import {
   checkDungeonEncounterTriggers,
@@ -469,7 +479,6 @@ export function reduceGame(
           break;
         }
         case 'help':
-        case 'hide':
         case 'search': {
           res = {
             state: nextState.combat,
@@ -482,6 +491,21 @@ export function reduceGame(
               },
             ],
           };
+          break;
+        }
+        case 'hide': {
+          // SRD-1208: real Stealth vs hostile passive Perception → hidden.
+          const hideRes = resolveCombatHide({
+            state: nextState,
+            actorId: command.actorId,
+            asBonusAction: command.asBonusAction ?? false,
+          });
+          nextState = hideRes.nextState;
+          // CHECK_RESOLVED is a GameEvent (not a CombatEvent): push it now and
+          // route only CombatEvents through the shared tail below.
+          const combatOnly = hideRes.events.filter((e) => e.type !== 'CHECK_RESOLVED');
+          events.push(...hideRes.events.filter((e) => e.type === 'CHECK_RESOLVED'));
+          res = { state: nextState.combat!, events: combatOnly as CombatEvent[] };
           break;
         }
         default:
@@ -1007,6 +1031,129 @@ export function reduceGame(
         nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
       }
       events.push(...recallRes.events);
+      break;
+    }
+
+    // SRD-1208: contested and missing skill verbs (Spec 11 §3.3).
+    case 'CONTEST_INSIGHT': {
+      const contestRes = resolveInsightContest({
+        state: nextState,
+        actorId: command.actorId,
+        targetId: command.targetId,
+        ...(command.speakerDeceptionTotal !== undefined
+          ? { speakerDeceptionTotal: command.speakerDeceptionTotal }
+          : {}),
+        ...(command.speakerDeceptionModifierOverride !== undefined
+          ? { speakerDeceptionModifierOverride: command.speakerDeceptionModifierOverride }
+          : {}),
+        ...(command.asBonusAction !== undefined ? { asBonusAction: command.asBonusAction } : {}),
+      });
+      nextState = contestRes.nextState;
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...contestRes.events);
+      break;
+    }
+
+    case 'ATTEMPT_STABILIZE': {
+      const stabRes = resolveStabilizeAttempt({
+        state: nextState,
+        actorId: command.actorId,
+        targetId: command.targetId,
+        ...(command.asBonusAction !== undefined ? { asBonusAction: command.asBonusAction } : {}),
+        ...(command.hasHealersKitOverride !== undefined
+          ? { hasHealersKitOverride: command.hasHealersKitOverride }
+          : {}),
+        ...(command.dcOverride !== undefined ? { dcOverride: command.dcOverride } : {}),
+      });
+      nextState = stabRes.nextState;
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...stabRes.events);
+      break;
+    }
+
+    case 'DIAGNOSE_AILMENT': {
+      const diagRes = resolveDiagnoseAttempt({
+        state: nextState,
+        actorId: command.actorId,
+        targetId: command.targetId,
+        ...(command.dcOverride !== undefined ? { dcOverride: command.dcOverride } : {}),
+      });
+      nextState = diagRes.nextState;
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...diagRes.events);
+      break;
+    }
+
+    case 'ATTEMPT_INTIMIDATION': {
+      const intimRes = resolveIntimidationAttempt({
+        state: nextState,
+        actorId: command.actorId,
+        targetId: command.targetId,
+        ...(command.asBonusAction !== undefined ? { asBonusAction: command.asBonusAction } : {}),
+        ...(command.dcOverride !== undefined ? { dcOverride: command.dcOverride } : {}),
+      });
+      nextState = intimRes.nextState;
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...intimRes.events);
+      break;
+    }
+
+    case 'ATTEMPT_ANIMAL_HANDLING': {
+      const handleRes = resolveAnimalHandlingAttempt({
+        state: nextState,
+        actorId: command.actorId,
+        targetId: command.targetId,
+        ...(command.intent !== undefined ? { intent: command.intent } : {}),
+        ...(command.asBonusAction !== undefined ? { asBonusAction: command.asBonusAction } : {}),
+        ...(command.dcOverride !== undefined ? { dcOverride: command.dcOverride } : {}),
+      });
+      nextState = handleRes.nextState;
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...handleRes.events);
+      break;
+    }
+
+    case 'ATTEMPT_NATURE_LORE': {
+      const natureRes = resolveNatureLoreAttempt({
+        state: nextState,
+        actorId: command.actorId,
+        ...(command.subject !== undefined ? { subject: command.subject } : {}),
+        ...(command.dc !== undefined ? { dc: command.dc } : {}),
+        ...(command.dcOverride !== undefined ? { dcOverride: command.dcOverride } : {}),
+      });
+      nextState = natureRes.nextState;
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...natureRes.events);
+      break;
+    }
+
+    case 'ATTEMPT_PERFORMANCE': {
+      const perfRes = resolvePerformanceAttempt({
+        state: nextState,
+        actorId: command.actorId,
+        ...(command.targetId !== undefined ? { targetId: command.targetId } : {}),
+        ...(command.intent !== undefined ? { intent: command.intent } : {}),
+        ...(command.asBonusAction !== undefined ? { asBonusAction: command.asBonusAction } : {}),
+        ...(command.dc !== undefined ? { dc: command.dc } : {}),
+        ...(command.dcOverride !== undefined ? { dcOverride: command.dcOverride } : {}),
+      });
+      nextState = perfRes.nextState;
+      if (nextState.combat) {
+        nextState.rngState = nextState.combat.rngState ?? nextState.rngState;
+      }
+      events.push(...perfRes.events);
       break;
     }
 
