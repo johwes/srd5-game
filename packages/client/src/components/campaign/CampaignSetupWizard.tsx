@@ -4,6 +4,12 @@ import {
   getPregenCharacter,
 } from '@srd5/data';
 import { generateDraftParty } from '@srd5/engine';
+import { computeDerivedCharacter } from '@srd5/engine';
+import {
+  getPartyCoverageHints,
+  type PartyCoverageInput,
+} from '../builder/relevance.js';
+import { PartyCoverageHintsList } from '../builder/MechanicalBadges.js';
 import { parseSrd5JsonImport } from '../../persistence/index.js';
 import { CampfirePartySlotCard } from './CampfirePartySlotCard.js';
 import { VaultSelectionModal } from './VaultSelectionModal.js';
@@ -865,6 +871,42 @@ export function CampaignSetupWizard({
                   </span>
                 </div>
               )}
+
+              {/* SRD-1211: Tabletop party-aware hints (missing language/skill coverage) */}
+              {(() => {
+                const coverage: PartyCoverageInput[] = activeParty.map((c) => {
+                  try {
+                    const derived = computeDerivedCharacter(c);
+                    return {
+                      languages: derived.proficiencies.languages,
+                      skillProficiencies: derived.proficiencies.skills,
+                      toolProficiencies: derived.proficiencies.tools,
+                      spellIds: [
+                        ...derived.spellcasting.cantripIds,
+                        ...derived.spellcasting.preparedOrKnownSpellIds,
+                      ],
+                    } as PartyCoverageInput;
+                  } catch {
+                    return {
+                      languages: [],
+                      skillProficiencies: [],
+                      spellIds: [],
+                    } as PartyCoverageInput;
+                  }
+                });
+                const tabletopHints = getPartyCoverageHints(coverage);
+                return (
+                  <div
+                    data-testid="wizard-tabletop-hints"
+                    className="rounded-xl border border-slate-800 bg-slate-900/70 p-3.5 space-y-2"
+                  >
+                    <div className="text-xs font-bold text-slate-300">
+                      Tabletop Coverage — languages, skills & spells that matter
+                    </div>
+                    <PartyCoverageHintsList hints={tabletopHints} />
+                  </div>
+                );
+              })()}
             </div>
 
             {/* 4 Party Slots Grid */}

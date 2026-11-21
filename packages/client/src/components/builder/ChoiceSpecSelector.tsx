@@ -13,6 +13,11 @@ import {
   formatAbilityFullName,
   formatTitleCase,
 } from '../compendium/formatters.js';
+import {
+  getLanguageMechanicalInfo,
+  getSkillMechanicalInfo,
+  getSpellMechanicalInfo,
+} from './relevance.js';
 
 export interface ChoiceSpecSelectorProps {
   choice: ChoiceSpec;
@@ -191,6 +196,38 @@ export function ChoiceSpecSelector({
             choice,
             compendium,
           );
+          // SRD-1211: mechanical-status badging — every pick shows where it
+          // matters (gate / verb / spell path) via the spell-card tooltip pattern.
+          const mechBadge = (() => {
+            if (choice.type === 'skill') {
+              const info = getSkillMechanicalInfo(canonical);
+              return {
+                label: info.badge,
+                title: `Mechanical path — ${info.uses.join('; ')}`,
+                testId: `${testIdPrefix}-mech-${choice.id}-${canonical}`,
+                supported: info.status === 'supported',
+              };
+            }
+            if (choice.type === 'language') {
+              const info = getLanguageMechanicalInfo(canonical, compendium);
+              return {
+                label: info.badge,
+                title: `Mechanical path — ${info.uses.join('; ')}`,
+                testId: `${testIdPrefix}-mech-${choice.id}-${canonical}`,
+                supported: info.status === 'supported',
+              };
+            }
+            if (choice.type === 'spell') {
+              const info = getSpellMechanicalInfo(canonical, compendium);
+              return {
+                label: info.badge,
+                title: `Mechanical path — ${info.detail}`,
+                testId: `${testIdPrefix}-mech-${choice.id}-${canonical}`,
+                supported: info.status === 'supported',
+              };
+            }
+            return null;
+          })();
 
           return (
             <button
@@ -219,6 +256,20 @@ export function ChoiceSpecSelector({
               {subtitle && (
                 <span className="text-[11px] text-slate-400 line-clamp-2">
                   {subtitle}
+                </span>
+              )}
+              {mechBadge && (
+                <span
+                  data-testid={mechBadge.testId}
+                  title={mechBadge.title}
+                  className={`inline-flex w-fit items-center gap-1 text-[10px] px-1.5 py-0.2 rounded border font-medium ${
+                    mechBadge.supported
+                      ? 'bg-emerald-950/70 border-emerald-700/60 text-emerald-300'
+                      : 'bg-amber-950/70 border-amber-600/60 text-amber-300'
+                  }`}
+                >
+                  <span aria-hidden="true">⚙</span>
+                  {mechBadge.label}
                 </span>
               )}
             </button>

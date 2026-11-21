@@ -18,6 +18,14 @@ import {
   type CharacterBuilderWizardState,
   PORTRAIT_PRESETS,
 } from './builderState.js';
+import {
+  RELEVANCE_MATRIX,
+  getLanguageMechanicalInfo,
+  getPartyCoverageHints,
+  getSkillMechanicalInfo,
+  type PartyCoverageInput,
+} from './relevance.js';
+import { PartyCoverageHintsList } from './MechanicalBadges.js';
 
 export interface ReviewStepProps {
   wizard: CharacterBuilderWizardState;
@@ -469,6 +477,22 @@ export function ReviewStep({
                   'None'}
               </span>
             </div>
+            <div className="flex flex-wrap gap-1 pt-1">
+              {derived.proficiencies.languages.map((langId) => {
+                const info = getLanguageMechanicalInfo(langId, compendium);
+                return (
+                  <span
+                    key={langId}
+                    data-testid={`builder-review-lang-mech-${info.id}`}
+                    title={`Mechanical path — ${info.uses.join('; ')}`}
+                    className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded border font-medium bg-emerald-950/70 border-emerald-700/60 text-emerald-300"
+                  >
+                    <span aria-hidden="true">⚙</span>
+                    {formatTitleCase(langId)}: {info.badge}
+                  </span>
+                );
+              })}
+            </div>
             <div className="text-slate-400">
               Tools:{' '}
               <span className="text-slate-200">
@@ -476,9 +500,96 @@ export function ReviewStep({
                   'None'}
               </span>
             </div>
+            <div className="flex flex-wrap gap-1 pt-1">
+              {derived.skills &&
+                Object.entries(derived.skills)
+                  .filter(([, sk]: [string, { proficiencyLevel?: string }]) =>
+                    ['proficient', 'expertise'].includes(sk.proficiencyLevel ?? ''),
+                  )
+                  .slice(0, 6)
+                  .map(([skillId]) => {
+                    const info = getSkillMechanicalInfo(skillId);
+                    return (
+                      <span
+                        key={skillId}
+                        data-testid={`builder-review-skill-mech-${info.id}`}
+                        title={`Mechanical path — ${info.uses.join('; ')}`}
+                        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded border font-medium bg-emerald-950/70 border-emerald-700/60 text-emerald-300"
+                      >
+                        <span aria-hidden="true">⚙</span>
+                        {formatTitleCase(skillId)}: {info.badge}
+                      </span>
+                    );
+                  })}
+            </div>
           </div>
         </section>
       </div>
+
+      {/* SRD-1211: Tabletop coverage — party-aware hints + relevance matrix */}
+      {(() => {
+        const coverage: PartyCoverageInput = {
+          languages: derived.proficiencies.languages,
+          skillProficiencies: derived.proficiencies.skills,
+          toolProficiencies: derived.proficiencies.tools,
+          spellIds: [
+            ...derived.spellcasting.cantripIds,
+            ...derived.spellcasting.preparedOrKnownSpellIds,
+          ],
+        };
+        const hints = getPartyCoverageHints([coverage]);
+        return (
+          <section
+            data-testid="builder-tabletop-coverage"
+            className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3"
+          >
+            <div>
+              <h4 className="text-sm font-semibold text-amber-300">
+                Tabletop Coverage — No Silent Dead Picks
+              </h4>
+              <p className="text-xs text-slate-400">
+                Every language, skill, and spell above carries a mechanical
+                path (gate, verb, or executable effect). This panel flags what
+                this hero alone does not cover — assemble a party so the gaps
+                are covered by someone or by magic.
+              </p>
+            </div>
+            <PartyCoverageHintsList hints={hints} />
+            <details className="rounded-lg bg-slate-950/60 border border-slate-800 p-3">
+              <summary
+                data-testid="relevance-matrix-toggle"
+                className="text-xs font-semibold text-slate-200 cursor-pointer"
+              >
+                Relevance matrix — which skills the shipped content exercises
+              </summary>
+              <div className="mt-2 overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-left text-slate-400">
+                      <th className="py-1 pr-2 font-medium">Skill</th>
+                      <th className="py-1 font-medium">Exercised by</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {RELEVANCE_MATRIX.map((row) => (
+                      <tr
+                        key={row.skill}
+                        data-testid={`relevance-matrix-row-${row.skill}`}
+                        className="border-t border-slate-800/60"
+                      >
+                        <td className="py-1 pr-2 text-slate-200 font-medium whitespace-nowrap">
+                          {row.skill}
+                        </td>
+                        <td className="py-1 text-slate-400">{row.exercisedBy}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </section>
+        );
+      })()}
     </div>
   );
 }

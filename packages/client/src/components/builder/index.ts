@@ -8,3 +8,5 @@ export * from './EquipmentStep.js';
 export * from './SpellsStep.js';
 export * from './ReviewStep.js';
 export * from './CharacterBuilderWizard.js';
+export * from './relevance.js';
+export * from './MechanicalBadges.js';

@@ -13,6 +13,7 @@ import {
   formatSpellRange,
   formatTitleCase,
 } from '../compendium/formatters.js';
+import { getSpellMechanicalInfo } from './relevance.js';
 import { getBuilderSpellcastingRequirements } from './builderState.js';
 
 export interface SpellsStepProps {
@@ -179,7 +180,9 @@ export function SpellsStep({
     isDisabled: boolean,
     onToggle: () => void,
     testIdPrefix: string,
-  ) => (
+  ) => {
+    const mech = getSpellMechanicalInfo(spell.id, compendium);
+    return (
     <div key={spell.id} className="relative group">
       <button
         type="button"
@@ -207,6 +210,14 @@ export function SpellsStep({
           {spell.concentration ? ' · Conc.' : ''}
           {spell.ritual ? ' · Ritual' : ''}
         </div>
+        <span
+          data-testid={`${testIdPrefix}-mech-${spell.id}`}
+          title={`Mechanical path — ${mech.detail}`}
+          className="inline-flex w-fit items-center gap-1 text-[10px] px-1.5 py-0.2 rounded border font-medium bg-emerald-950/70 border-emerald-700/60 text-emerald-300"
+        >
+          <span aria-hidden="true">⚙</span>
+          {mech.badge}
+        </span>
       </button>
       {/* BG3-style hover tooltip: full SRD description + Range/Duration/Components */}
       <div
@@ -244,6 +255,13 @@ export function SpellsStep({
         <div className="text-[11px] text-slate-300 leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto">
           {spell.description}
         </div>
+        <div
+          data-testid={`${testIdPrefix}-mech-detail-${spell.id}`}
+          className="text-[11px] leading-relaxed rounded bg-emerald-950/40 border border-emerald-800/50 px-2 py-1 text-emerald-200"
+        >
+          <span className="font-semibold">⚙ Mechanical path: </span>
+          {mech.detail}
+        </div>
         {spell.higherLevelDescription && (
           <div className="text-[11px] text-slate-400 leading-relaxed">
             <span className="font-semibold text-amber-300/90">At Higher Levels: </span>
@@ -252,7 +270,8 @@ export function SpellsStep({
         )}
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div data-testid="builder-step-spells" className="space-y-6">
