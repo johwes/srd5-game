@@ -404,3 +404,82 @@ describe('SRD-1303 USE_ITEM consumables engine path', () => {
     }
   });
 });
+
+describe('SRD-1303 item-ability routing guard (no free item use via USE_CLASS_FEATURE)', () => {
+  const potionAbility = {
+    id: 'drink-potion-of-healing',
+    name: 'Drink Potion of Healing',
+    description: 'You regain 2d4 + 2 hit points when you drink this potion.',
+    actionCost: 'action' as const,
+    targeting: { type: 'self' as const, rangeFeet: 0 },
+    effects: [{ step: 'heal' as const, diceFormula: '2d4 + 2' }],
+  };
+  const classAbility = {
+    id: 'test-second-wind',
+    name: 'Test Second Wind',
+    description: 'Class-granted ability (not item-granted).',
+    actionCost: 'bonus_action' as const,
+    targeting: { type: 'self' as const, rangeFeet: 0 },
+    effects: [],
+  };
+
+  function armedHero(id: string, hp: number) {
+    const hero = makeHero(id, 2, 2, {
+      hp,
+      inventory: [potionInstance('inst-potion-1')],
+    });
+    (hero.characterSheet as any).activatedAbilities = [potionAbility, classAbility];
+    return hero;
+  }
+
+  function startDuel(hero: Combatant, seed = 4242) {
+    const grid = createTacticalGrid(12, 12);
+    const goblin = makeGoblin('goblin-1', 7, 7);
+    let s = createInitialGameState({ grid, party: [hero], monsters: [goblin], rngState: seed });
+    s = reduceGame(s, { type: 'START_COMBAT', encounterId: 'enc-guard' }).nextState;
+    return activateHero(s, hero.id);
+  }
+
+  it('rejects USE_CLASS_FEATURE for an item-granted ability and names the USE_ITEM path', () => {
+    const s = startDuel(armedHero('hero-1', 6));
+    expect(s.combat?.activeCombatantId).toBe('hero-1');
+    expect(() =>
+      reduceGame(s, {
+        type: 'USE_CLASS_FEATURE',
+        actorId: 'hero-1',
+        featureId: 'drink-potion-of-healing',
+      }),
+    ).toThrow(/granted by potion-of-healing.*use USE_ITEM/i);
+  });
+
+  it('routes non-item abilities through USE_CLASS_FEATURE normally', () => {
+    const s = startDuel(armedHero('hero-1', 6));
+    const res = reduceGame(s, {
+      type: 'USE_CLASS_FEATURE',
+      actorId: 'hero-1',
+      featureId: 'test-second-wind',
+    });
+    expect(res.events.some((e) => e.type === 'ACTION_USED')).toBe(true);
+  });
+
+  it('strips the consumed ability from the sheet so it cannot fire again for free', () => {
+    const s = startDuel(armedHero('hero-1', 6));
+    const drank = reduceGame(s, {
+      type: 'USE_ITEM',
+      actorId: 'hero-1',
+      itemInstanceId: 'inst-potion-1',
+    });
+    const afterSheet = drank.nextState.combat!.combatants['hero-1']!.characterSheet as any;
+    expect(afterSheet.activatedAbilities.map((a: any) => a.id)).not.toContain('drink-potion-of-healing');
+    expect(afterSheet.activatedAbilities.map((a: any) => a.id)).toContain('test-second-wind');
+    // The stale sheet ability is gone: the feature path now fails closed
+    // ("not found") instead of healing a second time for free.
+    expect(() =>
+      reduceGame(drank.nextState, {
+        type: 'USE_CLASS_FEATURE',
+        actorId: 'hero-1',
+        featureId: 'drink-potion-of-healing',
+      }),
+    ).toThrow(/not found on/);
+  });
+});

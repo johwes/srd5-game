@@ -191,5 +191,5 @@ Reference flow for tribe/envoy/truce missions (extends Spec 10 §5–6 approach 
 
 - Integrity test: every builder-offered spell id resolves in the compendium (kills dangling refs permanently); every offered skill/language has ≥1 tagged consumer or an explicit `unsupported` badge with a tracking ticket.
 - Headless tests: language gate open/closed/fallback; recall rewards; theft success/caught branches; counterspell identification pass/fail; knock alert tradeoff; sleep HP-pool ordering; Wish boons; Time Stop turn sequencing; diplomacy fail-forward outcomes.
-- E2E: Orc-tribe chain played without Orcish (gesture path) and with Orcish/magic (full negotiation).
+- E2E (open — no UI chain-advancement surface yet): Orc-tribe chain played without Orcish (gesture path) and with Orcish/magic (full negotiation). Engine chain plays end-to-end headless (allied/blocked both paths); sub-faction quest advancement is currently engine-call-only (`completeSubFactionQuest`), displayed read-only in the War Room. Promote to E2E when a UI advancement path ships.
 - Passives: prof/expert tiers verified per skill; generator recall tags bit-exact across seeds.

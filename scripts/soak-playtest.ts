@@ -68,6 +68,7 @@ const telemetry = {
   maxLevelReached: 1,
   spellsCast: new Map<string, number>(),
   featuresUsed: new Map<string, number>(),
+  itemsUsed: new Map<string, number>(),
   concentrationBrokenEvents: 0,
 };
 
@@ -499,6 +500,11 @@ function buildRandomClassHero(
     inventory.push({ instanceId: instId, itemId: tpl.rangedWeaponId, quantity: 1 });
     equippedSlots.rangedInstanceId = instId;
   }
+  // Deterministic consumable for the USE_ITEM soak path (SRD-1303): every soak
+  // hero carries exactly one healing potion so the bot can drink under fire.
+  if (defaultCompendium.getEquipment('potion-of-healing')) {
+    inventory.push({ instanceId: `${heroId}-potion-healing`, itemId: 'potion-of-healing', quantity: 1 });
+  }
 
   const build: CharacterBuildState = {
     id: heroId,
@@ -917,10 +923,33 @@ function buildHeroAbilityAndSpellCommands(state: GameState, actorId: string, rng
     .filter((a) => a.currentHp < a.maxHp * 0.75)
     .sort((a, b) => a.currentHp / a.maxHp - b.currentHp / b.maxHp)[0];
 
-  // 1. Try activating an available Class Feature (Rage, Second Wind, Action Surge, Bardic Inspiration, Lay on Hands, Channel Divinity, Ki, etc.)
-  const abilities = actor.characterSheet?.activatedAbilities ?? [];
   let bonusLeft = budget.bonusAction;
   let actionLeft = budget.action;
+
+  // 0. Drink a healing potion when hurt (USE_ITEM consumables path, SRD-1303).
+  // Checked first: item-granted abilities can no longer fire through
+  // USE_CLASS_FEATURE (engine guard), so the bot must drink via USE_ITEM —
+  // exactly like the UI hotbar does. Healing now spends the turn's action,
+  // like real play.
+  const missingHp = actor.maxHp - actor.currentHp;
+  if (actionLeft > 0 && missingHp >= 4) {
+    const potion = actor.buildState?.inventory.find(
+      (i) => i.itemId === 'potion-of-healing' && i.quantity > 0,
+    );
+    if (potion) {
+      return [
+        {
+          type: 'USE_ITEM',
+          actorId: actor.id,
+          itemInstanceId: potion.instanceId,
+          targetId: actor.id,
+        },
+      ];
+    }
+  }
+
+  // 1. Try activating an available Class Feature (Rage, Second Wind, Action Surge, Bardic Inspiration, Lay on Hands, Channel Divinity, Ki, etc.)
+  const abilities = actor.characterSheet?.activatedAbilities ?? [];
 
   for (const ab of shuffleWithRng(abilities, rng)) {
     if (ab.actionCost === 'reaction' || ab.actionCost === 'movement' || ab.actionCost === 'special') continue;
@@ -1109,6 +1138,13 @@ function runHeadlessCombat(
         ).nextState;
       }
       try {
+        if (cmd.type === 'USE_ITEM') {
+          const user = state.combat?.combatants[cmd.actorId];
+          const used = user?.buildState?.inventory.find(
+            (i) => i.instanceId === cmd.itemInstanceId,
+          );
+          recordCount(telemetry.itemsUsed, used?.itemId ?? cmd.itemInstanceId);
+        }
         const res = reduceGame(state, cmd, { compendium: defaultCompendium });
         state = res.nextState;
         if (cmd.type === 'DECLARE_CAST_SPELL') {
@@ -1543,6 +1579,7 @@ function main() {
   const elapsedSec = ((Date.now() - startMs) / 1000).toFixed(2);
   const totalSpellCasts = [...telemetry.spellsCast.values()].reduce((a, b) => a + b, 0);
   const totalFeatureUses = [...telemetry.featuresUsed.values()].reduce((a, b) => a + b, 0);
+  const totalItemsUsed = [...telemetry.itemsUsed.values()].reduce((a, b) => a + b, 0);
   const topSpells = [...telemetry.spellsCast.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6)
@@ -1562,6 +1599,7 @@ function main() {
   if (topSpells) console.log(`    Top Spells:                      ${topSpells}`);
   console.log(`  Class Features Used:               ${totalFeatureUses} activations across ${telemetry.featuresUsed.size} distinct features`);
   if (topFeatures) console.log(`    Top Features:                    ${topFeatures}`);
+  console.log(`  Consumables Used (USE_ITEM):       ${totalItemsUsed} drinks across ${telemetry.itemsUsed.size} distinct items`);
   console.log(`  Concentration Checks Broken:       ${telemetry.concentrationBrokenEvents}`);
   console.log(`  Dungeon Soak (Kaelen F1 Darkness): ${dungeonStats.encountersCleared}/${dungeonStats.totalEncounters} cleared (avg ${dungeonStats.avgTurns} turns)`);
   console.log(`  Realm War Soak (${realmStats.seedsRun} seeds):         ${realmStats.totalTicks} ticks · ${realmStats.totalBattles} battles (${realmStats.victories}W/${realmStats.defeats}L) · ${realmStats.totalBloodless} bloodless · ${realmStats.totalPatrols} patrols`);
@@ -1585,6 +1623,10 @@ function main() {
     }
     if (telemetry.totalLevelUps === 0 || telemetry.maxLevelReached < 3) {
       console.error(`\n❌ Expected multi-level-up progression (L3+), got ${telemetry.totalLevelUps} level-ups (max L${telemetry.maxLevelReached})`);
+      process.exit(1);
+    }
+    if (totalItemsUsed === 0) {
+      console.error(`\n❌ Expected soak combat to exercise USE_ITEM consumables (SRD-1303), got 0 potion drinks`);
       process.exit(1);
     }
   }

@@ -73,7 +73,7 @@ import {
   transferInventoryItem,
   validateEquipLoadout,
 } from '../dungeon/inventory-management.js';
-import { resolveUseItem } from '../dungeon/use-item.js';
+import { findInventoryItemGrantingAbility, resolveUseItem } from '../dungeon/use-item.js';
 import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
 import { activateShrine } from '../dungeon/roguelite.js';
 import { applyBetweenCombatLevelUp } from '../dungeon/level-up-flow.js';
@@ -568,6 +568,25 @@ export function reduceGame(
     case 'USE_CLASS_FEATURE': {
       if (nextState.mode !== 'combat' || !nextState.combat) {
         throw new Error('Cannot execute USE_CLASS_FEATURE outside active combat');
+      }
+
+      // Consumable/item-granted abilities (potions, scrolls, wands, charged
+      // gear) must go through USE_ITEM so stacks are decremented and charges
+      // are spent. The derived sheet merges item abilities into
+      // activatedAbilities with no source tag, so without this guard a bare
+      // USE_CLASS_FEATURE would trigger them for free (infinite potions).
+      const featureActor = nextState.combat.combatants[command.actorId];
+      const featureGrant = featureActor?.buildState
+        ? findInventoryItemGrantingAbility(
+            featureActor.buildState.inventory,
+            command.featureId,
+            options?.compendium,
+          )
+        : undefined;
+      if (featureGrant) {
+        throw new Error(
+          `"${command.featureId}" is granted by ${featureGrant.itemName} — use USE_ITEM (instance ${featureGrant.instanceId}) so the stack/charge is consumed`,
+        );
       }
 
       const res = executeActivatedAbility({

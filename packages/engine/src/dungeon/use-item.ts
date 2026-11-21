@@ -152,6 +152,40 @@ function getItemAbility(
   };
 }
 
+/**
+ * Finds the inventory instance granting an activated ability id.
+ *
+ * The derived sheet merges item-granted abilities (potions, scrolls, wands,
+ * charged gear) into `activatedAbilities` with no source tag, so a bare
+ * `USE_CLASS_FEATURE` would trigger them for free (no stack decrement, no
+ * charge decrement). Callers must route item-granted abilities through
+ * `USE_ITEM`; this helper identifies them. Returns the granting instance or
+ * `undefined` when no carried item grants the ability (class/race/feat
+ * abilities resolve normally).
+ */
+export function findInventoryItemGrantingAbility(
+  inventory: readonly InventoryItemInstance[],
+  abilityId: string,
+  compendium?: SrdCompendium,
+): { instanceId: string; itemId: string; itemName: string } | undefined {
+  const comp = compendium ?? getDefaultCompendium();
+  for (const inst of inventory) {
+    const magic = comp.getMagicItem(inst.itemId);
+    const abilities = magic
+      ? (magic.activatedAbilities ?? [])
+      : (
+          (comp.getEquipment(inst.itemId) as unknown as
+            | { activatedAbilities?: ActivatedAbilitySpec[] }
+            | undefined)?.activatedAbilities ?? []
+        );
+    if (abilities.some((ability) => ability.id === abilityId)) {
+      const itemName = magic?.name ?? inst.itemId;
+      return { instanceId: inst.instanceId, itemId: inst.itemId, itemName };
+    }
+  }
+  return undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Combat-mode ability executor (heal / buff / attack_roll -> damage / saves)
 // ---------------------------------------------------------------------------
@@ -467,6 +501,22 @@ export function resolveUseItem(
       currency: bs.currency,
     });
     persistInventory(next);
+    // USE_ITEM does not recompute the derived sheet, so a fully-consumed
+    // instance would leave its ability listed (firing again via USE_ITEM, or
+    // for free via USE_CLASS_FEATURE past the inventory guard). Drop the
+    // ability from held sheets when nothing remaining grants it. Stacks with
+    // remaining quantity and charged wands keep their ability.
+    if (ability && !findInventoryItemGrantingAbility(next, ability.id, compendium)) {
+      const holders = [
+        nextState.party[command.actorId]?.characterSheet,
+        nextState.combat?.combatants[command.actorId]?.characterSheet,
+      ];
+      for (const sheet of holders) {
+        if (sheet?.activatedAbilities) {
+          sheet.activatedAbilities = sheet.activatedAbilities.filter((a) => a.id !== ability.id);
+        }
+      }
+    }
     return next;
   }
 

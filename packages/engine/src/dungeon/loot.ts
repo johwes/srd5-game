@@ -66,16 +66,23 @@ export const MAGIC_ITEM_TABLE_I = [
 
 /**
  * Creates an `InventoryItemInstance` from an SRD item or magic item ID.
+ *
+ * The fallback instance ID uses a process-local monotonic counter (never
+ * `Math.random()` / `Date.now()`, per the deterministic-engine invariant).
+ * Deterministic callers (loot claims, corpse drops) pass an explicit
+ * `overrides.instanceId` so replays are bit-exact.
  */
+let inventoryInstanceCounter = 0;
+
 export function createInventoryItemInstance(
   itemId: string,
   compendium: SrdCompendium = defaultCompendium,
   overrides?: Partial<InventoryItemInstance>,
 ): InventoryItemInstance {
   const isMagic = Boolean(compendium.getMagicItem(itemId));
+  inventoryInstanceCounter += 1;
   const instanceId =
-    overrides?.instanceId ??
-    `inst-${itemId}-${Date.now().toString(36)}-${Math.floor(Math.random() * 100000).toString(36)}`;
+    overrides?.instanceId ?? `inst-${itemId}-${inventoryInstanceCounter}`;
 
   return {
     instanceId,

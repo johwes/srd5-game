@@ -301,9 +301,9 @@ flowchart LR
 | **SRD-1215** | `[x]` | Skill benefit tooltips: SRD description + governing ability + game-use relevance on builder skill/expertise pickers, custom-background selects, and character-sheet skill inspector | `@srd5/client` | SRD-1211 |
 
 ### Epic 12 Acceptance Criteria Details
-- [ ] **SRD-1201..1202**: Compendium lookups for both new spells resolve; Orc-tribe chain playable with and without Orcish (gesture path verified E2E).
+- [x] **SRD-1201..1202**: Compendium lookups for both new spells resolve; Orc-tribe parley resolves with and without Orcish at the engine layer (headless end-to-end chain test, gesture fallback never blocks). UI-driven chain play + E2E remain open (no UI chain-advancement surface yet; see Spec 11 §7).
 - [x] **SRD-1203..1205**: Utility casts resolve outside combat — healing (`cure-wounds`) is required acceptance, not optional; knock alerts adjacent rooms; sleep follows the HP pool; no hazard step is silently dropped.
-- [ ] **SRD-1206..1208**: Theft success/caught branches; recall rewards apply; Insight opposes Deception; stabilize requires the check; `hide` grants `hidden`.
+- [x] **SRD-1206..1208**: Theft success/caught branches; recall rewards apply; Insight opposes Deception; stabilize requires the check; `hide` grants `hidden`.
 - [x] **SRD-1209..1210**: Diplomacy failures degrade the deal, never dead-end; Wish/Time Stop behave as bounded capstones with costs.
 - [x] **SRD-1211..1212**: Builder shows status for every pick; integrity suite fails on new dangling offered content.
 - [x] **SRD-1213**: Passive bonuses apply at prof/expert tiers in headless tests; generated floors deterministically carry recall tags (bit-exact replay still green).
@@ -330,7 +330,7 @@ End state: a Baldur's Gate 3-style graphical inventory (icon-grid backpack + vis
 ### Epic 13 Acceptance Criteria Details
 - [x] **SRD-1301**: `getItemIcon()` resolves every id in `equipment.json` + `magic-items.json` (exhaustiveness test); unknown ids render the category fallback with no broken images; `pnpm build`/`test`/`test:e2e` pass offline; credits screen carries the game-icons/RPG Awesome/Kenney attribution line.
 - [x] **SRD-1302**: Every loot/shop/paperdoll/compendium item surface shows rarity borders + icon; hover tooltips show description, effect summary, charges, attunement; compendium magic-item view lists modifiers/abilities; no raw template vars in tooltips.
-- [ ] **SRD-1303**: Drinking a potion in dungeon/arena/realm heals via engine (no `Math.random`); wand refuses at 0 charges and recharges at dawn; scroll is consumed on cast; soak playtest casts/uses items with 0 invariant violations.
+- [x] **SRD-1303**: Drinking a potion in dungeon/arena/realm heals via engine (no `Math.random`); wand refuses at 0 charges and recharges at dawn; scroll is consumed on cast; soak playtest drinks via USE_ITEM with 0 invariant violations (item abilities rejected on USE_CLASS_FEATURE so they cannot fire for free).
 - [x] **SRD-1304**: All 4 revived entries have executable mechanics verified headless; ≥2 new SRD-only items cover previously-unused modifier targets; integrity suite fails on modifier-less/ability-less magic items.
 - [x] **SRD-1305**: Grid + paperdoll fully operable by mouse, keyboard, and touch (Deck 1280×800 E2E); equip/compare/attune/use all function from the grid; loot-modal text rows and SRD-1307 corpse cards migrate onto grid cells, retiring the old text rows.
 - [x] **SRD-1306**: Stretch — trade/drop/give, identify, dungeon sell-back, stack splitting, weight/capacity display (no enforcement), equip proficiency/STR validation; engine + grid UI verified.

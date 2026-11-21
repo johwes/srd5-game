@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { EffectStepSpec, SpellData } from '@srd5/data';
 import type { DerivedWeaponAttackProfile } from '@srd5/engine';
+import { findInventoryItemGrantingAbility } from '@srd5/engine';
 import type { PlayerViewCombatant } from '@srd5/transport';
 import { GameIcon } from '../../canvas/assets/index.js';
 import { formatSpellRange } from '../compendium/formatters.js';
@@ -325,7 +326,16 @@ export function ActionHotbar({
         .filter((s): s is SpellData => Boolean(s))
     : [];
 
-  const features = sheet?.activatedAbilities ?? [];
+  const inventory = activeCombatant?.buildState?.inventory ?? [];
+
+  const features = (sheet?.activatedAbilities ?? []).filter(
+    // Item-granted abilities (potions, scrolls, wands) live behind the
+    // dedicated Use buttons (USE_ITEM): the engine rejects them on the
+    // USE_CLASS_FEATURE path, so listing them here would offer a command
+    // that always errors.
+    (feat) =>
+      !findInventoryItemGrantingAbility(inventory, feat.id, compendium),
+  );
 
   // SRD-904: the hotbar follows the active combatant. When a commanded summon
   // takes its turn its own DSL actions are shown; when the caster is active,
@@ -369,7 +379,7 @@ export function ActionHotbar({
   // SRD-1303: resolve real inventory instance ids for the quick-use potion
   // buttons. The engine consumes `itemInstanceId`; falling back to the
   // catalog id keeps older saves working via the engine's item-id fallback.
-  const inventory = activeCombatant?.buildState?.inventory ?? [];
+  // (`inventory` is declared above, next to the feature list filter.)
   const findInstanceId = (itemId: string): string => {
     const match = inventory.find((i) => i.itemId === itemId && i.quantity > 0);
     return match?.instanceId ?? itemId;
