@@ -17,7 +17,11 @@ import { scaleLootForScarcity, type Scarcity } from '../world-options.js';
 
 export const MAGIC_ITEM_TABLE_A = [
   'potion-of-healing',
-  'potion-of-climbing',
+  // NOTE (SRD-1406 gate): the bundle has no climbing rules, so the SRD
+  // Potion of Climbing ships no executable entry — and per the SRD-1304
+  // integrity rule, drop pools may only reference executable bundled ids.
+  // Table A therefore deals a greater-healing potion in that slot.
+  'potion-of-greater-healing',
   'scroll-of-fireball',
 ] as const;
 

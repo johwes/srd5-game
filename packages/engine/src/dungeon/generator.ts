@@ -1036,7 +1036,7 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
           blocksSight: false,
           lootTable: {
             ...chestLoot,
-            items: ['potion_of_healing'],
+            items: ['potion-of-healing'],
           },
         });
         propOccupied.add(key);

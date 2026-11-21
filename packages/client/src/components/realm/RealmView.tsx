@@ -672,6 +672,10 @@ export function RealmView({
             .filter((c): c is NonNullable<typeof c> => Boolean(c))}
           compendium={compendium}
           storageAdapter={storageAdapter}
+          // SRD-1406 gate: the delve inherits the Realm session's Civ
+          // setup-screen config (Spec 13 §5) so its HUD banner, run record,
+          // and generation match the chosen scope/wildness/scarcity/seed.
+          worldOptions={session.travel.worldOptions}
           onExitToRoster={() => setEndlessDelve(false)}
           onOpenCharacterSheet={onOpenCharacterSheet}
         />
