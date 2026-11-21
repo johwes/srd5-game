@@ -156,11 +156,51 @@ commands are explicitly phase-4 stretch (Section 11).
 | Phase | Backlog | Content |
 |---|---|---|
 | 1 — Icon + rarity layer | SRD-1301, SRD-1302 | Registry, fonts/SVG vendoring, credit line, rarity CSS, tooltips, compendium modifier display |
-| 2 — Items that work | SRD-1303, SRD-1304 | `USE_ITEM`, charges/recharge, revive dead entries, unused-DSL items |
+| 2 — Items that work | SRD-1303, SRD-1304, SRD-1307 | `USE_ITEM`, charges/recharge, revive dead entries, unused-DSL items, CR-scaled monster drops + skill-influenced loot |
 | 3 — BG3 grid | SRD-1305 | `InventoryView` grid + paperdoll, compare, filters, E2E |
 | 4 — Stretch | SRD-1306 | Trade/drop/give, identification, dungeon sell-back, encumbrance/enforcement |
 
-## 11. Non-Goals
+## 11. CR-Scaled Monster Loot Drops & Skill-Influenced Rewards
+
+Status quo (gap): monsters drop nothing on death. Loot enters play only via
+props/chests (`claimPropLoot`), war-battle awards (`awardLootToCharacter`),
+and shops — even though every monster already carries `challengeRating` and
+CR-banded treasure tables (`MAGIC_ITEM_TABLE_A..I`, `rollIndividualTreasure`,
+`rollTreasureHoard`) exist. This section closes that gap and ties loot into
+the Epic 12 skill-reward work (recall `trap_bonus` rewards, standing skill
+passives, diplomacy deal tiers).
+
+### 11.1 CR-scaled drops
+
+- On encounter clear (all hostiles defeated), roll per-slain-monster
+  individual treasure via `rollIndividualTreasure(cr, seed)` using DMG-style
+  CR bands (0–4 / 5–10 / 11–16 / 17+); elites/bosses additionally roll on
+  `rollTreasureHoard` at a CR-derived tier.
+- Deterministic: seeds thread from the combat/encounter seed (never UI-side
+  randomness). Drops aggregate into the existing loot-claim flow — no new
+  commands; reuse `awardLootToCharacter` and the loot-modal UI — with per-
+  monster provenance in the Combat Log.
+- No double-dip: the war-battle award path stays authoritative for war
+  missions; drops carry an origin tag so both paths never stack on the same
+  kill.
+
+### 11.2 Skill-influenced loot
+
+Loot-time skill hooks, resolved deterministically and attributed in the UI so
+players see the skill matter (extends the SRD-1211 badging philosophy):
+
+- **Investigation** (search the fallen / the room): meet a DC → bonus
+  hoard-table roll or concealed-cache reveal. Stacks with recall
+  `trap_bonus` reveals, never replaces them.
+- **Survival / Nature** (harvest): beasts/monstrosities yield harvest goods.
+  Stacks with the standing Nature forage bonus (SRD-1213).
+- **Diplomacy deal tiers** (SRD-1209/1214) may scale negotiated mission
+  rewards; the Religion potion synergy (SRD-1213) already rewards potion use.
+- Attribution lines in the loot UI (e.g. `Keen Eye (Investigation): +1 hoard
+  roll`). Same-type bonuses never stack; expertise counts double per the
+  standing-passive convention where applicable.
+
+## 12. Non-Goals
 
 - Hand-drawn or AI-generated art (license risk + style drift).
 - DCSS tile adoption without per-tile license proof.
