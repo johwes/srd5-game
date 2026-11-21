@@ -139,6 +139,105 @@ export function isCellInHazardDifficultTerrain(
 }
 
 /**
+ * SRD-1205: parses a hazard `spend_resource` id that names a spell-slot
+ * level (`spell_slot_3`, `slot_3`, `level_3`, `3`, `3_slot`). Returns the
+ * level 0–9, or null for class-style resources (`action_surge`, …) that no
+ * hazard can drain from a tracked pool.
+ */
+export function parseHazardSlotSpend(resourceId: string): number | null {
+  const match = resourceId
+    .trim()
+    .toLowerCase()
+    .match(/^(?:spell_slot_|slot_|level_)?(\d+)(?:_slot)?$/);
+  if (!match) return null;
+  const level = parseInt(match[1]!, 10);
+  return level >= 0 && level <= 9 ? level : null;
+}
+
+/** Mutable spell-slot availability backing a hazard `spend_resource` drain. */
+function hazardMutableSlotPools(target: Combatant, slotLevel: number): number[] {
+  const pools: number[] = [];
+  const key = String(slotLevel);
+  const direct = target.spellSlots?.[key];
+  if (direct) pools.push(direct.available);
+  const sheet =
+    target.characterSheet?.spellcasting?.spellSlots?.[
+      slotLevel as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+    ];
+  if (sheet) pools.push(sheet.available);
+  if (target.pactMagic && target.pactMagic.slotLevel === slotLevel) {
+    pools.push(target.pactMagic.availableSlots);
+  }
+  return pools;
+}
+
+/** True when a tracked pool covers the full drain amount (all-or-nothing). */
+export function hazardSlotSpendAvailable(
+  target: Combatant,
+  slotLevel: number,
+  amount: number,
+): boolean {
+  if (amount <= 0) return true;
+  return hazardMutableSlotPools(target, slotLevel).some((available) => available >= amount);
+}
+
+/** Deducts a hazard drain across every tracked mirror of the slot pool. */
+export function expendHazardSpellSlot(
+  target: Combatant,
+  slotLevel: number,
+  amount: number,
+): Combatant {
+  let next = { ...target };
+  const key = String(slotLevel);
+  if (next.spellSlots?.[key]) {
+    const pool = next.spellSlots[key]!;
+    next = {
+      ...next,
+      spellSlots: {
+        ...next.spellSlots,
+        [key]: {
+          ...pool,
+          expended: pool.expended + amount,
+          available: Math.max(0, pool.available - amount),
+        },
+      },
+    };
+  }
+  if (next.pactMagic && next.pactMagic.slotLevel === slotLevel) {
+    next = {
+      ...next,
+      pactMagic: {
+        ...next.pactMagic,
+        expendedSlots: next.pactMagic.expendedSlots + amount,
+        availableSlots: Math.max(0, next.pactMagic.availableSlots - amount),
+      },
+    };
+  }
+  const sheetSlots = next.characterSheet?.spellcasting?.spellSlots;
+  const sheetPool = sheetSlots?.[slotLevel as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9];
+  if (sheetPool && next.characterSheet?.spellcasting) {
+    next = {
+      ...next,
+      characterSheet: {
+        ...next.characterSheet,
+        spellcasting: {
+          ...next.characterSheet.spellcasting,
+          spellSlots: {
+            ...sheetSlots,
+            [slotLevel]: {
+              ...sheetPool,
+              expended: sheetPool.expended + amount,
+              available: Math.max(0, sheetPool.available - amount),
+            },
+          },
+        },
+      },
+    };
+  }
+  return next;
+}
+
+/**
  * Creates and registers a new active Hazard Zone on the tactical board.
  */
 export function createHazardZone(
@@ -312,7 +411,7 @@ export function executeHazardZoneEffects(
 
       if (step.step === 'saving_throw') {
         const bonus =
-          currentTarget.characterSheet?.savingThrows[step.ability]?.totalBonus ??
+          currentTarget.characterSheet?.savingThrows?.[step.ability]?.totalBonus ??
           currentTarget.monsterData?.savingThrows?.[step.ability] ??
           0;
 
@@ -571,6 +670,92 @@ export function executeHazardZoneEffects(
         };
         events.push({ type: 'ENTITY_MOVED', entityId: updated.id, path: [newPos], mode: 'forced' });
         currentTarget = updated;
+      } else if (step.step === 'teleport') {
+        // SRD-1205: hazard teleport (e.g. a teleport trap) flings the
+        // TRIGGERING creature — unlike a direct cast, which relocates the
+        // caster. Same ray convention as `forced_movement`: straight away
+        // from the zone origin, clamped to the board edge. Deterministic.
+        const stepsCount = Math.floor(step.maxDistanceFeet / 5);
+        const dirX = Math.sign(currentTarget.position.x - zone.origin.x) || 1;
+        const dirY = Math.sign(currentTarget.position.y - zone.origin.y);
+        const newPos = {
+          x: Math.max(0, currentTarget.position.x + dirX * stepsCount),
+          y: Math.max(0, currentTarget.position.y + dirY * stepsCount),
+        };
+        const updated: Combatant = { ...currentTarget, position: newPos };
+        currentState = {
+          ...currentState,
+          combatants: { ...currentState.combatants, [updated.id]: updated },
+        };
+        events.push({ type: 'ENTITY_MOVED', entityId: updated.id, path: [newPos], mode: 'teleport' });
+        currentTarget = updated;
+      } else if (step.step === 'create_hazard_zone') {
+        // SRD-1205: nested hazard — anchor the child zone at the triggering
+        // creature's position with its own rasterized footprint. No immediate
+        // trigger: the triggerer stands inside the new footprint and an
+        // immediate sweep would recurse; it fires on turn start / re-entry.
+        const nestedRes = createHazardZone(
+          { ...currentState, rngState: currentRng },
+          {
+            zoneId: step.zoneId,
+            casterId: zone.casterId,
+            sourceName: zone.sourceName,
+            shape: step.shape,
+            origin: { ...currentTarget.position },
+            sizeFeet: step.sizeFeet,
+            durationRounds: step.durationRounds,
+            requiresConcentration: false,
+            difficultTerrain: step.difficultTerrain,
+            obscurement: step.obscurement,
+            onEnterOrStartTurn: step.onEnterOrStartTurn,
+            saveDc,
+            spellLevel: zone.spellLevel,
+            triggerImmediatelyOnPlacement: false,
+          },
+        );
+        currentState = nestedRes.state;
+        currentRng = currentState.rngState;
+        events.push(...nestedRes.events);
+        currentTarget = currentState.combatants[currentTarget.id] ?? currentTarget;
+      } else if (step.step === 'spend_resource') {
+        // SRD-1205: hazard resource drain against the triggering creature's
+        // tracked spell-slot pools. Unknown resource ids (and empty pools)
+        // emit an explicit skip — never a silent drop.
+        const slotLevel = parseHazardSlotSpend(step.resourceId);
+        if (slotLevel === null) {
+          events.push({
+            type: 'HAZARD_ZONE_STEP_SKIPPED',
+            instanceId: zone.id,
+            zoneId: zone.zoneId,
+            entityId: currentTarget.id,
+            step: step.step,
+            reason: `untracked_resource_${step.resourceId}`,
+          });
+        } else if (!hazardSlotSpendAvailable(currentTarget, slotLevel, step.amount)) {
+          events.push({
+            type: 'HAZARD_ZONE_STEP_SKIPPED',
+            instanceId: zone.id,
+            zoneId: zone.zoneId,
+            entityId: currentTarget.id,
+            step: step.step,
+            reason: `insufficient_spell_slot_${slotLevel}`,
+          });
+        } else {
+          const updated = expendHazardSpellSlot(currentTarget, slotLevel, step.amount);
+          currentState = {
+            ...currentState,
+            combatants: { ...currentState.combatants, [updated.id]: updated },
+          };
+          events.push({
+            type: 'RESOURCE_SPENT',
+            entityId: updated.id,
+            resourceId: step.resourceId,
+            amount: step.amount,
+            slotLevel,
+            sourceName: zone.sourceName,
+          });
+          currentTarget = updated;
+        }
       } else if (isHazardUnsupportedStep(step.step)) {
         // SRD-1204: no silent drops — steps with no hazard auto-resolver
         // (teleport / summon / nested zone / resource spend) emit explicitly.

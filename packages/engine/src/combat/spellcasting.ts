@@ -219,8 +219,8 @@ export function getCasterSpellContext(caster: Combatant): {
  * Returns a target's saving throw modifier for a specific ability.
  */
 export function getTargetSavingThrowBonus(target: Combatant, ability: AbilityId): number {
-  if (target.characterSheet?.savingThrows[ability]) {
-    return target.characterSheet.savingThrows[ability].totalBonus;
+  if (target.characterSheet?.savingThrows?.[ability]) {
+    return target.characterSheet.savingThrows[ability]!.totalBonus;
   }
   if (target.monsterData?.savingThrows?.[ability] !== undefined) {
     return target.monsterData.savingThrows[ability]!;

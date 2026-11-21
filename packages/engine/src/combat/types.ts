@@ -657,6 +657,15 @@ export type CombatEvent =
       step: string;
       reason: string;
     }
+  /** SRD-1205: a hazard `spend_resource` step expended a tracked pool on the triggering creature. */
+  | {
+      type: 'RESOURCE_SPENT';
+      entityId: string;
+      resourceId: string;
+      amount: number;
+      slotLevel?: number | undefined;
+      sourceName: string;
+    }
   /** A summon was removed from play (duration, concentration, dismissal, leash, damage cap or death). */
   | {
       type: 'SUMMON_EXPIRED';

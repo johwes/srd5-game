@@ -347,7 +347,7 @@ describe('SRD-1204: knock prop hook + alert tradeoff', () => {
 });
 
 describe('SRD-1204: hazard-zone onEnter step coverage (no silent drops)', () => {
-  it('resolves heal/buff/attack shoves and explicitly skips teleport/summon', () => {
+  it('resolves heal/buff/attack shoves and explicitly skips summon (SRD-1205: teleport resolves)', () => {
     const caster = makeCombatant({ id: 'caster', name: 'Wiz', position: { x: 0, y: 0 } });
     const target = makeCombatant({ id: 't', name: 'T', side: 'monster', position: { x: 1, y: 0 }, currentHp: 5, maxHp: 20 });
     const grid = createTacticalGrid(10, 10);
@@ -375,9 +375,16 @@ describe('SRD-1204: hazard-zone onEnter step coverage (no silent drops)', () => 
     expect(res.events.some((e) => e.type === 'HEAL_APPLIED')).toBe(true);
     expect(res.events.some((e) => e.type === 'TEMP_HP_APPLIED')).toBe(true);
     expect(res.state.combatants['t']!.activeEffects?.some((e) => e.effectId === 'zone-ward')).toBe(true);
+    // SRD-1205: teleport now relocates the triggering creature (forced shove
+    // moved it +1 cell, then teleport flings it further along the same ray).
+    expect(
+      res.events.some(
+        (e) => e.type === 'ENTITY_MOVED' && (e as { mode: string }).mode === 'teleport',
+      ),
+    ).toBe(true);
     const skipped = res.events.filter((e) => e.type === 'HAZARD_ZONE_STEP_SKIPPED');
-    expect(skipped.length).toBe(2);
-    expect(new Set(skipped.map((s) => (s as unknown as { step: string }).step))).toEqual(new Set(['teleport', 'summon_creature']));
+    expect(skipped.length).toBe(1);
+    expect(new Set(skipped.map((s) => (s as unknown as { step: string }).step))).toEqual(new Set(['summon_creature']));
     void grid;
   });
 });

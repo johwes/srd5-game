@@ -377,12 +377,18 @@ export function getKnockAlertedRoomIds(
   return [...rooms].sort();
 }
 
-/** Steps the hazard-zone runner cannot auto-resolve (emitted, never silent). */
+/**
+ * Steps the hazard-zone runner cannot auto-resolve (emitted, never silent).
+ *
+ * SRD-1205: `teleport`, `create_hazard_zone`, and `spend_resource` graduated
+ * to real resolvers in `hazard-zone.ts` (relocate the triggering creature,
+ * anchor a nested zone at its position, expend its tracked spell slots), so
+ * `summon_creature` is the sole remaining member: spawning a token needs
+ * grid placement, initiative order, and control-mode context that the hazard
+ * runner does not carry.
+ */
 export const HAZARD_UNSUPPORTED_STEPS: ReadonlySet<EffectStepSpec['step']> = new Set([
-  'teleport',
   'summon_creature',
-  'create_hazard_zone',
-  'spend_resource',
 ] as Array<EffectStepSpec['step']>);
 
 /** True when a hazard `onEnterOrStartTurn` step has no auto-resolver. */
