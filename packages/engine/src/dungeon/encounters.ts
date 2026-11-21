@@ -165,11 +165,16 @@ export function triggerDungeonEncounter(
     const mSpec = enc.monsters[i]!;
     const instanceId = `${enc.id}-${mSpec.monsterId}-${i + 1}`;
     const monsterData = comp.getMonster(mSpec.monsterId) ?? createFallbackMonster(mSpec.monsterId);
+    // SRD-1402: the generator marks at most one spawn per encounter with a
+    // champion trait; the template applies here, before initiative.
+    const championTrait = mSpec.championTrait;
     const combatant = createMonsterCombatant(
       monsterData,
       instanceId,
       { x: mSpec.spawnX, y: mSpec.spawnY },
-      { side: 'monster', teamId: 'monster' },
+      championTrait
+        ? { side: 'monster', teamId: 'monster', championTrait }
+        : { side: 'monster', teamId: 'monster' },
     );
     combatant.roomId = enc.roomId;
     spawnedMonsters[instanceId] = combatant;
@@ -257,6 +262,17 @@ export function triggerDungeonEncounter(
     isSurprisedParty: partyHasSurprise,
     isSurprisedMonsters: monstersHaveSurprise,
   });
+
+  // SRD-1402: combat-log headline for each champion guardian in this encounter.
+  for (const [instanceId, combatant] of Object.entries(spawnedMonsters)) {
+    if (combatant.isChampion && combatant.championTrait) {
+      events.push({
+        type: 'ELITE_SPAWNED',
+        entityId: instanceId,
+        trait: combatant.championTrait,
+      });
+    }
+  }
 
   events.push({
     type: 'MODE_CHANGED',

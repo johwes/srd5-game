@@ -89,6 +89,27 @@ export function CombatantMedallion({
         )}
       </button>
 
+      {combatant.isChampion && (
+        <span
+          data-testid="medallion-champion-chip"
+          title={
+            combatant.championTrait === 'brutal'
+              ? 'Champion \u00b7 brutal \u2014 +50% damage'
+              : combatant.championTrait === 'swift'
+                ? 'Champion \u00b7 swift \u2014 +10 ft, advantage on initiative'
+                : combatant.championTrait === 'warded'
+                  ? 'Champion \u00b7 warded \u2014 +2 AC'
+                  : 'Champion guardian \u2014 +25% damage, +2 to hit'
+          }
+          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-800/90 border border-red-300 text-[9px] font-bold text-red-50 max-w-full truncate"
+        >
+          💀 Champion
+          {combatant.championTrait && (
+            <span className="font-semibold opacity-90 truncate">· {combatant.championTrait}</span>
+          )}
+        </span>
+      )}
+
       {combatant.isSummon && (
         <span
           data-testid="medallion-summon-chip"

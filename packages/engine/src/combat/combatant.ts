@@ -19,6 +19,8 @@ export interface CreateMonsterCombatantOptions {
   name?: string;
   teamId?: string;
   factionId?: string;
+  /** SRD-1402: promote this spawn to a champion with the given trait. */
+  championTrait?: 'brutal' | 'swift' | 'warded';
 }
 
 /**
@@ -123,23 +125,28 @@ export function createMonsterCombatant(
 
   return {
     id: instanceId,
-    name: options?.name ?? monster.name,
+    name:
+      options?.championTrait && !(options?.name ?? monster.name).startsWith('Champion ')
+        ? `Champion ${options?.name ?? monster.name}`
+        : (options?.name ?? monster.name),
     side: options?.side ?? 'monster',
     teamId: options?.teamId ?? options?.side ?? 'monster',
     factionId: options?.factionId,
     size: monster.size,
     position,
-    speedFeet: monster.speed.walk,
-    currentHp: hp,
-    maxHp: monster.hitPoints.average,
+    speedFeet:
+      options?.championTrait === 'swift' ? monster.speed.walk + 10 : monster.speed.walk,
+    currentHp: options?.championTrait ? Math.max(1, Math.round(hp * 1.5)) : hp,
+    maxHp: options?.championTrait ? Math.max(1, Math.round(monster.hitPoints.average * 1.5)) : monster.hitPoints.average,
     tempHp: 0,
-    armorClass: monster.armorClass.value,
+    armorClass:
+      options?.championTrait === 'warded' ? monster.armorClass.value + 2 : monster.armorClass.value,
     dexterityScore: monster.abilities.dex,
     dexterityModifier: dexMod,
     strengthScore: monster.abilities.str,
     strengthModifier: Math.floor((monster.abilities.str - 10) / 2),
     initiativeBonus: dexMod,
-    initiativeRollMode: 'normal',
+    initiativeRollMode: options?.championTrait === 'swift' ? 'advantage' : 'normal',
     passivePerception: monster.senses.passivePerception,
     stealthModifier: stealthMod,
     isSurprised: Boolean(options?.isSurprised),
@@ -155,5 +162,8 @@ export function createMonsterCombatant(
     conditionImmunities: monster.conditionImmunities ? [...monster.conditionImmunities] : [],
     spellSlots: Object.keys(monsterSpellSlots).length > 0 ? monsterSpellSlots : undefined,
     monsterData: monster,
+    ...(options?.championTrait
+      ? { isChampion: true as const, championTrait: options.championTrait }
+      : {}),
   };
 }

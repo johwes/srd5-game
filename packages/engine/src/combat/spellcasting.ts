@@ -52,6 +52,7 @@ import {
 } from './turn-budget.js';
 import { evaluateCombatVictory } from './state-machine.js';
 import { applyDamage, applyHealing } from './damage.js';
+import { getChampionAttackBonus, scaleChampionDamage } from '../dungeon/champions.js';
 import { applyConditionToCombatant } from './conditions.js';
 import { breakConcentration } from './concentration.js';
 import { createHazardZone } from './hazard-zone.js';
@@ -1205,7 +1206,9 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         }
 
         const rollMode = resolveRollMode({ advantageSources: advSources, disadvantageSources: disSources });
-        const attackBonus = step.attackBonusOverride ?? casterCtx.spellAttackBonus;
+        // SRD-1402: champions gain +2 to spell attacks on top of any override.
+        const attackBonus =
+          (step.attackBonusOverride ?? casterCtx.spellAttackBonus) + getChampionAttackBonus(nextCaster);
         const d20Res = rollD20(currentState, {
           modifier: attackBonus,
           mode: rollMode,
@@ -1350,7 +1353,8 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
         });
         currentState = dmgRes.nextState;
 
-        let finalDamage = dmgRes.total;
+        // SRD-1402: champions deal +25% (+50% brutal), rounded down, before save-halving.
+        let finalDamage = scaleChampionDamage(dmgRes.total, nextCaster);
         if (options?.isHalfDamage) {
           finalDamage = Math.floor(finalDamage / 2);
         }

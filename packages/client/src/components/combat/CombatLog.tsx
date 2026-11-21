@@ -974,6 +974,29 @@ export function CombatLog({
           };
         }
 
+        case 'ELITE_SPAWNED': {
+          const champion = getCombatantName(event.entityId);
+          const traitLine =
+            event.trait === 'brutal'
+              ? 'Champion · brutal — +50% damage'
+              : event.trait === 'swift'
+                ? 'Champion · swift — +10 ft, advantage on initiative'
+                : 'Champion · warded — +2 AC';
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `💀 ${champion} — Champion (${event.trait}) bars the way!`,
+            summary: `${traitLine} — worth hunting: elite spoils`,
+            badge: {
+              label: 'CHAMPION',
+              color: 'bg-red-500/20 text-red-300 border-red-500/40 font-bold',
+            },
+            rawEvent: event,
+          };
+        }
+
         case 'ENCOUNTER_TRIGGERED': {
           return {
             id: entryId,

@@ -2,6 +2,19 @@ import React from 'react';
 import type { PlayerViewCombatant } from '@srd5/transport';
 import type { InitiativeRibbonProps } from './types.js';
 
+function championTooltip(combatant: { championTrait?: string }): string {
+  switch (combatant.championTrait) {
+    case 'brutal':
+      return 'Champion \u00b7 brutal \u2014 +50% damage';
+    case 'swift':
+      return 'Champion \u00b7 swift \u2014 +10 ft, advantage on initiative';
+    case 'warded':
+      return 'Champion \u00b7 warded \u2014 +2 AC';
+    default:
+      return 'Champion guardian \u2014 +25% damage, +2 to hit';
+  }
+}
+
 function getSideColorClasses(side: PlayerViewCombatant['side']) {
   switch (side) {
     case 'party':
@@ -139,6 +152,15 @@ export function InitiativeRibbon({
                     className="absolute -top-1 -left-1 px-1 rounded-full bg-violet-700 border border-violet-300 text-[8px] font-black text-violet-50 leading-4"
                   >
                     ✦S
+                  </span>
+                )}
+                {combatant.isChampion && (
+                  <span
+                    data-testid="initiative-champion-badge"
+                    title={championTooltip(combatant)}
+                    className="absolute -top-1 -right-1 px-1 rounded-full bg-red-800 border border-red-300 text-[8px] font-black text-red-50 leading-4"
+                  >
+                    💀
                   </span>
                 )}
                 <span className="absolute -bottom-1 -right-1 min-w-[16px] px-0.5 text-center rounded-full bg-slate-950 border border-slate-700 text-[9px] font-mono font-bold text-slate-300 leading-4">

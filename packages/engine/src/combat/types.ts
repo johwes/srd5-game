@@ -190,6 +190,9 @@ export const CombatantStateSchema = z.object({
   wishLost: z.boolean().optional(),
   wishStressActive: z.boolean().optional(),
   wishStressDaysRemaining: z.number().int().nonnegative().optional(),
+  // --- SRD-1402 Champion packs (Spec 13 §4, MoM guardian stacks) ---
+  isChampion: z.boolean().optional(),
+  championTrait: z.enum(['brutal', 'swift', 'warded']).optional(),
 });
 export type CombatantState = z.infer<typeof CombatantStateSchema>;
 
@@ -600,6 +603,12 @@ export type CombatEvent =
       survivingHeroIds?: string[];
       encounterId?: string;
       lootBundle?: LootBundleSpec;
+    }
+  /** SRD-1402: a champion pack guardian spawned (Spec 13 §4, MoM guardian stacks). */
+  | {
+      type: 'ELITE_SPAWNED';
+      entityId: string;
+      trait: 'brutal' | 'swift' | 'warded';
     }
   /** A summoned creature/conjured token was spawned onto the tactical board. */
   | {

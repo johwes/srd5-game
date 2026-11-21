@@ -159,6 +159,10 @@ export interface CreatureTokenData {
   untargetable?: boolean;
   /** Source spell shown by the HUD when the summon is the active combatant. */
   summonSourceName?: string;
+  /** SRD-1402: champion guardian rendered with the skull badge. */
+  isChampion?: boolean;
+  /** Champion trait shown in the badge tooltip. */
+  championTrait?: 'brutal' | 'swift' | 'warded';
 }
 
 /**

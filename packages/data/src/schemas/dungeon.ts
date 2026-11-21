@@ -180,6 +180,12 @@ export const EncounterSpawnMonsterSchema = z.object({
   spawnX: z.number().int(),
   spawnY: z.number().int(),
   patrolWaypoints: z.array(GridPointSchema).optional(),
+  /**
+   * SRD-1402: presence marks this spawn as the encounter's champion
+   * (max 1 per encounter, never depth 1). The template is applied at
+   * trigger time in `triggerDungeonEncounter` via `applyChampionTemplate`.
+   */
+  championTrait: z.enum(['brutal', 'swift', 'warded']).optional(),
 });
 export type EncounterSpawnMonster = z.infer<typeof EncounterSpawnMonsterSchema>;
 

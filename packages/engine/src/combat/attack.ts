@@ -59,6 +59,7 @@ import {
   stripSanctuaryOnOffense,
 } from './marker-spells.js';
 import { isFlameTongueAblaze } from '../items/magic-items-1304.js';
+import { getChampionAttackBonus, scaleChampionDamage } from '../dungeon/champions.js';
 
 /**
  * Custom raw attack specification for testing or dynamic attacks.
@@ -237,10 +238,11 @@ export function resolveCombatantAttackProfile(
     const bonus = isTwoHanded && typeof c.versatileDamageBonus === 'number' ? c.versatileDamageBonus : c.damageBonus;
     const formula = bonus !== 0 ? `${dice} + ${bonus}` : dice;
 
+    const championBonus = getChampionAttackBonus(attacker);
     return {
       name: c.name,
       attackType: c.attackType,
-      toHitBonus: c.toHitBonus + blessingBonus,
+      toHitBonus: c.toHitBonus + blessingBonus + championBonus,
       damageDice: dice,
       damageBonus: bonus,
       damageFormula: formula,
@@ -287,10 +289,11 @@ export function resolveCombatantAttackProfile(
       ? profile.versatileDamageFormula
       : profile.damageFormula;
 
+    const championBonus = getChampionAttackBonus(attacker);
     return {
       name: profile.name,
       attackType: profile.rangeType === 'ranged' ? 'ranged_weapon' : 'melee_weapon',
-      toHitBonus: profile.toHitBonus + blessingBonus,
+      toHitBonus: profile.toHitBonus + blessingBonus + championBonus,
       damageDice,
       damageBonus: profile.damageBonus,
       damageFormula,
@@ -356,10 +359,11 @@ export function resolveCombatantAttackProfile(
     const damageFormula = damageStep && damageStep.step === 'deal_damage' ? damageStep.diceFormula : '1d6';
     const damageType: DamageType = damageStep && damageStep.step === 'deal_damage' ? damageStep.damageType : 'slashing';
 
+    const championBonus = getChampionAttackBonus(attacker);
     return {
       name: selectedAction.name,
       attackType: isRanged ? 'ranged_weapon' : 'melee_weapon',
-      toHitBonus: (attackStep.attackBonusOverride ?? 0) + blessingBonus,
+      toHitBonus: (attackStep.attackBonusOverride ?? 0) + blessingBonus + championBonus,
       damageDice: damageFormula,
       damageBonus: 0,
       damageFormula,
@@ -375,10 +379,11 @@ export function resolveCombatantAttackProfile(
 
   // 3. Fallback unarmed strike
   const strMod = attacker.strengthModifier ?? attacker.dexterityModifier;
+  const championBonus = getChampionAttackBonus(attacker);
   return {
     name: 'Unarmed Strike',
     attackType: 'melee_weapon',
-    toHitBonus: strMod + 2 + blessingBonus,
+    toHitBonus: strMod + 2 + blessingBonus + championBonus,
     damageDice: '1',
     damageBonus: Math.max(0, strMod),
     damageFormula: strMod > 0 ? `1 + ${strMod}` : '1',
@@ -991,7 +996,8 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
     });
     currentState = dmgRes.nextState;
     damageRollRecord = dmgRes.record;
-    damageDealt = Math.max(0, dmgRes.total);
+    // SRD-1402: champions deal +25% (+50% brutal), rounded down.
+    damageDealt = Math.max(0, scaleChampionDamage(dmgRes.total, attacker));
 
     // SRD 5.1 Rogue Sneak Attack: once per turn on a hit with a finesse or ranged weapon
     // when the rogue has advantage OR another non-incapacitated enemy of the target is

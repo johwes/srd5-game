@@ -120,6 +120,7 @@ describe('CombatLog event coverage (no raw JSON)', () => {
     { type: 'MOVEMENT_HALTED', actorId: 'pregen-fighter', reason: 'trap_detected', at: { x: 5, y: 5 } },
     { type: 'PARTY_STEALTH_CHANGED', inStealth: true },
     { type: 'ENCOUNTER_TRIGGERED', encounterId: 'enc-2', roomId: 'barracks', monsterIds: ['goblin-1', 'goblin-2'], isSurprisedParty: false, isSurprisedMonsters: true },
+    { type: 'ELITE_SPAWNED', entityId: 'enc-2-goblin-1', trait: 'brutal' },
     { type: 'ROOM_CLEARED', roomId: 'barracks', roomName: 'Barracks' },
     { type: 'REST_COMPLETED', restType: 'short', hpRecovered: { 'pregen-fighter': 8 } },
     { type: 'REST_INTERRUPTED', restType: 'long', reason: 'ambush' },

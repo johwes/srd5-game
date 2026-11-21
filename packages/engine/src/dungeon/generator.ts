@@ -23,6 +23,7 @@ import {
 } from '../dice/prng.js';
 import { generateFloorRecallTags } from './recall.js';
 import { pickFromBand } from './encounter-tables.js';
+import { rollChampionForEncounter } from './champions.js';
 
 /**
  * Procedural dungeon floor generator configuration (Spec 06 Section 3.1).
@@ -1148,6 +1149,20 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
           spawnX: spawnPt.x,
           spawnY: spawnPt.y,
         });
+      }
+    }
+
+    // SRD-1402: at most one champion per encounter, never on depth 1.
+    // The trait rides on the spawn spec; the template is applied at
+    // trigger time (`triggerDungeonEncounter`) before initiative.
+    if (monsters.length > 0) {
+      const champRoll = rollChampionForEncounter(rngState, config.depth);
+      rngState = champRoll.nextState;
+      if (champRoll.isChampion && champRoll.trait) {
+        const idxRes = nextRandomFloat(rngState);
+        rngState = idxRes.nextState;
+        const idx = Math.floor(idxRes.value * monsters.length) % monsters.length;
+        monsters[idx] = { ...monsters[idx]!, championTrait: champRoll.trait };
       }
     }
 

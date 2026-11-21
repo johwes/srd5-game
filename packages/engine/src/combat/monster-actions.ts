@@ -6,6 +6,7 @@ import { applyDamage } from './damage.js';
 import { evaluateCombatVictory } from './state-machine.js';
 import { getTargetSavingThrowBonus } from './spellcasting.js';
 import { spendAction, spendBonusAction } from './turn-budget.js';
+import { scaleChampionDamage } from '../dungeon/champions.js';
 import type { CombatEvent, CombatState } from './types.js';
 
 export interface ExecuteMonsterActionOptions {
@@ -192,7 +193,8 @@ export function executeMonsterAction(options: ExecuteMonsterActionOptions): Mons
                 const dmgApplied = applyDamage({
                   state: { ...currentState, rngState: rng, combatants: combatantsMap },
                   targetId: target.id,
-                  rawAmount: dmgRoll.total,
+                  // SRD-1402: champions deal +25% (+50% brutal), rounded down.
+                  rawAmount: scaleChampionDamage(dmgRoll.total, attacker),
                   damageType: sub.damageType,
                   attackerId: attacker.id,
                   sourceName: action.name,
@@ -211,7 +213,8 @@ export function executeMonsterAction(options: ExecuteMonsterActionOptions): Mons
               const dmgApplied = applyDamage({
                 state: { ...currentState, rngState: rng, combatants: combatantsMap },
                 targetId: target.id,
-                rawAmount: Math.floor(dmgRoll.total / 2),
+                // SRD-1402: champion scaling applies before the save-halving.
+                rawAmount: Math.floor(scaleChampionDamage(dmgRoll.total, attacker) / 2),
                 damageType: failStep.damageType,
                 attackerId: attacker.id,
                 sourceName: action.name,
@@ -238,7 +241,8 @@ export function executeMonsterAction(options: ExecuteMonsterActionOptions): Mons
               const dmgApplied = applyDamage({
                 state: { ...currentState, rngState: rng, combatants: combatantsMap },
                 targetId: target.id,
-                rawAmount: dmgRoll.total,
+                // SRD-1402: champions deal +25% (+50% brutal), rounded down.
+                rawAmount: scaleChampionDamage(dmgRoll.total, attacker),
                 damageType: sub.damageType,
                 attackerId: attacker.id,
                 sourceName: action.name,

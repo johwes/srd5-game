@@ -85,6 +85,8 @@ export function toPlayerViewCombatant(c: Combatant): PlayerViewCombatant {
     isDead: c.isDead,
     isStable: c.isStable,
     reactionAvailable: c.reactionAvailable,
+    isChampion: c.isChampion,
+    championTrait: c.championTrait,
     characterSheet: c.characterSheet,
     levelUpAvailable: c.levelUpAvailable,
     buildState: c.buildState,

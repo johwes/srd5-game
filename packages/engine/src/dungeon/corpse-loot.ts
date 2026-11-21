@@ -82,7 +82,8 @@ export function hasClaimableLoot(loot: LootBundleSpec | undefined): boolean {
  * same kill and the loot UI can attribute the drop.
  */
 export function rollCorpseLoot(
-  monster: Pick<Combatant, 'monsterData' | 'name' | 'isSummon'>,
+  monster: Pick<Combatant, 'monsterData' | 'name' | 'isSummon' | 'isChampion'> &
+    Partial<Pick<Combatant, 'id' | 'position' | 'isDead' | 'currentHp'>>,
   rngState: number,
   compendium: SrdCompendium = defaultCompendium,
 ): { loot: LootBundleSpec; nextRng: number } {
@@ -94,14 +95,15 @@ export function rollCorpseLoot(
   const individual = rollIndividualTreasure(cr, rng);
   rng = individual.nextRng;
   let loot = { ...individual.loot };
-  if (cr >= CORPSE_ELITE_CR_THRESHOLD) {
+  // SRD-1402: champions always roll the elite hoard path regardless of CR.
+  if (cr >= CORPSE_ELITE_CR_THRESHOLD || monster.isChampion === true) {
     const hoard = rollTreasureHoard(cr, rng, compendium);
     rng = hoard.nextRng;
     loot = mergeLootBundles(loot, hoard.loot);
   }
   if (hasClaimableLoot(loot)) {
     loot.origin = MONSTER_DROP_ORIGIN;
-    loot.sourceName = monster.name;
+    loot.sourceName = monster.isChampion === true ? `Champion ${monster.name.replace(/^Champion /, '')}` : monster.name;
   }
   return { loot, nextRng: rng };
 }
@@ -127,7 +129,7 @@ export interface SpawnCorpseLootResult {
  */
 export function spawnCorpseLootProps(
   props: InteractiveProp[],
-  defeatedMonsters: ReadonlyArray<Pick<Combatant, 'id' | 'name' | 'position' | 'monsterData' | 'isSummon' | 'isDead' | 'currentHp'>>,
+  defeatedMonsters: ReadonlyArray<Pick<Combatant, 'id' | 'name' | 'position' | 'monsterData' | 'isSummon' | 'isChampion' | 'isDead' | 'currentHp'>>,
   rngState: number,
   compendium: SrdCompendium = defaultCompendium,
 ): SpawnCorpseLootResult {

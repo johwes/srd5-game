@@ -107,6 +107,7 @@ export interface TokenNode {
   conditionsContainer: Container;
   buffsContainer: Container;
   summonBadgeContainer: Container;
+  championBadgeContainer: Container;
   nameText: Text;
   data: CreatureTokenData;
   targetPos: Point;
@@ -280,6 +281,9 @@ export class CreatureTokenRenderer {
       const summonBadgeContainer = new Container();
       summonBadgeContainer.label = 'SummonBadgeContainer';
 
+      const championBadgeContainer = new Container();
+      championBadgeContainer.label = 'ChampionBadgeContainer';
+
       const nameText = new Text({
         text: '',
         style: {
@@ -302,6 +306,7 @@ export class CreatureTokenRenderer {
       container.addChild(conditionsContainer);
       container.addChild(buffsContainer);
       container.addChild(summonBadgeContainer);
+      container.addChild(championBadgeContainer);
       container.addChild(nameText);
 
       this.container.addChild(container);
@@ -317,6 +322,7 @@ export class CreatureTokenRenderer {
         conditionsContainer,
         buffsContainer,
         summonBadgeContainer,
+        championBadgeContainer,
         nameText,
         data,
         targetPos: { ...data.position },
@@ -472,6 +478,20 @@ export class CreatureTokenRenderer {
     } else {
       node.summonBadgeContainer.removeChildren().forEach((c) => c.destroy());
       node.summonBadgeContainer.visible = false;
+    }
+
+    // 6d. Champion badge (SRD-1402 skull pip, opposite corner from the summon pip)
+    const championData = data as unknown as {
+      isChampion?: boolean;
+      championTrait?: 'brutal' | 'swift' | 'warded';
+    };
+    const isChampion = data.isChampion === true || championData.isChampion === true;
+    if (isChampion) {
+      this.drawChampionBadge(node.championBadgeContainer, radius);
+      node.championBadgeContainer.visible = true;
+    } else {
+      node.championBadgeContainer.removeChildren().forEach((c) => c.destroy());
+      node.championBadgeContainer.visible = false;
     }
 
     // 7. Name Tag
@@ -852,6 +872,39 @@ export class CreatureTokenRenderer {
     badge.addChild(bg);
     badge.addChild(label);
     badge.position.set(-(radius + 6), -(radius * 0.78));
+    container.addChild(badge);
+  }
+
+  /**
+   * Renders the skull `💀` medallion that marks a token as a champion
+   * guardian (SRD-1402). Mirrors the summon badge on the opposite corner so
+   * a champion summon (impossible today) would still show both pips.
+   */
+  private drawChampionBadge(container: Container, radius: number): void {
+    container.removeChildren().forEach((c) => c.destroy());
+
+    const badge = new Container();
+    badge.label = 'ChampionBadge';
+
+    const bg = new Graphics();
+    bg.circle(0, 0, 7).fill(0x7f1d1d);
+    bg.circle(0, 0, 7).stroke({ color: 0xfca5a5, width: 1.5 });
+
+    const label = new Text({
+      text: '💀',
+      style: {
+        fontFamily: 'sans-serif',
+        fontSize: 8,
+        fill: 0xfee2e2,
+        align: 'center',
+      },
+    });
+    label.label = 'ChampionBadgeText';
+    label.anchor.set(0.5, 0.5);
+
+    badge.addChild(bg);
+    badge.addChild(label);
+    badge.position.set(radius + 6, -(radius * 0.78));
     container.addChild(badge);
   }
 

@@ -117,6 +117,10 @@ export interface PlayerViewCombatant {
   tokenSpriteId?: string | undefined;
   monsterType?: string | undefined;
   challengeRating?: number | undefined;
+  /** SRD-1402: true for champion pack guardians (Spec 13 §4). */
+  isChampion?: boolean | undefined;
+  /** Champion trait (present exactly when `isChampion` is true). */
+  championTrait?: 'brutal' | 'swift' | 'warded' | undefined;
   /** True for conjured tokens spawned by the summon pipeline (Spec 08 §5 / SRD-903). */
   isSummon?: boolean | undefined;
   /** Entity id of the caster who owns this summon's transitive control chain. */
