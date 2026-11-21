@@ -24,6 +24,14 @@ import {
   formatTitleCase,
 } from '../compendium/formatters.js';
 import { getSkillMechanicalInfo } from '../builder/relevance.js';
+import { ItemIcon } from '../inventory/ItemIcon.js';
+import { ItemTooltipCard } from '../inventory/ItemTooltipCard.js';
+import {
+  getRarityBadgeClass,
+  getRarityBorderClass,
+  getRarityTextClass,
+  normalizeItemRarity,
+} from '../inventory/itemRarity.js';
 
 export type CharacterSheetTabId = 'overview' | 'equipment' | 'spells';
 
@@ -1132,22 +1140,45 @@ export function CharacterSheetDrawer({
                           const isAttuned = character.attunedItemInstanceIds.includes(
                             inst.instanceId,
                           );
+                          const rarity = normalizeItemRarity(mi?.rarity);
                           return (
                             <button
                               key={inst.instanceId}
                               type="button"
                               data-testid={`sheet-attune-toggle-${inst.instanceId}`}
                               onClick={() => handleToggleAttunement(inst.instanceId)}
-                              className={`w-full flex items-center justify-between px-3 py-1.5 rounded border text-xs ${
+                              className={`group relative w-full flex items-center justify-between px-3 py-1.5 rounded border text-xs ${
                                 isAttuned
-                                  ? 'bg-purple-950/50 border-purple-500 text-purple-200'
-                                  : 'bg-slate-950 border-slate-800 text-slate-300'
+                                  ? `bg-purple-950/50 ${getRarityBorderClass(rarity)} text-purple-200`
+                                  : `bg-slate-950 ${getRarityBorderClass(rarity)} text-slate-300`
                               }`}
                             >
-                              <span>{mi?.name ?? inst.itemId}</span>
-                              <span className="font-mono">
+                              <span className={`flex items-center gap-1.5 min-w-0 ${getRarityTextClass(rarity)}`}>
+                                <ItemIcon itemId={inst.itemId} size={16} testId={`sheet-attune-icon`} />
+                                <span className="truncate">{mi?.name ?? inst.itemId}</span>
+                                <span className={`px-1 py-px rounded text-[10px] border shrink-0 ${getRarityBadgeClass(rarity)}`}>
+                                  {rarity === 'very_rare' ? 'Very Rare' : rarity.charAt(0).toUpperCase() + rarity.slice(1)}
+                                </span>
+                              </span>
+                              <span className="font-mono shrink-0">
                                 {isAttuned ? '★ Attuned' : 'Attune'}
                               </span>
+                              {mi && (
+                                <ItemTooltipCard
+                                  itemId={inst.itemId}
+                                  name={mi.name}
+                                  rarity={rarity}
+                                  categoryLabel={mi.category.charAt(0).toUpperCase() + mi.category.slice(1)}
+                                  description={mi.description}
+                                  modifiers={mi.modifiers}
+                                  activatedAbilities={mi.activatedAbilities}
+                                  charges={mi.charges ? { max: mi.charges.max, remaining: inst.chargesRemaining, rechargeFormula: mi.charges.rechargeFormula, rechargeTiming: mi.charges.rechargeTiming ?? undefined } : null}
+                                  requiresAttunement={mi.requiresAttunement}
+                                  attunementRestriction={mi.attunementRestriction}
+                                  attunementState={isAttuned ? 'attuned' : 'unattuned'}
+                                  testIdPrefix={`sheet-attune`}
+                                />
+                              )}
                             </button>
                           );
                         })}
@@ -1209,18 +1240,40 @@ export function CharacterSheetDrawer({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-1">
                       {character.inventory.map((inst) => {
                         const eq = compendium.getEquipment(inst.itemId);
+                        const mi = compendium.getMagicItem(inst.itemId);
+                        const rarity = normalizeItemRarity(mi?.rarity);
+                        const label = mi?.name ?? eq?.name ?? formatTitleCase(inst.itemId);
+                        const description =
+                          mi?.description ??
+                          (eq as { description?: string } | undefined)?.description ??
+                          'No description available.';
                         return (
                           <div
                             key={inst.instanceId}
                             data-testid={`sheet-inventory-item-${inst.itemId}`}
-                            className="flex items-center justify-between px-2.5 py-1.5 rounded bg-slate-950 border border-slate-800"
+                            className={`group relative flex items-center justify-between px-2.5 py-1.5 rounded bg-slate-950 border ${getRarityBorderClass(rarity)}`}
                           >
-                            <span className="text-slate-200 truncate">
-                              {eq?.name ?? formatTitleCase(inst.itemId)}
+                            <span className={`flex items-center gap-1.5 min-w-0 ${getRarityTextClass(rarity)}`}>
+                              <ItemIcon itemId={inst.itemId} size={16} testId={`sheet-inventory-icon`} />
+                              <span className="truncate">{label}</span>
                             </span>
-                            <span className="font-mono text-slate-400">
+                            <span className="font-mono text-slate-400 shrink-0">
                               &times;{inst.quantity}
                             </span>
+                            <ItemTooltipCard
+                              itemId={inst.itemId}
+                              name={label}
+                              rarity={rarity}
+                              categoryLabel={mi ? mi.category.charAt(0).toUpperCase() + mi.category.slice(1) : eq ? eq.kind.charAt(0).toUpperCase() + eq.kind.slice(1) : 'Item'}
+                              description={description}
+                              modifiers={mi?.modifiers ?? (eq?.kind === 'gear' ? (eq.modifiers ?? null) : null)}
+                              activatedAbilities={mi?.activatedAbilities ?? (eq?.kind === 'gear' ? (eq.activatedAbilities ?? null) : null)}
+                              charges={mi?.charges ? { max: mi.charges.max, remaining: inst.chargesRemaining, rechargeFormula: mi.charges.rechargeFormula, rechargeTiming: mi.charges.rechargeTiming ?? undefined } : null}
+                              requiresAttunement={Boolean(mi?.requiresAttunement)}
+                              attunementRestriction={mi?.attunementRestriction}
+                              attunementState={mi?.requiresAttunement ? (character.attunedItemInstanceIds.includes(inst.instanceId) ? 'attuned' : 'unattuned') : 'n/a'}
+                              testIdPrefix={`sheet-inventory`}
+                            />
                           </div>
                         );
                       })}

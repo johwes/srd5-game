@@ -29,6 +29,12 @@ import {
 } from '@srd5/data';
 import { useMemo, useState } from 'react';
 import { EntityDetailView, type InspectableEntity } from './EntityDetailView.js';
+import { ItemIcon } from '../inventory/ItemIcon.js';
+import {
+  getRarityBorderClass,
+  getRarityTextClass,
+  normalizeItemRarity,
+} from '../inventory/itemRarity.js';
 import {
   formatAbilityAbbrev,
   formatAbilityBonuses,
@@ -826,6 +832,14 @@ export function CompendiumBrowser({
             <ul className="divide-y divide-slate-800/80 overflow-y-auto">
               {items.map((item) => {
                 const isSelected = activeItem?.id === item.id;
+                const isItemEntity =
+                  item.entity.kind === 'equipment' || item.entity.kind === 'magic_item';
+                const rarityKey = isItemEntity
+                  ? item.entity.kind === 'magic_item'
+                    ? normalizeItemRarity(item.entity.data.rarity)
+                    : 'common'
+                  : null;
+                const iconId = isItemEntity ? item.entity.data.id : null;
                 return (
                   <li key={item.id}>
                     <button
@@ -836,18 +850,29 @@ export function CompendiumBrowser({
                         isSelected
                           ? 'bg-amber-500/15 border-l-4 border-amber-400'
                           : 'hover:bg-slate-800/60'
-                      }`}
+                      } ${rarityKey ? getRarityBorderClass(rarityKey) : ''} ${rarityKey ? 'border' : 'border-transparent'} rounded`}
                     >
-                      <div className="min-w-0">
-                        <div
-                          className={`text-sm font-semibold truncate ${
-                            isSelected ? 'text-amber-300' : 'text-slate-100'
-                          }`}
-                        >
-                          {item.name}
-                        </div>
-                        <div className="text-xs text-slate-400 truncate mt-0.5">
-                          {item.subtitle}
+                      <div className="min-w-0 flex items-center gap-2">
+                        {iconId && (
+                          <span className={`shrink-0 rounded border px-1 py-0.5 ${rarityKey ? getRarityBorderClass(rarityKey) : 'border-slate-700'}`}>
+                            <ItemIcon itemId={iconId} size={16} testId={`compendium-icon`} />
+                          </span>
+                        )}
+                        <div className="min-w-0">
+                          <div
+                            className={`text-sm font-semibold truncate ${
+                              rarityKey
+                                ? getRarityTextClass(rarityKey)
+                                : isSelected
+                                  ? 'text-amber-300'
+                                  : 'text-slate-100'
+                            }`}
+                          >
+                            {item.name}
+                          </div>
+                          <div className="text-xs text-slate-400 truncate mt-0.5">
+                            {item.subtitle}
+                          </div>
                         </div>
                       </div>
                       <span className="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">

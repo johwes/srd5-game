@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { InventoryItemInstance } from '@srd5/data';
 import type { LootInventoryModalProps } from './types.js';
+import { InventoryItemRow } from '../inventory/InventoryItemRow.js';
 
 export function LootInventoryModal({
   isOpen,
@@ -190,19 +191,12 @@ export function LootInventoryModal({
                   </div>
                   <div className="space-y-1">
                     {activeLoot.bundle.items.map((itemId, idx) => (
-                      <div
+                      <InventoryItemRow
                         key={`${itemId}-${idx}`}
-                        className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800 text-xs"
-                      >
-                        <span className="font-medium text-slate-200">
-                          ✨ {getItemName(itemId)}
-                        </span>
-                        {isMagicItemRequiringAttunement(itemId) && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                            Requires Attunement
-                          </span>
-                        )}
-                      </div>
+                        itemId={itemId}
+                        compendium={compendium}
+                        testId={`discovered-loot-item-${itemId}-${idx}`}
+                      />
                     ))}
                   </div>
                 </div>
@@ -297,29 +291,48 @@ export function LootInventoryModal({
                   (slot) => {
                     const instId = equippedSlots[slot];
                     const itemInst = inventory.find((it) => it.instanceId === instId);
-                    const itemName = itemInst ? getItemName(itemInst.itemId) : 'Empty';
+
+                    if (!itemInst) {
+                      return (
+                        <div
+                          key={slot}
+                          className="p-2 rounded bg-slate-900 border border-slate-800/80 flex flex-col justify-between"
+                        >
+                          <div className="text-[10px] text-slate-500 uppercase font-semibold">
+                            {slot}
+                          </div>
+                          <div className="text-xs font-medium text-slate-500 truncate mt-0.5">
+                            Empty
+                          </div>
+                        </div>
+                      );
+                    }
 
                     return (
-                      <div
-                        key={slot}
-                        className="p-2 rounded bg-slate-900 border border-slate-800/80 flex flex-col justify-between"
-                      >
+                      <div key={slot} className="flex flex-col gap-1">
                         <div className="text-[10px] text-slate-500 uppercase font-semibold">
                           {slot}
                         </div>
-                        <div className="text-xs font-medium text-slate-200 truncate mt-0.5">
-                          {itemName}
-                        </div>
-                        {itemInst && (
-                          <button
-                            type="button"
-                            data-testid={`unequip-btn-${slot}`}
-                            onClick={() => onEquipItem(selectedHeroId, slot, undefined)}
-                            className="mt-1 text-[10px] text-amber-400 hover:text-amber-300 self-start"
-                          >
-                            Unequip
-                          </button>
-                        )}
+                        <InventoryItemRow
+                          itemId={itemInst.itemId}
+                          compendium={compendium}
+                          quantity={itemInst.quantity}
+                          attunementState={
+                            attunedIds.includes(itemInst.instanceId) ? 'attuned' : 'unattuned'
+                          }
+                          chargesRemaining={itemInst.chargesRemaining}
+                          testId={`equipped-slot-${slot}-${itemInst.instanceId}`}
+                          actions={
+                            <button
+                              type="button"
+                              data-testid={`unequip-btn-${slot}`}
+                              onClick={() => onEquipItem(selectedHeroId, slot, undefined)}
+                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold"
+                            >
+                              Unequip
+                            </button>
+                          }
+                        />
                       </div>
                     );
                   },
@@ -339,66 +352,53 @@ export function LootInventoryModal({
               ) : (
                 <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                   {inventory.map((item) => {
-                    const itemName = getItemName(item.itemId);
                     const isAttunable = isMagicItemRequiringAttunement(item.itemId);
                     const isAttuned = attunedIds.includes(item.instanceId);
 
                     return (
-                      <div
+                      <InventoryItemRow
                         key={item.instanceId}
-                        data-testid={`inventory-item-row-${item.instanceId}`}
-                        className="flex items-center justify-between p-2.5 rounded bg-slate-950 border border-slate-800 text-xs"
-                      >
-                        <div>
-                          <div className="font-medium text-slate-200 flex items-center gap-1.5">
-                            {itemName}
-                            {item.quantity > 1 && (
-                              <span className="text-slate-400">x{item.quantity}</span>
+                        itemId={item.itemId}
+                        compendium={compendium}
+                        quantity={item.quantity}
+                        attunementState={isAttunable ? (isAttuned ? 'attuned' : 'unattuned') : 'n/a'}
+                        chargesRemaining={item.chargesRemaining}
+                        testId={`inventory-item-row-${item.instanceId}`}
+                        actions={
+                          <>
+                            {isAttunable && !isAttuned && attunedIds.length < 3 && (
+                              <button
+                                type="button"
+                                data-testid={`attune-btn-${item.instanceId}`}
+                                onClick={() => onAttuneItem(selectedHeroId, item.instanceId)}
+                                className="px-2 py-1 rounded bg-purple-900/60 hover:bg-purple-800 border border-purple-700/60 text-purple-200 text-[10px] font-semibold"
+                              >
+                                Attune
+                              </button>
                             )}
-                            {item.isMagicItem && (
-                              <span className="text-[10px] text-amber-400">✨ Magic</span>
+                            {isAttuned && (
+                              <button
+                                type="button"
+                                data-testid={`unattune-btn-${item.instanceId}`}
+                                onClick={() => onUnattuneItem(selectedHeroId, item.instanceId)}
+                                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold"
+                              >
+                                Unattune
+                              </button>
                             )}
-                          </div>
-                          {isAttunable && (
-                            <div className="text-[10px] text-purple-400">
-                              {isAttuned ? '🟣 Attuned' : '⚪ Unattuned (Attunement Req)'}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          {isAttunable && !isAttuned && attunedIds.length < 3 && (
-                            <button
-                              type="button"
-                              data-testid={`attune-btn-${item.instanceId}`}
-                              onClick={() => onAttuneItem(selectedHeroId, item.instanceId)}
-                              className="px-2 py-1 rounded bg-purple-900/60 hover:bg-purple-800 border border-purple-700/60 text-purple-200 text-[10px] font-semibold"
-                            >
-                              Attune
-                            </button>
-                          )}
-                          {isAttuned && (
-                            <button
-                              type="button"
-                              data-testid={`unattune-btn-${item.instanceId}`}
-                              onClick={() => onUnattuneItem(selectedHeroId, item.instanceId)}
-                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold"
-                            >
-                              Unattune
-                            </button>
-                          )}
-                          {onUseItem && item.itemId.startsWith('potion') && (
-                            <button
-                              type="button"
-                              data-testid={`use-item-btn-${item.instanceId}`}
-                              onClick={() => onUseItem(selectedHeroId, item.instanceId)}
-                              className="px-2 py-1 rounded bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-200 text-[10px] font-semibold"
-                            >
-                              Use
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                            {onUseItem && item.itemId.startsWith('potion') && (
+                              <button
+                                type="button"
+                                data-testid={`use-item-btn-${item.instanceId}`}
+                                onClick={() => onUseItem(selectedHeroId, item.instanceId)}
+                                className="px-2 py-1 rounded bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-200 text-[10px] font-semibold"
+                              >
+                                Use
+                              </button>
+                            )}
+                          </>
+                        }
+                      />
                     );
                   })}
                 </div>

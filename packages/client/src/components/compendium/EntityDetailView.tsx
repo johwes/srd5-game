@@ -1,6 +1,7 @@
 import {
   ABILITY_IDS,
   type AbilityId,
+  type ActivatedAbilitySpec,
   type ArmorData,
   type BackgroundData,
   type ClassData,
@@ -10,6 +11,7 @@ import {
   type FeatData,
   type GearData,
   type MagicItemData,
+  type ModifierSpec,
   type MonsterActionSpec,
   type MonsterData,
   type RaceData,
@@ -437,6 +439,14 @@ function EquipmentDetail({
       {item.kind === 'tool' && <ToolSubDetail tool={item} />}
       {item.kind === 'pack' && <PackSubDetail pack={item} compendium={compendium} />}
 
+      {item.kind === 'gear' && (
+        <ItemMechanicsSection
+          modifiers={item.modifiers}
+          activatedAbilities={item.activatedAbilities}
+          testIdPrefix="compendium-detail-equipment"
+        />
+      )}
+
       {item.description && (
         <section className="space-y-2">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-400">
@@ -536,6 +546,89 @@ function GearSubDetail({ gear }: { gear: GearData }) {
   );
 }
 
+/** SRD-1302: shared modifiers + activated-abilities section for item detail views. */
+function ItemMechanicsSection({
+  modifiers,
+  activatedAbilities,
+  testIdPrefix,
+}: {
+  modifiers?: readonly ModifierSpec[] | null;
+  activatedAbilities?: readonly ActivatedAbilitySpec[] | null;
+  testIdPrefix: string;
+}) {
+  const mods = (modifiers ?? []).filter(Boolean);
+  const abilities = (activatedAbilities ?? []).filter(Boolean);
+  if (mods.length === 0 && abilities.length === 0) return null;
+  return (
+    <section className="space-y-2" data-testid={`${testIdPrefix}-mechanics`}>
+      <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-400">
+        Game Effect
+      </h3>
+      {mods.length > 0 && (
+        <ul
+          data-testid={`${testIdPrefix}-modifiers`}
+          className="rounded bg-emerald-950/40 border border-emerald-800/50 px-3 py-2 text-[12px] text-emerald-200 space-y-1"
+        >
+          {mods.map((mod, idx) => (
+            <li key={idx}>
+              <span className="font-semibold">⚙ </span>
+              {summarizeSingleModifier(mod)}
+            </li>
+          ))}
+        </ul>
+      )}
+      {abilities.length > 0 && (
+        <div className="space-y-2" data-testid={`${testIdPrefix}-abilities`}>
+          {abilities.map((ability) => (
+            <div
+              key={ability.id}
+              data-testid={`${testIdPrefix}-ability-${ability.id}`}
+              className="bg-slate-900/50 border border-slate-800/80 rounded-lg p-3.5 text-sm"
+            >
+              <div className="font-semibold text-slate-100">
+                {ability.name}{' '}
+                <span className="text-[10px] text-slate-400 font-normal">
+                  ({formatTitleCase(ability.actionCost)})
+                </span>
+              </div>
+              <p className="mt-1 text-slate-300 leading-relaxed text-[13px]">
+                {ability.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function summarizeSingleModifier(mod: ModifierSpec): string {
+  switch (mod.type) {
+    case 'flat_bonus':
+      return `${typeof mod.value === 'number' ? (mod.value >= 0 ? `+${mod.value}` : `${mod.value}`) : `+${String(mod.value).replace(/^@/, '')}`} to ${String(mod.target).replace(/_/g, ' ')}`;
+    case 'ability_score':
+      return `${mod.bonus >= 0 ? `+${mod.bonus}` : `${mod.bonus}`} ${String(mod.ability).toUpperCase()}`;
+    case 'set_ability_minimum':
+      return `${String(mod.ability).toUpperCase()} set to ${mod.minimum} while attuned/worn`;
+    case 'roll_mode':
+      return `${mod.mode === 'advantage' ? 'Advantage' : 'Disadvantage'} on ${String(mod.target).replace(/^(save|skill):/, '').replace(/_/g, ' ')}`;
+    case 'damage_mitigation':
+      return `${mod.mitigation} to ${mod.damageTypes.join(', ')} damage`;
+    case 'condition_immunity':
+      return `Immunity to ${mod.conditions.join(', ')}`;
+    case 'ac_calculation':
+      return `AC formula: ${String(mod.formula).replace(/^@/, '')}${mod.allowsShield ? ' (+shield)' : ''}`;
+    case 'die_manipulation':
+      return `Die rule: ${String(mod.rule).replace(/_/g, ' ')}`;
+    case 'extra_attack':
+      return `Extra attacks: ${mod.attacksPerAction} per action`;
+    case 'grant_resource':
+      return `Grants ${mod.name} (${String(mod.maxFormula).replace(/^@/, '')}, ${mod.recovery})`;
+    default:
+      return 'Special magical effect';
+  }
+}
+
 function ToolSubDetail({ tool }: { tool: ToolData }) {
   return (
     <div className="bg-slate-900/70 border border-slate-800 rounded-lg p-4 text-sm flex flex-wrap gap-6">
@@ -602,7 +695,10 @@ function MagicItemDetail({ item }: { item: MagicItemData }) {
       </div>
 
       {item.charges && (
-        <div className="bg-slate-900/70 border border-slate-800 rounded-lg p-3.5 text-sm">
+        <div
+          data-testid="compendium-detail-magic-item-charges"
+          className="bg-slate-900/70 border border-slate-800 rounded-lg p-3.5 text-sm"
+        >
           <span className="text-slate-400">Charges: </span>
           <span className="font-semibold text-amber-300">Up to {item.charges.max} charges</span>
           {item.charges.rechargeFormula && (
@@ -614,6 +710,12 @@ function MagicItemDetail({ item }: { item: MagicItemData }) {
           )}
         </div>
       )}
+
+      <ItemMechanicsSection
+        modifiers={item.modifiers}
+        activatedAbilities={item.activatedAbilities}
+        testIdPrefix="compendium-detail-magic-item"
+      />
 
       <section className="space-y-2">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-400">

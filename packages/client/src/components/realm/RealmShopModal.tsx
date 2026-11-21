@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import type { OverworldPOI, ShopInventory } from '@srd5/engine';
 import { getShopCatalogEntry, getShopItemPrice, SELL_PRICE_RATIO } from '@srd5/engine';
+import { defaultCompendium } from '@srd5/data';
 import type { RealmSessionState } from './realmEngine.js';
 import { getPartyList } from './realmEngine.js';
+import { InventoryItemRow } from '../inventory/InventoryItemRow.js';
 
 /**
  * Settlement shop modal (SRD-805): buy gear / rations at reputation-adjusted
@@ -125,32 +127,27 @@ export function RealmShopModal({
               const price = getShopItemPrice(item, reputation);
               const affordable = gold >= price && item.quantity > 0;
               return (
-                <li
-                  key={item.itemId}
-                  data-testid={`realm-shop-item-${item.itemId}`}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <span className="text-sm font-semibold text-slate-200">{item.name}</span>
-                    {item.isMagicItem && (
-                      <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">
-                        ✨ {item.rarity ?? 'magic'}
-                      </span>
-                    )}
-                    <span className="ml-2 text-[11px] text-slate-500">stock {item.quantity}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-bold text-yellow-300">{price} gp</span>
-                    <button
-                      type="button"
-                      data-testid={`realm-shop-buy-${item.itemId}`}
-                      disabled={!affordable}
-                      onClick={() => onBuy(item.itemId, 1, effectiveRecipient)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 text-xs font-bold min-h-[36px]"
-                    >
-                      Buy
-                    </button>
-                  </div>
+                <li key={item.itemId}>
+                  <InventoryItemRow
+                    itemId={item.itemId}
+                    compendium={defaultCompendium}
+                    quantity={item.quantity}
+                    testId={`realm-shop-item-${item.itemId}`}
+                    actions={
+                      <>
+                        <span className="text-xs font-bold text-yellow-300">{price} gp</span>
+                        <button
+                          type="button"
+                          data-testid={`realm-shop-buy-${item.itemId}`}
+                          disabled={!affordable}
+                          onClick={() => onBuy(item.itemId, 1, effectiveRecipient)}
+                          className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 text-xs font-bold min-h-[36px]"
+                        >
+                          Buy
+                        </button>
+                      </>
+                    }
+                  />
                 </li>
               );
             })}
@@ -183,25 +180,26 @@ export function RealmShopModal({
                         Math.floor(basePrice * SELL_PRICE_RATIO),
                       ) * instance.quantity;
                       return (
-                        <li
-                          key={instance.instanceId}
-                          data-testid={`realm-shop-sell-item-${instance.instanceId}`}
-                          className="flex items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-1.5"
-                        >
-                          <span className="text-xs text-slate-300 truncate">
-                            {instance.quantity}× {catalog?.name ?? instance.itemId}
-                          </span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-xs font-bold text-yellow-300">{sellValue} gp</span>
-                            <button
-                              type="button"
-                              data-testid={`realm-shop-sell-${instance.instanceId}`}
-                              onClick={() => onSell(hero.id, instance.instanceId)}
-                              className="px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-100 min-h-[32px]"
-                            >
-                              Sell
-                            </button>
-                          </div>
+                        <li key={instance.instanceId}>
+                          <InventoryItemRow
+                            itemId={instance.itemId}
+                            compendium={defaultCompendium}
+                            quantity={instance.quantity}
+                            testId={`realm-shop-sell-item-${instance.instanceId}`}
+                            actions={
+                              <>
+                                <span className="text-xs font-bold text-yellow-300">{sellValue} gp</span>
+                                <button
+                                  type="button"
+                                  data-testid={`realm-shop-sell-${instance.instanceId}`}
+                                  onClick={() => onSell(hero.id, instance.instanceId)}
+                                  className="px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-100 min-h-[32px]"
+                                >
+                                  Sell
+                                </button>
+                              </>
+                            }
+                          />
                         </li>
                       );
                     })}
