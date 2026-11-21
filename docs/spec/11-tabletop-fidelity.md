@@ -1,7 +1,7 @@
 # Specification Module 11: Tabletop Fidelity — Languages, Skills & Spells
 
 > **Packages**: `@srd5/data`, `@srd5/engine`, `@srd5/client`
-> **Backlog Epic**: Epic 12 (`SRD-1201` – `SRD-1212`)
+> **Backlog Epic**: Epic 12 (`SRD-1201` – `SRD-1213`)
 > **Parent Specs**: [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md) (reactions, conditions), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md) (exploration verbs, props), [10](file:///home/jwesterl/ai/srd5-game/docs/spec/10-realm-war-campaign.md) (approach dialogue, diplomacy)
 
 ---
@@ -87,12 +87,34 @@ export interface KnowledgeRecallSpec {
 
 ### 3.3 Contested and missing rolls
 
-- **Insight**: opposed vs. Deception in social reads (patrol bluff, tribe intent, envoy missions). `passiveInsight` becomes the floor.
+- **Insight**: opposed vs. Deception in social reads (patrol bluff, tribe intent, envoy missions). `passiveInsight` becomes the floor, and every social prompt shows a "something feels off" cue when the party's passive beats the speaker's Deception.
 - **Medicine**: stabilize becomes a real check (DC 10, healer's kit advantage); diagnose disease/poison branches.
 - **Intimidation**: social third leg alongside Persuasion/Deception with distinct consequences (fear: compliance + attitude cost).
 - **Animal Handling**: mounts/beasts/pack animals, sub-faction beast encounters.
 - **Performance**: tavern/distraction/cover-identity verb (earn coin, distract guards, blend into crowds) — the alternative to cutting it.
 - Combat `hide` graduates from stub to a real Stealth-vs-passive-Perception roll granting `hidden` (unseen attacker) per Spec 03 §4.3 item 7.
+
+### 3.4 Standing skill passives — small, always-on, never overpowered
+
+Every skill below grants a flat standing bonus in its domain. Rules: **proficiency-gated, not rank-scaled** (untrained = nothing, proficient = half bonus, expert = full); bonuses are small, typed, and same-type never stacks (take the highest); domain-locked, never global +X.
+
+| Skill | Proficient | Expert |
+| :--- | :--- | :--- |
+| **Religion** | +1 HP whenever you *receive* magical healing or quaff a potion | +2, plus +1 vs. undead-channeled effects on consecrated ground; shrine blessings last one extra rest |
+| **History** | One free recall per delve (hint card per `KnowledgeRecallSpec`) | Recall also reveals the boss's damage resistances pre-fight |
+| **Nature** | +1 ration yield when foraging; advantage vs. natural poison/disease | Wilderness camps count one step safer for ambush rolls |
+| **Animal Handling** | Beasts start one attitude step friendlier (buys the parley round) | Mounts/beasts grant off-road travel discount; guard-beasts +1 camp perception |
+| **Medicine** | Administered Hit-Die healing +1 per die during rests; free poison/disease diagnosis | Stabilize DC 10 with healer's-kit advantage; diagnosis unlocks the correct cure path |
+| **Intimidation** | Bloodied enemies check morale earlier against your side | Failed Deception bluffs fall back to Intimidation at +2 DC instead of instant combat |
+| **Insight** | "Something feels off" cue whenever party passive beats a speaker's Deception | Opposed read reveals intent band (demand / fear / bluff) |
+| **Performance** | Tavern rests earn coin + rumors on one roll (fail-forward) | Once per combat, distract as a Help-equivalent from 30 ft |
+
+### 3.5 Content tagging — authored once, generated forever
+
+Recall specs (`§3.2`) and passive dividends (`§3.4`) attach to content two ways:
+
+- **Authored modules** (Kaelen, quest chains): hand-tagged per location/quest/NPC (`historyDc`, `religionDc`, `arcanaDc` + reward kind).
+- **Procedural generator** (`DungeonGenerator`, realm POIs/delves): recall tags are emitted from the same seeded theme tables that already emit `detectionDc`, traps, and loot — e.g. undead-biome floors roll a Religion ward tag, wizard-lair themes roll History/Arcana tags. Deterministic from the seed, so **every new game ships with the data side already done**: no post-generation pass, no per-save migration.
 
 ---
 
@@ -143,3 +165,4 @@ Reference flow for tribe/envoy/truce missions (extends Spec 10 §5–6 approach 
 - Integrity test: every builder-offered spell id resolves in the compendium (kills dangling refs permanently); every offered skill/language has ≥1 tagged consumer or an explicit `unsupported` badge with a tracking ticket.
 - Headless tests: language gate open/closed/fallback; recall rewards; theft success/caught branches; counterspell identification pass/fail; knock alert tradeoff; sleep HP-pool ordering; Wish boons; Time Stop turn sequencing; diplomacy fail-forward outcomes.
 - E2E: Orc-tribe chain played without Orcish (gesture path) and with Orcish/magic (full negotiation).
+- Passives: prof/expert tiers verified per skill; generator recall tags bit-exact across seeds.
