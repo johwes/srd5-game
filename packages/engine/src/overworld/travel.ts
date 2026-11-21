@@ -27,6 +27,8 @@ import {
   restoreCombatantAfterLongRest,
   spendHitDiceForHero,
 } from '../dungeon/rest.js';
+import { rechargeHeroCharges } from '../dungeon/use-item.js';
+import { defaultCompendium } from '@srd5/data';
 
 /**
  * Overworld Party Travel loop (SRD-802, Spec 06 Section 4.1 & 4.3).
@@ -627,6 +629,14 @@ export function campOverworld(
       for (const [heroId, hero] of Object.entries(nextParty)) {
         const restored = restoreCombatantAfterLongRest(hero);
         if (restored.hpRecovered > 0) hpRecovered[heroId] = restored.hpRecovered;
+        // SRD-1303: dawn recharge for wands/staffs while camping.
+        if (hero.buildState) {
+          const recharge = rechargeHeroCharges(hero.buildState.inventory, defaultCompendium, rngState);
+          rngState = recharge.nextRng;
+          if (recharge.inventory !== hero.buildState.inventory) {
+            hero.buildState = { ...hero.buildState, inventory: recharge.inventory };
+          }
+        }
       }
     } else {
       // Starvation: no recovery; every living member gains a level of exhaustion.

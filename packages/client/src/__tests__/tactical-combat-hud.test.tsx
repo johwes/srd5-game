@@ -564,7 +564,7 @@ describe('SRD-406: React Tactical Combat HUD', () => {
       expect(screen.getByTestId('item-card-potion-healing')).toBeDefined();
 
       fireEvent.click(screen.getByTestId('item-use-btn-potion-healing'));
-      expect(onUseItem).toHaveBeenCalledWith('potion-of-healing');
+      expect(onUseItem).toHaveBeenCalledWith('potion-of-healing', undefined);
     });
   });
 

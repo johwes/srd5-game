@@ -977,12 +977,13 @@ export function DungeonView({
               action,
             });
           }}
-          onUseItem={(itemId) => {
+          onUseItem={(itemInstanceId, targetId) => {
             if (!activeCombatantId) return;
             void handleDispatch({
               type: 'USE_ITEM',
               actorId: activeCombatantId,
-              itemInstanceId: itemId,
+              itemInstanceId,
+              ...(targetId ?? selectedCombatantId ? { targetId: (targetId ?? selectedCombatantId)! } : {}),
             });
           }}
           onUseSummonAction={(actionId) => {
@@ -1311,6 +1312,13 @@ export function DungeonView({
           handleDispatch({
             type: 'UNATTUNE_ITEM',
             characterId: charId,
+            itemInstanceId: instId,
+          })
+        }
+        onUseItem={(charId, instId) =>
+          handleDispatch({
+            type: 'USE_ITEM',
+            actorId: charId,
             itemInstanceId: instId,
           })
         }

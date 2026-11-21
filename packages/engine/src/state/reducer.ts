@@ -65,6 +65,7 @@ import {
 } from '../dungeon/encounters.js';
 import { resolveRest } from '../dungeon/rest.js';
 import { claimPropLoot, awardLootToCharacter } from '../dungeon/loot.js';
+import { resolveUseItem } from '../dungeon/use-item.js';
 import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
 import { activateShrine } from '../dungeon/roguelite.js';
 import { applyBetweenCombatLevelUp } from '../dungeon/level-up-flow.js';
@@ -579,6 +580,17 @@ export function reduceGame(
       }
 
       events.push(...res.events);
+      break;
+    }
+
+    case 'USE_ITEM': {
+      const useRes = resolveUseItem(
+        nextState,
+        { actorId: command.actorId, itemInstanceId: command.itemInstanceId, targetId: command.targetId },
+        options?.compendium,
+      );
+      nextState = useRes.nextState;
+      events.push(...useRes.events);
       break;
     }
 

@@ -386,16 +386,17 @@ export function LootInventoryModal({
                                 Unattune
                               </button>
                             )}
-                            {onUseItem && item.itemId.startsWith('potion') && (
-                              <button
-                                type="button"
-                                data-testid={`use-item-btn-${item.instanceId}`}
-                                onClick={() => onUseItem(selectedHeroId, item.instanceId)}
-                                className="px-2 py-1 rounded bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-200 text-[10px] font-semibold"
-                              >
-                                Use
-                              </button>
-                            )}
+                            {onUseItem &&
+                              (item.itemId.startsWith('potion') || item.itemId === 'antitoxin') && (
+                                <button
+                                  type="button"
+                                  data-testid={`use-item-btn-${item.instanceId}`}
+                                  onClick={() => onUseItem(selectedHeroId, item.instanceId)}
+                                  className="px-2 py-1 rounded bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-700/60 text-emerald-200 text-[10px] font-semibold"
+                                >
+                                  Use
+                                </button>
+                              )}
                           </>
                         }
                       />

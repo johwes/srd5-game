@@ -129,6 +129,8 @@ describe('CombatLog event coverage (no raw JSON)', () => {
     { type: 'LEVEL_UP_APPLIED', characterId: 'pregen-fighter', newLevel: 2, hpIncrease: 7 },
     { type: 'ATTUNEMENT_CHANGED', characterId: 'pregen-fighter', attunedItemInstanceIds: ['sword-1'] },
     { type: 'INVENTORY_UPDATED', characterId: 'pregen-fighter', inventory: [] },
+    { type: 'ITEM_CONSUMED', characterId: 'pregen-fighter', itemInstanceId: 'inst-potion-1', itemId: 'potion-of-healing', quantityRemaining: 0 },
+    { type: 'CHARGES_CHANGED', characterId: 'pregen-wizard', itemInstanceId: 'inst-wand-1', itemId: 'wand-of-magic-missiles', chargesRemaining: 6, chargesMax: 7 },
     { type: 'SHRINE_ACTIVATED', shrineId: 'shrine-1', shrineType: 'healing', actorId: 'pregen-cleric', effectDescription: 'Restored all HP.' },
     { type: 'ROGUELITE_STARVATION', actorId: 'pregen-fighter', rationsConsumed: 0, rationsShort: 2, exhaustionLevel: 1 },
   ];

@@ -13,6 +13,7 @@ import {
 import { triggerDungeonEncounter } from './encounters.js';
 import { type EncounterSpawnGroup } from './schemas.js';
 import { attuneMagicItem, unattuneMagicItem } from '../character/attunement.js';
+import { rechargeHeroCharges } from './use-item.js';
 import { computeDerivedCharacter } from '../character/derived.js';
 import { getMedicineHitDieBonusPerDieFor } from '../skills/skill-passives.js';
 
@@ -643,6 +644,8 @@ export function resolveLongRest(
   // 2. Safe Long Rest Execution
   const hpRecovered: Record<string, number> = {};
   const hitDiceRecovered: Record<string, number> = {};
+  const comp = options?.compendium ?? defaultCompendium;
+  let restRng = nextState.rngState;
 
   for (const [heroId, hero] of Object.entries(nextState.party)) {
     // 2.1–2.5 Shared per-combatant Long Rest restoration (also used when camping).
@@ -660,7 +663,6 @@ export function resolveLongRest(
     // 2.7 Attunement updates during Long Rest (SRD 5.1 & SRD-505)
     if (command.attunements?.[heroId] && hero.buildState) {
       let b = hero.buildState;
-      const comp = options?.compendium ?? defaultCompendium;
       for (const un of command.attunements[heroId]!.unattune ?? []) {
         b = unattuneMagicItem(b, un);
       }
@@ -676,7 +678,37 @@ export function resolveLongRest(
         attunedItemInstanceIds: b.attunedItemInstanceIds,
       });
     }
+
+    // SRD-1303: dawn recharge for wands/staffs (seeded, capped at max).
+    if (hero.buildState) {
+      const recharge = rechargeHeroCharges(hero.buildState.inventory, comp, restRng);
+      restRng = recharge.nextRng;
+      if (recharge.recharged.length > 0) {
+        hero.buildState = { ...hero.buildState, inventory: recharge.inventory };
+        for (const r of recharge.recharged) {
+          events.push({
+            type: 'CHARGES_CHANGED',
+            characterId: heroId,
+            itemInstanceId: r.instanceId,
+            itemId: r.itemId,
+            chargesRemaining: r.after,
+            chargesMax: comp.getMagicItem(r.itemId)?.charges?.max ?? r.after,
+          });
+        }
+        events.push({
+          type: 'INVENTORY_UPDATED',
+          characterId: heroId,
+          inventory: recharge.inventory,
+          currency: hero.buildState.currency,
+        });
+      } else if (recharge.inventory !== hero.buildState.inventory) {
+        // Newly-initialized full charges (no roll) still persist.
+        hero.buildState = { ...hero.buildState, inventory: recharge.inventory };
+      }
+    }
   }
+
+  nextState.rngState = restRng;
 
   events.push({
     type: 'REST_COMPLETED',

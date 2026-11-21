@@ -455,12 +455,13 @@ export function RealmBattleView({
             action,
           });
         }}
-        onUseItem={(itemId) => {
+        onUseItem={(itemInstanceId, targetId) => {
           if (!activeCombatantId) return;
           void handleDispatch({
             type: 'USE_ITEM',
             actorId: activeCombatantId,
-            itemInstanceId: itemId,
+            itemInstanceId: itemInstanceId,
+            ...(targetId ?? selectedCombatantId ? { targetId: (targetId ?? selectedCombatantId)! } : {}),
           });
         }}
         onUseSummonAction={(actionId) => {

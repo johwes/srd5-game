@@ -1117,6 +1117,35 @@ export function CombatLog({
           };
         }
 
+        case 'ITEM_CONSUMED': {
+          const hero = getCombatantName(event.characterId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${hero} uses ${prettifyId(event.itemId)}`,
+            summary:
+              event.quantityRemaining > 0
+                ? `${event.quantityRemaining} remaining`
+                : 'consumed',
+            rawEvent: event,
+          };
+        }
+
+        case 'CHARGES_CHANGED': {
+          const hero = getCombatantName(event.characterId);
+          return {
+            id: entryId,
+            timestamp: timeStr,
+            type: event.type,
+            category: 'system',
+            title: `${hero} ${prettifyId(event.itemId)} charges`,
+            summary: `${event.chargesRemaining}/${event.chargesMax} charges remaining`,
+            rawEvent: event,
+          };
+        }
+
         case 'SHRINE_ACTIVATED': {
           const actor = getCombatantName(event.actorId);
           return {

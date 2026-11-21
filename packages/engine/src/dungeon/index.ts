@@ -10,3 +10,4 @@ export * from './generator.js';
 export * from './roguelite.js';
 export * from './theft.js';
 export * from './recall.js';
+export * from './use-item.js';

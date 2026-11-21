@@ -366,6 +366,19 @@ export function ActionHotbar({
   const hasExtraAttacks = (turnBudget?.extraAttacksRemaining ?? 0) > 0;
   const bonusActionSpellCast = Boolean(turnBudget?.bonusActionSpellCast);
 
+  // SRD-1303: resolve real inventory instance ids for the quick-use potion
+  // buttons. The engine consumes `itemInstanceId`; falling back to the
+  // catalog id keeps older saves working via the engine's item-id fallback.
+  const inventory = activeCombatant?.buildState?.inventory ?? [];
+  const findInstanceId = (itemId: string): string => {
+    const match = inventory.find((i) => i.itemId === itemId && i.quantity > 0);
+    return match?.instanceId ?? itemId;
+  };
+  const useItemTarget =
+    selectedCombatantId && selectedCombatantId !== activeCombatant?.id
+      ? selectedCombatantId
+      : undefined;
+
   // BG3-style fit-to-grid: measure the tab column once; every panel derives
   // its icon size from the same width so icons scale instead of scrolling.
   const [gridWidth, setGridWidth] = useState(0);
@@ -1222,7 +1235,7 @@ export function ActionHotbar({
                 data-testid="item-use-btn-potion-healing"
                 style={{ width: itemIconSize, height: itemIconSize }}
                 disabled={!isPlayerControlled || !hasAction}
-                onClick={() => onUseItem?.('potion-of-healing')}
+                onClick={() => onUseItem?.(findInstanceId('potion-of-healing'), useItemTarget)}
                 className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
                   isPlayerControlled && hasAction
                     ? 'bg-slate-900 border-slate-700 hover:border-emerald-400 hover:bg-slate-800 shadow-md hover:shadow-[0_0_12px_rgba(52,211,153,0.3)] cursor-pointer active:scale-95'
@@ -1259,7 +1272,7 @@ export function ActionHotbar({
                 data-testid="item-use-btn-potion-greater-healing"
                 style={{ width: itemIconSize, height: itemIconSize }}
                 disabled={!isPlayerControlled || !hasAction}
-                onClick={() => onUseItem?.('potion-of-greater-healing')}
+                onClick={() => onUseItem?.(findInstanceId('potion-of-greater-healing'), useItemTarget)}
                 className={`relative rounded-xl flex flex-col items-center justify-center border transition-all ${
                   isPlayerControlled && hasAction
                     ? 'bg-slate-900 border-slate-700 hover:border-emerald-400 hover:bg-slate-800 shadow-md hover:shadow-[0_0_12px_rgba(52,211,153,0.3)] cursor-pointer active:scale-95'

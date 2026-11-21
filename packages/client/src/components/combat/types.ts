@@ -87,7 +87,7 @@ export interface ActionHotbarProps {
   onCastSpell?: (spellId: string, slotLevel: number) => void;
   onUseClassFeature?: (featureId: string, optionId?: string) => void;
   onStandardAction?: (action: StandardActionType) => void;
-  onUseItem?: (itemId: string) => void;
+  onUseItem?: (itemInstanceId: string, targetId?: string) => void;
   onUseSummonAction?: (actionId: string) => void;
   onDismissSummon?: (summon: PlayerViewCombatant) => void;
   onEndTurn?: () => void;
@@ -180,7 +180,7 @@ export interface TacticalCombatHudProps {
   onCastSpell?: (spellId: string, slotLevel: number) => void;
   onUseClassFeature?: (featureId: string, optionId?: string) => void;
   onStandardAction?: (action: StandardActionType) => void;
-  onUseItem?: (itemId: string) => void;
+  onUseItem?: (itemInstanceId: string, targetId?: string) => void;
   onUseSummonAction?: (actionId: string) => void;
   onDismissSummon?: (summon: PlayerViewCombatant) => void;
   onEndTurn?: () => void;

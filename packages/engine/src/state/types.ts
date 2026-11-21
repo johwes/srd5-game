@@ -592,6 +592,21 @@ export type GameEvent =
       currency?: CharacterCurrency;
     }
   | {
+      type: 'ITEM_CONSUMED';
+      characterId: string;
+      itemInstanceId: string;
+      itemId: string;
+      quantityRemaining: number;
+    }
+  | {
+      type: 'CHARGES_CHANGED';
+      characterId: string;
+      itemInstanceId: string;
+      itemId: string;
+      chargesRemaining: number;
+      chargesMax: number;
+    }
+  | {
       type: 'SHRINE_ACTIVATED';
       shrineId: string;
       shrineType: string;
