@@ -179,6 +179,7 @@ export function startRogueliteRun(options: CreateRogueliteRunOptions = {}): Rogu
       side: 'party',
       teamId: 'party',
       playerId: 'player-1',
+      buildState: char,
     });
     partyCombatants[combatant.id] = combatant;
     return combatant;

@@ -72,6 +72,7 @@ export function buildDungeonSession(
         side: 'party',
         teamId: 'party',
         playerId: 'player-1',
+        buildState: char,
       });
     });
   }

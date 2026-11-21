@@ -210,6 +210,7 @@ export function buildArenaPveEncounter(
       side: 'party',
       teamId: 'party',
       playerId: 'player-1',
+      buildState: char,
     });
   });
 
@@ -323,6 +324,7 @@ export function buildArenaPvpEncounter(
       side: 'party',
       teamId: 'team_red',
       playerId: teamAPlayerId,
+      buildState: char,
     });
   });
 
@@ -340,6 +342,7 @@ export function buildArenaPvpEncounter(
       side: 'monster',
       teamId: 'team_blue',
       playerId: teamBPlayerId,
+      buildState: char,
     });
   });
 
