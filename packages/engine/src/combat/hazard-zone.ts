@@ -11,9 +11,10 @@ import {
 import { CELL_SIZE_FEET, type GridPoint } from '../grid/model.js';
 import { doesFootprintContainCell, getFootprintCells } from '../grid/footprints.js';
 import { rollDamage, rollD20 } from '../dice/evaluator.js';
-import { applyDamage } from './damage.js';
+import { applyDamage, applyHealing } from './damage.js';
 import { applyConditionToCombatant, getConditionSavingThrowRollMode } from './conditions.js';
 import { startConcentration } from './concentration.js';
+import { isHazardUnsupportedStep } from './marker-spells.js';
 import type {
   CombatEvent,
   CombatState,
@@ -440,6 +441,155 @@ export function executeHazardZoneEffects(
           guidance: step.guidance,
           ...(step.suggestedRoll ? { suggestedRoll: step.suggestedRoll } : {}),
           targetId: currentTarget.id,
+        });
+      } else if (step.step === 'heal') {
+        const healRoll = rollDamage(currentRng, step.diceFormula);
+        currentRng = healRoll.nextState;
+        events.push({
+          type: 'DICE_ROLLED',
+          actorId: zone.casterId,
+          rollPurpose: `${zone.sourceName} Healing`,
+          notation: healRoll.record.formula,
+          rolls: healRoll.record.rolls,
+          kept: healRoll.record.kept,
+          modifier: healRoll.record.modifier,
+          total: healRoll.total,
+          mode: 'normal',
+        });
+        const healRes = applyHealing({
+          state: { ...currentState, rngState: currentRng },
+          targetId: currentTarget.id,
+          amount: healRoll.total,
+          sourceName: zone.sourceName,
+        });
+        currentState = healRes.state;
+        currentRng = currentState.rngState;
+        events.push(...healRes.events);
+        currentTarget = currentState.combatants[currentTarget.id] ?? currentTarget;
+      } else if (step.step === 'grant_temp_hp') {
+        const hpRoll = rollDamage(currentRng, step.amountFormula);
+        currentRng = hpRoll.nextState;
+        events.push({
+          type: 'DICE_ROLLED',
+          actorId: zone.casterId,
+          rollPurpose: `${zone.sourceName} Temp HP`,
+          notation: hpRoll.record.formula,
+          rolls: hpRoll.record.rolls,
+          kept: hpRoll.record.kept,
+          modifier: hpRoll.record.modifier,
+          total: hpRoll.total,
+          mode: 'normal',
+        });
+        const updated: Combatant = {
+          ...currentTarget,
+          tempHp: Math.max(currentTarget.tempHp, hpRoll.total),
+        };
+        currentState = {
+          ...currentState,
+          combatants: { ...currentState.combatants, [updated.id]: updated },
+        };
+        events.push({
+          type: 'TEMP_HP_APPLIED',
+          targetId: updated.id,
+          amount: hpRoll.total,
+          tempHpBefore: currentTarget.tempHp,
+          tempHpAfter: updated.tempHp,
+          sourceName: zone.sourceName,
+        });
+        currentTarget = updated;
+      } else if (step.step === 'apply_active_effect') {
+        const existing = currentTarget.activeEffects ? [...currentTarget.activeEffects] : [];
+        const entry = {
+          effectId: step.effectId,
+          name: step.name,
+          sourceEntityId: zone.casterId,
+          requiresConcentration: step.requiresConcentration,
+          remainingRounds: step.durationRounds,
+          modifiers: step.modifiers ?? [],
+        };
+        const updated: Combatant = {
+          ...currentTarget,
+          activeEffects: [...existing.filter((e) => e.effectId !== step.effectId), entry],
+        };
+        currentState = {
+          ...currentState,
+          combatants: { ...currentState.combatants, [updated.id]: updated },
+        };
+        currentTarget = updated;
+      } else if (step.step === 'attack_roll') {
+        // Hazard attack: bonus derived from the zone DC (DC = 8 + bonus).
+        const attackBonus = saveDc - 8;
+        const d20Res = rollD20(currentRng, { modifier: attackBonus, mode: 'normal' });
+        currentRng = d20Res.nextState;
+        events.push({
+          type: 'DICE_ROLLED',
+          actorId: zone.casterId,
+          rollPurpose: `${zone.sourceName} attack (${step.attackType})`,
+          notation: d20Res.record.formula,
+          rolls: d20Res.record.rolls,
+          kept: d20Res.record.kept,
+          modifier: d20Res.record.modifier,
+          total: d20Res.total,
+          mode: 'normal',
+          naturalCrit: d20Res.naturalRoll === 20,
+          naturalFumble: d20Res.naturalRoll === 1,
+        });
+        const effectiveAc = currentTarget.armorClass;
+        let outcome: 'miss' | 'hit' | 'critical_hit' = 'miss';
+        if (d20Res.naturalRoll === 20) outcome = 'critical_hit';
+        else if (d20Res.naturalRoll !== 1 && d20Res.total >= effectiveAc) outcome = 'hit';
+        events.push({
+          type: 'ATTACK_RESOLVED',
+          attackerId: zone.casterId,
+          targetId: currentTarget.id,
+          weaponOrSpellName: zone.sourceName,
+          attackType: step.attackType,
+          roll: d20Res.naturalRoll,
+          totalToHit: d20Res.total,
+          targetAc: effectiveAc,
+          outcome,
+        });
+        if (outcome === 'hit' || outcome === 'critical_hit') {
+          runSteps(step.onHit, currentTarget, false);
+          currentTarget = currentState.combatants[currentTarget.id] ?? currentTarget;
+        } else if (step.onMiss) {
+          runSteps(step.onMiss, currentTarget, false);
+          currentTarget = currentState.combatants[currentTarget.id] ?? currentTarget;
+        }
+      } else if (step.step === 'forced_movement') {
+        const stepsCount = Math.floor(step.distanceFeet / 5);
+        const dirX = Math.sign(currentTarget.position.x - zone.origin.x) || 1;
+        const dirY = Math.sign(currentTarget.position.y - zone.origin.y);
+        const newPos = {
+          x: Math.max(0, currentTarget.position.x + dirX * stepsCount * (step.direction === 'pull_to_actor' ? -1 : 1)),
+          y: Math.max(0, currentTarget.position.y + dirY * stepsCount * (step.direction === 'pull_to_actor' ? -1 : 1)),
+        };
+        const updated: Combatant = { ...currentTarget, position: newPos };
+        currentState = {
+          ...currentState,
+          combatants: { ...currentState.combatants, [updated.id]: updated },
+        };
+        events.push({ type: 'ENTITY_MOVED', entityId: updated.id, path: [newPos], mode: 'forced' });
+        currentTarget = updated;
+      } else if (isHazardUnsupportedStep(step.step)) {
+        // SRD-1204: no silent drops — steps with no hazard auto-resolver
+        // (teleport / summon / nested zone / resource spend) emit explicitly.
+        events.push({
+          type: 'HAZARD_ZONE_STEP_SKIPPED',
+          instanceId: zone.id,
+          zoneId: zone.zoneId,
+          entityId: currentTarget.id,
+          step: step.step,
+          reason: `no_hazard_resolver_for_${step.step}`,
+        });
+      } else {
+        events.push({
+          type: 'HAZARD_ZONE_STEP_SKIPPED',
+          instanceId: zone.id,
+          zoneId: zone.zoneId,
+          entityId: currentTarget.id,
+          step: (step as { step: string }).step,
+          reason: 'unhandled_step',
         });
       }
     }

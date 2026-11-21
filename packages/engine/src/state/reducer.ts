@@ -43,7 +43,9 @@ import {
   listenAtDoor,
   resolveActiveSearch,
   resolvePropInteraction,
+  resolveKnockOnProp,
 } from '../dungeon/props.js';
+import { senseDetectMagic } from '../combat/marker-spells.js';
 import {
   checkDungeonEncounterTriggers,
   triggerDungeonEncounter,
@@ -306,6 +308,52 @@ export function reduceGame(
       // non-hostile utility, buff, and healing spells. Combat casts keep the
       // initiative-bound resolver below.
       if (nextState.mode !== 'combat' || !nextState.combat) {
+        // SRD-1204: Knock resolves through the prop hook (unlock + alert),
+        // not the combatant-buff path — it targets a lock, not a creature.
+        if (command.spellId === 'knock') {
+          const caster = nextState.party[command.actorId] ?? nextState.monsters[command.actorId];
+          if (!caster) throw new Error(`Caster ${command.actorId} not found`);
+          const slotLevel = command.slotLevel ?? 2;
+          const pool = caster.spellSlots?.[String(slotLevel)];
+          if (caster.spellSlots && (!pool || pool.available <= 0)) {
+            throw new Error(`No level ${slotLevel} spell slots available for ${caster.name}`);
+          }
+          const targetCell = command.targetCell;
+          const propAtCell = targetCell
+            ? nextState.props.find((p) => p.x === targetCell.x && p.y === targetCell.y)
+            : nextState.props.find((p) => p.state === 'locked');
+          if (!propAtCell) {
+            throw new Error('Knock requires a target lock: pass targetCell of a locked door/chest/furniture');
+          }
+          // Expend the slot on the authoritative party copy.
+          if (nextState.party[command.actorId]?.spellSlots?.[String(slotLevel)]) {
+            const sp = nextState.party[command.actorId]!.spellSlots![String(slotLevel)]!;
+            nextState.party[command.actorId]!.spellSlots![String(slotLevel)] = {
+              ...sp,
+              expended: sp.expended + 1,
+              available: Math.max(0, sp.available - 1),
+            };
+          }
+          events.push({
+            type: 'SPELL_CAST',
+            actorId: command.actorId,
+            spellId: 'knock',
+            spellName: 'Knock',
+            spellLevel: 2,
+            castAtLevel: slotLevel,
+            actionCost: 'action',
+            slotExpended: slotLevel,
+            targetEntityIds: [],
+          });
+          const knockRes = resolveKnockOnProp({
+            state: nextState,
+            actorId: command.actorId,
+            propId: propAtCell.id,
+          });
+          nextState = knockRes.nextState;
+          events.push(...knockRes.events);
+          break;
+        }
         const res = executeOutOfCombatSpellCast({
           party: nextState.party,
           monsters: nextState.monsters,
@@ -323,6 +371,43 @@ export function reduceGame(
         nextState.rngState = res.rngState;
 
         events.push(...res.events);
+        // SRD-1204: Detect Magic is a real sense — append the aura sweep so
+        // the cast reveals (not just buffs) nearby magic.
+        if (command.spellId === 'detect-magic') {
+          const casterPos = nextState.party[command.actorId]?.position;
+          const propAuras = (nextState.props ?? [])
+            .filter((p) => {
+              if (p.kind !== 'shrine' && p.trapDamageFormula === undefined) return false;
+              if (!casterPos) return true;
+              return Math.max(Math.abs(casterPos.x - p.x), Math.abs(casterPos.y - p.y)) * 5 <= 30;
+            })
+            .map((p) => ({
+              kind: 'prop' as const,
+              id: p.id,
+              label: p.kind === 'shrine' ? `Consecrated shrine (${p.id})` : `Warded trap (${p.id})`,
+            }));
+          const combatLike = {
+            encounterId: 'exploration',
+            round: 0,
+            phase: 'active_turn',
+            initiativeOrder: [],
+            activeCombatantIndex: 0,
+            activeCombatantId: command.actorId,
+            turnBudget: null,
+            combatants: { ...nextState.party, ...nextState.monsters },
+            surprisedCombatantIds: [],
+            outcome: 'in_progress',
+            rngState: nextState.rngState,
+          } as never;
+          const sense = senseDetectMagic(combatLike, command.actorId, { propAuras });
+          events.push({
+            type: 'DETECT_MAGIC_SENSED',
+            observerId: command.actorId,
+            rangeFeet: sense.rangeFeet,
+            auraCount: sense.auraCount,
+            auras: sense.auras,
+          });
+        }
         break;
       }
 

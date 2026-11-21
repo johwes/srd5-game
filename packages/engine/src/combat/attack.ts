@@ -53,6 +53,11 @@ import {
   expendSpellSlot,
   spendCombatantReaction,
 } from './reactions.js';
+import {
+  hasSanctuaryWard,
+  resolveSanctuaryWardAttack,
+  stripSanctuaryOnOffense,
+} from './marker-spells.js';
 
 /**
  * Custom raw attack specification for testing or dynamic attacks.
@@ -593,6 +598,66 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   let currentState = state.rngState;
   let currentCombatState = state;
   const events: CombatEvent[] = [];
+
+  // SRD-1204: Sanctuary ward — the attacker must pass a WIS save or lose
+  // the attack before any roll. The ward also ends if the warded creature
+  // itself attacks (handled by stripping the attacker's own ward first).
+  if (hasSanctuaryWard(attacker)) {
+    const stripped = stripSanctuaryOnOffense(attacker);
+    currentCombatState = {
+      ...currentCombatState,
+      combatants: { ...currentCombatState.combatants, [attackerId]: stripped.combatant },
+    };
+    if (stripped.wardEnded) {
+      events.push({
+        type: 'SANCTUARY_WARD_RESOLVED',
+        attackerId,
+        targetId: attackerId,
+        dc: 0,
+        roll: 0,
+        total: 0,
+        outcome: 'pierced',
+      });
+    }
+  }
+  {
+    const wardTarget = currentCombatState.combatants[targetId] ?? target;
+    if (hasSanctuaryWard(wardTarget)) {
+      const wardRes = resolveSanctuaryWardAttack({
+        state: currentCombatState,
+        attackerId,
+        targetId,
+        rngState: currentState,
+      });
+      currentState = wardRes.rngState;
+      events.push(...wardRes.events);
+      if (wardRes.blocked) {
+        const blockedState: CombatState = {
+          ...currentCombatState,
+          rngState: currentState,
+          combatants: { ...currentCombatState.combatants },
+        };
+        return {
+          state: blockedState,
+          events,
+          outcome: 'miss',
+          rollMode: 'normal',
+          advantageSources: [],
+          disadvantageSources: ['sanctuary_ward'],
+          attackRollRecord: {
+            formula: '1d20',
+            rolls: [wardRes.roll],
+            kept: [wardRes.roll],
+            modifier: 0,
+            total: wardRes.total,
+          } as DiceRollRecord,
+          targetEffectiveAc: 99,
+          cover: 'none' as CoverLevel,
+        };
+      }
+      currentCombatState = { ...currentCombatState, rngState: currentState };
+    }
+  }
 
   // 1. Resolve Attack Profile
   const attack = resolveCombatantAttackProfile(attacker, {

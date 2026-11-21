@@ -612,6 +612,51 @@ export type CombatEvent =
       spellName: string;
       reason: 'no_shared_language';
     }
+  /** SRD-1204: Sanctuary ward save — attacker pierces the ward or loses the attack. */
+  | {
+      type: 'SANCTUARY_WARD_RESOLVED';
+      attackerId: string;
+      targetId: string;
+      dc: number;
+      roll: number;
+      total: number;
+      outcome: 'blocked' | 'pierced';
+    }
+  /** SRD-1204: Sleep HP-pool roll with ascending-HP affect order. */
+  | {
+      type: 'SLEEP_HP_POOL_RESOLVED';
+      casterId: string;
+      poolFormula: string;
+      poolTotal: number;
+      affectedIds: string[];
+      skippedIds: string[];
+      remainingPool: number;
+    }
+  /** SRD-1204: Detect Magic sense sweep (real aura list, not a marker). */
+  | {
+      type: 'DETECT_MAGIC_SENSED';
+      observerId: string;
+      rangeFeet: number;
+      auraCount: number;
+      auras: Array<{ kind: string; id: string; label: string }>;
+    }
+  /** SRD-1204: Knock blew the lock — loud report alerting nearby rooms. */
+  | {
+      type: 'KNOCK_ALERTED';
+      propId: string;
+      actorId: string;
+      alertedRoomIds: string[];
+      audibleFeet: number;
+    }
+  /** SRD-1204: hazard onEnter step with no auto-resolver (explicit, never silent). */
+  | {
+      type: 'HAZARD_ZONE_STEP_SKIPPED';
+      instanceId: string;
+      zoneId: string;
+      entityId: string;
+      step: string;
+      reason: string;
+    }
   /** A summon was removed from play (duration, concentration, dismissal, leash, damage cap or death). */
   | {
       type: 'SUMMON_EXPIRED';

@@ -288,16 +288,22 @@ export function expendSpellSlot(combatant: Combatant, slotLevel: number): Combat
 
 /**
  * Applies the Shield spell +5 AC bonus until the start of reactor's next turn.
+ * Uses the canonical `shield-ac-bonus` effect id (matches `@srd5/data`); the
+ * two legacy ids are still recognised on read so older saves keep expiring.
  */
 export function applyShieldBuff(combatant: Combatant): Combatant {
   const currentEffects = combatant.activeEffects ? [...combatant.activeEffects] : [];
-  const existingShield = currentEffects.find((e) => e.effectId === 'shield_ac_buff');
+  // Only real AC buffs dedup here: the bare 'shield' id is a legacy
+  // spell-access marker (used by combatantHasSpell fixtures), not a +5 buff.
+  const existingShield = currentEffects.find(
+    (e) => e.effectId === 'shield-ac-bonus' || e.effectId === 'shield_ac_buff',
+  );
   if (existingShield) {
     return combatant; // Already active
   }
 
   currentEffects.push({
-    effectId: 'shield_ac_buff',
+    effectId: 'shield-ac-bonus',
     name: 'Shield (+5 AC)',
     requiresConcentration: false,
     remainingRounds: 1,

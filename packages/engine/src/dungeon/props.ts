@@ -1,5 +1,6 @@
 import { type AbilityId, defaultCompendium, type SrdCompendium } from '@srd5/data';
 import { type Combatant } from '../combat/types.js';
+import { KNOCK_AUDIBLE_FEET, getKnockAlertedRoomIds } from '../combat/marker-spells.js';
 import { rollD20, rollDamage } from '../dice/evaluator.js';
 import {
   type GridPoint,
@@ -1087,4 +1088,56 @@ export function resolvePropInteraction(options: {
   }
 
   return { nextState, events };
+}
+
+/**
+ * SRD-1204: Knock prop hook (Spec 11 §4.2).
+ *
+ * The `knock` spell unlocks a single locked door/chest/furniture piece
+ * within 60 ft without a tools or Athletics check. The tradeoff is the
+ * loud report — SRD 5.1: audible 300 ft — implemented as an adjacent-room
+ * alert: the prop's own room plus every room touching its 8-neighbourhood.
+ * The lock opens to `closed` (not `open`); traps stay armed and loot stays
+ * sealed until the party opens the prop normally.
+ */
+export function resolveKnockOnProp(options: {
+  state: GameState;
+  actorId: string;
+  propId: string;
+}): { nextState: GameState; events: GameEvent[]; alertedRoomIds: string[] } {
+  const { state, actorId, propId } = options;
+  const nextState = structuredClone(state);
+  const actor = nextState.party[actorId] ?? nextState.combat?.combatants[actorId];
+  if (!actor) throw new Error(`Actor not found for knock: ${actorId}`);
+  const prop = nextState.props.find((p) => p.id === propId);
+  if (!prop) throw new Error(`Interactive prop not found for knock: ${propId}`);
+  if (prop.kind !== 'door' && prop.kind !== 'secret_door' && prop.kind !== 'chest' && prop.kind !== 'furniture') {
+    throw new Error(`Knock can only target a door, chest, or furniture (not ${prop.kind})`);
+  }
+  if (prop.state !== 'locked') throw new Error(`Knock requires a locked prop (got ${prop.state})`);
+
+  // Knock works at spell range (60 ft = 12 cells), unlike adjacent-only tools.
+  const dist = Math.max(Math.abs(actor.position.x - prop.x), Math.abs(actor.position.y - prop.y));
+  if (dist > 12) throw new Error(`Prop ${propId} is out of knock range (${dist * 5} ft > 60 ft)`);
+
+  const prevState = prop.state;
+  prop.state = 'closed';
+  const events: GameEvent[] = [
+    {
+      type: 'PROP_STATE_CHANGED',
+      propId: prop.id,
+      prevState,
+      nextState: 'closed',
+      actorId,
+    },
+  ];
+  const alertedRoomIds = getKnockAlertedRoomIds(nextState.grid as never, prop);
+  events.push({
+    type: 'KNOCK_ALERTED',
+    propId: prop.id,
+    actorId,
+    alertedRoomIds,
+    audibleFeet: KNOCK_AUDIBLE_FEET,
+  });
+  return { nextState, events, alertedRoomIds };
 }

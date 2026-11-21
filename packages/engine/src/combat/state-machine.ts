@@ -249,10 +249,11 @@ export function startTurn(
     reactionAvailable: canReact,
   };
 
-  // Expire Shield spell buff at the start of reactor's next turn (SRD 5.1)
-  if (updatedCombatant.activeEffects?.some((e) => e.effectId === 'shield_ac_buff' || e.effectId === 'shield')) {
+  // Expire Shield spell buff at the start of reactor's next turn (SRD 5.1).
+  // Canonical id is `shield-ac-bonus`; both legacy ids still expire here.
+  if (updatedCombatant.activeEffects?.some((e) => e.effectId === 'shield-ac-bonus' || e.effectId === 'shield_ac_buff' || e.effectId === 'shield')) {
     const nextEffects = updatedCombatant.activeEffects.filter(
-      (e) => e.effectId !== 'shield_ac_buff' && e.effectId !== 'shield',
+      (e) => e.effectId !== 'shield-ac-bonus' && e.effectId !== 'shield_ac_buff' && e.effectId !== 'shield',
     );
     let nextSheet = updatedCombatant.characterSheet;
     if (nextSheet) {

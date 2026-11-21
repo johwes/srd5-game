@@ -66,6 +66,13 @@ import {
   combatantLanguages,
   requiresSharedLanguage,
 } from '../language/index.js';
+import {
+  hasSanctuaryWard,
+  resolveSanctuaryWardAttack,
+  stripSanctuaryOnOffense,
+  resolveSleepHpPool,
+  senseDetectMagic,
+} from './marker-spells.js';
 
 let defaultCompendium: SrdCompendium | null = null;
 function getDefaultCompendium(): SrdCompendium {
@@ -195,7 +202,7 @@ export function getCasterSpellContext(caster: Combatant): {
       if (sp.primarySpellSaveDc !== undefined) spellSaveDc = sp.primarySpellSaveDc;
       if (sp.primarySpellAttackBonus !== undefined) spellAttackBonus = sp.primarySpellAttackBonus;
       const ability = sp.primaryAbility ?? 'int';
-      spellMod = caster.characterSheet.abilities[ability]?.modifier ?? 3;
+      spellMod = caster.characterSheet.abilities?.[ability]?.modifier ?? 3;
     }
   } else if (caster.monsterData?.spellcasting) {
     const sp = caster.monsterData.spellcasting;
@@ -899,6 +906,106 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     targetEntityIds: [...resolvedTargetIds],
   });
 
+  // SRD-1204: Sanctuary breaks when the warded caster casts a harmful spell.
+  // Harmful = any attack, damage, or hostile condition/save step.
+  const isHostileSpell = spell.effects.some(
+    (s) =>
+      s.step === 'attack_roll' ||
+      s.step === 'deal_damage' ||
+      s.step === 'saving_throw' ||
+      s.step === 'apply_condition' ||
+      s.step === 'forced_movement',
+  );
+  if (isHostileSpell && hasSanctuaryWard(nextCaster)) {
+    const stripped = stripSanctuaryOnOffense(nextCaster);
+    nextCaster = stripped.combatant;
+    combatantsMap[nextCaster.id] = nextCaster;
+    events.push({
+      type: 'SANCTUARY_WARD_RESOLVED',
+      attackerId: nextCaster.id,
+      targetId: nextCaster.id,
+      dc: 0,
+      roll: 0,
+      total: 0,
+      outcome: 'pierced',
+    });
+  }
+
+  // SRD-1204: Sleep uses the SRD 5.1 HP pool (5d8 + 2d8/slot above 1st),
+  // affecting creatures in ascending current-HP order — never an
+  // unconditional AoE unconscious. Intercepts here so the data marker
+  // (`apply_condition unconscious`) cannot bypass the pool.
+  if (spell.id === 'sleep') {
+    const sleepRes = resolveSleepHpPool({
+      state: { ...state, combatants: combatantsMap, hazardZones: currentHazardZones },
+      casterId: nextCaster.id,
+      candidateIds: [...resolvedTargetIds],
+      slotLevel: effectiveSlotLevel,
+      rngState: currentState,
+    });
+    currentState = sleepRes.rngState;
+    events.push(...sleepRes.events);
+    for (const tid of sleepRes.affectedIds) {
+      const tgt = combatantsMap[tid];
+      if (!tgt || tgt.isDead) continue;
+      const condRes = applyConditionToCombatant(tgt, 'unconscious', {
+        sourceId: spell.id,
+        sourceName: spell.name,
+        sourceEntityId: nextCaster.id,
+        durationRounds: 10,
+      });
+      combatantsMap[tid] = condRes.combatant;
+      events.push(...condRes.events);
+    }
+    const sleepOutcome = evaluateCombatVictory(combatantsMap);
+    if (sleepOutcome !== 'in_progress' && sleepOutcome !== state.outcome) {
+      events.push({ type: 'ENCOUNTER_VICTORY', outcome: sleepOutcome, round: state.round });
+    }
+    return {
+      state: {
+        ...state,
+        turnBudget: nextBudget,
+        combatants: combatantsMap,
+        hazardZones: currentHazardZones,
+        initiativeOrder: state.initiativeOrder,
+        outcome: sleepOutcome,
+        rngState: currentState,
+      },
+      events,
+      spell,
+      effectiveSlotLevel,
+      targetsHit: [...sleepRes.affectedIds],
+      targetsMissed: [...sleepRes.skippedIds.map((s) => s.id)],
+      targetsSaved: [],
+      targetsFailedSave: [...sleepRes.affectedIds],
+      targetsUnaffectedByLanguage: [],
+      totalDamageByTarget: {},
+      totalHealingByTarget: {},
+    };
+  }
+
+  // SRD-1204: Sanctuary ward vs harmful spells — a warded target forces the
+  // caster's spell to face a WIS save first; failure wastes the targeting.
+  if (isHostileSpell) {
+    const kept: string[] = [];
+    for (const tid of resolvedTargetIds) {
+      const tgt = combatantsMap[tid];
+      if (tgt && hasSanctuaryWard(tgt)) {
+        const wardRes = resolveSanctuaryWardAttack({
+          state: { ...state, combatants: combatantsMap, hazardZones: currentHazardZones },
+          attackerId: nextCaster.id,
+          targetId: tid,
+          rngState: currentState,
+        });
+        currentState = wardRes.rngState;
+        events.push(...wardRes.events);
+        if (wardRes.blocked) continue;
+      }
+      kept.push(tid);
+    }
+    resolvedTargetIds = kept;
+  }
+
   // 5. Higher-Level Scaling Preparation
   const casterLevel = getCombatantCasterLevel(caster);
   const casterCtx = getCasterSpellContext(caster);
@@ -1367,6 +1474,23 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     if (target && !target.isDead && isSummonTargetable(target)) {
       executeSteps(scaledEffects, target);
     }
+  }
+
+  // SRD-1204: Detect Magic is a real sense in combat too — report the aura
+  // sweep alongside the concentration buff so the UI can render it.
+  if (spell.id === 'detect-magic') {
+    const sense = senseDetectMagic(
+      { ...state, combatants: combatantsMap, hazardZones: currentHazardZones, rngState: currentState },
+      nextCaster.id,
+      { grid },
+    );
+    events.push({
+      type: 'DETECT_MAGIC_SENSED',
+      observerId: nextCaster.id,
+      rangeFeet: sense.rangeFeet,
+      auraCount: sense.auraCount,
+      auras: sense.auras,
+    });
   }
 
   // Create active hazard zones defined by spell
