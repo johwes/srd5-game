@@ -202,6 +202,12 @@ export const EncounterSpawnGroupSchema = z.object({
       monstersStealthedDc: z.number().int().positive().optional(),
     })
     .optional(),
+  /**
+   * SRD-1404: nest-room bonus XP multiplier (Spec 13 §6). Applied to this
+   * encounter's XP share in `transitionCombatToExploration` via the existing
+   * award path. Defaults to 1 (no bonus).
+   */
+  xpMultiplier: z.number().positive().optional(),
 });
 export type EncounterSpawnGroup = z.infer<typeof EncounterSpawnGroupSchema>;
 
@@ -241,6 +247,16 @@ export const RecallTagSchema = z.object({
 export type RecallTag = z.infer<typeof RecallTagSchema>;
 
 /**
+ * SRD-1404 special room kinds (Spec 13 §6): at most one per floor, never on
+ * depth 1. Treasure vault (locked room + magic-biased hoard chest),
+ * cursed shrine (4th shrineType: pay HP/gp for a seeded boon), nest
+ * (high-density same-band pack room with bonus XP).
+ */
+export const SPECIAL_ROOM_KINDS = ['vault', 'cursed_shrine', 'nest'] as const;
+export const SpecialRoomKindSchema = z.enum(SPECIAL_ROOM_KINDS);
+export type SpecialRoomKind = z.infer<typeof SpecialRoomKindSchema>;
+
+/**
  * Logical room specification partitioning a floor (Spec 04 Section 2 & 6).
  */
 export const DungeonRoomSpecSchema = z.object({
@@ -257,6 +273,10 @@ export const DungeonRoomSpecSchema = z.object({
       height: z.number().int().positive(),
     })
     .optional(),
+  /**
+   * SRD-1404: marks this room as the floor's single special room, if any.
+   */
+  specialRoom: SpecialRoomKindSchema.optional(),
   /**
    * SRD-1213: standing recall lenses for this room (Spec 11 §3.2 + §3.5).
    * Hand-tagged on authored modules; emitted deterministically by the

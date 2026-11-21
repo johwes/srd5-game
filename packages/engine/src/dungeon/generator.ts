@@ -3,6 +3,7 @@ import {
   type AbilityId,
   type DamageType,
   type GridPoint,
+  type SpecialRoomKind,
   type TileTerrainType,
   type LightLevel,
 } from '@srd5/data';
@@ -24,6 +25,16 @@ import {
 import { generateFloorRecallTags } from './recall.js';
 import { pickFromBand } from './encounter-tables.js';
 import { rollChampionForEncounter } from './champions.js';
+import {
+  CURSED_SHRINE_TYPE,
+  NEST_XP_MULTIPLIER,
+  VAULT_TRAP_CHANCE,
+  rollNestPack,
+  rollSpecialRoomForFloor,
+  rollVaultHoard,
+  specialRoomDisplayName,
+  vaultLockDcForDepth,
+} from './special-rooms.js';
 import {
   WorldOptionsSchema,
   applyScopeToFloorSize,
@@ -1234,7 +1245,168 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
     }
   }
 
+  // 10b. Special Room (SRD-1404, Spec 13 §6): at most one per floor, never
+  // on depth 1. Seeded pick among eligible non-entrance, non-boss rooms.
+  // Depth-1 floors consume no RNG here, preserving the SRD-1403 bit-exact
+  // baseline, and the pick runs after encounters so the earlier RNG stream
+  // (rooms, corridors, encounters) is untouched.
+  const specialRoomMarks = new Map<string, SpecialRoomKind>();
+  {
+    const eligibleRoomIdx: number[] = [];
+    for (let i = 1; i < internalRooms.length; i++) {
+      if (i === furthestRoomIdx) continue; // boss room stays curated
+      eligibleRoomIdx.push(i);
+    }
+    if (config.depth >= 2 && eligibleRoomIdx.length > 0) {
+      const specialRoll = rollSpecialRoomForFloor(rngState, config.depth, eligibleRoomIdx.length);
+      rngState = specialRoll.nextState;
+      if (specialRoll.kind !== undefined) {
+        const roomIdx = eligibleRoomIdx[specialRoll.eligibleIndex % eligibleRoomIdx.length]!;
+        const specialRoom = internalRooms[roomIdx]!;
+        specialRoom.name = specialRoomDisplayName(specialRoll.kind);
+        specialRoomMarks.set(specialRoom.id, specialRoll.kind);
+
+        const encounterSpawnCells = new Set<string>();
+        for (const e of encounters) {
+          for (const m of e.monsters) encounterSpawnCells.add(`${m.spawnX},${m.spawnY}`);
+        }
+
+        if (specialRoll.kind === 'vault') {
+          const lockDc = vaultLockDcForDepth(config.depth);
+          // Lock the threshold into the vault room (prefer a free strict
+          // threshold; otherwise convert an existing closed door into the
+          // vault gate so the room is always actually locked).
+          const vaultEntries = doorwayCandidates.filter((c) => c.intoRoomId === specialRoom.id);
+          const freeEntry =
+            vaultEntries.find((c) => !propOccupied.has(`${c.pt.x},${c.pt.y}`) && c.isStrictThreshold) ??
+            vaultEntries.find((c) => !propOccupied.has(`${c.pt.x},${c.pt.y}`));
+          if (freeEntry) {
+            props.push({
+              id: `vault_door_${config.depth}`,
+              x: freeEntry.pt.x,
+              y: freeEntry.pt.y,
+              kind: 'door',
+              state: 'locked',
+              blocksMovement: true,
+              blocksSight: true,
+              lockDc,
+            });
+            propOccupied.add(`${freeEntry.pt.x},${freeEntry.pt.y}`);
+          } else {
+            const existingDoor = props.find(
+              (p) =>
+                p.kind === 'door' &&
+                p.state === 'closed' &&
+                vaultEntries.some((c) => c.pt.x === p.x && c.pt.y === p.y),
+            );
+            if (existingDoor) {
+              existingDoor.state = 'locked';
+              existingDoor.lockDc = lockDc;
+            }
+          }
+          // Hoard chest with a magic-item bias at a free room cell.
+          const hoard = rollVaultHoard(rngState, config.depth);
+          rngState = hoard.nextRng;
+          const chestSpot = specialRoom.cells.find(
+            (pt) =>
+              !propOccupied.has(`${pt.x},${pt.y}`) &&
+              !encounterSpawnCells.has(`${pt.x},${pt.y}`),
+          );
+          if (chestSpot) {
+            const trapped = nextFloat() < VAULT_TRAP_CHANCE;
+            props.push({
+              id: `vault_chest_${config.depth}`,
+              x: chestSpot.x,
+              y: chestSpot.y,
+              kind: 'chest',
+              state: 'locked',
+              blocksMovement: false,
+              blocksSight: false,
+              lockDc,
+              lootTable: hoard.loot,
+              ...(trapped
+                ? {
+                    detectionDc: theme.trapType.detectionDc,
+                    disarmDc: theme.trapType.disarmDc,
+                    trapDamageFormula: theme.trapType.damageFormula,
+                    trapDamageType: theme.trapType.damageType,
+                    trapSaveDc: theme.trapType.dc,
+                    trapSaveAbility: theme.trapType.saveAbility,
+                    trapHalfDamageOnSave: true,
+                  }
+                : {}),
+            });
+            propOccupied.add(`${chestSpot.x},${chestSpot.y}`);
+          }
+        } else if (specialRoll.kind === 'cursed_shrine') {
+          const centerKey = `${specialRoom.center.x},${specialRoom.center.y}`;
+          const centerFree = !propOccupied.has(centerKey) && !encounterSpawnCells.has(centerKey);
+          const shrineSpot = centerFree
+            ? specialRoom.center
+            : specialRoom.cells.find(
+                (pt) =>
+                  !propOccupied.has(`${pt.x},${pt.y}`) &&
+                  !encounterSpawnCells.has(`${pt.x},${pt.y}`),
+              );
+          if (shrineSpot) {
+            props.push({
+              id: `cursed_shrine_${config.depth}`,
+              x: shrineSpot.x,
+              y: shrineSpot.y,
+              kind: 'shrine',
+              shrineType: CURSED_SHRINE_TYPE,
+              state: 'closed',
+              blocksMovement: false,
+              blocksSight: false,
+            });
+            propOccupied.add(`${shrineSpot.x},${shrineSpot.y}`);
+          }
+        } else {
+          // Nest: replace (or create) the room encounter with a 3–5 pack of
+          // one band monster, with bonus XP via the existing award path.
+          // Nests are listenable per SRD-511 because their encounters sit in
+          // rooms neighboring the doors heroes listen at.
+          const nestPack = rollNestPack(rngState, config.depth);
+          rngState = nestPack.nextState;
+          const occupiedForNest = new Set<string>([...propOccupied]);
+          const existing = encounters.find((e) => e.roomId === specialRoom.id);
+          if (existing) {
+            for (const m of existing.monsters) occupiedForNest.delete(`${m.spawnX},${m.spawnY}`);
+          }
+          const freeCells = specialRoom.cells.filter(
+            (pt) => !occupiedForNest.has(`${pt.x},${pt.y}`),
+          );
+          const placed: { monsterId: string; spawnX: number; spawnY: number }[] = [];
+          for (let n = 0; n < nestPack.packSize && freeCells.length > 0; n++) {
+            const pickIdx = Math.floor(nextFloat() * freeCells.length) % freeCells.length;
+            const cell = freeCells.splice(pickIdx, 1)[0]!;
+            placed.push({ monsterId: nestPack.monsterId, spawnX: cell.x, spawnY: cell.y });
+          }
+          if (placed.length > 0) {
+            if (existing) {
+              existing.monsters = placed;
+              existing.xpMultiplier = NEST_XP_MULTIPLIER;
+            } else {
+              encounters.push({
+                id: `enc_${config.depth}_${specialRoom.id}_nest`,
+                roomId: specialRoom.id,
+                triggered: false,
+                monsters: placed,
+                xpMultiplier: NEST_XP_MULTIPLIER,
+                surpriseCondition: {
+                  monstersStealthedDc: 12 + Math.min(config.depth, 6),
+                },
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
   // 11. Biome Hazards & Decorative Tiles
+  // SRD-1404: special rooms are placed first (section 10b above) so hazard
+  // scatter avoids the new vault/cursed-shrine prop cells via propOccupied.
   if (theme.hazardTerrain) {
     for (let i = 1; i < internalRooms.length; i++) {
       const room = internalRooms[i];
@@ -1302,6 +1474,8 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
       width: r.bounds.width,
       height: r.bounds.height,
     },
+    // SRD-1404: tag the floor's single special room, if any.
+    ...(specialRoomMarks.get(r.id) ? { specialRoom: specialRoomMarks.get(r.id)! } : {}),
     ...(recallTagsByRoom[r.id] ? { recallTags: recallTagsByRoom[r.id] } : {}),
   }));
 

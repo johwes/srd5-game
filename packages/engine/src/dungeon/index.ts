@@ -15,3 +15,4 @@ export * from './recall.js';
 export * from './use-item.js';
 export * from './inventory-management.js';
 export * from './champions.js';
+export * from './special-rooms.js';

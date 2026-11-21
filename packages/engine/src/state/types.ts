@@ -162,6 +162,8 @@ export type GameCommand =
       type: 'ACTIVATE_SHRINE';
       actorId: string;
       shrineId: string;
+      /** SRD-1404: cursed-shrine offering (`hp` | `gp` | `decline`). */
+      offering?: 'hp' | 'gp' | 'decline';
     }
   | {
       type: 'EXPLORE_SEARCH';

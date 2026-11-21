@@ -7,7 +7,11 @@ export interface ShrineModalProps {
   shrine: InteractiveProp | PlayerViewProp | null;
   actorName: string;
   onClose: () => void;
-  onActivate: (propId: string) => void;
+  /**
+   * SRD-1404: the cursed shrine passes an explicit offering
+   * (`hp` | `gp` | `decline`); all other shrines call with the prop id only.
+   */
+  onActivate: (propId: string, offering?: 'hp' | 'gp' | 'decline') => void;
 }
 
 export function ShrineModal({
@@ -52,6 +56,20 @@ export function ShrineModal({
         };
       case 'fountain_restoration':
       default:
+        if (shrineType === 'shrine_cursed') {
+          return {
+            title: 'Cursed Shrine',
+            icon: '🕯️',
+            borderColor: 'border-amber-600',
+            badgeBg: 'bg-amber-950 text-amber-200 border-amber-700',
+            description:
+              'A blackened altar sweats cold candlelight. Something patient behind the stone offers a bargain: lifeblood or coin for stolen power — blood for fury, or starlight for spells. Walk away free, if you prefer.',
+            reward: 'Seeded boon — blood pact (+2 attack rolls for 3 floors) or arcane bargain (restore all party spell slots, no ambush).',
+            risk: 'Pay 10 HP or 50 gp up front. Declining is free and leaves the shrine sealed.',
+            buttonLabel: 'Offer',
+            buttonClass: 'bg-amber-700 hover:bg-amber-600 text-white',
+          };
+        }
         return {
           title: 'Fountain of Restoration',
           icon: '💧',
@@ -136,25 +154,70 @@ export function ShrineModal({
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-2 border-t border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-          >
-            Step Away
-          </button>
-          {!isUsed && (
+          {isUsed ? (
             <button
               type="button"
-              data-testid="shrine-activate-button"
-              onClick={() => {
-                onActivate(shrine.id);
-                onClose();
-              }}
-              className={`px-5 py-2 rounded text-sm font-bold shadow-lg transition-all ${info.buttonClass}`}
+              onClick={onClose}
+              className="px-4 py-2 rounded text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
             >
-              {info.buttonLabel}
+              Step Away
             </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                data-testid={
+                  shrineType === 'shrine_cursed' ? 'shrine-decline-button' : undefined
+                }
+                onClick={() => {
+                  // SRD-1404: declining the cursed shrine is free — the engine
+                  // leaves it sealed for later; other shrines just step away.
+                  if (shrineType === 'shrine_cursed') onActivate(shrine.id, 'decline');
+                  onClose();
+                }}
+                className="px-4 py-2 rounded text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              >
+                {shrineType === 'shrine_cursed' ? 'Decline (Free)' : 'Step Away'}
+              </button>
+              {shrineType === 'shrine_cursed' ? (
+                <>
+                  <button
+                    type="button"
+                    data-testid="shrine-offer-hp-button"
+                    onClick={() => {
+                      onActivate(shrine.id, 'hp');
+                      onClose();
+                    }}
+                    className="px-5 py-2 rounded text-sm font-bold shadow-lg transition-all bg-red-700 hover:bg-red-600 text-white"
+                  >
+                    Offer 10 HP
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="shrine-offer-gp-button"
+                    onClick={() => {
+                      onActivate(shrine.id, 'gp');
+                      onClose();
+                    }}
+                    className="px-5 py-2 rounded text-sm font-bold shadow-lg transition-all bg-amber-700 hover:bg-amber-600 text-white"
+                  >
+                    Offer 50 gp
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  data-testid="shrine-activate-button"
+                  onClick={() => {
+                    onActivate(shrine.id);
+                    onClose();
+                  }}
+                  className={`px-5 py-2 rounded text-sm font-bold shadow-lg transition-all ${info.buttonClass}`}
+                >
+                  {info.buttonLabel}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

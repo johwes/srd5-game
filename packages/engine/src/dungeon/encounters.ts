@@ -319,17 +319,34 @@ export function transitionCombatToExploration(
   }
 
   // Calculate XP from defeated monsters (Spec 04 Section 4.3 & SRD-505)
-  const defeatedMonsters = Object.values(state.monsters).filter((m) => m.isDead || m.currentHp <= 0);
-  const totalMonsterXp = defeatedMonsters.reduce((sum, m) => {
+  // SRD-1404: nest encounters carry an `xpMultiplier` applied to their share
+  // via this existing award path (no separate bonus pipeline).
+  const encounterXpMultiplier = new Map<string, number>();
+  if (state.dungeon) {
+    for (const e of state.dungeon.encounters) {
+      if (e.xpMultiplier !== undefined && e.xpMultiplier > 1) {
+        for (let idx = 0; idx < e.monsters.length; idx++) {
+          encounterXpMultiplier.set(
+            `${e.id}-${e.monsters[idx]!.monsterId}-${idx + 1}`,
+            e.xpMultiplier,
+          );
+        }
+      }
+    }
+  }
+  const defeatedEntries = Object.entries(state.monsters).filter(
+    ([, m]) => m.isDead || m.currentHp <= 0,
+  );
+  const totalMonsterXp = defeatedEntries.reduce((sum, [instanceId, m]) => {
+    let base = 0;
     if (m.monsterData?.xp !== undefined) {
-      return sum + m.monsterData.xp;
-    }
-    if (m.monsterData?.challengeRating !== undefined) {
+      base = m.monsterData.xp;
+    } else if (m.monsterData?.challengeRating !== undefined) {
       const crVal = m.monsterData.challengeRating;
-      const crXp = (SRD_CR_TO_XP as Record<number, number>)[crVal] ?? 0;
-      return sum + crXp;
+      base = (SRD_CR_TO_XP as Record<number, number>)[crVal] ?? 0;
     }
-    return sum;
+    const mult = encounterXpMultiplier.get(instanceId) ?? 1;
+    return sum + Math.floor(base * mult);
   }, 0);
 
   const survivingHeroes = Object.values(nextParty).filter((h) => !h.isDead);
@@ -341,7 +358,12 @@ export function transitionCombatToExploration(
   let corpseProps = state.props;
   let corpseRng = state.rngState;
   if (options?.corpseDrops !== 'skip') {
-    const spawned = spawnCorpseLootProps(state.props, defeatedMonsters, state.rngState, compendium);
+    const spawned = spawnCorpseLootProps(
+      state.props,
+      defeatedEntries.map(([, m]) => m),
+      state.rngState,
+      compendium,
+    );
     corpseProps = spawned.nextProps;
     corpseRng = spawned.nextRng;
   }
@@ -404,7 +426,7 @@ export function transitionCombatToExploration(
     }
   }
 
-  if (totalMonsterXp > 0 || defeatedMonsters.length > 0) {
+  if (totalMonsterXp > 0 || defeatedEntries.length > 0) {
     events.push({
       type: 'ENCOUNTER_VICTORY',
       encounterId: state.combat?.encounterId,

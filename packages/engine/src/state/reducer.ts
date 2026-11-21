@@ -986,7 +986,9 @@ export function reduceGame(
         score: 0,
         isComplete: false,
       };
-      const shrineRes = activateShrine(dummyRun, nextState, command.shrineId, command.actorId);
+      const shrineRes = activateShrine(dummyRun, nextState, command.shrineId, command.actorId, {
+        offering: command.offering,
+      });
       nextState = shrineRes.nextGameState;
       events.push(...shrineRes.events);
       break;

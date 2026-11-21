@@ -39,6 +39,13 @@ import {
   scaleRationRequirement,
   scaleStartingRations,
 } from '../world-options.js';
+import {
+  CURSED_SHRINE_GP_COST,
+  CURSED_SHRINE_HP_COST,
+  CURSED_SHRINE_TYPE,
+  rollCursedBoon,
+  type CursedShrineOffering,
+} from './special-rooms.js';
 
 /**
  * Historical record of a completed or failed roguelite run (Spec 06 Section 3.1 & 3.2).
@@ -470,12 +477,17 @@ export function resolveRogueliteLongRest(
 
 /**
  * Activates a Shrine of Fate (Risk & Reward) (Spec 06 Section 3.2).
+ *
+ * SRD-1404: `shrine_cursed` (Spec 13 §6) requires an `offering`:
+ * `'hp'` (pay 10 HP) or `'gp'` (pay 50 gp) for a seeded blood/arcane boon,
+ * or `'decline'` (free — the shrine stays sealed, no state change).
  */
 export function activateShrine(
   runState: DeepDescentRunState,
   gameState: GameState,
   shrinePropId: string,
   actorId: string,
+  options?: { offering?: CursedShrineOffering },
 ): {
   nextRunState: DeepDescentRunState;
   nextGameState: GameState;
@@ -592,6 +604,98 @@ export function activateShrine(
 
     case 'fountain_restoration':
     default: {
+      if (shrineType === CURSED_SHRINE_TYPE) {
+        // SRD-1404 cursed shrine (Spec 13 §6): the price is paid first —
+        // cost shown before commit — then a seeded boon from the
+        // blood/arcane tables (existing mechanics only). Declining is free
+        // and leaves the shrine sealed for later.
+        const offering = options?.offering;
+        if (offering === undefined) {
+          throw new Error(
+            `Cursed shrine "${shrinePropId}" demands an offering: 'hp' (${CURSED_SHRINE_HP_COST} HP), 'gp' (${CURSED_SHRINE_GP_COST} gp), or 'decline' (free)`,
+          );
+        }
+        if (offering === 'decline') {
+          return { nextRunState, nextGameState, events };
+        }
+
+        let costNote: string;
+        if (offering === 'hp') {
+          if (actor.currentHp <= CURSED_SHRINE_HP_COST) {
+            throw new Error(
+              `Actor "${actorId}" is too weak to pay ${CURSED_SHRINE_HP_COST} HP (decline free)`,
+            );
+          }
+          actor.currentHp -= CURSED_SHRINE_HP_COST;
+          if (actor.characterSheet) {
+            actor.characterSheet.currentHp = Math.max(
+              0,
+              (actor.characterSheet.currentHp ?? actor.currentHp + CURSED_SHRINE_HP_COST) -
+                CURSED_SHRINE_HP_COST,
+            );
+          }
+          costNote = `${actor.name} offers ${CURSED_SHRINE_HP_COST} HP of lifeblood`;
+        } else {
+          const purse = actor.buildState?.currency;
+          if (!purse || purse.gp < CURSED_SHRINE_GP_COST) {
+            throw new Error(
+              `Actor "${actorId}" cannot pay ${CURSED_SHRINE_GP_COST} gp (decline free)`,
+            );
+          }
+          actor.buildState!.currency = { ...purse, gp: purse.gp - CURSED_SHRINE_GP_COST };
+          events.push({
+            type: 'INVENTORY_UPDATED',
+            characterId: actorId,
+            inventory: actor.buildState!.inventory,
+            currency: actor.buildState!.currency,
+          });
+          costNote = `${actor.name} offers ${CURSED_SHRINE_GP_COST} gp`;
+        }
+
+        const boonRoll = rollCursedBoon(nextGameState.rngState);
+        nextGameState.rngState = boonRoll.nextState;
+        if (boonRoll.boon === 'blood') {
+          // Blood-table pact (no max-HP cut — the offering was the price).
+          actor.blessings = actor.blessings ?? [];
+          if (!actor.blessings.includes('shrine_blood_god')) {
+            actor.blessings.push('shrine_blood_god');
+          }
+          nextRunState.bloodGodFloorsRemaining = 3;
+          nextRunState.shrineBlessings.push(
+            'Cursed Shrine: blood pact — +2 Attack Rolls for 3 floors',
+          );
+          effectDescription =
+            `${costNote} to the dark altar. Crimson light settles on ${actor.name}: ` +
+            `+2 to attack rolls for 3 floors.`;
+        } else {
+          // Arcane-table bargain (no specter ambush — the offering was the price).
+          for (const hero of Object.values(nextGameState.party)) {
+            if (hero.spellSlots) {
+              for (const pool of Object.values(hero.spellSlots)) {
+                pool.expended = 0;
+                pool.available = pool.max;
+              }
+            }
+            if (hero.pactMagic) {
+              hero.pactMagic.expendedSlots = 0;
+              hero.pactMagic.availableSlots = hero.pactMagic.maxSlots;
+            }
+            if (hero.characterSheet?.spellcasting?.spellSlots) {
+              for (const pool of Object.values(hero.characterSheet.spellcasting.spellSlots)) {
+                pool.expended = 0;
+                pool.available = pool.max;
+              }
+            }
+          }
+          nextRunState.shrineBlessings.push(
+            'Cursed Shrine: arcane bargain — all spell slots replenished',
+          );
+          effectDescription =
+            `${costNote} to the dark altar. Stolen starlight floods the party, ` +
+            `restoring all spell slots — and nothing answers from the dark.`;
+        }
+        break;
+      }
       // Fountain of Restoration: Remove all conditions, poison, and exhaustion; full HP heal
       for (const hero of Object.values(nextGameState.party)) {
         hero.conditions = [];

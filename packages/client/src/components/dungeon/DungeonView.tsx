@@ -862,8 +862,8 @@ export function DungeonView({
     setTransport(nextTransport);
   };
 
-  // Shrine activation handler
-  const handleActivateShrine = async (propId: string) => {
+  // Shrine activation handler (SRD-1404: cursed shrines pass an offering)
+  const handleActivateShrine = async (propId: string, offering?: 'hp' | 'gp' | 'decline') => {
     if (isRunMode && rogueliteState) {
       const currentAuth = getAuthState();
       const shrineRes = activateShrine(
@@ -871,6 +871,7 @@ export function DungeonView({
         currentAuth,
         propId,
         leadExplorerId,
+        offering ? { offering } : undefined,
       );
       const nextTransport = new LocalTransport({
         initialState: shrineRes.nextGameState,
@@ -887,6 +888,7 @@ export function DungeonView({
       type: 'ACTIVATE_SHRINE',
       actorId: leadExplorerId,
       shrineId: propId,
+      ...(offering ? { offering } : {}),
     });
   };
 
