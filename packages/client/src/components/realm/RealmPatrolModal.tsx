@@ -34,6 +34,8 @@ export interface RealmPatrolModalProps {
   previews: PatrolApproachPreview[];
   /** Post-resolution headline + optional roll line (host-computed). */
   result: { headline: string; rollLine: string | null } | null;
+  /** SRD-1214: war-tongue note rendered under the threat line (odds rows). */
+  languageNote?: string | null;
   onChooseApproach: (approach: WarPatrolApproach) => void;
   onClose: () => void;
 }
@@ -102,6 +104,7 @@ export function RealmPatrolModal({
   gold,
   previews,
   result,
+  languageNote,
   onChooseApproach,
   onClose,
 }: RealmPatrolModalProps) {
@@ -129,6 +132,14 @@ export function RealmPatrolModal({
             >
               Threat {threat} ({threatTier}) — bluff, evade, bribe, or fight.
             </p>
+            {languageNote && (
+              <p
+                data-testid="realm-patrol-language-note"
+                className="text-[11px] text-violet-300 mt-1"
+              >
+                {languageNote}
+              </p>
+            )}
           </div>
           <button
             type="button"

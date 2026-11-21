@@ -98,6 +98,7 @@ export const LANGUAGE_RELEVANCE: Record<string, LanguageRelevanceEntry> = {
     consumers: [
       'engine/language/gates.ts:resolveLanguageGate',
       'engine/overworld/war-patrols.ts:resolvePatrolEncounter',
+      'engine/overworld/war-languages.ts:resolveWarLanguageDealTier',
     ],
   },
   elvish: {
@@ -110,6 +111,7 @@ export const LANGUAGE_RELEVANCE: Record<string, LanguageRelevanceEntry> = {
     consumers: [
       'engine/language/gates.ts:resolveLanguageGate',
       'engine/overworld/war-patrols.ts:resolvePatrolEncounter',
+      'engine/overworld/war-languages.ts:resolveWarLanguageDealTier',
     ],
   },
   giant: {
@@ -122,6 +124,7 @@ export const LANGUAGE_RELEVANCE: Record<string, LanguageRelevanceEntry> = {
     consumers: [
       'engine/language/gates.ts:resolveLanguageGate',
       'engine/overworld/war-patrols.ts:resolvePatrolEncounter',
+      'engine/overworld/war-languages.ts:resolveWarLanguageDealTier',
     ],
   },
   gnomish: {
@@ -171,6 +174,7 @@ export const LANGUAGE_RELEVANCE: Record<string, LanguageRelevanceEntry> = {
       'engine/language/gates.ts:resolveLanguageGate',
       'engine/overworld/war-subfactions.ts:orc tribe chain',
       'engine/social/diplomacy.ts:resolveDiplomacy',
+      'engine/overworld/war-languages.ts:resolveWarLanguageDealTier',
     ],
   },
   abyssal: {
@@ -219,6 +223,7 @@ export const LANGUAGE_RELEVANCE: Record<string, LanguageRelevanceEntry> = {
     consumers: [
       'engine/language/gates.ts:resolveLanguageGate',
       'engine/overworld/war-patrols.ts:resolvePatrolEncounter',
+      'engine/overworld/war-languages.ts:resolveWarLanguageDealTier',
     ],
   },
   druidic: {
@@ -243,6 +248,7 @@ export const LANGUAGE_RELEVANCE: Record<string, LanguageRelevanceEntry> = {
     consumers: [
       'engine/language/gates.ts:resolveLanguageGate',
       'engine/overworld/war-patrols.ts:resolvePatrolEncounter',
+      'engine/overworld/war-languages.ts:resolveWarLanguageDealTier',
     ],
   },
   primordial: {

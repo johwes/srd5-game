@@ -24,6 +24,10 @@ import {
   bestBonusOf,
 } from './war-negotiation-utils.js';
 import {
+  hasPartyLanguageInfo,
+  resolveWarLanguageDealTier,
+} from './war-languages.js';
+import {
   RealmError,
 } from './realm-error.js';
 
@@ -47,6 +51,8 @@ export const TRUCE_TRIBUTE_DC_DEEP_RELIEF = 4;
 export const TRUCE_TRIBUTE_DEEP_THRESHOLD = 250;
 export const TRUCE_MIN_DURATION_DAYS = 12;
 export const TRUCE_DURATION_SPREAD = 7; // 1d7 + 11 → 12..18 days
+/** SRD-1214: gesture parleys (no shared tongue/magic/interpreter) cap the truce at the floor. */
+export const TRUCE_GESTURE_MAX_DURATION_DAYS = 12;
 
 export const NegotiateTruceOptionsSchema = z.object({
   war: WarStateSchema,
@@ -56,6 +62,8 @@ export const NegotiateTruceOptionsSchema = z.object({
   day: z.number().int().min(1).optional(),
   /** Gold tribute offered alongside the parley (spent only on success). */
   tributeGold: z.number().int().min(0).default(0),
+  /** SRD-1214: retained interpreter carries the parley at baseline + fee. */
+  hasInterpreter: z.boolean().default(false),
 });
 export type NegotiateTruceOptions = z.input<typeof NegotiateTruceOptionsSchema>;
 
@@ -74,13 +82,23 @@ export interface NegotiatedTruce {
   goldSpent: number;
   headline: string;
   nextRngState: number;
+  /** SRD-1214: war-tongue tier that graded the parley (`baseline` for legacy sheets). */
+  languageTier: 'native' | 'magic' | 'interpreter' | 'gesture' | 'baseline';
+  /** SRD-1214: check modifier from the tongue tier (+2 native, −2 gesture). */
+  languageBonus: number;
+  /** SRD-1214: gesture path locks the longest-truce tier (capped at 12 days). */
+  topTierLocked: boolean;
+  /** SRD-1214: interpreter per-parley fee included in `goldSpent` (0 unless carried). */
+  interpreterFee: number;
 }
 
 /**
  * Parleys a Temporary Truce with a rival nation: the best live party
  * Persuasion bonus is tested against DC 14 (12 with ≥100gp tribute, 10 with
- * ≥250gp). Success halts that nation's attacks and patrol hostility until
- * `untilDay` (12–18 days); the tribute is spent only when accepted.
+ * ≥250gp; SRD-1214 tongue tiers shift the DC by +2 native / −2 gesture).
+ * Success halts that nation's attacks and patrol hostility until `untilDay`
+ * (12–18 days, gesture parleys capped at 12); the tribute (plus any
+ * interpreter fee) is spent only when accepted.
  */
 export function negotiateTruce(rawOptions: NegotiateTruceOptions): NegotiatedTruce {
   const options = NegotiateTruceOptionsSchema.parse(rawOptions);
@@ -95,9 +113,35 @@ export function negotiateTruce(rawOptions: NegotiateTruceOptions): NegotiatedTru
     throw new RealmError(`A truce with ${target.name} is already active`);
   }
 
+  // SRD-1214: war-tongue tier. Legacy sheets without language data (or
+  // unknown profiles) fall back to baseline so pre-1214 behavior is preserved.
+  let languageTier: NegotiatedTruce['languageTier'] = 'baseline';
+  let languageBonus = 0;
+  let topTierLocked = false;
+  let interpreterFee = 0;
+  try {
+    if (hasPartyLanguageInfo(party)) {
+      const resolved = resolveWarLanguageDealTier({
+        nationId: options.targetNationId,
+        party,
+        hasInterpreter: options.hasInterpreter,
+      });
+      languageTier = resolved.tier;
+      languageBonus = resolved.bonus;
+      topTierLocked = resolved.topTierLocked;
+      interpreterFee = resolved.perParleyFee;
+    }
+  } catch {
+    languageTier = 'baseline';
+    languageBonus = 0;
+    topTierLocked = false;
+    interpreterFee = 0;
+  }
+
   let dc = TRUCE_BASE_DC;
   if (options.tributeGold >= TRUCE_TRIBUTE_DEEP_THRESHOLD) dc -= TRUCE_TRIBUTE_DC_DEEP_RELIEF;
   else if (options.tributeGold >= TRUCE_TRIBUTE_RELIEF_THRESHOLD) dc -= TRUCE_TRIBUTE_DC_RELIEF;
+  dc = Math.max(5, dc - languageBonus);
 
   const { bonus, sheet } = bestBonusOf(party, 'persuasion');
   const rngState = normalizeSeed(options.rngState);
@@ -119,11 +163,16 @@ export function negotiateTruce(rawOptions: NegotiateTruceOptions): NegotiatedTru
       goldSpent: 0,
       headline: `${sheet.name} fails to move ${target.name} (${roll.total} vs DC ${dc}) — the war grinds on, no tribute paid.`,
       nextRngState: roll.nextState,
+      languageTier,
+      languageBonus,
+      topTierLocked,
+      interpreterFee: 0,
     };
   }
 
   const durationRoll = rollDie(roll.nextState, TRUCE_DURATION_SPREAD);
-  const durationDays = durationRoll.roll + (TRUCE_MIN_DURATION_DAYS - 1);
+  let durationDays = durationRoll.roll + (TRUCE_MIN_DURATION_DAYS - 1);
+  if (topTierLocked) durationDays = Math.min(durationDays, TRUCE_GESTURE_MAX_DURATION_DAYS);
   const untilDay = day + durationDays;
   const nextWar: WarState = structuredClone(war);
   nextWar.truces = [...nextWar.truces, { nationIdA: war.playerNationId, nationIdB: target.id, untilDay }];
@@ -146,9 +195,13 @@ export function negotiateTruce(rawOptions: NegotiateTruceOptions): NegotiatedTru
     total: roll.total,
     durationDays,
     untilDay,
-    goldSpent: options.tributeGold,
+    goldSpent: options.tributeGold + interpreterFee,
     headline: `${sheet.name} seals a ${durationDays}-day truce with ${target.name} (${roll.total} vs DC ${dc}).`,
     nextRngState: durationRoll.nextState,
+    languageTier,
+    languageBonus,
+    topTierLocked,
+    interpreterFee,
   };
 }
 

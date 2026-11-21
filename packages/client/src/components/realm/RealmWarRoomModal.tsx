@@ -8,9 +8,12 @@ import type {
 import {
   WAR_SUBFACTION_QUESTS,
   getNationThreat,
+  getWarNationLanguageProfile,
   getWarNationTotal,
   getWarPowerTotal,
   getWarThreatTier,
+  INTERPRETER_HIRE_COST_GOLD,
+  INTERPRETER_PER_PARLEY_FEE_GOLD,
   isTruceActive,
   listWarMissionCatalog,
 } from '@srd5/engine';
@@ -42,7 +45,7 @@ export interface RealmWarRoomModalProps {
   onClose: () => void;
   onAcceptMission?: (kind: WarMissionKind, poiId: string) => void;
   onNegotiateTruce?: (nationId: string) => void;
-  onHireAsset?: (asset: 'mercenaries' | 'thieves_guild') => void;
+  onHireAsset?: (asset: 'mercenaries' | 'thieves_guild' | 'interpreter') => void;
   onFacePatrol?: (nationId: string) => void;
 }
 
@@ -279,10 +282,11 @@ function WarDiplomacyPanel({
   currentDay: number;
   gold: number;
   onNegotiateTruce?: (nationId: string) => void;
-  onHireAsset?: (asset: 'mercenaries' | 'thieves_guild') => void;
+  onHireAsset?: (asset: 'mercenaries' | 'thieves_guild' | 'interpreter') => void;
   onFacePatrol?: (nationId: string) => void;
 }) {
   const rivals = war.nationOrder.filter((id) => id !== war.playerNationId);
+  const interpreterHired = diplomacy.interpreterHired === true;
   return (
     <div data-testid="realm-war-room-diplomacy" className="space-y-3">
       <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3 space-y-2">
@@ -294,6 +298,17 @@ function WarDiplomacyPanel({
           const threat = getNationThreat(diplomacy, nationId);
           const tier = getWarThreatTier(threat);
           const truced = isTruceActive(war, war.playerNationId, nationId, currentDay);
+          let tongue = '';
+          try {
+            const profile = getWarNationLanguageProfile(nationId);
+            tongue = profile.liturgicalLanguage
+              ? `${profile.commandLanguage} (+${profile.liturgicalLanguage} writs)`
+              : profile.battleLanguage
+                ? `${profile.commandLanguage} / ${profile.battleLanguage} battle`
+                : profile.commandLanguage;
+          } catch {
+            tongue = '';
+          }
           return (
             <div
               key={nationId}
@@ -301,6 +316,15 @@ function WarDiplomacyPanel({
               className="flex items-center gap-2 text-xs"
             >
               <span className="font-bold text-slate-200 truncate">{nation.name}</span>
+              {tongue && (
+                <span
+                  data-testid={`realm-war-tongue-${nationId}`}
+                  className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30 font-mono shrink-0"
+                  title={`Command tongue: ${tongue}. Parley in tongue +2 (top tier unlocked); magic baseline; interpreter baseline +${INTERPRETER_PER_PARLEY_FEE_GOLD}gp; gestures −2 (top tier locked).`}
+                >
+                  🗣️ {tongue}
+                </span>
+              )}
               <span
                 data-testid={`realm-war-diplomacy-threat-${nationId}`}
                 className="font-mono text-slate-400"
@@ -363,7 +387,25 @@ function WarDiplomacyPanel({
           >
             🗝️ Hire Thieves&apos; Guild (150 gp)
           </button>
+          <button
+            type="button"
+            data-testid="realm-war-hire-interpreter-btn"
+            onClick={() => onHireAsset?.('interpreter')}
+            disabled={interpreterHired}
+            className="px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold min-h-[36px] disabled:opacity-50"
+            title={`Retain a polyglot linguist (${INTERPRETER_HIRE_COST_GOLD} gp) covering every war command tongue. Carried bluffs and truces resolve at baseline +${INTERPRETER_PER_PARLEY_FEE_GOLD} gp per parley.`}
+          >
+            {interpreterHired
+              ? `🧑‍⚖️ Interpreter retained (+${INTERPRETER_PER_PARLEY_FEE_GOLD} gp/parley)`
+              : `🧑‍⚖️ Hire Interpreter (${INTERPRETER_HIRE_COST_GOLD} gp)`}
+          </button>
         </div>
+        {interpreterHired && (
+          <p data-testid="realm-war-interpreter-note" className="text-[11px] text-violet-300">
+            Interpreter retained — bluffs and truces without the local tongue resolve at baseline
+            (+{INTERPRETER_PER_PARLEY_FEE_GOLD} gp per carried parley); sealed dispatches read plain.
+          </p>
+        )}
       </div>
 
       <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3 space-y-2">

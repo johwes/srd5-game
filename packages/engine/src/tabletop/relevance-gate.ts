@@ -60,6 +60,15 @@ import { resolveDiplomaticParley } from '../social/diplomacy.js';
 import { resolveLanguageGate, resolveOrcTribeParley } from '../language/gates.js';
 import { partyCanUnderstand } from '../language/comprehension.js';
 import { resolvePatrolEncounter } from '../overworld/war-patrols.js';
+import {
+  generateDispatchIntercept,
+  getWarNationLanguageProfile,
+  hireInterpreter,
+  resolveWarLanguageDealTier,
+  rollDispatchInterceptDrop,
+  tryReadDispatchIntercept,
+} from '../overworld/war-languages.js';
+import { negotiateTruce } from '../overworld/war-contracts.js';
 import { resolveMissionApproach } from '../overworld/war-missions.js';
 import {
   getSkillPassiveTier,
@@ -115,12 +124,15 @@ export const ENGINE_SKILL_CONSUMERS: Record<SkillId, string[]> = {
 /** Languages open the party-level gate; war tongues additionally feed patrols/deals. */
 export const ENGINE_LANGUAGE_CONSUMERS: Record<string, string[]> = {
   '*': ['language/gates.ts:resolveLanguageGate', 'language/comprehension.ts:partyCanUnderstand'],
-  orc: ['language/gates.ts:resolveOrcTribeParley', 'social/diplomacy.ts:resolveDiplomaticParley'],
-  dwarvish: ['overworld/war-patrols.ts:resolvePatrolEncounter'],
-  elvish: ['overworld/war-patrols.ts:resolvePatrolEncounter'],
-  infernal: ['overworld/war-patrols.ts:resolvePatrolEncounter'],
-  draconic: ['overworld/war-patrols.ts:resolvePatrolEncounter'],
-  giant: ['overworld/war-patrols.ts:resolvePatrolEncounter'],
+  orc: ['language/gates.ts:resolveOrcTribeParley', 'social/diplomacy.ts:resolveDiplomaticParley', 'overworld/war-languages.ts:resolveWarLanguageDealTier'],
+  dwarvish: ['overworld/war-patrols.ts:resolvePatrolEncounter', 'overworld/war-languages.ts:resolveWarLanguageDealTier'],
+  elvish: ['overworld/war-patrols.ts:resolvePatrolEncounter', 'overworld/war-languages.ts:resolveWarLanguageDealTier'],
+  infernal: ['overworld/war-patrols.ts:resolvePatrolEncounter', 'overworld/war-languages.ts:resolveWarLanguageDealTier'],
+  draconic: ['overworld/war-patrols.ts:resolvePatrolEncounter', 'overworld/war-languages.ts:resolveWarLanguageDealTier'],
+  giant: ['overworld/war-patrols.ts:resolvePatrolEncounter', 'overworld/war-languages.ts:resolveWarLanguageDealTier'],
+  common: ['overworld/war-patrols.ts:resolvePatrolEncounter', 'overworld/war-languages.ts:resolveWarLanguageDealTier'],
+  sylvan: ['overworld/war-languages.ts:resolveWarLanguageDealTier'],
+  celestial: ['overworld/war-languages.ts:generateDispatchIntercept'],
 };
 
 /** Keep imported verbs referenced so typecheck fails if any are deleted. */
@@ -153,6 +165,13 @@ const ENGINE_VERB_PROOF: Record<string, unknown> = {
   resolvePatrolEncounter,
   resolveMissionApproach,
   generateDraftParty,
+  getWarNationLanguageProfile,
+  resolveWarLanguageDealTier,
+  generateDispatchIntercept,
+  rollDispatchInterceptDrop,
+  tryReadDispatchIntercept,
+  hireInterpreter,
+  negotiateTruce,
   getSkillPassiveTier,
   getReligionHealingReceivedBonusFor,
   getMedicineHitDieBonusPerDieFor,

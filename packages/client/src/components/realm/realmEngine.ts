@@ -29,6 +29,7 @@ import {
   getSettlementHubAccess,
   getTempleBlessingCost,
   getTempleCleanseCost,
+  hireInterpreter,
   hireMercenaryCompany,
   hireThievesGuild,
   identifyMagicItem,
@@ -727,6 +728,7 @@ export function reduceRealm(
         approach: command.approach,
         rngState: next.travel.rngState,
         goldAvailable: next.travel.gold,
+        hasInterpreter: next.diplomacy.interpreterHired === true,
       });
       next.diplomacy = resolved.diplomacy;
       next.travel = {
@@ -811,6 +813,7 @@ export function reduceRealm(
         rngState: next.travel.rngState,
         day: next.travel.currentDay,
         tributeGold: tribute,
+        hasInterpreter: next.diplomacy.interpreterHired === true,
       });
       next.war = negotiated.war;
       next.travel = { ...next.travel, rngState: negotiated.nextRngState, gold: next.travel.gold - negotiated.goldSpent };
@@ -842,6 +845,23 @@ export function reduceRealm(
           asset: 'mercenaries',
           success: hired.success,
           headline: hired.headline,
+        });
+        return { session: next, events };
+      }
+      if (command.asset === 'interpreter') {
+        const retained = hireInterpreter({
+          diplomacy: next.diplomacy,
+          goldAvailable: next.travel.gold,
+          rngState: next.travel.rngState,
+          day: next.travel.currentDay,
+        });
+        next.diplomacy = retained.diplomacy;
+        next.travel = { ...next.travel, rngState: retained.nextRngState, gold: retained.remainingGold };
+        events.push({
+          type: 'WAR_ASSET_HIRED',
+          asset: 'interpreter',
+          success: retained.success,
+          headline: retained.headline,
         });
         return { session: next, events };
       }

@@ -69,6 +69,14 @@ export const WarDiplomacyStateSchema = z.object({
   subfactions: z.record(z.string().min(1), SubFactionProgressSchema).default({}),
   /** Set when the Druid Circle chain completes (forest-stealth/healing hook). */
   druidBlessingActive: z.boolean().default(false),
+  /**
+   * SRD-1214: retained party interpreter (War Room hire row). When true the
+   * party travels with a linguist covering every war command tongue: patrol
+   * bluffs and truce parleys fall back to the baseline tier (plus a
+   * per-parley fee) instead of the gesture tier. Compromise/double-agent
+   * behavior is a deferred data hook (never set in phase 1).
+   */
+  interpreterHired: z.boolean().default(false),
 });
 export type WarDiplomacyState = z.infer<typeof WarDiplomacyStateSchema>;
 

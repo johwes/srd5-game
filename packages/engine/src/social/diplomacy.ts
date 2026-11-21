@@ -95,6 +95,12 @@ export const ResolveDiplomaticParleyOptionsSchema = z.object({
   dcModifier: z.number().int().min(-10).max(10).default(0),
   /** Tribute on the table (spent/owed per the outcome below). */
   baseTributeGold: z.number().int().min(0).default(100),
+  /**
+   * SRD-1214: gesture path locks the top deal tier — a persuasion parley
+   * that would close as `alliance` degrades to `fair_terms`. Native, magic,
+   * and interpreter paths leave the top tier unlocked.
+   */
+  topTierLocked: z.boolean().default(false),
 });
 export type ResolveDiplomaticParleyOptions = z.input<typeof ResolveDiplomaticParleyOptionsSchema>;
 
@@ -230,7 +236,8 @@ export function resolveDiplomaticParley(
   let outcome: DiplomacyOutcome;
   if (success) {
     if (options.approach === 'persuasion') {
-      outcome = historyUnlocked ? 'alliance' : 'fair_terms';
+      // SRD-1214: gesture path locks the top deal tier.
+      outcome = historyUnlocked && !options.topTierLocked ? 'alliance' : 'fair_terms';
     } else if (options.approach === 'deception') {
       outcome = 'trick';
     } else {

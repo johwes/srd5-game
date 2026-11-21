@@ -31,6 +31,10 @@ import {
   findSpellCaster,
 } from './war-negotiation-utils.js';
 import {
+  hasPartyLanguageInfo,
+  resolveWarLanguageDealTier,
+} from './war-languages.js';
+import {
   buildWarSquad,
   type BuiltWarSquad,
 } from './war-squads.js';
@@ -55,6 +59,12 @@ export const PATROL_MIN_CHANCE = 0.02;
 export const PATROL_BLUFF_DC = 13;
 export const PATROL_EVADE_DC = 13;
 export const PATROL_BRIBE_COST_GOLD = 50;
+/** SRD-1214: gesture bluff DC penalty without a shared tongue/magic/interpreter. */
+export const PATROL_GESTURE_BLUFF_DC_MODIFIER = 2;
+/** SRD-1214: gesture bluffs never come clean — a passed gesture bluff banks Threat. */
+export const PATROL_GESTURE_BLUFF_THREAT = 5;
+/** SRD-1214: small tourist-price surcharge on bribes without patter. */
+export const PATROL_TOURIST_SURCHARGE_GOLD = 15;
 
 export const RollPatrolEncounterOptionsSchema = z.object({
   rngState: z.number().int().default(0),
@@ -124,6 +134,8 @@ export const ResolvePatrolEncounterOptionsSchema = z.object({
   rngState: z.number().int().default(0),
   goldAvailable: z.number().int().min(0).default(0),
   day: z.number().int().min(1).optional(),
+  /** SRD-1214: retained interpreter carries bluffs/bribes at baseline + fee. */
+  hasInterpreter: z.boolean().default(false),
 });
 export type ResolvePatrolEncounterOptions = z.input<typeof ResolvePatrolEncounterOptionsSchema>;
 
@@ -147,14 +159,22 @@ export interface ResolvedPatrolEncounter {
   remainingGold: number;
   headline: string;
   nextRngState: number;
+  /** SRD-1214: war-tongue tier that graded the approach (`baseline` for legacy sheets). */
+  languageTier: 'native' | 'magic' | 'interpreter' | 'gesture' | 'baseline';
+  /** SRD-1214: interpreter per-parley fee included in `goldSpent` (0 unless carried). */
+  interpreterFee: number;
 }
 
 /**
- * Resolves the patrol encounter dialogue (Spec 10 §7):
+ * Resolves the patrol encounter dialogue (Spec 10 §7 + Spec 11 §2.4):
  * - **Bluff** (Persuasion/Deception, or *Disguise Self* for an automatic
- *   pass that expends a 1st-level+ slot): pass with `+0` Threat.
- * - **Evade** (Stealth/Survival): slip off the road with `+0` Threat.
- * - **Bribe** (50gp): pass with `+5` Threat.
+ *   pass that expends a 1st-level+ slot): pass with `+0` Threat in tongue /
+ *   magic / interpreter hands; gesture bluffs (no shared tongue, magic, or
+ *   interpreter) roll at `+2` DC and cap at pass-with-Threat (`+5`).
+ * - **Evade** (Stealth/Survival): slip off the road with `+0` Threat —
+ *   never gated on language.
+ * - **Bribe** (50gp, `+15gp` tourist surcharge without patter): pass with
+ *   `+5` Threat. Interpreter hands pay baseline + per-parley fee.
  * - **Fight**: a tactical battle — Threat only rises once the patrol is
  *   reported killed via `reportPatrolKill()` (`+20`, pursuit at `>= 55`).
  */
@@ -179,14 +199,56 @@ export function resolvePatrolEncounter(rawOptions: ResolvePatrolEncounterOptions
     remainingGold: options.goldAvailable,
     headline,
     nextRngState: rngState,
+    languageTier: 'baseline',
+    interpreterFee: 0,
   });
 
-  if (options.approach === 'bribe') {
-    if (options.goldAvailable < PATROL_BRIBE_COST_GOLD) {
-      return failThrough(
-        `The patrol captain names ${PATROL_BRIBE_COST_GOLD}gp — the party cannot pay, and steel is drawn.`,
-      );
+  // SRD-1214: war-tongue tier for bluff/bribe. Legacy sheets without explicit
+  // language data (or unknown nations) resolve to `baseline` — pre-1214
+  // behavior preserved. Real derived sheets gate through the deal tier.
+  const resolveTier = (): {
+    tier: ResolvedPatrolEncounter['languageTier'];
+    dcModifier: number;
+    interpreterFee: number;
+  } => {
+    try {
+      if (!hasPartyLanguageInfo(party)) return { tier: 'baseline', dcModifier: 0, interpreterFee: 0 };
+      const resolved = resolveWarLanguageDealTier({
+        nationId: options.nationId,
+        party,
+        hasInterpreter: options.hasInterpreter,
+      });
+      if (resolved.tier === 'gesture') {
+        return { tier: 'gesture', dcModifier: PATROL_GESTURE_BLUFF_DC_MODIFIER, interpreterFee: 0 };
+      }
+      if (resolved.tier === 'interpreter') {
+        return { tier: 'interpreter', dcModifier: 0, interpreterFee: resolved.perParleyFee };
+      }
+      return { tier: resolved.tier, dcModifier: 0, interpreterFee: 0 };
+    } catch {
+      return { tier: 'baseline', dcModifier: 0, interpreterFee: 0 };
     }
+  };
+
+  if (options.approach === 'bribe') {
+    const tierInfo = resolveTier();
+    const surcharge =
+      tierInfo.tier === 'gesture' ? PATROL_TOURIST_SURCHARGE_GOLD : 0;
+    const fee = tierInfo.tier === 'interpreter' ? tierInfo.interpreterFee : 0;
+    const cost = PATROL_BRIBE_COST_GOLD + surcharge + fee;
+    if (options.goldAvailable < cost) {
+      return {
+        ...failThrough(
+          `The patrol captain names ${cost}gp${surcharge ? ` (includes ${surcharge}gp tourist surcharge — no shared tongue)` : ''}${fee ? ` (includes ${fee}gp interpreter fee)` : ''} — the party cannot pay, and steel is drawn.`,
+        ),
+        languageTier: tierInfo.tier,
+        interpreterFee: fee,
+      };
+    }
+    const surchargeNote = surcharge
+      ? ` (+${surcharge}gp tourist surcharge — no shared tongue)`
+      : '';
+    const feeNote = fee ? ` (+${fee}gp interpreter fee)` : '';
     return {
       diplomacy: addNationThreat(diplomacy, options.nationId, WAR_THREAT_BRIBE_GAIN),
       updatedParty: structuredClone(party),
@@ -199,10 +261,12 @@ export function resolvePatrolEncounter(rawOptions: ResolvePatrolEncounterOptions
       naturalRoll: null,
       total: null,
       threatDelta: WAR_THREAT_BRIBE_GAIN,
-      goldSpent: PATROL_BRIBE_COST_GOLD,
-      remainingGold: options.goldAvailable - PATROL_BRIBE_COST_GOLD,
-      headline: `The captain pockets ${PATROL_BRIBE_COST_GOLD}gp and waves the party through (+${WAR_THREAT_BRIBE_GAIN} Threat).`,
+      goldSpent: cost,
+      remainingGold: options.goldAvailable - cost,
+      headline: `The captain pockets ${cost}gp${surchargeNote}${feeNote} and waves the party through (+${WAR_THREAT_BRIBE_GAIN} Threat).`,
       nextRngState: rngState,
+      languageTier: tierInfo.tier,
+      interpreterFee: fee,
     };
   }
 
@@ -238,12 +302,94 @@ export function resolvePatrolEncounter(rawOptions: ResolvePatrolEncounterOptions
         remainingGold: options.goldAvailable,
         headline: `${veiled.name}'s Disguise Self veil fools the patrol — the band passes as traveling merchants (+0 Threat).`,
         nextRngState: rngState,
+        languageTier: 'baseline',
+        interpreterFee: 0,
       };
     }
+    const tierInfo = resolveTier();
+    // Interpreter hands need their fee covered, else the parley falls back to gesture.
+    if (tierInfo.tier === 'interpreter' && options.goldAvailable < tierInfo.interpreterFee) {
+      const dc = PATROL_BLUFF_DC + PATROL_GESTURE_BLUFF_DC_MODIFIER;
+      const { bonus, sheet } = bestBonusOf(party, 'persuasion', 'deception');
+      const roll = rollD20(rngState, { modifier: bonus });
+      rngState = roll.nextState;
+      if (roll.total >= dc) {
+        const gestureDiplomacy = addNationThreat(diplomacy, options.nationId, PATROL_GESTURE_BLUFF_THREAT);
+        return {
+          diplomacy: gestureDiplomacy,
+          updatedParty: structuredClone(party),
+          outcome: 'passed',
+          success: true,
+          actorId: sheet.id,
+          actorName: sheet.name,
+          bonus,
+          dc,
+          naturalRoll: roll.naturalRoll,
+          total: roll.total,
+          threatDelta: PATROL_GESTURE_BLUFF_THREAT,
+          goldSpent: 0,
+          remainingGold: options.goldAvailable,
+          headline: `${sheet.name} mimes the patrol past (${roll.total} vs DC ${dc}) — gesture pass, but the patrol notes the strangers (+${PATROL_GESTURE_BLUFF_THREAT} Threat; interpreter fee unpaid).`,
+          nextRngState: rngState,
+          languageTier: 'gesture',
+          interpreterFee: 0,
+        };
+      }
+      return {
+        diplomacy,
+        updatedParty: structuredClone(party),
+        outcome: 'tactical_battle',
+        success: false,
+        actorId: sheet.id,
+        actorName: sheet.name,
+        bonus,
+        dc,
+        naturalRoll: roll.naturalRoll,
+        total: roll.total,
+        threatDelta: 0,
+        goldSpent: 0,
+        remainingGold: options.goldAvailable,
+        headline: `${sheet.name}'s gestures fail (${roll.total} vs DC ${dc}) — the patrol attacks (interpreter fee unpaid).`,
+        nextRngState: rngState,
+        languageTier: 'gesture',
+        interpreterFee: 0,
+      };
+    }
+    const dc = PATROL_BLUFF_DC + tierInfo.dcModifier;
     const { bonus, sheet } = bestBonusOf(party, 'persuasion', 'deception');
     const roll = rollD20(rngState, { modifier: bonus });
     rngState = roll.nextState;
-    if (roll.total >= PATROL_BLUFF_DC) {
+    const fee = tierInfo.tier === 'interpreter' ? tierInfo.interpreterFee : 0;
+    if (roll.total >= dc) {
+      if (tierInfo.tier === 'gesture') {
+        const gestureDiplomacy = addNationThreat(diplomacy, options.nationId, PATROL_GESTURE_BLUFF_THREAT);
+        return {
+          diplomacy: gestureDiplomacy,
+          updatedParty: structuredClone(party),
+          outcome: 'passed',
+          success: true,
+          actorId: sheet.id,
+          actorName: sheet.name,
+          bonus,
+          dc,
+          naturalRoll: roll.naturalRoll,
+          total: roll.total,
+          threatDelta: PATROL_GESTURE_BLUFF_THREAT,
+          goldSpent: 0,
+          remainingGold: options.goldAvailable,
+          headline: `${sheet.name} mimes the patrol past (${roll.total} vs DC ${dc}) — gesture pass, but the patrol notes the strangers (+${PATROL_GESTURE_BLUFF_THREAT} Threat, never clean).`,
+          nextRngState: rngState,
+          languageTier: 'gesture',
+          interpreterFee: 0,
+        };
+      }
+      const feeNote = fee ? ` (−${fee}gp interpreter fee)` : '';
+      const tongueNote =
+        tierInfo.tier === 'native'
+          ? ' in their own tongue'
+          : tierInfo.tier === 'interpreter'
+            ? ' through the interpreter'
+            : '';
       return {
         diplomacy,
         updatedParty: structuredClone(party),
@@ -252,14 +398,16 @@ export function resolvePatrolEncounter(rawOptions: ResolvePatrolEncounterOptions
         actorId: sheet.id,
         actorName: sheet.name,
         bonus,
-        dc: PATROL_BLUFF_DC,
+        dc,
         naturalRoll: roll.naturalRoll,
         total: roll.total,
         threatDelta: 0,
-        goldSpent: 0,
-        remainingGold: options.goldAvailable,
-        headline: `${sheet.name} talks the patrol down (${roll.total} vs DC ${PATROL_BLUFF_DC}) — waved through (+0 Threat).`,
+        goldSpent: fee,
+        remainingGold: options.goldAvailable - fee,
+        headline: `${sheet.name} talks the patrol down${tongueNote} (${roll.total} vs DC ${dc}) — waved through (+0 Threat)${feeNote}.`,
         nextRngState: rngState,
+        languageTier: tierInfo.tier,
+        interpreterFee: fee,
       };
     }
     return {
@@ -270,14 +418,16 @@ export function resolvePatrolEncounter(rawOptions: ResolvePatrolEncounterOptions
       actorId: sheet.id,
       actorName: sheet.name,
       bonus,
-      dc: PATROL_BLUFF_DC,
+      dc,
       naturalRoll: roll.naturalRoll,
       total: roll.total,
       threatDelta: 0,
       goldSpent: 0,
       remainingGold: options.goldAvailable,
-      headline: `${sheet.name}'s cover story collapses (${roll.total} vs DC ${PATROL_BLUFF_DC}) — the patrol attacks.`,
+      headline: `${sheet.name}'s cover story collapses (${roll.total} vs DC ${dc}) — the patrol attacks.`,
       nextRngState: rngState,
+      languageTier: tierInfo.tier,
+      interpreterFee: 0,
     };
   }
 
@@ -302,6 +452,8 @@ export function resolvePatrolEncounter(rawOptions: ResolvePatrolEncounterOptions
       remainingGold: options.goldAvailable,
       headline: `${sheet.name} ghosts the patrol into the treeline (${roll.total} vs DC ${PATROL_EVADE_DC}) — unseen (+0 Threat).`,
       nextRngState: rngState,
+      languageTier: 'baseline',
+      interpreterFee: 0,
     };
   }
   return {
@@ -320,6 +472,8 @@ export function resolvePatrolEncounter(rawOptions: ResolvePatrolEncounterOptions
     remainingGold: options.goldAvailable,
     headline: `${sheet.name} snaps a branch at the wrong moment (${roll.total} vs DC ${PATROL_EVADE_DC}) — the patrol gives chase.`,
     nextRngState: rngState,
+    languageTier: 'baseline',
+    interpreterFee: 0,
   };
 }
 

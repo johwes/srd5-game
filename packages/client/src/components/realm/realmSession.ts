@@ -184,4 +184,4 @@ export type RealmCommand =
   | { type: 'COMPLETE_WAR_MISSION'; victory: boolean }
   | { type: 'RESOLVE_PATROL_ENCOUNTER'; nationId: string; approach: 'bluff' | 'evade' | 'bribe' | 'fight' }
   | { type: 'NEGOTIATE_TRUCE'; targetNationId: string; tributeGold?: number }
-  | { type: 'HIRE_COVERT_ASSET'; asset: 'mercenaries' | 'thieves_guild'; targetPoiId?: string };
+  | { type: 'HIRE_COVERT_ASSET'; asset: 'mercenaries' | 'thieves_guild' | 'interpreter'; targetPoiId?: string };
