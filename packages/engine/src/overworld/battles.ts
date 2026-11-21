@@ -753,7 +753,7 @@ export function resolveOverworldBattle(
   }, 0);
   const goldAwarded = Math.floor(totalXp * (options.goldPerXp ?? 0.1));
 
-  const transition = transitionCombatToExploration(state);
+  const transition = transitionCombatToExploration(state, { compendium, corpseDrops: 'skip' });
   const survivingHeroes = Object.values(transition.nextState.party).filter((hero) => !hero.isDead);
   const goldPerHero = survivingHeroes.length > 0 ? Math.floor(goldAwarded / survivingHeroes.length) : 0;
 
@@ -763,7 +763,13 @@ export function resolveOverworldBattle(
     if (goldPerHero > 0 && hero.buildState) {
       nextParty[id] = {
         ...hero,
-        buildState: awardLootToCharacter(hero.buildState, { gp: goldPerHero }, compendium),
+        // SRD-1307: war-battle awards carry the war origin so they never
+        // stack with per-slay corpse drops on the same kill.
+        buildState: awardLootToCharacter(
+          hero.buildState,
+          { gp: goldPerHero, origin: 'war_award', sourceName: 'war spoils' },
+          compendium,
+        ),
       };
       events.push({
         type: 'INVENTORY_UPDATED',

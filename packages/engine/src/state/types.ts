@@ -53,6 +53,7 @@ export const PROP_KINDS = [
   'stairs_down',
   'stairs_up',
   'furniture',
+  'corpse',
 ] as const;
 export const PropKindSchema = z.enum(PROP_KINDS);
 export type PropKind = z.infer<typeof PropKindSchema>;
@@ -85,6 +86,14 @@ export interface InteractiveProp {
   furnitureType?: string;
   /** SRD-512: hiding behind/inside grants advantage on Stealth checks. */
   hideSpot?: boolean;
+  /** SRD-1307: slain monster id this corpse prop holds loot for. Only for kind 'corpse'. */
+  monsterId?: string;
+  /** SRD-1307: display name ("Remains of Goblin"). Only for kind 'corpse'. */
+  label?: string;
+  /** SRD-1307: whether the fallen have been searched (skill bonus resolved). */
+  searched?: boolean;
+  /** SRD-1307: Search-the-Fallen DC (10 + floor(CR)). Only for kind 'corpse'. */
+  searchDc?: number;
   discovered?: boolean;
   ac?: number;
   hp?: number;

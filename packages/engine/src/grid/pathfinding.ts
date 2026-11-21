@@ -42,6 +42,8 @@ export interface GridCreature {
   canMakeOpportunityAttack?: boolean;
   /** Whether this creature has the Halfling Nimbleness trait (can move through creatures larger than itself) */
   halflingNimbleness?: boolean;
+  /** Whether this creature is dead: corpses never block traversal or end-of-move and never provoke (Spec 12 §11.2) */
+  isDead?: boolean;
   /** Whether this creature is currently prone (crawling costs +5 extra ft per cell) */
   isProne?: boolean;
   /** Creature's maximum speed in feet (e.g., 30) */
@@ -177,6 +179,10 @@ export function canTraverseCreatureSpace(mover: GridCreature, other: GridCreatur
   if (mover.id === other.id) {
     return true;
   }
+  // SRD-1307 (Spec 12 §11.2): corpses are lootable terrain, never blockers.
+  if (other.isDead) {
+    return true;
+  }
   if (!areCreaturesHostile(mover, other)) {
     return true;
   }
@@ -261,7 +267,10 @@ export function canEndMoveAt(
   }
 
   const overlapping = creatures.filter(
-    (other) => other.id !== mover.id && doFootprintsOverlap(anchor, mover.size, other, other.size),
+    (other) =>
+      other.id !== mover.id &&
+      !other.isDead &&
+      doFootprintsOverlap(anchor, mover.size, other, other.size),
   );
 
   if (overlapping.length === 0) {
@@ -301,6 +310,8 @@ export function isFootprintStepDifficultTerrain(
 
   for (const other of creatures) {
     if (other.id === mover.id) continue;
+    // SRD-1307: corpse cells cost normal movement, not difficult terrain.
+    if (other.isDead) continue;
     if (doFootprintsOverlap(toAnchor, mover.size, other, other.size)) {
       return true;
     }
@@ -358,6 +369,8 @@ export function detectStepOpportunityAttacks(
   const triggers: OpportunityAttackTrigger[] = [];
   for (const other of creatures) {
     if (other.id === mover.id) continue;
+    // SRD-1307: corpses never threaten Opportunity Attacks.
+    if (other.isDead) continue;
     if (!areCreaturesHostile(mover, other)) continue;
     if (other.canMakeOpportunityAttack === false) continue;
 

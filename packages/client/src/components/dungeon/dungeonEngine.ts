@@ -18,6 +18,7 @@ import {
   createDungeonGameState,
   startRogueliteRun,
   advanceRogueliteFloor,
+  sweepUnclaimedCorpseLoot,
 } from '@srd5/engine';
 import { LocalTransport, type PlayerViewProp } from '@srd5/transport';
 
@@ -134,8 +135,13 @@ export function transitionToNextFloor(
 ): {
   transport: LocalTransport;
   nextState: GameState;
+  /** Corpse props auto-collected by the SRD-1307 floor-exit sweep. */
+  sweptCorpsePropIds: string[];
 } {
-  const partyList = Object.values(currentGameState.party);
+  // SRD-1307 floor-exit sweep: unclaimed corpse drops join the party before
+  // the floor (and its props) is discarded, so loot is never silently lost.
+  const swept = sweepUnclaimedCorpseLoot(currentGameState, compendium);
+  const partyList = Object.values(swept.nextState.party);
 
   const updatedCombatants = partyList.map((c, idx) => {
     const spawnPoint =
@@ -162,7 +168,7 @@ export function transitionToNextFloor(
     defaultPlayerId: 'player-1',
   });
 
-  return { transport, nextState };
+  return { transport, nextState, sweptCorpsePropIds: swept.sweptPropIds };
 }
 
 /**

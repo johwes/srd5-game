@@ -4,6 +4,22 @@ import type { LootInventoryModalProps } from './types.js';
 import { InventoryGridCell } from '../inventory/InventoryGridCell.js';
 import { InventoryView } from '../inventory/InventoryView.js';
 
+/**
+ * SRD-1307 drop provenance line for the loot UI (per-slay attribution).
+ * `monster_drop` bundles name the fallen; war awards and caches label
+ * their own source so both paths never read as the same kill.
+ */
+export function formatLootProvenance(origin: string, sourceName?: string | null): string {
+  switch (origin) {
+    case 'monster_drop':
+      return sourceName ? `Slain foe drop — ${sourceName}` : 'Slain foe drop';
+    case 'war_award':
+      return 'War spoils award';
+    default:
+      return sourceName ? `${sourceName}` : 'Discovered cache';
+  }
+}
+
 export function LootInventoryModal({
   isOpen,
   party,
@@ -136,14 +152,21 @@ export function LootInventoryModal({
               <div className="flex items-center justify-between">
                 <div className="text-sm font-bold text-amber-300">
                   Contents of {activeLoot.sourceName ?? 'Discovered Cache'}:
-                </div>
-                <div className="text-xs text-slate-400">
+                </div>                <div className="text-xs text-slate-400">
                   Recipient:{' '}
                   <span className="font-semibold text-slate-200">
                     {currentHero?.name}
                   </span>
                 </div>
               </div>
+              {activeLoot.bundle.origin && (
+                <div
+                  data-testid="discovered-loot-provenance"
+                  className="text-[11px] text-slate-400 italic"
+                >
+                  🏴 {formatLootProvenance(activeLoot.bundle.origin, activeLoot.bundle.sourceName)}
+                </div>
+              )}
 
               {/* Coins Display */}
               <div className="grid grid-cols-5 gap-2 text-center text-xs">
@@ -186,6 +209,14 @@ export function LootInventoryModal({
                         instanceId={`discovered-${itemId}-${idx}`}
                         compendium={compendium}
                         testIdPrefix="discovered-loot"
+                        provenanceLine={
+                          activeLoot.bundle.origin
+                            ? formatLootProvenance(
+                                activeLoot.bundle.origin,
+                                activeLoot.bundle.sourceName,
+                              )
+                            : undefined
+                        }
                       />
                     ))}
                   </div>

@@ -9,6 +9,7 @@ import {
 } from '../grid/model.js';
 import { hasLineOfSight } from '../grid/vision.js';
 import { getRecallTrapBonus } from './recall.js';
+import { resolveCorpseSearch } from './corpse-loot.js';
 import {
   type GameEvent,
   type GameState,
@@ -37,6 +38,7 @@ export function getActorCheckBonus(
     | 'religion'
     | 'arcana'
     | 'nature'
+    | 'survival'
     | AbilityId,
 ): number {
   switch (checkType) {
@@ -98,7 +100,8 @@ export function getActorCheckBonus(
     case 'history':
     case 'religion':
     case 'arcana':
-    case 'nature': {
+    case 'nature':
+    case 'survival': {
       const sheetSkills = actor.characterSheet?.skills as
         | Record<string, { totalBonus?: number } | undefined>
         | undefined;
@@ -107,7 +110,8 @@ export function getActorCheckBonus(
       }
       const monsterSkills = actor.monsterData?.skills as Record<string, number> | undefined;
       if (typeof monsterSkills?.[checkType] === 'number') return monsterSkills[checkType]!;
-      // All four recall skills are INT-based in SRD 5.1.
+      // SRD-1307: Survival is WIS-based; the four recall skills are INT-based.
+      if (checkType === 'survival') return actor.characterSheet?.abilities.wis.modifier ?? 0;
       return actor.characterSheet?.abilities.int.modifier ?? 0;
     }
 
@@ -186,6 +190,8 @@ export function getAvailablePropInteractions(
     | 'disarmDc'
     | 'trapDamageFormula'
     | 'discovered'
+    | 'searched'
+    | 'searchDc'
   >,
   actor?: Pick<Combatant, 'id'> & Partial<Combatant>,
 ): PropInteractionOption[] {
@@ -349,6 +355,25 @@ export function getAvailablePropInteractions(
             searchBonus !== undefined
               ? `Perception/Investigation ${signed(searchBonus)} vs DC ${prop.detectionDc ?? 10}`
               : undefined,
+        });
+      }
+      return options;
+    }
+    case 'corpse': {
+      // SRD-1307: the fallen hold CR-scaled drops (claimed via the loot
+      // card); searching once resolves Investigation / Survival bonuses.
+      if (prop.searched !== true) {
+        const dc = prop.searchDc ?? 10;
+        const investigationBonus = actor
+          ? getActorCheckBonus(actor as Combatant, 'investigation')
+          : undefined;
+        options.push({
+          interaction: 'search',
+          label: 'Search the Fallen',
+          checkHint:
+            investigationBonus !== undefined
+              ? `INT (Investigation) ${signed(investigationBonus)} vs DC ${dc}`
+              : `DC ${dc}`,
         });
       }
       return options;
@@ -751,6 +776,12 @@ export function resolvePropInteraction(options: {
   const { state, actorId, propId, interaction } = options;
 
   if (interaction === 'search') {
+    // SRD-1307: searching the fallen resolves Investigation / Survival loot
+    // bonuses against the corpse instead of the generic active-search sweep.
+    const targetKind = state.props.find((p) => p.id === propId)?.kind;
+    if (targetKind === 'corpse') {
+      return resolveCorpseSearch({ state, actorId, propId });
+    }
     return resolveActiveSearch({ state, actorId, propId });
   }
 

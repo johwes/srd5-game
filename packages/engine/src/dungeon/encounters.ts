@@ -11,6 +11,16 @@ import { hasLineOfSight } from '../grid/vision.js';
 import { type GameEvent, type GameState } from '../state/types.js';
 import { type DungeonFloorState } from './state.js';
 import { awardCharacterXp, getCharacterLevelForXp } from '../character/level-up.js';
+import { spawnCorpseLootProps } from './corpse-loot.js';
+
+export interface TransitionCombatToExplorationOptions {
+  compendium?: SrdCompendium;
+  /**
+   * SRD-1307: `'skip'` suppresses per-slay corpse drops (war-battle path stays
+   * authoritative via `resolveOverworldBattle` gold awards). Defaults to `'roll'`.
+   */
+  corpseDrops?: 'roll' | 'skip';
+}
 
 function createFallbackMonster(monsterId: string): MonsterData {
   return {
@@ -262,8 +272,15 @@ export function triggerDungeonEncounter(
 /**
  * Transitions from combat mode back to exploration mode after all hostiles are defeated (Spec 04 Section 3).
  * Resets temporary combat states and checks if rooms are cleared.
+ *
+ * SRD-1307: also spawns one lootable `corpse` prop per newly slain monster
+ * (CR-scaled individual treasure, hoard rolls for elite/boss CRs), threading
+ * `state.rngState` deterministically.
  */
-export function transitionCombatToExploration(state: GameState): {
+export function transitionCombatToExploration(
+  state: GameState,
+  options?: TransitionCombatToExplorationOptions,
+): {
   nextState: GameState;
   events: GameEvent[];
 } {
@@ -272,6 +289,7 @@ export function transitionCombatToExploration(state: GameState): {
   }
 
   const events: GameEvent[] = [];
+  const compendium = options?.compendium ?? defaultCompendium;
 
   // Reset temporary combat properties on party members
   const nextParty: Record<string, Combatant> = {};
@@ -300,6 +318,17 @@ export function transitionCombatToExploration(state: GameState): {
 
   const survivingHeroes = Object.values(nextParty).filter((h) => !h.isDead);
   const xpPerHero = survivingHeroes.length > 0 ? Math.floor(totalMonsterXp / survivingHeroes.length) : 0;
+
+  // SRD-1307: per-slay corpse drops on the corpse cells (idempotent —
+  // prior-encounter remains already have corpse props). Skipped for
+  // war-battle resolutions, where `resolveOverworldBattle` awards spoils.
+  let corpseProps = state.props;
+  let corpseRng = state.rngState;
+  if (options?.corpseDrops !== 'skip') {
+    const spawned = spawnCorpseLootProps(state.props, defeatedMonsters, state.rngState, compendium);
+    corpseProps = spawned.nextProps;
+    corpseRng = spawned.nextRng;
+  }
 
   if (xpPerHero > 0) {
     for (const hero of survivingHeroes) {
@@ -419,6 +448,8 @@ export function transitionCombatToExploration(state: GameState): {
     combat: null,
     party: nextParty,
     dungeon: nextDungeon,
+    props: corpseProps,
+    rngState: corpseRng,
   };
 
   events.push({

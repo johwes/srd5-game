@@ -28,6 +28,7 @@ import {
 } from '../state/types.js';
 import { isAdjacent } from './props.js';
 import { triggerDungeonEncounter } from './encounters.js';
+import { sweepUnclaimedCorpseLoot } from './corpse-loot.js';
 
 export const STARTING_ROGUELITE_RATIONS = 10;
 export const RATIONS_PER_LONG_REST = 4;
@@ -255,8 +256,11 @@ export function advanceRogueliteFloor(
     lockedStairsDoor: nextDepth >= 3,
   });
 
-  // Preserve existing party state across floor transitions
-  const existingPartyList = Object.values(currentGameState.party);
+  // Preserve existing party state across floor transitions.
+  // SRD-1307: sweep unclaimed corpse drops into the party first so delve
+  // loot is never silently lost when the floor (and its props) is discarded.
+  const swept = sweepUnclaimedCorpseLoot(currentGameState, compendium);
+  const existingPartyList = Object.values(swept.nextState.party);
   const updatedCombatants = existingPartyList.map((c, idx) => {
     const spawnPoint =
       generatedFloor.floor.partySpawnCells[idx] ??

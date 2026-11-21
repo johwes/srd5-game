@@ -381,11 +381,15 @@ export function rollTreasureHoard(
  * Applies a `LootBundleSpec` directly to a character's currency and inventory.
  * Stacks consumable potions/scrolls if an identical identified item is in inventory;
  * otherwise adds new `InventoryItemInstance`s.
+ *
+ * SRD-1307: pass `instanceIdPrefix` for deterministic instance ids
+ * (`<prefix>-<itemId>-<n>`) instead of clock/random ids (corpse drops, sweeps).
  */
 export function awardLootToCharacter(
   character: CharacterBuildState,
   loot: LootBundleSpec,
   compendium: SrdCompendium = defaultCompendium,
+  instanceIdPrefix?: string,
 ): CharacterBuildState {
   const nextCurrency: CharacterCurrency = {
     cp: character.currency.cp + (loot.cp ?? 0),
@@ -398,7 +402,9 @@ export function awardLootToCharacter(
   const nextInventory = [...character.inventory];
 
   if (loot.items && loot.items.length > 0) {
-    for (const itemId of loot.items) {
+    const lootItems: string[] = loot.items;
+    for (let itemIndex = 0; itemIndex < lootItems.length; itemIndex++) {
+      const itemId: string = lootItems[itemIndex]!;
       // If item is a potion or stackable consumable and already in inventory, stack quantity
       const isConsumable = itemId.startsWith('potion-') || itemId.startsWith('scroll-');
       const existingIdx = isConsumable
@@ -412,7 +418,15 @@ export function awardLootToCharacter(
           quantity: existing.quantity + 1,
         };
       } else {
-        nextInventory.push(createInventoryItemInstance(itemId, compendium));
+        nextInventory.push(
+          createInventoryItemInstance(
+            itemId,
+            compendium,
+            instanceIdPrefix
+              ? { instanceId: `${instanceIdPrefix}-${itemId}-${itemIndex}` }
+              : undefined,
+          ),
+        );
       }
     }
   }
@@ -425,7 +439,7 @@ export function awardLootToCharacter(
 }
 
 /**
- * Claims loot from an interactive prop (e.g. chest, defeated container).
+ * Claims loot from an interactive prop (e.g. chest, defeated container, corpse).
  * Requires prop to be open or destroyed.
  * Emits LOOT_ACQUIRED and updates hero's inventory and state.
  */
@@ -434,6 +448,7 @@ export function claimPropLoot(
   propId: string,
   actorId: string,
   compendium: SrdCompendium = defaultCompendium,
+  instanceIdPrefix?: string,
 ): { nextState: GameState; events: GameEvent[]; loot: LootBundleSpec } {
   const prop = state.props.find((p) => p.id === propId);
   if (!prop) {
@@ -466,7 +481,7 @@ export function claimPropLoot(
   let nextParty = { ...state.party };
 
   if (hero.buildState) {
-    const updatedBuild = awardLootToCharacter(hero.buildState, lootToClaim, compendium);
+    const updatedBuild = awardLootToCharacter(hero.buildState, lootToClaim, compendium, instanceIdPrefix);
     const updatedSheet = computeDerivedCharacter(updatedBuild, compendium);
     nextParty[actorId] = {
       ...hero,
@@ -488,8 +503,8 @@ export function claimPropLoot(
     events.push({
       type: 'INVENTORY_UPDATED',
       characterId: actorId,
-      inventory: hero.buildState.inventory,
-      currency: hero.buildState.currency,
+      inventory: nextParty[actorId]!.buildState!.inventory,
+      currency: nextParty[actorId]!.buildState!.currency,
     });
   }
 

@@ -12,6 +12,8 @@ interface PropInteractionCardProps {
   onUseShrine?: (propId: string) => void;
   /** Latest listen result to display (from a CHECK_RESOLVED note). */
   resultNote?: string | null;
+  /** SRD-1307: corpse "Take Spoils" shortcut opening the per-corpse loot card. */
+  onTakeLoot?: (propId: string) => void;
 }
 
 const KIND_ICON: Record<string, string> = {
@@ -23,7 +25,13 @@ const KIND_ICON: Record<string, string> = {
   stairs_up: '🪜',
   lever: '🕹️',
   shrine: '✨',
+  furniture: '🪑',
+  corpse: '💀',
 };
+
+function resultNoteIcon(note: string): string {
+  return note.startsWith('Keen Eye') || note.startsWith('Field Dressing') ? '🔍' : '👂';
+}
 
 /**
  * SRD-510 click-to-inspect prop card. Opened by clicking a prop sprite (or its
@@ -31,7 +39,7 @@ const KIND_ICON: Record<string, string> = {
  * state, each with its check preview. Dismissed via Esc, click-away, or any
  * committed action.
  */
-export function PropInteractionCard({ prop, options, onInteract, onClose, onUseShrine, resultNote }: PropInteractionCardProps) {
+export function PropInteractionCard({ prop, options, onInteract, onClose, onUseShrine, resultNote, onTakeLoot }: PropInteractionCardProps) {
   const handleAction = (interaction: PropInteractionKind) => {
     if (prop.kind === 'shrine' && interaction === 'open' && onUseShrine) {
       onUseShrine(prop.id);
@@ -54,7 +62,7 @@ export function PropInteractionCard({ prop, options, onInteract, onClose, onUseS
           </span>
           <div className="min-w-0">
             <div className="font-bold text-slate-100 text-sm truncate capitalize">
-              {prop.id.replace(/[-_]/g, ' ')}
+              {prop.label ?? prop.id.replace(/[-_]/g, ' ')}
             </div>
             <div className="text-[11px] text-slate-400">
               {prop.kind.replace(/_/g, ' ')} ·{' '}
@@ -78,8 +86,22 @@ export function PropInteractionCard({ prop, options, onInteract, onClose, onUseS
           data-testid={`prop-listen-result-${prop.id}`}
           className="rounded-lg bg-sky-950/60 border border-sky-700/50 px-2.5 py-2 text-[11px] text-sky-200 italic"
         >
-          👂 {resultNote}
+          {resultNoteIcon(resultNote)} {resultNote}
         </div>
+      )}
+
+      {onTakeLoot && (
+        <button
+          type="button"
+          data-testid={`prop-take-loot-${prop.id}`}
+          onClick={() => onTakeLoot(prop.id)}
+          className="w-full px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs text-left transition-colors"
+        >
+          💎 Take Spoils
+          <span className="block font-normal text-[11px] text-slate-800">
+            Open the per-corpse loot card (Take / Take All + recipient select).
+          </span>
+        </button>
       )}
 
       {prop.hideSpot === true && (

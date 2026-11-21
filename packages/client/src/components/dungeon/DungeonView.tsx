@@ -674,6 +674,25 @@ export function DungeonView({
           setModalState('loot_inventory');
           return;
         }
+        // SRD-1307: corpses holding unclaimed drops open the per-corpse loot
+        // card; unsearched remains open the inspect card first (Search the
+        // Fallen), fully-looted remains stay inert.
+        if (clickedProp.kind === 'corpse') {
+          const authProp = getAuthState().props.find((p) => p.id === clickedProp.id);
+          if (!authProp?.lootTable) return;
+          if (authProp.searched !== true) {
+            setInspectedPropId(clickedProp.id);
+            return;
+          }
+          setActiveLoot({
+            sourcePropId: authProp.id,
+            sourceName: authProp.label ?? authProp.id.replace(/[-_]/g, ' '),
+            bundle: authProp.lootTable,
+          });
+          setInspectedPropId(null);
+          setModalState('loot_inventory');
+          return;
+        }
         if (clickedProp.kind !== 'stairs_down' && clickedProp.kind !== 'stairs_up') {
           setInspectedPropId(clickedProp.id);
           return;
@@ -1150,6 +1169,23 @@ export function DungeonView({
                   resultNote={inspectedPropListenNote}
                   onInteract={handleCardInteract}
                   onClose={() => setInspectedPropId(null)}
+                  onTakeLoot={
+                    visibleInspectedProp.kind === 'corpse' &&
+                    visibleInspectedProp.lootTable
+                      ? (propId) => {
+                          const target = getAuthState().props.find((p) => p.id === propId);
+                          if (!target?.lootTable) return;
+                          setActiveLoot({
+                            sourcePropId: target.id,
+                            sourceName:
+                              target.label ?? target.id.replace(/[-_]/g, ' '),
+                            bundle: target.lootTable,
+                          });
+                          setInspectedPropId(null);
+                          setModalState('loot_inventory');
+                        }
+                      : undefined
+                  }
                   onUseShrine={(propId) => {
                     const target = getAuthState().props.find((p) => p.id === propId);
                     if (target) {

@@ -184,6 +184,21 @@ export class PropRenderer {
         }
         break;
       }
+      case 'corpse': {
+        // SRD-1307: slain-foe remains. Skull mound with hollow eyes;
+        // unsearched corpses pulse faintly to invite the Search action.
+        g.circle(0, 6, 15).fill(0x1c1917);
+        g.ellipse(0, -2, 16, 11).fill(0xd6d3d1);
+        g.circle(0, -3, 9).fill(0xf5f5f4);
+        g.circle(-3.5, -4, 2.4).fill(0x020617);
+        g.circle(3.5, -4, 2.4).fill(0x020617);
+        g.rect(-2, 1, 4, 4).fill(0x020617);
+        g.rect(-14, 8, 28, 4).fill(0x78716c);
+        if (state === 'open') {
+          g.circle(0, -3, 12).stroke({ color: 0xa8a29e, width: 1.5, alpha: 0.6 });
+        }
+        break;
+      }
       case 'trap': {
         const armed = state !== 'disarmed' && state !== 'triggered';
         const color = armed ? 0xcbd5e1 : 0x64748b;

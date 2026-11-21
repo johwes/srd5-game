@@ -63,6 +63,7 @@ export const PROP_KINDS = [
   'stairs_down',
   'stairs_up',
   'furniture',
+  'corpse',
 ] as const;
 export const PropKindSchema = z.enum(PROP_KINDS);
 export type PropKind = z.infer<typeof PropKindSchema>;
@@ -80,6 +81,12 @@ export type PropState = z.infer<typeof PropStateSchema>;
 
 /**
  * Loot bundle specification for chests and drop containers (Spec 04 Section 2 & SRD-505).
+ *
+ * SRD-1307 provenance: `origin` tags where a bundle came from
+ * (`monster_drop` per-slay CR rolls, `war_award` overworld battle spoils,
+ * `cache` chest/prop loot) so award paths never stack on the same kill and
+ * the loot UI can attribute drops; `sourceName` names the fallen monster or
+ * container for display.
  */
 export const LootBundleSpecSchema = z.object({
   cp: z.number().int().nonnegative().optional(),
@@ -88,6 +95,8 @@ export const LootBundleSpecSchema = z.object({
   gp: z.number().int().nonnegative().optional(),
   pp: z.number().int().nonnegative().optional(),
   items: z.array(z.string()).optional(),
+  origin: z.string().min(1).optional(),
+  sourceName: z.string().min(1).optional(),
 });
 export type LootBundleSpec = z.infer<typeof LootBundleSpecSchema>;
 
@@ -152,6 +161,14 @@ export const InteractivePropSpecSchema = z.object({
   targetFloorId: z.string().optional(),
   targetSpawnPoint: GridPointSchema.optional(),
   shrineType: z.string().optional(),
+  /** SRD-1307: slain monster id this corpse prop holds loot for. */
+  monsterId: z.string().min(1).optional(),
+  /** SRD-1307: display name ("Remains of Goblin"). */
+  label: z.string().min(1).optional(),
+  /** SRD-1307: whether the fallen have been searched (skill bonus resolved). */
+  searched: z.boolean().optional(),
+  /** SRD-1307: Search-the-Fallen DC (10 + floor(CR)). Only for kind 'corpse'. */
+  searchDc: z.number().int().positive().optional(),
 });
 export type InteractivePropSpec = z.infer<typeof InteractivePropSpecSchema>;
 
