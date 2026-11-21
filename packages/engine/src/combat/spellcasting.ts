@@ -61,6 +61,11 @@ import {
   spendCombatantReaction,
   expendSpellSlot,
 } from './reactions.js';
+import {
+  casterCanBeUnderstoodByTarget,
+  combatantLanguages,
+  requiresSharedLanguage,
+} from '../language/index.js';
 
 let defaultCompendium: SrdCompendium | null = null;
 function getDefaultCompendium(): SrdCompendium {
@@ -422,6 +427,8 @@ export interface SpellCastResolutionResult {
   targetsMissed: string[];
   targetsSaved: string[];
   targetsFailedSave: string[];
+  /** Targets skipped by the Spec 11 §2.2 shared-language precondition. */
+  targetsUnaffectedByLanguage?: string[];
   totalDamageByTarget: Record<string, number>;
   totalHealingByTarget: Record<string, number>;
 }
@@ -556,6 +563,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
             targetsMissed: [],
             targetsSaved: [],
             targetsFailedSave: [],
+            targetsUnaffectedByLanguage: [],
             totalDamageByTarget: {},
             totalHealingByTarget: {},
           };
@@ -588,6 +596,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
           targetsMissed: [],
           targetsSaved: [],
           targetsFailedSave: [],
+          targetsUnaffectedByLanguage: [],
           totalDamageByTarget: {},
           totalHealingByTarget: {},
         };
@@ -1311,8 +1320,49 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     }
   }
 
+  // 5.5 Shared-language precondition (Spec 11 §2.2): language-dependent
+  // enchantments do not affect targets that cannot understand the caster.
+  // Checked before any save is rolled; the slot is still expended.
+  const targetsUnaffectedByLanguage: string[] = [];
+  let effectTargetIds = resolvedTargetIds;
+  if (requiresSharedLanguage(spell.id)) {
+    const casterBearer = {
+      languages: combatantLanguages(nextCaster),
+      activeEffects: nextCaster.activeEffects,
+      isDead: nextCaster.isDead,
+      currentHp: nextCaster.currentHp,
+      conditions: nextCaster.conditions,
+    };
+    const kept: string[] = [];
+    for (const tid of resolvedTargetIds) {
+      const target = combatantsMap[tid];
+      if (!target) continue;
+      const targetBearer = {
+        languages: combatantLanguages(target),
+        activeEffects: target.activeEffects,
+        isDead: target.isDead,
+        currentHp: target.currentHp,
+        conditions: target.conditions,
+      };
+      if (!casterCanBeUnderstoodByTarget(casterBearer, targetBearer)) {
+        targetsUnaffectedByLanguage.push(tid);
+        events.push({
+          type: 'SPELL_TARGET_UNAFFECTED',
+          actorId: nextCaster.id,
+          targetId: tid,
+          spellId: spell.id,
+          spellName: spell.name,
+          reason: 'no_shared_language',
+        });
+      } else {
+        kept.push(tid);
+      }
+    }
+    effectTargetIds = kept;
+  }
+
   // Iterate over resolved targets
-  for (const tid of resolvedTargetIds) {
+  for (const tid of effectTargetIds) {
     const target = combatantsMap[tid];
     if (target && !target.isDead && isSummonTargetable(target)) {
       executeSteps(scaledEffects, target);
@@ -1419,6 +1469,7 @@ export function executeSpellCast(options: ExecuteSpellCastOptions): SpellCastRes
     targetsMissed,
     targetsSaved,
     targetsFailedSave,
+    targetsUnaffectedByLanguage,
     totalDamageByTarget,
     totalHealingByTarget,
   };

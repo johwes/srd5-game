@@ -603,6 +603,15 @@ export type CombatEvent =
       position: GridPoint;
       expiryRound: number;
     }
+  /** A target cannot understand the caster, so a language-dependent enchantment does not affect it (Spec 11 §2.2). */
+  | {
+      type: 'SPELL_TARGET_UNAFFECTED';
+      actorId: string;
+      targetId: string;
+      spellId: string;
+      spellName: string;
+      reason: 'no_shared_language';
+    }
   /** A summon was removed from play (duration, concentration, dismissal, leash, damage cap or death). */
   | {
       type: 'SUMMON_EXPIRED';
