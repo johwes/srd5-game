@@ -868,19 +868,24 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
     // Must be a carved passable tile and NOT already inside a room
     if (!cell || cell.roomId !== undefined) return;
 
-    const left = cellMap.has(`${x - 1},${y}`);
-    const right = cellMap.has(`${x + 1},${y}`);
-    const top = cellMap.has(`${x},${y - 1}`);
-    const bottom = cellMap.has(`${x},${y + 1}`);
+    const left = cellMap.get(`${x - 1},${y}`);
+    const right = cellMap.get(`${x + 1},${y}`);
+    const top = cellMap.get(`${x},${y - 1}`);
+    const bottom = cellMap.get(`${x},${y + 1}`);
 
-    const isVerticalPassage = !left && !right && top && bottom;
-    const isHorizontalPassage = !top && !bottom && left && right;
+    // SRD-1701: only true 1-wide thresholds qualify. A corridor merely
+    // grazing past a room has extra carved neighbors (room floor on the
+    // perpendicular side), so it is never strict — this rejects the
+    // wall-embedded door rows and doors with no room opening behind them.
+    const isVerticalPassage = !left && !right && !!top && !!bottom;
+    const isHorizontalPassage = !top && !bottom && !!left && !!right;
+    if (!isVerticalPassage && !isHorizontalPassage) return;
 
     if (!doorwayCandidates.some((d) => d.pt.x === x && d.pt.y === y)) {
       doorwayCandidates.push({
         pt: { x, y },
         intoRoomId,
-        isStrictThreshold: isVerticalPassage || isHorizontalPassage,
+        isStrictThreshold: true,
       });
     }
   }
@@ -913,6 +918,18 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
     `${stairsDown.x},${stairsDown.y}`,
   ]);
 
+  // SRD-1701: door adjacency suppression set (declared before both passes).
+  // Once any door lands, Chebyshev-neighboring candidates are skipped, so
+  // locked gates and standard doors can never sit side by side.
+  const doorBlocked = new Set<string>();
+  const suppressDoorNeighbors = (x: number, y: number) => {
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        doorBlocked.add(`${x + dx},${y + dy}`);
+      }
+    }
+  };
+
   // First pass: if stairs locked, place locked gate at entrance to descent room
   if (isStairsLocked) {
     const descentCandidates = doorwayCandidates.filter(
@@ -935,15 +952,21 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
         lockDc: Math.min(20, 12 + config.depth),
       });
       propOccupied.add(`${chosen.pt.x},${chosen.pt.y}`);
+      suppressDoorNeighbors(chosen.pt.x, chosen.pt.y);
       lockedDoorPlaced = true;
     }
   }
 
-  // Second pass: standard doors
+  // Second pass: standard doors. SRD-1701: placement-level adjacency
+  // suppression — once a door lands, Chebyshev-neighboring candidates are
+  // skipped outright, so L-elbow kisses and double-wide carves can never
+  // yield adjacent door pairs. Suppression lives in a dedicated set so the
+  // shared propOccupied map (traps/chests/spawns) keeps its exact-cell
+  // semantics.
   let doorCounter = 0;
   for (const dw of doorwayCandidates) {
     const key = `${dw.pt.x},${dw.pt.y}`;
-    if (propOccupied.has(key)) continue;
+    if (propOccupied.has(key) || doorBlocked.has(key)) continue;
 
     if (nextFloat() < config.doorProbability) {
       props.push({
@@ -956,6 +979,7 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
         blocksSight: true,
       });
       propOccupied.add(key);
+      suppressDoorNeighbors(dw.pt.x, dw.pt.y);
     }
   }
 
@@ -1278,8 +1302,17 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
           // vault gate so the room is always actually locked).
           const vaultEntries = doorwayCandidates.filter((c) => c.intoRoomId === specialRoom.id);
           const freeEntry =
-            vaultEntries.find((c) => !propOccupied.has(`${c.pt.x},${c.pt.y}`) && c.isStrictThreshold) ??
-            vaultEntries.find((c) => !propOccupied.has(`${c.pt.x},${c.pt.y}`));
+            vaultEntries.find(
+              (c) =>
+                !propOccupied.has(`${c.pt.x},${c.pt.y}`) &&
+                !doorBlocked.has(`${c.pt.x},${c.pt.y}`) &&
+                c.isStrictThreshold,
+            ) ??
+            vaultEntries.find(
+              (c) =>
+                !propOccupied.has(`${c.pt.x},${c.pt.y}`) &&
+                !doorBlocked.has(`${c.pt.x},${c.pt.y}`),
+            );
           if (freeEntry) {
             props.push({
               id: `vault_door_${config.depth}`,
@@ -1292,6 +1325,7 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
               lockDc,
             });
             propOccupied.add(`${freeEntry.pt.x},${freeEntry.pt.y}`);
+            suppressDoorNeighbors(freeEntry.pt.x, freeEntry.pt.y);
           } else {
             const existingDoor = props.find(
               (p) =>

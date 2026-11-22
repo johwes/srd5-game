@@ -415,3 +415,24 @@ Player feedback (Nov 2026): `C`/`I` opened the legacy sheet drawer instead of th
 - [x] **SRD-1602**: No persistent full-width top bar in exploration: compact location chip (campaign/floor/room) top-left, icon system cluster (Menu/Save/Exit) top-right, run pills folded top-center when active; portraits form a left vertical rail (portrait, name, HP/AC, lead crown, status, inspect); Stealth/Formation/Search/Rest/Inventory move to a bottom-center action bar; all existing testids and E2E flows unchanged (`dungeon-exploration-hud` unit tests + full E2E green).
 - [x] **SRD-1603**: Combat already met the goal via SRD-607/608 (full-bleed canvas, docked hotbar, initiative pill, left floating `PartyPortraits` panel — no bottom portrait row); verified at 1280×800 with zero console errors by the existing combat E2E legs (realm-war playtest, 1506 gate).
 - [x] **SRD-1604**: `epic16-hud-parity` E2E proves the `C`/`I` flow and the new HUD layout (screenshots archived per surface: `1604-hud-exploration`, `1604-character-view-via-hotkey`); side-by-side review vs `docs/reference/bg3/` (Character view vs `bg3-character-sheet-xorda`, strip vs `bg3-party-inventory`) records no missing panels, clipped tooltips, or text-only fallbacks; full monorepo gate (`typecheck` + `test` + `build` + `test:e2e` 11/11 incl. the new spec) green. On this sign-off the Epic 15 visual parity gate is checked:
+
+---
+
+## Epic 17: Combat Follow-ups — Bless Reliability, Door Placement, Weapon Sets
+
+Player feedback (Nov 2026, captures in `docs/reference/feedback/`): Bless cast with 3 targets left only 1 buffed; dungeon doors spawn adjacent or embedded in wall runs; BG3-style dual weapon sets requested (melee/ranged with free swap).
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-1701** | `[x]` | Doorway placement constraints: strict-threshold-only candidates, placement-level adjacency suppression (standard, locked, vault), seed-sweep invariant tests | `@srd5/engine` | SRD-508 |
+| **SRD-1702** | `[x]` | Bless reliability: AI `bless-buff` guard + self-dedupe fix, 3-target fan-out + concentration-overwrite engine tests, explicit picked/max commit counter | `@srd5/engine`, `@srd5/client` | SRD-306 |
+| **SRD-1703** | `[ ]` | Weapon sets engine: `activeWeaponSet` discriminator + per-set slots, derivation filters to active set, free `SWAP_WEAPON_SET` command (BG3: swapping is free), save/pregen migration | `@srd5/data`, `@srd5/engine` | SRD-204 |
+| **SRD-1704** | `[ ]` | Weapon sets client: set toggle + per-set paperdoll/weapon cards in InventoryView/sheet drawer, hotbar stays passive (derivation-filtered), builder + e2e coverage | `@srd5/client` | SRD-1703 |
+| **SRD-1705** | `[ ]` | Weapon sets verification gate: headless swap/derivation tests, E2E equip-set-swap flow at 1280×800, spec amendment lifting the one-set limitation | `@srd5/engine`, `@srd5/client` | SRD-1704 |
+
+### Epic 17 Acceptance Criteria Details
+- [x] **SRD-1701**: No two doors Chebyshev-adjacent and every door on a strict 1-wide threshold cell across a 5-depth × 20-seed sweep; locked/vault gates suppress neighboring standards; existing connectivity/determinism suites stay green.
+- [x] **SRD-1702**: AI priest blesses 3 distinct allies once (guard keys on `bless-buff`, self excluded/deduped); engine tests prove single-cast 3-target fan-out and document concentration overwrite on re-cast; commit bar shows explicit `n/3 picked` plus picked names before Confirm.
+- [ ] **SRD-1703**: Two weapon values per weapon slot + active-set discriminator; `weaponAttacks` derives from the active set only (hotbar/reactions/AI unchanged); swapping is free out of turn cost; old single-set saves/pregens migrate with the set defaulting sensibly.
+- [ ] **SRD-1704**: Paperdoll and weapon cards render the active set with a set toggle (melee/ranged); equip/unequip/use flows operate on the visible set; builder auto-equip fills both sets; no testid regressions in existing inventory E2E.
+- [ ] **SRD-1705**: Swap flow proven headless (equip set A, swap, attacks switch; swap back) and in browser E2E at 1280×800; Spec 14 § limitation note amended.

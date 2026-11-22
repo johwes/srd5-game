@@ -359,13 +359,19 @@ function planCleric(
   }
 
   // Bless early (round 1, allies unblessed, slot free).
+  // NOTE: the applied effect id is 'bless-buff' (spell-overlays), not 'bless' —
+  // guard on the real id or the priest re-casts every round, breaking its own
+  // concentration and stripping the war band's buffs.
   if (
     state.round <= 1 &&
     knowsSpell(actor, 'bless') &&
     slotAvailable(actor, 1) &&
-    !allies.some((a) => a.activeEffects?.some((e) => e.effectId === 'bless'))
+    !allies.some((a) => a.activeEffects?.some((e) => e.effectId === 'bless-buff'))
   ) {
-    const blessTargets = [actor.id, ...allies.slice(0, 2).map((a) => a.id)];
+    // `allies` includes the actor itself: exclude + dedupe so the cast fans
+    // out to 3 distinct targets instead of double-counting the priest.
+    const others = allies.filter((a) => a.id !== actor.id).slice(0, 2);
+    const blessTargets = [...new Set([actor.id, ...others.map((a) => a.id)])];
     commands.push({
       type: 'DECLARE_CAST_SPELL',
       actorId: actor.id,

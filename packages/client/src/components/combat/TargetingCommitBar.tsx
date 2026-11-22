@@ -125,8 +125,9 @@ export function TargetingCommitBar({
           <span
             data-testid="targeting-counter"
             className="px-2 py-0.5 rounded-full bg-purple-950 border border-purple-500 text-purple-200 font-mono font-bold shrink-0"
+            title={`${pendingTarget.picked.length} of ${pendingTarget.maxTargets} targets picked`}
           >
-            🪄 ×{pendingTarget.maxTargets - pendingTarget.picked.length} left
+            🪄 {pendingTarget.picked.length}/{pendingTarget.maxTargets} picked
           </span>
         )}
         {pendingTarget.kind === 'aoe' && (

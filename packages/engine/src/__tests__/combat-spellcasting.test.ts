@@ -527,6 +527,101 @@ describe('SRD-306: Concentration Mechanics', () => {
   });
 });
 
+describe('SRD-306: Bless multi-target fan-out', () => {
+  function createBlessEncounter() {
+    const wizardSheet = computeDerivedCharacter(requirePregenCharacter('pregen-wizard'), compendium);
+    const fighterSheet = computeDerivedCharacter(requirePregenCharacter('pregen-fighter'), compendium);
+    const rogueSheet = computeDerivedCharacter(requirePregenCharacter('pregen-rogue'), compendium);
+    const wizard = createCharacterCombatant(wizardSheet, { x: 1, y: 1 });
+    const fighter = createCharacterCombatant(fighterSheet, { x: 2, y: 1 });
+    const rogue = createCharacterCombatant(rogueSheet, { x: 3, y: 1 });
+
+    const startRes = startCombatEncounter({
+      encounterId: 'test-bless-encounter',
+      combatants: [wizard, fighter, rogue],
+      rngState: 12345,
+    });
+    const turnBudget = createTurnBudget(wizard, false);
+    return {
+      ...startRes.state,
+      activeCombatantId: wizard.id,
+      turnBudget,
+      combatants: {
+        [wizard.id]: wizard,
+        [fighter.id]: fighter,
+        [rogue.id]: rogue,
+      },
+    };
+  }
+
+  const BLESSED_IDS = ['pregen-wizard', 'pregen-fighter', 'pregen-rogue'];
+
+  it('applies bless-buff to all three targets in a single cast', () => {
+    const state = createBlessEncounter();
+    const bless = compendium.requireSpell('bless');
+    const res = executeSpellCast({
+      state,
+      casterId: 'pregen-wizard',
+      spell: bless,
+      targetIds: BLESSED_IDS,
+    });
+
+    for (const id of BLESSED_IDS) {
+      expect(
+        res.state.combatants[id]!.activeEffects?.some((e) => e.effectId === 'bless-buff'),
+      ).toBe(true);
+    }
+    expect(res.state.combatants['pregen-wizard']!.concentratingOn?.targetEntityIds).toHaveLength(3);
+  });
+
+  it('re-casting bless on a single target strips the other two (concentration overwrite)', () => {
+    const state = createBlessEncounter();
+    const bless = compendium.requireSpell('bless');
+    const res1 = executeSpellCast({
+      state,
+      casterId: 'pregen-wizard',
+      spell: bless,
+      targetIds: BLESSED_IDS,
+    });
+    for (const id of BLESSED_IDS) {
+      expect(
+        res1.state.combatants[id]!.activeEffects?.some((e) => e.effectId === 'bless-buff'),
+      ).toBe(true);
+    }
+
+    // Next round, fresh budget, re-cast on the caster alone: the new cast
+    // breaks concentration on the first, so only one buff survives.
+    const caster1 = res1.state.combatants['pregen-wizard']!;
+    const round2State = {
+      ...res1.state,
+      turnBudget: createTurnBudget(caster1, false),
+      combatants: { ...res1.state.combatants },
+    };
+    const res2 = executeSpellCast({
+      state: round2State,
+      casterId: 'pregen-wizard',
+      spell: bless,
+      targetIds: ['pregen-wizard'],
+    });
+
+    expect(
+      res2.events.some(
+        (e) => e.type === 'CONCENTRATION_ENDED' && e.spellId === 'bless' && e.reason === 'new_spell',
+      ),
+    ).toBe(true);
+    expect(
+      res2.state.combatants['pregen-wizard']!.activeEffects?.some(
+        (e) => e.effectId === 'bless-buff',
+      ),
+    ).toBe(true);
+    for (const id of ['pregen-fighter', 'pregen-rogue']) {
+      expect(
+        res2.state.combatants[id]!.activeEffects?.some((e) => e.effectId === 'bless-buff'),
+      ).toBe(false);
+    }
+  });
+});
+
 describe('SRD-306: Healing & Condition Application', () => {
   it('restores HP and revives unconscious targets from 0 HP', () => {
     const cureWounds = compendium.requireSpell('cure-wounds');

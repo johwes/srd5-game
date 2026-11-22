@@ -282,6 +282,67 @@ describe('SRD-508: Procedural DungeonGenerator & Guaranteed BFS Connectivity', (
     });
   });
 
+  describe('SRD-1701: Doorway placement invariants (no adjacent / wall-embedded doors)', () => {
+    it('never places Chebyshev-adjacent doors across a seed sweep', () => {
+      for (let depth = 1; depth <= 5; depth++) {
+        for (let seed = 0; seed < 20; seed++) {
+          const generated = generateDungeonFloor({
+            depth,
+            seed: seed * 7919 + depth,
+            width: 40,
+            height: 40,
+            targetRoomCount: 6,
+          });
+          const doors = generated.floor.props.filter((p) => p.kind === 'door');
+          for (let i = 0; i < doors.length; i++) {
+            for (let j = i + 1; j < doors.length; j++) {
+              const cheb = Math.max(
+                Math.abs(doors[i]!.x - doors[j]!.x),
+                Math.abs(doors[i]!.y - doors[j]!.y),
+              );
+              expect(
+                cheb,
+                `depth ${depth} seed ${seed}: doors ${doors[i]!.id} and ${doors[j]!.id} adjacent`,
+              ).toBeGreaterThan(1);
+            }
+          }
+        }
+      }
+    });
+
+    it('places every door on a strict 1-wide threshold cell', () => {
+      for (let depth = 1; depth <= 5; depth++) {
+        for (let seed = 0; seed < 20; seed++) {
+          const generated = generateDungeonFloor({
+            depth,
+            seed: seed * 7919 + depth,
+            width: 40,
+            height: 40,
+            targetRoomCount: 6,
+          });
+          const carved = new Set(
+            generated.floor.cells
+              .filter((c) => c.terrain !== 'wall_solid')
+              .map((c) => `${c.x},${c.y}`),
+          );
+          const doors = generated.floor.props.filter((p) => p.kind === 'door');
+          for (const door of doors) {
+            const left = carved.has(`${door.x - 1},${door.y}`);
+            const right = carved.has(`${door.x + 1},${door.y}`);
+            const top = carved.has(`${door.x},${door.y - 1}`);
+            const bottom = carved.has(`${door.x},${door.y + 1}`);
+            const strict =
+              (!left && !right && top && bottom) || (!top && !bottom && left && right);
+            expect(
+              strict,
+              `depth ${depth} seed ${seed}: door ${door.id} at (${door.x},${door.y}) is not a strict threshold`,
+            ).toBe(true);
+          }
+        }
+      }
+    });
+  });
+
   describe('Biome Theming, Props & Encounters', () => {
     it('populates themed monsters, hazards, chests, and traps for Sunken Tombs', () => {
       const generated = generateDungeonFloor({
