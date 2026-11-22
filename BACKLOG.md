@@ -1,6 +1,6 @@
 # SRD 5.1 Tactical Dungeon Crawler — Implementation Backlog
 
-This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md), [09](file:///home/jwesterl/ai/srd5-game/docs/spec/09-content-library.md), [10](file:///home/jwesterl/ai/srd5-game/docs/spec/10-realm-war-campaign.md), [11](file:///home/jwesterl/ai/srd5-game/docs/spec/11-tabletop-fidelity.md), [12](file:///home/jwesterl/ai/srd5-game/docs/spec/12-graphical-inventory.md), [13](file:///home/jwesterl/ai/srd5-game/docs/spec/13-run-variety.md)) into granular, dependency-ordered engineering tickets.
+This backlog breaks down the [Master Specification](file:///home/jwesterl/ai/srd5-game/SPEC.md) and modular specs ([01](file:///home/jwesterl/ai/srd5-game/docs/spec/01-srd-data-schema.md), [02](file:///home/jwesterl/ai/srd5-game/docs/spec/02-character-builder.md), [03](file:///home/jwesterl/ai/srd5-game/docs/spec/03-combat-and-rules-engine.md), [04](file:///home/jwesterl/ai/srd5-game/docs/spec/04-dungeon-and-ai.md), [05](file:///home/jwesterl/ai/srd5-game/docs/spec/05-multiplayer-and-ui.md), [06](file:///home/jwesterl/ai/srd5-game/docs/spec/06-game-modes-and-progression.md), [07](file:///home/jwesterl/ai/srd5-game/docs/spec/07-main-menu-and-campaign-launcher.md), [08](file:///home/jwesterl/ai/srd5-game/docs/spec/08-summoned-creatures.md), [09](file:///home/jwesterl/ai/srd5-game/docs/spec/09-content-library.md), [10](file:///home/jwesterl/ai/srd5-game/docs/spec/10-realm-war-campaign.md), [11](file:///home/jwesterl/ai/srd5-game/docs/spec/11-tabletop-fidelity.md), [12](file:///home/jwesterl/ai/srd5-game/docs/spec/12-graphical-inventory.md), [13](file:///home/jwesterl/ai/srd5-game/docs/spec/13-run-variety.md), [14](file:///home/jwesterl/ai/srd5-game/docs/spec/14-party-inventory.md)) into granular, dependency-ordered engineering tickets.
 
 ## Status Legend
 - `[ ]` Todo
@@ -31,6 +31,8 @@ flowchart LR
     E5 --> E13["Epic 13: Graphical Inventory —\nBG3-Style Equipment"]
     E12 --> E13
     E5 --> E14["Epic 14: Run Variety —\nEndless Uniqueness"]
+    E13 --> E15["Epic 15: Character & Party —\nBG3-Style Inventory"]
+    E5 --> E15
 ```
 
 ---
@@ -360,3 +362,26 @@ Measured baseline (Nov 2026): 20 depth-1 seeds yield 39 distinct encounter compo
 - [x] **SRD-1404**: ≤1 special room per floor (never depth 1); vault opens to a magic-biased hoard; cursed shrine costs then boons (decline free); nest listenable + bonus XP; E2E vault smoke clean.
 - [x] **SRD-1405**: Retirement offered exactly to living heroes ≥ L3 at run conclusion; roster caps at 8 with confirm-to-release; veterans hireable in campfire assembly at level-scaled gp and deploy as ordinary members; persistence survives reloads.
 - [x] **SRD-1406**: Gate asserts measured variety (not vibes) + 0 invariant violations on world-option seeds + E2E smoke green.
+---
+
+## Epic 15: Character & Party Inventory — BG3-Style Flow
+**Spec Reference**: [14-party-inventory.md](file:///home/jwesterl/ai/srd5-game/docs/spec/14-party-inventory.md)
+
+Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-sheet-xorda.png`, `bg3-party-inventory.png`, `bg3-character-skills.png`, `bg3-character-attributes.png`, `bg3-character-sheet-astarion.png`, `bg3-character-sheet-laezel.png`). Goal: the Epic 13 mechanics (grid, doll, rarity, tooltips, loot box, gold) presented in the BG3 flow — a full-screen Character view (stats rail · doll + equipment · backpack) and a Party strip (all heroes side by side, per-hero + total gold, hero-to-hero moves). Same answers at a glance, same muscle memory, none of Larian's art: our doll is the token sprite on a class-tinted backdrop, icons stay RPG Awesome + vendored game-icons. No new engine commands expected; equip/move/use/attune/drop/split/sell all exist. Sheet drawer keeps quick-inspect; its Equipment tab links out once SRD-1501 lands.
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-1501** | `[ ]` | Character view shell (3-pane: stats rail · doll + equipment · backpack): fullscreen modal, hero switcher, XP + party-gold header, Esc close; reuses `InventoryView` grid + sheet doll slots; unit + E2E at 1280×800 | `@srd5/client` | SRD-1305 |
+| **SRD-1502** | `[ ]` | Party strip mode: all active heroes side by side (doll card + condensed grid + weight bar each), per-hero gold + party total, drag-or-click hero-to-hero moves via `TRANSFER_ITEM`; engine-state re-render proof | `@srd5/client`, `@srd5/engine` | SRD-1501 |
+| **SRD-1503** | `[ ]` | Doll depth: melee/ranged weapon cards (icon, to-hit, damage from derived profiles) + weight capacity bar (STR × 15, display only) + click-to-unequip; visual validation screenshots | `@srd5/client` | SRD-1501 |
+| **SRD-1504** | `[ ]` | Flow parity: double-click equip/use, right-click context menu (Equip, Use, Send to hero, Split, Drop, Sell-info/Identify), sort control (Name/Type/Value/Weight); Deck focus+Enter parity for every flow | `@srd5/client` | SRD-1501, SRD-1502 |
+| **SRD-1505** | `[ ]` | Stats rail completion: Build/Skills/Attributes tabs (conditions, resistances, attributes, proficiencies, proficiency stars); presentation over sheet-drawer data, no new mechanics | `@srd5/client` | SRD-1501 |
+| **SRD-1506** | `[ ]` | Flow verification gate: E2E kill → loot box Take → Character view equip → party-strip move at 1280×800 with zero console errors + zero overflow; visual screenshots per surface | `@srd5/client` | SRD-1502, SRD-1503, SRD-1504, SRD-1505 |
+
+### Epic 15 Acceptance Criteria Details
+- [ ] **SRD-1501**: Character view opens from HUD/roster/loot, switches heroes, shows stats, doll, grid, gold; closes on Esc; drawer still works.
+- [ ] **SRD-1502**: Strip shows all active heroes with correct per-hero and total gold; moving an item updates both heroes' grids from engine state.
+- [ ] **SRD-1503**: Weapon cards match derived to-hit/damage; weight bar matches STR×15; Unequip works from the doll.
+- [ ] **SRD-1504**: Double-click, right-click menu, and sort all function by mouse, keyboard, and touch; no hover-only information.
+- [ ] **SRD-1505**: Skills/attributes/conditions/resistances render from sheet data; no new engine mechanics.
+- [ ] **SRD-1506**: Full flow E2E green at 1280×800 with zero console errors; screenshots archived per surface.
