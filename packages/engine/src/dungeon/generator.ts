@@ -1285,17 +1285,35 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
       const specialRoll = rollSpecialRoomForFloor(rngState, config.depth, eligibleRoomIdx.length);
       rngState = specialRoll.nextState;
       if (specialRoll.kind !== undefined) {
-        const roomIdx = eligibleRoomIdx[specialRoll.eligibleIndex % eligibleRoomIdx.length]!;
-        const specialRoom = internalRooms[roomIdx]!;
-        specialRoom.name = specialRoomDisplayName(specialRoll.kind);
-        specialRoomMarks.set(specialRoom.id, specialRoll.kind);
+        // SRD-1701: a vault is only vault-worthy if it has a lockable
+        // threshold. Grazed rooms (corridor running alongside the wall with
+        // direct room/corridor adjacency and no 1-wide threshold cell) can
+        // never receive a vault gate, so re-pick among thresholded rooms
+        // using the same roll (no extra RNG); if no room qualifies, skip
+        // the special room for this floor.
+        let resolvedKind: SpecialRoomKind | undefined = specialRoll.kind;
+        let roomIdx = eligibleRoomIdx[specialRoll.eligibleIndex % eligibleRoomIdx.length]!;
+        if (resolvedKind === 'vault') {
+          const withEntry = eligibleRoomIdx.filter((idx) =>
+            doorwayCandidates.some((c) => c.intoRoomId === internalRooms[idx]!.id),
+          );
+          if (withEntry.length === 0) {
+            resolvedKind = undefined;
+          } else {
+            roomIdx = withEntry[specialRoll.eligibleIndex % withEntry.length]!;
+          }
+        }
+        if (resolvedKind !== undefined) {
+          const specialRoom = internalRooms[roomIdx]!;
+          specialRoom.name = specialRoomDisplayName(resolvedKind);
+          specialRoomMarks.set(specialRoom.id, resolvedKind);
 
         const encounterSpawnCells = new Set<string>();
         for (const e of encounters) {
           for (const m of e.monsters) encounterSpawnCells.add(`${m.spawnX},${m.spawnY}`);
         }
 
-        if (specialRoll.kind === 'vault') {
+        if (resolvedKind === 'vault') {
           const lockDc = vaultLockDcForDepth(config.depth);
           // Lock the threshold into the vault room (prefer a free strict
           // threshold; otherwise convert an existing closed door into the
@@ -1372,7 +1390,7 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
             });
             propOccupied.add(`${chestSpot.x},${chestSpot.y}`);
           }
-        } else if (specialRoll.kind === 'cursed_shrine') {
+        } else if (resolvedKind === 'cursed_shrine') {
           const centerKey = `${specialRoom.center.x},${specialRoom.center.y}`;
           const centerFree = !propOccupied.has(centerKey) && !encounterSpawnCells.has(centerKey);
           const shrineSpot = centerFree
@@ -1433,6 +1451,7 @@ export function generateDungeonFloor(rawConfig: ProceduralFloorConfigInput): Gen
               });
             }
           }
+        }
         }
       }
     }
