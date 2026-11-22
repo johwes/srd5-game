@@ -3,3 +3,4 @@ export * from './dungeonSavePersistence.js';
 export * from './roguelitePersistence.js';
 export * from './settingsPersistence.js';
 export * from './veteranPersistence.js';
+export * from './reactionPolicies.js';

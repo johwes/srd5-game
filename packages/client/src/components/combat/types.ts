@@ -110,6 +110,10 @@ export interface ReactionInterruptModalProps {
   deadlineMs?: number | null;
   /** When true the server owns timeout resolution; expiry only stops the UI clock. */
   serverAuthoritativeTimeout?: boolean;
+  /** SRD-1509: active Ask/Auto/Off policy per reaction key (defaults to Ask). */
+  policies?: Record<string, import('../../persistence/reactionPolicies.js').ReactionPolicyMode>;
+  /** SRD-1509: flip a reaction's policy mid-fight (persisted per character). */
+  onPolicyChange?: (reactionKey: string, mode: import('../../persistence/reactionPolicies.js').ReactionPolicyMode) => void;
   className?: string;
 }
 

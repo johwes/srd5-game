@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import type { AvailableReaction } from '@srd5/engine';
 import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
+import {
+  normalizeReactionPolicyKey,
+  type ReactionPolicyMode,
+} from '../../persistence/reactionPolicies.js';
 import type { ReactionInterruptModalProps } from './types.js';
 
 export function ReactionInterruptModal({
@@ -10,6 +14,8 @@ export function ReactionInterruptModal({
   isOpen = true,
   deadlineMs = null,
   serverAuthoritativeTimeout = false,
+  policies,
+  onPolicyChange,
   className = '',
 }: ReactionInterruptModalProps) {
   const [selectedSlotLevels, setSelectedSlotLevels] = useState<Record<string, number>>({});
@@ -216,6 +222,9 @@ export function ReactionInterruptModal({
 
             {prompt.availableReactions.map((reaction, index) => {
               const numKey = index + 1;
+              const policyKey = normalizeReactionPolicyKey(reaction.id);
+              const activePolicy: ReactionPolicyMode =
+                policies?.[policyKey] ?? policies?.[reaction.id] ?? 'ask';
               return (
                 <div
                   key={reaction.id}
@@ -246,6 +255,40 @@ export function ReactionInterruptModal({
                     <p className="text-xs text-slate-300 leading-normal pl-7">
                       {reaction.description}
                     </p>
+                  )}
+
+                  {/* SRD-1509: active policy badge + mid-fight flip (client-side only). */}
+                  {(policies || onPolicyChange) && (
+                    <div
+                      data-testid={`reaction-policy-row-${reaction.id}`}
+                      className="pl-7 flex items-center gap-1.5 text-[11px]"
+                    >
+                      <span className="text-slate-500">Policy:</span>
+                      <span
+                        data-testid={`reaction-policy-active-${reaction.id}`}
+                        className="px-1.5 py-px rounded bg-slate-800 text-slate-200 font-mono uppercase"
+                      >
+                        {activePolicy}
+                      </span>
+                      {onPolicyChange &&
+                        (['ask', 'auto', 'off'] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            data-testid={`reaction-policy-set-${reaction.id}-${mode}`}
+                            aria-pressed={activePolicy === mode}
+                            aria-label={`${reaction.label} policy: ${mode}`}
+                            onClick={() => onPolicyChange(policyKey, mode)}
+                            className={`px-1.5 py-px rounded font-bold uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
+                              activePolicy === mode
+                                ? 'bg-amber-500 text-slate-950'
+                                : 'bg-slate-800 text-slate-300 hover:text-white'
+                            }`}
+                          >
+                            {mode}
+                          </button>
+                        ))}
+                    </div>
                   )}
 
                   <div className="pl-7 pt-1 flex items-center justify-between">

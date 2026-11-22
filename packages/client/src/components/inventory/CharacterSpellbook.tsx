@@ -3,6 +3,7 @@ import type { CharacterBuildState, SpellData, SrdCompendium } from '@srd5/data';
 import type { PlayerViewCombatant } from '@srd5/transport';
 import { computeDerivedCharacter, type DerivedCharacterSheet } from '@srd5/engine';
 import { SpellCastPicker } from '../combat/SpellCastPicker.js';
+import { CharacterReactionsTab } from './CharacterReactionsTab.js';
 import { assetRegistry } from '../../canvas/assets/AssetRegistry.js';
 import {
   formatAbilityAbbrev,
@@ -21,7 +22,7 @@ export interface CharacterSpellbookProps {
   testIdPrefix?: string;
 }
 
-type SpellbookTabId = string; // classId or 'common'
+type SpellbookTabId = string; // classId or 'common' or 'reactions'
 
 const ROMAN_LEVELS: Record<number, string> = {
   1: 'I',
@@ -125,14 +126,41 @@ export function CharacterSpellbook({
   const needle = search.trim().toLowerCase();
 
   if (!sc.isSpellcaster || classTabs.length === 0) {
+    // SRD-1509: non-casters still own reactions (Opportunity Attack at
+    // minimum), so keep the Reactions tab reachable instead of a dead end.
+    // The `spellbook-empty` marker stays for the spell-empty assertion path.
+    const showReactions = effectiveTab === 'reactions';
     return (
       <div data-testid={prefix} className="space-y-2">
         <div
-          data-testid={`${prefix}-empty`}
-          className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-center text-sm text-slate-400"
+          data-testid={`${prefix}-tabs`}
+          role="tablist"
+          aria-label="Spellbook class tabs"
+          className="flex flex-wrap gap-1.5"
         >
-          This character does not currently have Spellcasting unlocked.
+          <button
+            type="button"
+            role="tab"
+            aria-selected={showReactions}
+            data-testid={`${prefix}-tab-reactions`}
+            onClick={() => setActiveTab(showReactions ? 'common' : 'reactions')}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+              showReactions ? 'bg-purple-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white'
+            }`}
+          >
+            Reactions
+          </button>
         </div>
+        {showReactions ? (
+          <CharacterReactionsTab hero={hero} compendium={compendium} derived={derived} testIdPrefix={testIdPrefix} />
+        ) : (
+          <div
+            data-testid={`${prefix}-empty`}
+            className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-center text-sm text-slate-400"
+          >
+            This character does not currently have Spellcasting unlocked.
+          </div>
+        )}
       </div>
     );
   }
@@ -210,9 +238,25 @@ export function CharacterSpellbook({
         >
           Common
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveTab === 'reactions'}
+          data-testid={`${prefix}-tab-reactions`}
+          onClick={() => setActiveTab('reactions')}
+          className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
+            effectiveTab === 'reactions'
+              ? 'bg-amber-500 text-slate-950'
+              : 'bg-slate-800 text-slate-300 hover:text-white'
+          }`}
+        >
+          Reactions
+        </button>
       </div>
 
-      {effectiveTab === 'common' ? (
+      {effectiveTab === 'reactions' ? (
+        <CharacterReactionsTab hero={hero} compendium={compendium} derived={derived} testIdPrefix={testIdPrefix} />
+      ) : effectiveTab === 'common' ? (
         <div data-testid={`${prefix}-common`} className="space-y-2">
           <p className="text-[11px] text-slate-500">
             Non-spell actions — weapon attacks and class resources. The hotbar stays the combat

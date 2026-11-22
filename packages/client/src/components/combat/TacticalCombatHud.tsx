@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { defaultCompendium } from '@srd5/data';
 import type { DiceRollRecord } from '@srd5/engine';
 import { ActionHotbar } from './ActionHotbar.js';
@@ -9,6 +9,12 @@ import { SelectedEnemyCard } from './SelectedEnemyCard.js';
 import { PartyPortraits } from './PartyPortraits.js';
 import { GameIcon } from '../../canvas/assets/index.js';
 import { ReactionInterruptModal } from './ReactionInterruptModal.js';
+import {
+  decideReactionPromptAction,
+  getReactionPoliciesForCharacterSync,
+  setReactionPolicySync,
+  type ReactionPolicyMode,
+} from '../../persistence/reactionPolicies.js';
 import { playerControlsViewEntity } from '../../utils/summonPresentation.js';
 import type { TacticalCombatHudProps } from './types.js';
 
@@ -127,6 +133,48 @@ export function TacticalCombatHud({
       viewState.party[pendingReactionPrompt.reactorEntityId] ??
       null
     : null;
+
+  // SRD-1509: client-side policy over the prompt flow. The sync mirror keeps
+  // this render-cheap; flips bump `policyTick` so the modal badge updates
+  // mid-fight without waiting on IndexedDB.
+  const [policyTick, setPolicyTick] = useState(0);
+  void policyTick;
+  const autoResolvedPromptRef = useRef<string | null>(null);
+  const reactorPolicyId = pendingReactionPrompt?.reactorEntityId ?? null;
+  const reactorPolicies = reactorPolicyId
+    ? getReactionPoliciesForCharacterSync(reactorPolicyId)
+    : {};
+  const policyDecision = pendingReactionPrompt
+    ? decideReactionPromptAction(pendingReactionPrompt, reactorPolicies)
+    : { action: 'show' as const };
+
+  // Auto/Off bypass the modal entirely (first valid option / immediate pass).
+  // Guarded per promptId so StrictMode double-effects resolve exactly once.
+  React.useEffect(() => {
+    if (!pendingReactionPrompt || !reactorPolicyId) return;
+    if (policyDecision.action === 'show') return;
+    if (autoResolvedPromptRef.current === pendingReactionPrompt.promptId) return;
+    autoResolvedPromptRef.current = pendingReactionPrompt.promptId;
+    if (policyDecision.action === 'auto') {
+      onResolveReaction?.({
+        execute: true,
+        reactionId: policyDecision.reactionId,
+        ...(policyDecision.slotLevel !== undefined ? { slotLevel: policyDecision.slotLevel } : {}),
+      });
+    } else {
+      onResolveReaction?.({ execute: false });
+    }
+  }, [pendingReactionPrompt, reactorPolicyId, policyDecision, onResolveReaction]);
+  // Reset the guard when the prompt clears so the next prompt auto-resolves.
+  React.useEffect(() => {
+    if (!pendingReactionPrompt) autoResolvedPromptRef.current = null;
+  }, [pendingReactionPrompt]);
+
+  const handleReactionPolicyChange = (reactionKey: string, mode: ReactionPolicyMode) => {
+    if (!reactorPolicyId) return;
+    setReactionPolicySync(reactorPolicyId, reactionKey, mode);
+    setPolicyTick((t) => t + 1);
+  };
 
   const currentActiveRoll = controlledActiveRoll ?? inspectedRoll;
 
@@ -309,8 +357,8 @@ export function TacticalCombatHud({
         </div>
       )}
 
-      {/* 5. Reaction Interrupt Modal */}
-      {pendingReactionPrompt && (
+      {/* 5. Reaction Interrupt Modal (suppressed when policy auto-resolves) */}
+      {pendingReactionPrompt && policyDecision.action === 'show' && (
         <ReactionInterruptModal
           prompt={pendingReactionPrompt}
           reactorCombatant={reactorEntity}
@@ -318,6 +366,8 @@ export function TacticalCombatHud({
           serverAuthoritativeTimeout={
             typeof viewState.combat?.reactionPromptDeadline === 'number'
           }
+          policies={reactorPolicies}
+          onPolicyChange={handleReactionPolicyChange}
           onResolve={(decision) => {
             if (onResolveReaction) {
               onResolveReaction(decision);
