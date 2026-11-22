@@ -678,6 +678,29 @@ export function executeWeaponAttack(options: ExecuteAttackOptions): AttackResolu
   let nextTurnBudget: TurnBudget | null = state.turnBudget ? { ...state.turnBudget } : null;
   let updatedAttacker: Combatant = { ...attacker };
 
+  // SRD 5.1 Two-Weapon Fighting: bonus off-hand attack requires a light
+  // melee weapon in each hand. Defense in depth alongside the derived-sheet
+  // gate (which omits the off-hand profile for illegal pairs): reject direct
+  // engine calls (customAttack, monsters) that lack a qualifying pair.
+  if (attack.isOffHand) {
+    const sheet = attacker.characterSheet;
+    const isLightMeleeProfile = (w?: { rangeType?: string; properties?: string[] } | null): boolean =>
+      w?.rangeType === 'melee' && Array.isArray(w?.properties) && w!.properties!.includes('light');
+    if (sheet) {
+      const mainProfile = sheet.weaponAttacks.find((w) => w.slot === 'main_hand');
+      const offProfile = sheet.weaponAttacks.find((w) => w.slot === 'off_hand');
+      if (!isLightMeleeProfile(mainProfile) || !isLightMeleeProfile(offProfile)) {
+        throw new Error(
+          `Two-Weapon Fighting requires a light melee weapon in each hand ("${attacker.name}" does not qualify)`,
+        );
+      }
+    } else if (attack.attackType !== 'melee_weapon' || !attack.properties.includes('light')) {
+      throw new Error(
+        `Two-Weapon Fighting requires a light melee weapon in each hand ("${attacker.name}" does not qualify)`,
+      );
+    }
+  }
+
   if (isReaction) {
     updatedAttacker = { ...updatedAttacker, reactionAvailable: false };
   }

@@ -453,6 +453,55 @@ describe('SRD-406: React Tactical Combat HUD', () => {
       expect(onAttack).toHaveBeenCalledTimes(1);
     });
 
+    it('gates the off-hand BA button on the Attack action (SRD 5.1 Two-Weapon Fighting)', () => {
+      const base = structuredClone(getPregenCharacter('pregen-fighter')!);
+      base.inventory = [
+        { instanceId: 'tw-short', itemId: 'shortsword', quantity: 1 },
+        { instanceId: 'tw-dagger', itemId: 'dagger', quantity: 1 },
+      ];
+      base.equippedSlots = {
+        mainHandInstanceId: 'tw-short',
+        offHandInstanceId: 'tw-dagger',
+      } as typeof base.equippedSlots;
+      const dualSheet: DerivedCharacterSheet = computeDerivedCharacter(base, defaultCompendium);
+      const offHand = dualSheet.weaponAttacks.find((w) => w.slot === 'off_hand');
+      expect(offHand).toBeDefined();
+      const dualFighter: PlayerViewCombatant = {
+        ...createMockPlayerViewState().fighter,
+        characterSheet: dualSheet,
+      };
+
+      // Before the Attack action: BA off-hand is disabled with a reason.
+      const { unmount } = render(
+        <ActionHotbar
+          activeCombatant={dualFighter}
+          turnBudget={createMockTurnBudget({ attackActionTaken: false })}
+          compendium={defaultCompendium}
+          onDeclareAttack={vi.fn()}
+        />,
+      );
+      const lockedBtn = screen.getByTestId(`attack-btn-${offHand!.id}`) as HTMLButtonElement;
+      expect(lockedBtn.disabled).toBe(true);
+      expect(lockedBtn.title).toContain('Requires Attack action first');
+      unmount();
+      cleanup();
+
+      // After the Attack action: BA off-hand is enabled.
+      const onAttack = vi.fn();
+      render(
+        <ActionHotbar
+          activeCombatant={dualFighter}
+          turnBudget={createMockTurnBudget({ action: 0, attackActionTaken: true })}
+          compendium={defaultCompendium}
+          onDeclareAttack={onAttack}
+        />,
+      );
+      const liveBtn = screen.getByTestId(`attack-btn-${offHand!.id}`) as HTMLButtonElement;
+      expect(liveBtn.disabled).toBe(false);
+      fireEvent.click(liveBtn);
+      expect(onAttack).toHaveBeenCalledTimes(1);
+    });
+
     it('renders Spells tab with cantrips, slot counts, and triggers onCastSpell', () => {
       const { wizard } = createMockPlayerViewState();
       const budget = createMockTurnBudget();

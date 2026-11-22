@@ -585,9 +585,38 @@ describe('SRD-305: Advantage / Disadvantage Tactical Matrix', () => {
 });
 
 describe('SRD-305: Two-Weapon Fighting & Extra Attacks', () => {
+  function createDualWieldFighterSheet() {
+    const base = structuredClone(requirePregenCharacter('pregen-fighter'));
+    base.inventory = [
+      { instanceId: 'tw-short', itemId: 'shortsword', quantity: 1 },
+      { instanceId: 'tw-dagger', itemId: 'dagger', quantity: 1 },
+    ];
+    base.equippedSlots = {
+      mainHandInstanceId: 'tw-short',
+      offHandInstanceId: 'tw-dagger'
+    } as typeof base.equippedSlots;
+    return computeDerivedCharacter(base, compendium);
+  }
+
+  function createNonLightMainSheet() {
+    // Xorda-like: quarterstaff (versatile, NOT light) main + dagger off.
+    const base = structuredClone(requirePregenCharacter('pregen-fighter'));
+    base.inventory = [
+      { instanceId: 'nl-staff', itemId: 'quarterstaff', quantity: 1 },
+      { instanceId: 'nl-dagger', itemId: 'dagger', quantity: 1 },
+    ];
+    base.equippedSlots = {
+      mainHandInstanceId: 'nl-staff',
+      offHandInstanceId: 'nl-dagger'
+    } as typeof base.equippedSlots;
+    return computeDerivedCharacter(base, compendium);
+  }
+
   it('throws when attempting off-hand bonus attack before taking the Attack action', () => {
+    const dualSheet = createDualWieldFighterSheet();
+    expect(dualSheet.weaponAttacks.some((w) => w.slot === 'off_hand')).toBe(true);
     const state = createMockEncounter(
-      { position: { x: 1, y: 1 } },
+      { position: { x: 1, y: 1 }, characterSheet: dualSheet },
       { position: { x: 2, y: 1 } },
     );
 
@@ -598,9 +627,31 @@ describe('SRD-305: Two-Weapon Fighting & Extra Attacks', () => {
     ).toThrow(/requires taking the Attack action first/i);
   });
 
-  it('executes off-hand bonus attack after Attack action, deducting 1 bonus action', () => {
+  it('rejects off-hand bonus attack when the main weapon is not light (quarterstaff + dagger)', () => {
+    const badSheet = createNonLightMainSheet();
+    expect(badSheet.weaponAttacks.some((w) => w.slot === 'off_hand')).toBe(false);
     const state = createMockEncounter(
-      { position: { x: 1, y: 1 } },
+      { position: { x: 1, y: 1 }, characterSheet: badSheet },
+      { position: { x: 2, y: 1 } },
+    );
+
+    // Even after taking the Attack action, the off-hand is illegal.
+    const attack1 = executeWeaponAttack({
+      state,
+      attackerId: 'pregen-fighter',
+      targetId: 'goblin-1',
+    });
+    expect(attack1.state.turnBudget?.attackActionTaken).toBe(true);
+
+    expect(() =>
+      executeTwoWeaponFightingAttack(attack1.state, 'pregen-fighter', 'goblin-1'),
+    ).toThrow(/light melee weapon in each hand/i);
+  });
+
+  it('executes off-hand bonus attack after Attack action, deducting 1 bonus action', () => {
+    const dualSheet = createDualWieldFighterSheet();
+    const state = createMockEncounter(
+      { position: { x: 1, y: 1 }, characterSheet: dualSheet },
       { position: { x: 2, y: 1 } },
     );
 

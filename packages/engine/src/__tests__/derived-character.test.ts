@@ -764,6 +764,37 @@ describe('SRD-204: 10-Stage computeDerivedCharacter() Pipeline', () => {
       expect(offProfileWithTwf.damageFormula).toBe('1d4+4');
     });
 
+    it('omits the off-hand profile unless BOTH hands hold light melee weapons (quarterstaff + dagger has no BA)', () => {
+      // Xorda-like: quarterstaff main (versatile, NOT light) + dagger off (light).
+      const nonLight = createBaseCharacterState({
+        inventory: [
+          { instanceId: 'inv-staff', itemId: 'quarterstaff', quantity: 1 },
+          { instanceId: 'inv-dagger', itemId: 'dagger', quantity: 1 },
+        ],
+        equippedSlots: {
+          mainHandInstanceId: 'inv-staff',
+          offHandInstanceId: 'inv-dagger',
+        },
+      });
+      const nonLightSheet = computeDerivedCharacter(nonLight, compendium);
+      expect(nonLightSheet.weaponAttacks.some((w) => w.slot === 'main_hand')).toBe(true);
+      expect(nonLightSheet.weaponAttacks.some((w) => w.slot === 'off_hand')).toBe(false);
+
+      // Light + light (dagger + dagger) qualifies for the BA off-hand.
+      const lightPair = createBaseCharacterState({
+        inventory: [
+          { instanceId: 'inv-d1', itemId: 'dagger', quantity: 1 },
+          { instanceId: 'inv-d2', itemId: 'dagger', quantity: 1 },
+        ],
+        equippedSlots: {
+          mainHandInstanceId: 'inv-d1',
+          offHandInstanceId: 'inv-d2',
+        },
+      });
+      const lightSheet = computeDerivedCharacter(lightPair, compendium);
+      expect(lightSheet.weaponAttacks.some((w) => w.slot === 'off_hand')).toBe(true);
+    });
+
     it('applies Archery (+2 to ranged weapon attack rolls) and Dueling (+2 to one-handed melee damage with no other weapon)', () => {
       // Fighter with STR 16 (+3), DEX 16 (+3), Proficiency +2
       const state = createBaseCharacterState({

@@ -374,6 +374,11 @@ export function ActionHotbar({
   const hasAction = (turnBudget?.action ?? 0) > 0;
   const hasBonusAction = (turnBudget?.bonusAction ?? 0) > 0;
   const hasExtraAttacks = (turnBudget?.extraAttacksRemaining ?? 0) > 0;
+  // SRD 5.1 Two-Weapon Fighting: the off-hand BA is only available after the
+  // Attack action has been taken this turn (engine enforces in
+  // spendTwoWeaponFightingBonusAttack). Gate the hotbar the same way so the
+  // BA button does not look clickable at the start of the turn.
+  const attackActionTaken = Boolean(turnBudget?.attackActionTaken);
   const bonusActionSpellCast = Boolean(turnBudget?.bonusActionSpellCast);
 
   // SRD-1303: resolve real inventory instance ids for the quick-use potion
@@ -605,7 +610,8 @@ export function ActionHotbar({
             {attacks.length > 0 ? (
               attacks.map((wp) => {
                 const isOffHand = wp.slot === 'off_hand';
-                const canUse = isPlayerControlled && (isOffHand ? hasBonusAction : (hasAction || hasExtraAttacks));
+                const offHandLockedByRule = isOffHand && !attackActionTaken;
+                const canUse = isPlayerControlled && (isOffHand ? hasBonusAction && attackActionTaken : (hasAction || hasExtraAttacks));
                 const icon = weaponIcon(wp);
 
                 return (
@@ -625,7 +631,7 @@ export function ActionHotbar({
                           ? 'bg-slate-900 border-slate-700 hover:border-amber-400 hover:bg-slate-800 shadow-md hover:shadow-[0_0_12px_rgba(251,191,36,0.3)] cursor-pointer active:scale-95'
                           : 'bg-slate-950/60 border-slate-800/80 text-slate-600 cursor-not-allowed opacity-50'
                       }`}
-                      title={`${wp.name} (${wp.damageFormula})`}
+                      title={offHandLockedByRule ? `${wp.name} (${wp.damageFormula}) — Requires Attack action first` : `${wp.name} (${wp.damageFormula})`}
                     >
                       <GameIcon name={icon.name} category={icon.category} size={20} alt="" />
                       {/* Action Cost Pip */}

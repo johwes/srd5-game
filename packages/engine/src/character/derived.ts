@@ -2285,7 +2285,19 @@ export function computeDerivedCharacter(
   if (mainHandWeapon) {
     weaponAttacks.push(buildWeaponAttackProfile(mainHandWeapon, 'main_hand'));
   }
-  if (offHandWeapon) {
+  // SRD 5.1 Two-Weapon Fighting: the off-hand bonus attack requires a light
+  // melee weapon in EACH hand (PHB: "a light melee weapon... in one hand...
+  // a different light melee weapon... in the other hand"). A non-light main
+  // (e.g. quarterstaff/longsword) with a light off-hand (e.g. dagger) does
+  // NOT qualify, so no off-hand profile is emitted and no BA button appears.
+  const isLightMeleeWeapon = (w: typeof mainHandWeapon): boolean =>
+    Boolean(w) && w!.weapon.rangeType === 'melee' && w!.weapon.properties.includes('light');
+  if (
+    offHandWeapon &&
+    offHandWeapon.instance.instanceId !== mainHandWeapon?.instance.instanceId &&
+    isLightMeleeWeapon(mainHandWeapon) &&
+    isLightMeleeWeapon(offHandWeapon)
+  ) {
     weaponAttacks.push(buildWeaponAttackProfile(offHandWeapon, 'off_hand'));
   }
   if (rangedWeapon) {
