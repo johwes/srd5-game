@@ -49,14 +49,18 @@ on a class-tinted backdrop with the Spec-12 icon slots around it.
 ## 2. Non-Goals
 
 - 3D models, hand-drawn/AI art, or new art licensing (Spec 12 §2 stands).
-- Extra body slots (helm/cloak/rings/boots): v1 mirrors the 5 engine slots
-  (armor/shield/main/off/ranged). Extra slots stay passive-while-attuned per
-  Spec 12 §8.
+- Extra body slots (helm/cloak/rings/boots): v1 mirrors the 5 equipment
+  slots (armor/shield/main/off/ranged) plus the SRD-1703 second weapon set
+  (Set I / Set II melee/ranged values per weapon slot, armor/shield shared).
+  Extra slots stay passive-while-attuned per Spec 12 §8.
 - Weight **enforcement**, crafting, socketing, durability (Spec 12 §12).
-- New engine commands expected: equip (`EQUIP_LOADOUT`), move
+- New engine commands: equip (`EQUIP_LOADOUT`, with cross-set dedup), move
   (`TRANSFER_ITEM`), use (`USE_ITEM`), attune, drop/split/sell all exist and
-  stay authoritative. If a slice needs transport changes, it says so in the
-  ticket.
+  stay authoritative, plus `SWAP_WEAPON_SET` (SRD-1703, free — costs no
+  action or bonus action, in or out of combat) which flips the
+  `activeWeaponSet` discriminator so derivation, hotbar, reactions, and AI
+  follow the active set. If a slice needs transport changes, it says so in
+  the ticket.
 - Hotbar redesign (shot `bg3-hotbar.png` is context only — SRD-607 owns it).
 
 ## 3. Layout Spec (`@srd5/client`)
@@ -77,7 +81,9 @@ Full-screen modal (`role="dialog"`, `?` no route change), max-w-7xl:
     carrying capacity, weapon/armor/tool proficiencies.
 - **Center doll**: enlarged token sprite on class-tinted backdrop; equipment
   slots flanking (left: armor/shield; right: main/off-hand; below: ranged —
-  or the Spec-12 5-slot row if space is tight); melee/ranged weapon cards
+  or the Spec-12 5-slot row if space is tight); a **Set I / Set II toggle**
+  (SRD-1703/1704) switches the weapon slots between the two weapon values
+  while armor/shield stay shared; melee/ranged weapon cards
   with to-hit + damage; AC shield; weight capacity bar; Unequip on click.
 - **Right backpack**: the Spec-12 `InventoryView` grid (rarity borders,
   counts, attunement pips) + sort control + category filters + search +
@@ -128,10 +134,12 @@ engine state after dispatch.
 
 ## 6. Engine / Transport Notes
 
-No new commands planned. Slices reuse: `EQUIP_LOADOUT` (with dedup),
+One command added by SRD-1703: `SWAP_WEAPON_SET` (free — costs no action).
+Slices otherwise reuse: `EQUIP_LOADOUT` (with cross-set dedup),
 `TRANSFER_ITEM`, `USE_ITEM`, `ATTUNE_ITEM`, `DROP_ITEM`,
 `SPLIT_ITEM_STACK`, `SELL_ITEM`. Validation stays engine-side
-(`validateEquipLoadout` incl. worn-proficiency + thrown-ranged fit).
+(`validateEquipLoadout` incl. worn-proficiency + thrown-ranged fit, both
+sets with `secondary:`-prefixed slot labels).
 `calculateGoldFromLoot` / purse math already gold-only.
 
 ## 7. Phased Delivery (→ Epic 15)
@@ -165,8 +173,10 @@ links out to the Character view (drawer stays for quick inspect).
 
 - Does the Character view replace the loot modal's inventory tab, or stay
   separate? ( leaning: separate — §3.3.)
-- Second weapon set (Lae'zel shot)? Engine has one set of slots: out of
-  scope unless a ticket proves otherwise.
+- Second weapon set (Lae'zel shot)? Resolved by SRD-1703/1704: the engine
+  carries two weapon values per weapon slot (primary + secondary) with an
+  `activeWeaponSet` discriminator and a free `SWAP_WEAPON_SET` command;
+  legacy single-set saves migrate to Set I. Verified end-to-end by SRD-1705.
 - Camp-supply / consumable quick-use row in the sheet? Nice-to-have; propose
   only if free inside SRD-1504.
 
