@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { ActivatedAbilitySpec, ModifierSpec } from '@srd5/data';
 import { ItemIcon } from './ItemIcon.js';
 import {
@@ -82,6 +82,65 @@ export function ItemTooltipCard({
   const effectLines = (effects ?? []).filter((l) => l.trim().length > 0);
   const rarityLabel = formatRarityLabel(rarity);
 
+  // Viewport-fixed positioning (not absolute): loot/inventory tooltips live
+  // inside overflow-y-auto scroll containers, which clip absolute children.
+  // `fixed` escapes that clipping; placement flips above/below the anchor
+  // and clamps horizontally. Visibility is state-driven (the old
+  // `group-hover` CSS cannot reach a fixed element reliably).
+  const tipRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [placement, setPlacement] = useState<{ top: number; left: number; above: boolean }>({
+    top: 0,
+    left: 0,
+    above: true,
+  });
+
+  useEffect(() => {
+    const tip = tipRef.current;
+    const anchor = tip?.parentElement as HTMLElement | null;
+    if (!tip || !anchor) return;
+
+    const place = (): void => {
+      const rect = anchor.getBoundingClientRect();
+      const width = 288; // w-72
+      const vw = window.innerWidth;
+      const left = Math.max(8, Math.min(rect.left + rect.width / 2 - width / 2, vw - width - 8));
+      const above = rect.top > 300;
+      setPlacement({
+        top: above ? Math.max(8, rect.top - 12) : rect.bottom + 12,
+        left,
+        above,
+      });
+    };
+
+    const show = (): void => {
+      place();
+      setVisible(true);
+    };
+    const hide = (): void => setVisible(false);
+    const onScroll = (): void => {
+      setVisible((was) => {
+        if (was) place();
+        return was;
+      });
+    };
+
+    anchor.addEventListener('mouseenter', show);
+    anchor.addEventListener('focus', show);
+    anchor.addEventListener('mouseleave', hide);
+    anchor.addEventListener('blur', hide);
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onScroll);
+    return () => {
+      anchor.removeEventListener('mouseenter', show);
+      anchor.removeEventListener('focus', show);
+      anchor.removeEventListener('mouseleave', hide);
+      anchor.removeEventListener('blur', hide);
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+
   const chargesLine = charges
     ? charges.remaining !== undefined
       ? `${charges.remaining}/${charges.max} charges${charges.rechargeFormula ? `, recharge ${charges.rechargeFormula}` : ''}${charges.rechargeTiming ? ` at ${charges.rechargeTiming}` : ''}`
@@ -92,9 +151,17 @@ export function ItemTooltipCard({
 
   return (
     <div
+      ref={tipRef}
       role="tooltip"
       data-testid={testId}
-      className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-slate-950/95 border ${getRarityBorderClass(rarity)} rounded-xl shadow-2xl backdrop-blur-md text-left flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 focus-within:opacity-100 pointer-events-none transition-opacity z-50`}
+      style={{
+        top: placement.top,
+        left: placement.left,
+        transform: placement.above ? 'translateY(-100%)' : undefined,
+        opacity: visible ? 1 : 0,
+        visibility: visible ? 'visible' : 'hidden',
+      }}
+      className={`fixed w-72 p-3 bg-slate-950/95 border ${getRarityBorderClass(rarity)} rounded-xl shadow-2xl backdrop-blur-md text-left flex flex-col gap-1.5 pointer-events-none transition-opacity duration-150 z-[100]`}
     >
       <div className="flex items-center justify-between gap-1.5 border-b border-slate-800 pb-1.5">
         <span className="font-bold text-slate-100 text-xs flex items-center gap-1.5 min-w-0">

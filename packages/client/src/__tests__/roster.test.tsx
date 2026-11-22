@@ -292,8 +292,13 @@ describe('SRD-208: Character Sheet Drawer, Level-Up Modal, and .srd5.json Roster
       />,
     );
     expect(fighterChar.equippedSlots.mainHandInstanceId).toBe('fighter-handaxe');
+    // One instance cannot sit in two slots: ranged cleared when it moved.
+    expect(fighterChar.equippedSlots.rangedInstanceId).toBeUndefined();
     expect(screen.getByTestId('sheet-paperdoll-slot-mainHand').textContent).toContain(
       'Handaxe',
+    );
+    expect(screen.getByTestId('sheet-paperdoll-slot-ranged').textContent).toContain(
+      'No Ranged Weapon',
     );
   });
 

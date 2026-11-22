@@ -180,6 +180,45 @@ describe('SRD-1306: equip restriction enforcement', () => {
       }),
     ).toThrow(/Invalid loadout/);
   });
+
+  it('dedups one instance across two slots: the changed slot wins', () => {
+    const fighter = getPregenCharacter('pregen-fighter')!;
+    const grid = createTacticalGrid(5, 5, 'floor_stone', 'bright');
+    const hero = makeHero('fig-1', {
+      inventory: [{ instanceId: 'inst-dagger', itemId: 'dagger', quantity: 1 }],
+    });
+    hero.buildState = {
+      ...structuredClone(fighter),
+      id: 'fig-1',
+      inventory: hero.buildState!.inventory,
+      equippedSlots: { mainHandInstanceId: 'inst-dagger' },
+    };
+    const state = createInitialGameState({ grid, party: [hero] });
+    // Equip the same dagger to the off hand: the changed slot wins, main clears.
+    const res = reduceGame(state, {
+      type: 'EQUIP_LOADOUT',
+      characterId: 'fig-1',
+      equippedSlots: { mainHandInstanceId: 'inst-dagger', offHandInstanceId: 'inst-dagger' },
+    });
+    const slots = res.nextState.party['fig-1']!.buildState!.equippedSlots;
+    expect(slots.offHandInstanceId).toBe('inst-dagger');
+    expect(slots.mainHandInstanceId).toBeUndefined();
+  });
+
+  it('lets thrown melee weapons validate in the ranged slot', () => {
+    const fighter = getPregenCharacter('pregen-fighter')!;
+    const withAxe: CharacterBuildState = {
+      ...structuredClone(fighter),
+      inventory: [{ instanceId: 'inst-axe', itemId: 'handaxe', quantity: 1 }],
+    };
+    const ok = validateEquipLoadout(
+      withAxe,
+      { mainHandInstanceId: 'inst-axe', rangedInstanceId: 'inst-axe' },
+      compendium,
+    );
+    // Duplicate instance still fails dedup-free validation, but slot fit passes.
+    expect(ok.errors.some((e) => e.code === 'slot_mismatch')).toBe(false);
+  });
 });
 
 describe('SRD-1306: stack splitting (deterministic)', () => {

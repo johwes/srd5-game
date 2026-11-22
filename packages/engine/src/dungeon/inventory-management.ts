@@ -199,7 +199,12 @@ function candidateSlotsForItemId(
   if (!equip) return [];
   if (equip.kind === 'armor') return equip.category === 'shield' ? ['shield'] : ['armor'];
   if (equip.kind === 'weapon') {
-    return equip.rangeType === 'ranged' ? ['ranged', 'mainHand', 'offHand'] : ['mainHand', 'offHand'];
+    // Thrown melee weapons (dagger, handaxe, ...) double as ranged weapons:
+    // the sheet drawer, paperdoll, pregens, and derived ranged profiles all
+    // treat them as valid ranged-slot occupants.
+    if (equip.rangeType === 'ranged') return ['ranged', 'mainHand', 'offHand'];
+    if (equip.properties.includes('thrown')) return ['mainHand', 'offHand', 'ranged'];
+    return ['mainHand', 'offHand'];
   }
   return [];
 }

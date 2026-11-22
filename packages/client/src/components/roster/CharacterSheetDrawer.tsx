@@ -245,11 +245,19 @@ export function CharacterSheetDrawer({
     instanceId: string,
   ) => {
     if (!onUpdateCharacter) return;
+    // One instance cannot occupy two slots: the incoming assignment wins, so
+    // clear this instance from every other slot first (mirrors the engine
+    // EQUIP_LOADOUT dedup for roster-local edits).
     const nextSlots: EquippedSlots = { ...character.equippedSlots };
 
     if (!instanceId) {
       delete nextSlots[slotKey];
     } else {
+      for (const [slot, instId] of Object.entries(nextSlots)) {
+        if (slot !== slotKey && instId === instanceId) {
+          delete nextSlots[slot as keyof EquippedSlots];
+        }
+      }
       nextSlots[slotKey] = instanceId;
 
       // Enforce SRD 5.1 two-handed vs shield/off-hand constraint

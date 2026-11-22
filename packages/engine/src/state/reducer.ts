@@ -1341,11 +1341,39 @@ export function reduceGame(
     case 'EQUIP_LOADOUT': {
       const hero = nextState.party[command.characterId];
       if (hero?.buildState) {
+        // One instance cannot occupy two slots. The command carries the full
+        // slot map, so a slot whose value differs from current state is the
+        // intended change and wins: apply changes in canonical slot order,
+        // clearing the moved instance everywhere else first (e.g. the same
+        // handaxe lingering in main hand after moving it to ranged).
+        const incoming = { ...(command.equippedSlots as Record<string, string | undefined>) };
+        const current = hero.buildState.equippedSlots as Record<string, string | undefined>;
+        const canonical = [
+          'armorInstanceId',
+          'shieldInstanceId',
+          'mainHandInstanceId',
+          'offHandInstanceId',
+          'rangedInstanceId',
+        ];
+        const mergedSlots: Record<string, string | undefined> = { ...current };
+        for (const slot of canonical) {
+          if (!(slot in incoming)) continue;
+          const id = incoming[slot];
+          if (mergedSlots[slot] === id) continue;
+          if (typeof id === 'string' && id.length > 0) {
+            for (const other of Object.keys(mergedSlots)) {
+              if (other !== slot && mergedSlots[other] === id) delete mergedSlots[other];
+            }
+            mergedSlots[slot] = id;
+          } else {
+            delete mergedSlots[slot];
+          }
+        }
         // SRD-1306: enforce armor/shield proficiency + slot fit; STR and
         // weapon proficiency surface as warnings (penalties, not blocks).
         const validation = validateEquipLoadout(
-          hero.buildState,
-          command.equippedSlots as Record<string, string | undefined>,
+          { ...hero.buildState, equippedSlots: mergedSlots },
+          mergedSlots as Record<string, string | undefined>,
           options?.compendium,
         );
         if (!validation.ok) {
@@ -1355,7 +1383,7 @@ export function reduceGame(
         }
         const nextBuild = {
           ...hero.buildState,
-          equippedSlots: { ...command.equippedSlots },
+          equippedSlots: mergedSlots,
         };
         const nextSheet = computeDerivedCharacter(nextBuild, options?.compendium);
         nextState = {
