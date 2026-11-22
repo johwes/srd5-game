@@ -975,145 +975,64 @@ export function CharacterSheetDrawer({
                   </div>
 
                   <div className="space-y-3 text-xs">
-                    <div>
-                      <label
-                        htmlFor="sheet-equip-armor-select"
-                        className="block text-slate-300 font-medium mb-1"
-                      >
-                        Body Armor Slot
-                      </label>
-                      <select
-                        id="sheet-equip-armor-select"
-                        data-testid="sheet-equip-armor-select"
-                        value={character.equippedSlots.armorInstanceId ?? ''}
-                        onChange={(e) =>
-                          handleEquipSlotChange('armorInstanceId', e.target.value)
-                        }
-                        className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-slate-100"
-                      >
-                        <option value="">Unarmored (None)</option>
-                        {armorItems.map((inst) => {
-                          const eq = compendium.getEquipment(inst.itemId);
-                          return (
-                            <option key={inst.instanceId} value={inst.instanceId}>
-                              {eq?.name ?? inst.itemId}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="sheet-equip-shield-select"
-                        className="block text-slate-300 font-medium mb-1"
-                      >
-                        Shield Slot (+2 AC)
-                      </label>
-                      <select
-                        id="sheet-equip-shield-select"
-                        data-testid="sheet-equip-shield-select"
-                        value={character.equippedSlots.shieldInstanceId ?? ''}
-                        onChange={(e) =>
-                          handleEquipSlotChange('shieldInstanceId', e.target.value)
-                        }
-                        className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-slate-100"
-                      >
-                        <option value="">No Shield</option>
-                        {shieldItems.map((inst) => {
-                          const eq = compendium.getEquipment(inst.itemId);
-                          return (
-                            <option key={inst.instanceId} value={inst.instanceId}>
-                              {eq?.name ?? inst.itemId}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="sheet-equip-mainhand-select"
-                        className="block text-slate-300 font-medium mb-1"
-                      >
-                        Main-Hand Melee Weapon
-                      </label>
-                      <select
-                        id="sheet-equip-mainhand-select"
-                        data-testid="sheet-equip-mainhand-select"
-                        value={character.equippedSlots.mainHandInstanceId ?? ''}
-                        onChange={(e) =>
-                          handleEquipSlotChange('mainHandInstanceId', e.target.value)
-                        }
-                        className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-slate-100"
-                      >
-                        <option value="">Unarmed Strike Only</option>
-                        {meleeWeaponItems.map((inst) => {
-                          const eq = compendium.getEquipment(inst.itemId);
-                          return (
-                            <option key={inst.instanceId} value={inst.instanceId}>
-                              {eq?.name ?? inst.itemId}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="sheet-equip-offhand-select"
-                        className="block text-slate-300 font-medium mb-1"
-                      >
-                        Off-Hand Light Weapon (Two-Weapon Fighting)
-                      </label>
-                      <select
-                        id="sheet-equip-offhand-select"
-                        data-testid="sheet-equip-offhand-select"
-                        value={character.equippedSlots.offHandInstanceId ?? ''}
-                        onChange={(e) =>
-                          handleEquipSlotChange('offHandInstanceId', e.target.value)
-                        }
-                        className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-slate-100"
-                      >
-                        <option value="">Empty Off-Hand</option>
-                        {offHandLightWeaponItems.map((inst) => {
-                          const eq = compendium.getEquipment(inst.itemId);
-                          return (
-                            <option key={inst.instanceId} value={inst.instanceId}>
-                              {eq?.name ?? inst.itemId}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="sheet-equip-ranged-select"
-                        className="block text-slate-300 font-medium mb-1"
-                      >
-                        Ranged Weapon Slot
-                      </label>
-                      <select
-                        id="sheet-equip-ranged-select"
-                        data-testid="sheet-equip-ranged-select"
-                        value={character.equippedSlots.rangedInstanceId ?? ''}
-                        onChange={(e) =>
-                          handleEquipSlotChange('rangedInstanceId', e.target.value)
-                        }
-                        className="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-1.5 text-slate-100"
-                      >
-                        <option value="">No Ranged Weapon</option>
-                        {rangedWeaponItems.map((inst) => {
-                          const eq = compendium.getEquipment(inst.itemId);
-                          return (
-                            <option key={inst.instanceId} value={inst.instanceId}>
-                              {eq?.name ?? inst.itemId}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
+                    <p className="text-slate-400">
+                      Click an equipped slot to unequip it. Equip from the
+                      inventory list below.
+                    </p>
+                    {(
+                      [
+                        { slotKey: 'armorInstanceId', short: 'armor', label: 'Body Armor', emptyLabel: 'Unarmored (None)' },
+                        { slotKey: 'shieldInstanceId', short: 'shield', label: 'Shield (+2 AC)', emptyLabel: 'No Shield' },
+                        { slotKey: 'mainHandInstanceId', short: 'mainHand', label: 'Main-Hand Melee Weapon', emptyLabel: 'Unarmed Strike Only' },
+                        { slotKey: 'offHandInstanceId', short: 'offHand', label: 'Off-Hand Light Weapon (Two-Weapon Fighting)', emptyLabel: 'Empty Off-Hand' },
+                        { slotKey: 'rangedInstanceId', short: 'ranged', label: 'Ranged Weapon Slot', emptyLabel: 'No Ranged Weapon' },
+                      ] as const
+                    ).map((slot) => {
+                      const equippedInst = character.inventory.find(
+                        (i) => i.instanceId === character.equippedSlots[slot.slotKey],
+                      );
+                      const equippedEq = equippedInst
+                        ? compendium.getEquipment(equippedInst.itemId)
+                        : undefined;
+                      const equippedMi = equippedInst
+                        ? compendium.getMagicItem(equippedInst.itemId)
+                        : undefined;
+                      const slotRarity = normalizeItemRarity(equippedMi?.rarity);
+                      return (
+                        <div key={slot.slotKey}>
+                          <span className="block text-slate-300 font-medium mb-1">
+                            {slot.label}
+                          </span>
+                          <button
+                            type="button"
+                            data-testid={`sheet-paperdoll-slot-${slot.short}`}
+                            title={equippedInst ? 'Click to unequip' : slot.emptyLabel}
+                            onClick={() => {
+                              if (equippedInst) handleEquipSlotChange(slot.slotKey, '');
+                            }}
+                            className={`w-full flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors ${getRarityBorderClass(slotRarity)} ${equippedInst ? 'bg-slate-950 hover:border-amber-400 cursor-pointer' : 'bg-slate-950/60 border-slate-800 text-slate-500'}`}
+                          >
+                            {equippedInst ? (
+                              <>
+                                <ItemIcon
+                                  itemId={equippedInst.itemId}
+                                  size={30}
+                                  testId="sheet-paperdoll-icon"
+                                />
+                                <span className={`truncate font-medium ${getRarityTextClass(slotRarity)}`}>
+                                  {equippedMi?.name ?? equippedEq?.name ?? equippedInst.itemId}
+                                </span>
+                                <span className="ml-auto text-[10px] text-slate-500 shrink-0">
+                                  Unequip
+                                </span>
+                              </>
+                            ) : (
+                              <span>{slot.emptyLabel}</span>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Magic Item Attunement Slots (Max 3) */}
@@ -1251,14 +1170,42 @@ export function CharacterSheetDrawer({
                           <div
                             key={inst.instanceId}
                             data-testid={`sheet-inventory-item-${inst.itemId}`}
-                            className={`group relative flex items-center justify-between px-2.5 py-1.5 rounded bg-slate-950 border ${getRarityBorderClass(rarity)}`}
+                            className={`group relative flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-slate-950 border ${getRarityBorderClass(rarity)}`}
                           >
                             <span className={`flex items-center gap-1.5 min-w-0 ${getRarityTextClass(rarity)}`}>
                               <ItemIcon itemId={inst.itemId} size={16} testId={`sheet-inventory-icon`} />
                               <span className="truncate">{label}</span>
                             </span>
-                            <span className="font-mono text-slate-400 shrink-0">
-                              &times;{inst.quantity}
+                            <span className="flex items-center gap-1 shrink-0">
+                              {(
+                                [
+                                  { list: armorItems, slotKey: 'armorInstanceId', short: 'armor', slotLabel: 'Armor' },
+                                  { list: shieldItems, slotKey: 'shieldInstanceId', short: 'shield', slotLabel: 'Shield' },
+                                  { list: meleeWeaponItems, slotKey: 'mainHandInstanceId', short: 'mainHand', slotLabel: 'Main' },
+                                  { list: offHandLightWeaponItems, slotKey: 'offHandInstanceId', short: 'offHand', slotLabel: 'Off' },
+                                  { list: rangedWeaponItems, slotKey: 'rangedInstanceId', short: 'ranged', slotLabel: 'Ranged' },
+                                ] as const
+                              )
+                                .filter(
+                                  ({ list, slotKey }) =>
+                                    list.some((i) => i.instanceId === inst.instanceId) &&
+                                    character.equippedSlots[slotKey] !== inst.instanceId,
+                                )
+                                .map(({ slotKey, short, slotLabel }) => (
+                                  <button
+                                    key={short}
+                                    type="button"
+                                    data-testid={`sheet-inventory-equip-${inst.instanceId}-${short}`}
+                                    title={`Equip to ${slotLabel}`}
+                                    onClick={() => handleEquipSlotChange(slotKey, inst.instanceId)}
+                                    className="px-1.5 py-0.5 rounded border border-slate-700 bg-slate-900 text-[10px] font-semibold text-amber-300 hover:border-amber-400 hover:bg-slate-800 transition-colors"
+                                  >
+                                    {slotLabel}
+                                  </button>
+                                ))}
+                              <span className="font-mono text-slate-400">
+                                &times;{inst.quantity}
+                              </span>
                             </span>
                             <ItemTooltipCard
                               itemId={inst.itemId}

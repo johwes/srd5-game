@@ -255,14 +255,46 @@ describe('SRD-208: Character Sheet Drawer, Level-Up Modal, and .srd5.json Roster
     ).toContain('Attack Roll: 1d20');
 
     // Unequip Shield -> AC drops from 19 to 17
-    fireEvent.change(screen.getByTestId('sheet-equip-shield-select'), {
-      target: { value: '' },
-    });
+    fireEvent.click(screen.getByTestId('sheet-paperdoll-slot-shield'));
     const updatedDerived = computeDerivedCharacter(
       fighterChar,
       defaultCompendium,
     );
     expect(updatedDerived.armorClass.totalAc).toBe(17);
+
+    // Paperdoll shows the loadout graphically: shield slot is now empty,
+    // main hand still shows the longsword icon slot.
+    rerender(
+      <CharacterSheetDrawer
+        character={fighterChar}
+        onClose={onClose}
+        onUpdateCharacter={(updated) => {
+          fighterChar = updated;
+        }}
+      />,
+    );
+    expect(screen.getByTestId('sheet-paperdoll-slot-shield').textContent).toContain(
+      'No Shield',
+    );
+    expect(screen.getByTestId('sheet-paperdoll-slot-mainHand').textContent).toContain(
+      'Longsword',
+    );
+
+    // Equip the handaxe to the main hand from the inventory row.
+    fireEvent.click(screen.getByTestId('sheet-inventory-equip-fighter-handaxe-mainHand'));
+    rerender(
+      <CharacterSheetDrawer
+        character={fighterChar}
+        onClose={onClose}
+        onUpdateCharacter={(updated) => {
+          fighterChar = updated;
+        }}
+      />,
+    );
+    expect(fighterChar.equippedSlots.mainHandInstanceId).toBe('fighter-handaxe');
+    expect(screen.getByTestId('sheet-paperdoll-slot-mainHand').textContent).toContain(
+      'Handaxe',
+    );
   });
 
   it('levels up characters through LevelUpModal (Fixed/Rolled HP, Subclass unlock, Spellbook additions, and L4 ASI/Feat)', () => {
