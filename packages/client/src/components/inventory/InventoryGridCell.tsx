@@ -2,6 +2,7 @@ import React from 'react';
 import type { SrdCompendium } from '@srd5/data';
 import { ItemIcon } from './ItemIcon.js';
 import { ItemTooltipCard } from './ItemTooltipCard.js';
+import { useInventoryCellTouch } from './inventoryCellTouch.js';
 import {
   formatRarityLabel,
   getItemRarityForMagicItem,
@@ -37,8 +38,15 @@ export interface InventoryGridCellProps {
   onSelect?: (instanceId: string) => void;
   /** Double-click / double-tap activation (equip suggested slot, else Use). */
   onActivate?: (instanceId: string) => void;
-  /** Right-click / long-press (opens the context menu; Deck uses the action bar). */
-  onContextMenuInstance?: (event: React.MouseEvent, instanceId: string) => void;
+  /**
+   * Right-click / long-press opener (Deck keyboard parity lives in the action
+   * bar). The event is the minimal position interface so both mouse events
+   * and touch long-press points satisfy it.
+   */
+  onContextMenuInstance?: (
+    event: { preventDefault(): void; clientX: number; clientY: number },
+    instanceId: string,
+  ) => void;
   /** Drag payload starter (sets the drag data). */
   onDragStartInstance?: (event: React.DragEvent, instanceId: string) => void;
 }
@@ -68,6 +76,15 @@ export function InventoryGridCell({
   onDragStartInstance,
 }: InventoryGridCellProps) {
   const instId = instanceId ?? itemId;
+  const touch = useInventoryCellTouch({
+    enabled: Boolean(onActivate ?? onContextMenuInstance),
+    onDoubleTap: () => onActivate?.(instId),
+    onLongPress: (point) =>
+      onContextMenuInstance?.(
+        { preventDefault() {}, clientX: point.x, clientY: point.y },
+        instId,
+      ),
+  });
   const magic = compendium.getMagicItem(itemId);
   const equip = !magic ? compendium.getEquipment(itemId) : undefined;
   const rarity = getItemRarityForMagicItem(magic ?? null);
@@ -91,9 +108,15 @@ export function InventoryGridCell({
       aria-pressed={selected}
       title={name}
       draggable={draggable}
-      onClick={() => onSelect?.(instId)}
+      onClick={() => {
+        if (touch.consumeSuppressedClick()) return;
+        onSelect?.(instId);
+      }}
       onDoubleClick={() => onActivate?.(instId)}
       onContextMenu={(event) => onContextMenuInstance?.(event, instId)}
+      onTouchStart={touch.onTouchStart}
+      onTouchMove={touch.onTouchMove}
+      onTouchEnd={touch.onTouchEnd}
       onDragStart={(event) => onDragStartInstance?.(event, instId)}
       className={`group relative flex flex-col items-center justify-center gap-0.5 w-16 h-16 rounded-lg bg-slate-900 border-2 p-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${getRarityBorderClass(rarity)} ${selected ? 'ring-2 ring-amber-400 bg-slate-800' : 'hover:bg-slate-800'}`}
     >

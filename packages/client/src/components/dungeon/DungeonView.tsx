@@ -85,6 +85,8 @@ export interface DungeonViewProps {
   onOpenCharacterSheet?: (characterId: string) => void;
   /** SRD-1501: open the fullscreen BG3-style Character view (roster-backed shell). */
   onOpenCharacterView?: (characterId: string) => void;
+  /** SRD-1601: toggle the Character view for the focused hero (`C`/`I` shortcut). */
+  onToggleCharacterView?: (characterId: string) => void;
   /** SRD-806: scoped POI delve state when gameMode is 'realm_delve'. */
   initialDelveState?: RealmDelveState;
   /** SRD-806: generated first-floor spec for the POI delve. */
@@ -109,6 +111,7 @@ export function DungeonView({
   onExitToRoster,
   onOpenCharacterSheet,
   onOpenCharacterView,
+  onToggleCharacterView,
   initialDelveState,
   initialFloorSpec,
   onDelveResolved,
@@ -511,11 +514,12 @@ export function DungeonView({
     activeTurnHeroId ??
     (viewState.party[leadExplorerId] ? leadExplorerId : (partyList[0]?.id ?? null));
 
-  // Targeting-aware Character Sheet shortcut ('C' / 'I'): opens the sheet for
-  // the currently focused party hero (selected party member -> active combat
-  // turn hero -> lead explorer). Registered on capture so the App-level
-  // fallback (which always opens the first party member) never fires while the
-  // dungeon view is mounted.
+  // Targeting-aware Character view shortcut ('C' / 'I'): toggles the BG3-style
+  // Character view for the currently focused party hero (selected party
+  // member -> active combat turn hero -> lead explorer). Falls back to the
+  // legacy sheet drawer only when no Character-view opener is wired.
+  // Registered on capture so the App-level fallback (which always toggles
+  // the first party member) never fires while the dungeon view is mounted.
   useEffect(() => {
     const handleSheetShortcut = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -533,14 +537,20 @@ export function DungeonView({
       if (key !== 'c' && key !== 'i') return;
       e.preventDefault();
       e.stopPropagation();
-      if (focusedPartyHeroId && onOpenCharacterSheet) {
-        onOpenCharacterSheet(focusedPartyHeroId);
+      if (focusedPartyHeroId) {
+        if (onToggleCharacterView) {
+          onToggleCharacterView(focusedPartyHeroId);
+        } else if (onOpenCharacterView) {
+          onOpenCharacterView(focusedPartyHeroId);
+        } else if (onOpenCharacterSheet) {
+          onOpenCharacterSheet(focusedPartyHeroId);
+        }
       }
     };
 
     window.addEventListener('keydown', handleSheetShortcut, { capture: true });
     return () => window.removeEventListener('keydown', handleSheetShortcut, { capture: true });
-  }, [focusedPartyHeroId, onOpenCharacterSheet]);
+  }, [focusedPartyHeroId, onOpenCharacterSheet, onOpenCharacterView, onToggleCharacterView]);
 
   const hasPendingReaction = Boolean(viewState.combat?.pendingReactionPrompt);
 

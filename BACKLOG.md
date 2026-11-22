@@ -386,11 +386,32 @@ Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-
 - [x] **SRD-1501**: Character view opens from HUD/roster/loot, switches heroes, shows stats, doll, grid, gold; closes on Esc; drawer still works.
 - [x] **SRD-1502**: Strip shows all active heroes with correct per-hero and total gold; moving an item updates both heroes' grids from engine state.
 - [x] **SRD-1503**: Weapon cards match derived to-hit/damage; weight bar matches STR×15; Unequip works from the doll.
-- [ ] **SRD-1504**: Double-click, right-click menu, and sort all function by mouse, keyboard, and touch; no hover-only information.
+- [x] **SRD-1504**: Double-click, right-click menu, and sort all function by mouse, keyboard, and touch (long-press opens the menu, double-tap activates, tap + action bar covers all gestures); no hover-only information (tooltips are focus-driven, not hover-only).
 - [x] **SRD-1505**: Skills/attributes/conditions/resistances render from sheet data; no new engine mechanics.
 - [x] **SRD-1506**: Full flow E2E green at 1280×800 with zero console errors; screenshots archived per surface.
 - [x] **SRD-1507**: Spellbook shows every known/prepared spell grouped by level with correct live slot pips; search filters; class tabs + resource header render.
 - [x] **SRD-1508**: Cast picker previews exact upcast math; unavailable slots disabled; cantrips skip the picker; Bonus-Action rule still enforced.
 - [x] **SRD-1509**: Reactions policy flips Ask/Auto/Off per reaction, persists per character, prompt modal honors it; zero engine changes.
 - [x] **SRD-1510**: Loot box opens anchored at the container, takes items/gold inline, Take All clears it, Esc/walk-away dismisses, battlefield stays visible.
-- [ ] **Visual parity gate**: every Epic 15 surface is validated side-by-side against its `docs/reference/bg3/` shot (Character view vs `bg3-character-sheet-xorda`, skills/attributes tabs vs `bg3-character-skills` / `bg3-character-attributes`, party strip vs `bg3-party-inventory`, spellbook vs `bg3-spellbook-*`, cast picker vs `bg3-cast-fireball-*`, loot box vs `bg3-loot-box-inworld`); layout, grouping, and information density match the reference flow with our licensed icon set - no missing panels, no clipped tooltips, no text-only fallbacks where the reference shows a graphical surface.
+- [ ] **Visual parity gate**: every Epic 15 surface is validated side-by-side against its `docs/reference/bg3/` shot (Character view vs `bg3-character-sheet-xorda`, skills/attributes tabs vs `bg3-character-skills` / `bg3-character-attributes`, party strip vs `bg3-party-inventory`, spellbook vs `bg3-spellbook-*`, cast picker vs `bg3-cast-fireball-*`, loot box vs `bg3-loot-box-inworld`); layout, grouping, and information density match the reference flow with our licensed icon set - no missing panels, no clipped tooltips, no text-only fallbacks where the reference shows a graphical surface. Epic 16 HUD work (left portrait rail, collapsed top chrome) is in scope for this gate; current-state captures live in `docs/reference/feedback/`.
+
+---
+
+## Epic 16: BG3 HUD Parity — Portraits, Chrome & Hotkeys
+
+**Spec Reference**: [14-party-inventory.md](file:///home/jwesterl/ai/srd5-game/docs/spec/14-party-inventory.md) (BG3 flow), `docs/reference/bg3/` shots, current-state captures in `docs/reference/feedback/`.
+
+Player feedback (Nov 2026): `C`/`I` opened the legacy sheet drawer instead of the BG3 Character view; the dungeon HUD keeps a persistent full-width top bar and a bottom portrait row while BG3 uses a left vertical portrait rail with minimal chrome and a bottom action hotbar.
+
+| ID | Status | Title | Package | Depends On |
+| :--- | :---: | :--- | :--- | :--- |
+| **SRD-1601** | `[x]` | `C`/`I` hotkey opens the fullscreen BG3 Character view (App fallback, Dungeon + Arena capture handlers); legacy drawer keeps portrait-click quick-inspect | `@srd5/client` | SRD-1501 |
+| **SRD-1602** | `[x]` | Exploration HUD BG3 layout: left vertical portrait rail, collapsed top chrome (location chip + system cluster), bottom-center action bar | `@srd5/client` | SRD-507 |
+| **SRD-1603** | `[x]` | Combat HUD portrait-rail parity (TacticalCombatHud/PartyPortraits left rail, keep docked hotbar + initiative pill) | `@srd5/client` | SRD-607, SRD-1602 |
+| **SRD-1604** | `[ ]` | Epic 16 visual verification gate: E2E (i/c flow, HUD layout, overflow + zero console errors at 1280×800) and side-by-side sign-off vs BG3 refs closing the Epic 15 visual parity gate | `@srd5/client` | SRD-1601, SRD-1602, SRD-1603 |
+
+### Epic 16 Acceptance Criteria Details
+- [x] **SRD-1601**: In dungeon, arena, and roster/title views, `C`/`I` opens the fullscreen Character view for the focused hero (selected → active combatant → lead → first party member); a second `C`/`I` toggles it closed (`onToggleCharacterView` through Dungeon/Arena/Realm); the legacy drawer never appears on this path; portrait/scroll inspect buttons still open the drawer as quick-inspect with its Character-view link-out intact. Proven by the `epic16-hud-parity` E2E.
+- [x] **SRD-1602**: No persistent full-width top bar in exploration: compact location chip (campaign/floor/room) top-left, icon system cluster (Menu/Save/Exit) top-right, run pills folded top-center when active; portraits form a left vertical rail (portrait, name, HP/AC, lead crown, status, inspect); Stealth/Formation/Search/Rest/Inventory move to a bottom-center action bar; all existing testids and E2E flows unchanged (`dungeon-exploration-hud` unit tests + full E2E green).
+- [x] **SRD-1603**: Combat already met the goal via SRD-607/608 (full-bleed canvas, docked hotbar, initiative pill, left floating `PartyPortraits` panel — no bottom portrait row); verified at 1280×800 with zero console errors by the existing combat E2E legs (realm-war playtest, 1506 gate).
+- [ ] **SRD-1604**: E2E proves the `C`/`I` flow and the new HUD layout (screenshots archived per surface); side-by-side review vs `docs/reference/bg3/` records no missing panels, clipped tooltips, or text-only fallbacks; on sign-off the Epic 15 visual parity gate is checked.

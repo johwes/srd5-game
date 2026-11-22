@@ -157,7 +157,9 @@ export function App({
     });
   };
 
-  // Global keyboard shortcut ('C' or 'I') to toggle Character Sheet Drawer (`docs/spec/05-multiplayer-and-ui.md` Section 4.2)
+  // Global keyboard shortcut ('C' or 'I') toggles the BG3-style Character view
+  // (`docs/spec/14-party-inventory.md` §3.1). The legacy sheet drawer keeps
+  // portrait-click quick-inspect (with a link-out into the Character view).
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -174,15 +176,16 @@ export function App({
 
       const key = e.key.toLowerCase();
       if (key === 'c' || key === 'i') {
-        if (sheetCharacterId || sheetFallbackCharacter) {
-          setSheetCharacterId(null);
-          setSheetFallbackCharacter(null);
+        if (characterViewHeroId !== null) {
+          setCharacterViewHeroId(null);
         } else {
           const firstPartyChar =
             roster.characters.find((c) => c.id === roster.activePartyIds[0]) ??
             roster.characters[0];
           if (firstPartyChar) {
-            setSheetCharacterId(firstPartyChar.id);
+            setSheetCharacterId(null);
+            setSheetFallbackCharacter(null);
+            setCharacterViewHeroId(firstPartyChar.id);
           }
         }
       }
@@ -190,7 +193,7 @@ export function App({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [roster, sheetCharacterId, sheetFallbackCharacter]);
+  }, [roster, characterViewHeroId]);
 
   const persistAndSetRoster = (nextRoster: PersistedRosterData) => {
     setRoster(nextRoster);
@@ -313,8 +316,11 @@ export function App({
     });
   };
 
-  const handleCharacterViewTransfer = (fromHeroId: string, instanceId: string, toHeroId: string) => {
-    const from = roster.characters.find((c) => c.id === fromHeroId);
+  // SRD-1601: `C`/`I` toggles the Character view for the focused hero.
+  const handleToggleCharacterView = (id: string) =>
+    setCharacterViewHeroId((prev) => (prev === id ? null : id));
+
+  const handleCharacterViewTransfer = (fromHeroId: string, instanceId: string, toHeroId: string) => {    const from = roster.characters.find((c) => c.id === fromHeroId);
     const to = roster.characters.find((c) => c.id === toHeroId);
     if (!from || !to || fromHeroId === toHeroId) return;
     const inst = from.inventory.find((i) => i.instanceId === instanceId);
@@ -733,6 +739,8 @@ export function App({
                 handleInspectCharacter(char);
               }
             }}
+            onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
+            onToggleCharacterView={handleToggleCharacterView}
             onBackToRoster={() => setActiveView('roster')}
           />
         )}
@@ -753,6 +761,7 @@ export function App({
               }
             }}
             onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
+            onToggleCharacterView={handleToggleCharacterView}
             onExitToRoster={() => setActiveView('title_menu')}
           />
         )}
@@ -802,6 +811,7 @@ export function App({
                 handleInspectCharacter(char);
               }
             }}
+            onToggleCharacterView={handleToggleCharacterView}
             onExitToRoster={() => setActiveView('title_menu')}
           />
         )}
@@ -824,6 +834,7 @@ export function App({
               }
             }}
             onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
+            onToggleCharacterView={handleToggleCharacterView}
             onExitToRoster={() => {
               setIsDailyDescentActive(false);
               setActiveView('title_menu');

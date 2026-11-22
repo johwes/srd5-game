@@ -264,8 +264,8 @@ export function InventoryView({
     }
   };
 
-  /** SRD-1504 right-click opener (Deck/keyboard parity lives in the action bar). */
-  const openContextMenu = (event: React.MouseEvent, instanceId: string) => {
+  /** SRD-1504 right-click / long-press opener (keyboard parity lives in the action bar). */
+  const openContextMenu = (event: { preventDefault(): void; clientX: number; clientY: number }, instanceId: string) => {
     event.preventDefault();
     setSelectedInstanceId(instanceId);
     setContextMenu({ instanceId, x: event.clientX, y: event.clientY });

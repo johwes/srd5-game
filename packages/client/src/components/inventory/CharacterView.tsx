@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import {
   ABILITY_IDS,
   SKILL_IDS,
@@ -24,6 +24,7 @@ import {
   sortInventoryInstances,
   type InventorySortKey,
 } from './inventorySort.js';
+import { useInventoryCellTouch } from './inventoryCellTouch.js';
 import {
   formatAbilityAbbrev,
   formatAbilityFullName,
@@ -97,6 +98,73 @@ export function getDollBackdropClass(classId: string | undefined): string {
     default:
       return 'from-slate-800 via-slate-900 to-slate-950 border-slate-700';
   }
+}
+
+/**
+ * SRD-1504 party-strip cell (Spec 14 §3.2) with touch parity.
+ *
+ * Single tap / click / Enter selects (revealing the Send-to action bar);
+ * double-click / double-tap re-selects; right-click / long-press opens the
+ * Send-to context menu at the pointer position. Extracted per cell so the
+ * long-press timer and double-tap tracking stay scoped to one instance.
+ */
+function PartyStripCell({
+  heroId,
+  inst,
+  itemName,
+  selected,
+  draggable,
+  testIdPrefix,
+  onSelect,
+  onOpenMenu,
+  onDragStartCell,
+}: {
+  heroId: string;
+  inst: { instanceId: string; itemId: string; quantity: number };
+  itemName: string;
+  selected: boolean;
+  draggable: boolean;
+  testIdPrefix: string;
+  onSelect: () => void;
+  onOpenMenu: (x: number, y: number) => void;
+  onDragStartCell: (event: DragEvent) => void;
+}) {
+  const touch = useInventoryCellTouch({
+    enabled: true,
+    onDoubleTap: onSelect,
+    onLongPress: (point) => onOpenMenu(point.x, point.y),
+  });
+  return (
+    <button
+      key={inst.instanceId}
+      type="button"
+      data-testid={`${testIdPrefix}-party-card-${heroId}-cell-${inst.instanceId}`}
+      title={itemName}
+      aria-label={`${itemName}${inst.quantity > 1 ? ` ×${inst.quantity}` : ''}`}
+      aria-pressed={selected}
+      draggable={draggable}
+      onDragStart={onDragStartCell}
+      onClick={() => {
+        if (touch.consumeSuppressedClick()) return;
+        onSelect();
+      }}
+      onDoubleClick={onSelect}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onOpenMenu(event.clientX, event.clientY);
+      }}
+      onTouchStart={touch.onTouchStart}
+      onTouchMove={touch.onTouchMove}
+      onTouchEnd={touch.onTouchEnd}
+      className={`relative flex flex-col items-center justify-center gap-0.5 min-h-14 rounded-lg bg-slate-900 border p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 transition-colors ${selected ? 'border-amber-400 ring-2 ring-amber-400/60' : 'border-slate-700'}`}
+    >
+      <ItemIcon itemId={inst.itemId} size={24} testId={`${testIdPrefix}-party-card-icon`} />
+      <span className="max-w-full truncate text-[9px] font-medium text-slate-300">
+        {itemName}
+        {inst.quantity > 1 && <span className="text-slate-500"> ×{inst.quantity}</span>}
+      </span>
+    </button>
+  );
 }
 
 /**
@@ -509,45 +577,34 @@ export function CharacterView({
                           const isSelected =
                             partySelected?.heroId === hero.id && partySelected?.instanceId === inst.instanceId;
                           return (
-                            <button
+                            <PartyStripCell
                               key={inst.instanceId}
-                              type="button"
-                              data-testid={`${testIdPrefix}-party-card-${hero.id}-cell-${inst.instanceId}`}
-                              title={itemName}
-                              aria-label={`${itemName}${inst.quantity > 1 ? ` ×${inst.quantity}` : ''}`}
-                              aria-pressed={isSelected}
+                              heroId={hero.id}
+                              inst={inst}
+                              itemName={itemName}
+                              selected={isSelected}
                               draggable={Boolean(onTransferItem)}
-                              onDragStart={(event) => {
-                                event.dataTransfer.setData('text/inventory-instance-id', inst.instanceId);
-                                event.dataTransfer.setData('text/party-source-hero-id', hero.id);
-                                event.dataTransfer.effectAllowed = 'move';
-                              }}
-                              onClick={() =>
+                              testIdPrefix={testIdPrefix}
+                              onSelect={() =>
                                 setPartySelected(
                                   isSelected ? null : { heroId: hero.id, instanceId: inst.instanceId },
                                 )
                               }
-                              onDoubleClick={() =>
-                                setPartySelected({ heroId: hero.id, instanceId: inst.instanceId })
-                              }
-                              onContextMenu={(event) => {
-                                event.preventDefault();
+                              onOpenMenu={(x, y) => {
                                 setPartySelected({ heroId: hero.id, instanceId: inst.instanceId });
                                 setPartyContextMenu({
                                   heroId: hero.id,
                                   instanceId: inst.instanceId,
-                                  x: event.clientX,
-                                  y: event.clientY,
+                                  x,
+                                  y,
                                 });
                               }}
-                              className={`relative flex flex-col items-center justify-center gap-0.5 min-h-14 rounded-lg bg-slate-900 border p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 transition-colors ${isSelected ? 'border-amber-400 ring-2 ring-amber-400/60' : 'border-slate-700'}`}
-                            >
-                              <ItemIcon itemId={inst.itemId} size={24} testId={`${testIdPrefix}-party-card-icon`} />
-                              <span className="max-w-full truncate text-[9px] font-medium text-slate-300">
-                                {itemName}
-                                {inst.quantity > 1 && <span className="text-slate-500"> ×{inst.quantity}</span>}
-                              </span>
-                            </button>
+                              onDragStartCell={(event) => {
+                                event.dataTransfer.setData('text/inventory-instance-id', inst.instanceId);
+                                event.dataTransfer.setData('text/party-source-hero-id', hero.id);
+                                event.dataTransfer.effectAllowed = 'move';
+                              }}
+                            />
                           );
                         })
                       )}

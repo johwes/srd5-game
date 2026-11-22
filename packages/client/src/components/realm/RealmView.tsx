@@ -97,6 +97,8 @@ export interface RealmViewProps {
   storageAdapter?: DungeonStorageAdapter;
   onExitToRoster: () => void;
   onOpenCharacterSheet?: (characterId: string, liveBuild?: CharacterBuildState) => void;
+  /** SRD-1601: toggle the BG3 Character view for the focused hero (`C`/`I` shortcut in delves). */
+  onToggleCharacterView?: (characterId: string) => void;
   onSyncPartyBuilds?: (updatedBuilds: CharacterBuildState[]) => void;
   /** SRD-1405: removes retired veterans from the App roster. */
   onRemovePartyBuilds?: (buildIds: string[]) => void;
@@ -126,6 +128,7 @@ export function RealmView({
   storageAdapter = defaultDungeonStorageAdapter,
   onExitToRoster,
   onOpenCharacterSheet,
+  onToggleCharacterView,
   onSyncPartyBuilds,
   onRemovePartyBuilds,
   worldOptions,
@@ -662,6 +665,7 @@ export function RealmView({
           onDelveResolved={handleDelveResolved}
           onExitToRoster={() => setActiveDelve(null)}
           onOpenCharacterSheet={onOpenCharacterSheet}
+          onToggleCharacterView={onToggleCharacterView}
         />
       ) : endlessDelve ? (
         <DungeonView
@@ -678,6 +682,7 @@ export function RealmView({
           worldOptions={session.travel.worldOptions}
           onExitToRoster={() => setEndlessDelve(false)}
           onOpenCharacterSheet={onOpenCharacterSheet}
+          onToggleCharacterView={onToggleCharacterView}
         />
       ) : battle ? (
         <RealmBattleView

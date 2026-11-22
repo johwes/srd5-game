@@ -12,6 +12,10 @@ export interface ArenaViewProps {
   rosterCharacters?: CharacterBuildState[];
   compendium?: SrdCompendium;
   onOpenCharacterSheet?: (characterId: string) => void;
+  /** BG3-style Character view opener (preferred `C`/`I` target; sheet is the fallback). */
+  onOpenCharacterView?: (characterId: string) => void;
+  /** SRD-1601: toggle the Character view for the focused hero (`C`/`I` shortcut). */
+  onToggleCharacterView?: (characterId: string) => void;
   onBackToRoster?: () => void;
 }
 
@@ -22,6 +26,8 @@ export function ArenaView({
   rosterCharacters = [],
   compendium = defaultCompendium,
   onOpenCharacterSheet,
+  onOpenCharacterView,
+  onToggleCharacterView,
   onBackToRoster,
 }: ArenaViewProps) {
   const [activeConfig, setActiveConfig] = useState<ArenaConfig | null>(null);
@@ -34,6 +40,8 @@ export function ArenaView({
         compendium={compendium}
         onExitToSetup={() => setActiveConfig(null)}
         onOpenCharacterSheet={onOpenCharacterSheet}
+        onOpenCharacterView={onOpenCharacterView}
+        onToggleCharacterView={onToggleCharacterView}
       />
     );
   }

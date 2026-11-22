@@ -37,6 +37,10 @@ export interface ArenaCombatViewProps {
   compendium?: SrdCompendium;
   onExitToSetup: () => void;
   onOpenCharacterSheet?: (characterId: string) => void;
+  /** BG3-style Character view opener (preferred `C`/`I` target; sheet is the fallback). */
+  onOpenCharacterView?: (characterId: string) => void;
+  /** SRD-1601: toggle the Character view for the focused hero (`C`/`I` shortcut). */
+  onToggleCharacterView?: (characterId: string) => void;
 }
 
 export function ArenaCombatView({
@@ -45,6 +49,8 @@ export function ArenaCombatView({
   compendium = defaultCompendium,
   onExitToSetup,
   onOpenCharacterSheet,
+  onOpenCharacterView,
+  onToggleCharacterView,
 }: ArenaCombatViewProps) {
   const [transport, setTransport] = useState<LocalTransport>(() => {
     if (config.mode === 'pvp_duel') {
@@ -260,8 +266,10 @@ export function ArenaCombatView({
     },
   );
 
-  // Targeting-aware Character Sheet shortcut ('C' / 'I'): opens the sheet for
-  // the currently selected combatant instead of always the first party member.
+  // Targeting-aware Character view shortcut ('C' / 'I'): toggles the BG3-style
+  // Character view for the currently selected combatant instead of always
+  // the first party member. Falls back to the legacy sheet drawer only when
+  // no Character-view opener is wired.
   useEffect(() => {
     const handleSheetShortcut = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -287,14 +295,20 @@ export function ArenaCombatView({
         selectedPartyHeroId ??
         viewState.party[viewState.combat?.activeCombatantId ?? '']?.id ??
         Object.keys(viewState.party)[0];
-      if (heroId && onOpenCharacterSheet) {
-        onOpenCharacterSheet(heroId);
+      if (heroId) {
+        if (onToggleCharacterView) {
+          onToggleCharacterView(heroId);
+        } else if (onOpenCharacterView) {
+          onOpenCharacterView(heroId);
+        } else if (onOpenCharacterSheet) {
+          onOpenCharacterSheet(heroId);
+        }
       }
     };
 
     window.addEventListener('keydown', handleSheetShortcut, { capture: true });
     return () => window.removeEventListener('keydown', handleSheetShortcut, { capture: true });
-  }, [selectedCombatantId, viewState.party, viewState.combat, onOpenCharacterSheet]);
+  }, [selectedCombatantId, viewState.party, viewState.combat, onOpenCharacterSheet, onOpenCharacterView, onToggleCharacterView]);
 
   // AI monster turn execution
   const executeAiMonsterTurn = useCallback(async () => {
