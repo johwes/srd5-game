@@ -385,6 +385,78 @@ describe('SRD-1307: claiming corpse loot and floor-exit sweep', () => {
     expect(again.events).toHaveLength(0);
   });
 
+  it('CLAIM_LOOT with itemIndex takes a single item and leaves the rest', () => {
+    const { state, propId } = stateWithCorpse();
+    const planted: GameState = {
+      ...state,
+      props: state.props.map((p) =>
+        p.id === propId
+          ? { ...p, lootTable: { ...p.lootTable, items: ['dagger', 'potion-of-healing'], gp: 5 } }
+          : p,
+      ),
+    };
+    const beforeCount = planted.party['fighter-1']!.buildState!.inventory.length;
+    const res = reduceGame(planted, {
+      type: 'CLAIM_LOOT',
+      characterId: 'fighter-1',
+      propId,
+      itemIndex: 0,
+    });
+
+    // Dagger lands in the bag; the potion and all coins stay on the corpse.
+    const hero = res.nextState.party['fighter-1']!;
+    expect(hero.buildState!.inventory.length).toBe(beforeCount + 1);
+    expect(hero.buildState!.inventory[hero.buildState!.inventory.length - 1]!.itemId).toBe('dagger');
+    const table = res.nextState.props.find((p) => p.id === propId)!.lootTable!;
+    expect(table.items).toEqual(['potion-of-healing']);
+    expect(table.gp).toBe(5);
+
+    const acquired = res.events.find((e) => e.type === 'LOOT_ACQUIRED');
+    expect(acquired).toBeDefined();
+    if (acquired && acquired.type === 'LOOT_ACQUIRED') {
+      expect(acquired.loot.items).toEqual(['dagger']);
+      expect(acquired.loot.gp).toBeUndefined();
+    }
+  });
+
+  it('taking the last item with no coins clears the corpse table', () => {
+    const { state, propId } = stateWithCorpse();
+    const planted: GameState = {
+      ...state,
+      props: state.props.map((p) =>
+        p.id === propId ? { ...p, lootTable: { items: ['dagger'] } } : p,
+      ),
+    };
+    const res = reduceGame(planted, {
+      type: 'CLAIM_LOOT',
+      characterId: 'fighter-1',
+      propId,
+      itemIndex: 0,
+    });
+    expect(res.nextState.props.find((p) => p.id === propId)!.lootTable).toBeUndefined();
+  });
+
+  it('claimPropLootItem rejects out-of-range indexes and closed props', () => {
+    const { state, propId } = stateWithCorpse();
+    expect(() =>
+      reduceGame(planted(state, propId), {
+        type: 'CLAIM_LOOT',
+        characterId: 'fighter-1',
+        propId,
+        itemIndex: 7,
+      }),
+    ).toThrow(/No loot item at index/);
+
+    function planted(s: GameState, id: string): GameState {
+      return {
+        ...s,
+        props: s.props.map((p) =>
+          p.id === id ? { ...p, lootTable: { items: ['dagger'] } } : p,
+        ),
+      };
+    }
+  });
+
   it('claimPropLoot mints deterministic instance ids with a prefix', () => {
     const { state, propId } = stateWithCorpse();
     const bundle = state.props.find((p) => p.id === propId)!.lootTable!;

@@ -60,6 +60,14 @@ export function LootInventoryModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialHeroId]);
 
+  // If the live prop was fully looted elsewhere, fall back to the
+  // inventory tab instead of showing a stale discovered bundle.
+  useEffect(() => {
+    if (isOpen && !activeLoot) {
+      setActiveTab('inventory');
+    }
+  }, [isOpen, activeLoot]);
+
   // Keep selection valid if the party roster changes while open.
   useEffect(() => {
     if (isOpen && !party[selectedHeroId] && partyList[0]) {
@@ -196,7 +204,10 @@ export function LootInventoryModal({
               {activeLoot.bundle.items && activeLoot.bundle.items.length > 0 && (
                 <div className="space-y-1.5 pt-2 border-t border-slate-800">
                   <div className="text-xs font-semibold text-slate-400 uppercase">
-                    Items &amp; Relics:
+                    Items &amp; Relics:{' '}
+                    <span className="normal-case font-normal text-slate-500">
+                      click an item to take it
+                    </span>
                   </div>
                   <div
                     data-testid="discovered-loot-grid"
@@ -216,6 +227,10 @@ export function LootInventoryModal({
                                 activeLoot.bundle.sourceName,
                               )
                             : undefined
+                        }
+                        onSelect={() =>
+                          currentHero &&
+                          onClaimLoot(currentHero.id, activeLoot.sourcePropId, undefined, idx)
                         }
                       />
                     ))}

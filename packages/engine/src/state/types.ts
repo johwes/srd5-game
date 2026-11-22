@@ -383,6 +383,8 @@ export type GameCommand =
       characterId: string;
       propId?: string;
       loot?: LootBundleSpec;
+      /** BG3-style single-item take: bundle index into the prop's loot items. */
+      itemIndex?: number;
     }
   | {
       type: 'ATTUNE_ITEM';

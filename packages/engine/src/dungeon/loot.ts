@@ -476,10 +476,103 @@ export function awardLootToCharacter(
 }
 
 /**
- * Claims loot from an interactive prop (e.g. chest, defeated container, corpse).
- * Requires prop to be open or destroyed.
- * Emits LOOT_ACQUIRED and updates hero's inventory and state.
+ * Claims a single item from an interactive prop's loot table by bundle index
+ * (BG3-style click-to-take). Coins stay on the prop until the remainder is
+ * claimed via `claimPropLoot`. When no items and no coins remain, the prop's
+ * loot table is cleared so corpses/containers go inert.
  */
+export function claimPropLootItem(
+  state: GameState,
+  propId: string,
+  actorId: string,
+  itemIndex: number,
+  compendium: SrdCompendium = defaultCompendium,
+  instanceIdPrefix?: string,
+): { nextState: GameState; events: GameEvent[]; loot: LootBundleSpec } {
+  const prop = state.props.find((p) => p.id === propId);
+  if (!prop) {
+    throw new Error(`Interactive prop with id ${propId} not found`);
+  }
+
+  if (prop.state !== 'open' && prop.state !== 'destroyed') {
+    throw new Error(`Cannot claim loot from prop in state '${prop.state}'. Must be 'open' or 'destroyed'.`);
+  }
+
+  const table = prop.lootTable;
+  if (!table?.items || itemIndex < 0 || itemIndex >= table.items.length) {
+    throw new Error(`No loot item at index ${itemIndex} on prop '${propId}'`);
+  }
+
+  const hero = state.party[actorId];
+  if (!hero) {
+    throw new Error(`Actor ${actorId} not found in party`);
+  }
+
+  const itemId = table.items[itemIndex]!;
+  const singleLoot: LootBundleSpec = {
+    origin: table.origin,
+    sourceName: table.sourceName,
+    items: [itemId],
+  };
+
+  const remainingItems = table.items.filter((_, idx) => idx !== itemIndex);
+  const coinsRemain =
+    (table.cp ?? 0) > 0 ||
+    (table.sp ?? 0) > 0 ||
+    (table.ep ?? 0) > 0 ||
+    (table.gp ?? 0) > 0 ||
+    (table.pp ?? 0) > 0;
+  const nextLootTable =
+    remainingItems.length > 0 || coinsRemain
+      ? { ...table, items: remainingItems.length > 0 ? remainingItems : undefined }
+      : undefined;
+
+  const nextProps = state.props.map((p) =>
+    p.id === propId ? { ...p, lootTable: nextLootTable } : p,
+  );
+
+  let nextParty = { ...state.party };
+
+  if (hero.buildState) {
+    const updatedBuild = awardLootToCharacter(hero.buildState, singleLoot, compendium, instanceIdPrefix);
+    const updatedSheet = computeDerivedCharacter(updatedBuild, compendium);
+    nextParty[actorId] = {
+      ...hero,
+      buildState: updatedBuild,
+      characterSheet: updatedSheet,
+    };
+  }
+
+  const events: GameEvent[] = [
+    {
+      type: 'LOOT_ACQUIRED',
+      actorId,
+      propId,
+      loot: singleLoot,
+    },
+  ];
+
+  if (hero.buildState) {
+    events.push({
+      type: 'INVENTORY_UPDATED',
+      characterId: actorId,
+      inventory: nextParty[actorId]!.buildState!.inventory,
+      currency: nextParty[actorId]!.buildState!.currency,
+    });
+  }
+
+  const nextState: GameState = {
+    ...state,
+    props: nextProps,
+    party: nextParty,
+  };
+
+  return {
+    nextState,
+    events,
+    loot: singleLoot,
+  };
+}
 export function claimPropLoot(
   state: GameState,
   propId: string,

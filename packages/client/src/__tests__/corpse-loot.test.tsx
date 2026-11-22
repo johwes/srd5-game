@@ -203,4 +203,34 @@ describe('SRD-1307: per-corpse loot card (modal)', () => {
       expect.objectContaining({ origin: 'monster_drop', gp: 12 }),
     );
   });
+
+  it('clicking a discovered cell takes just that item (BG3-style single take)', () => {
+    const onClaimLoot = vi.fn();
+    render(
+      <LootInventoryModal
+        isOpen={true}
+        party={makeParty()}
+        initialHeroId="hero-1"
+        compendium={compendium}
+        activeLoot={{
+          sourcePropId: 'corpse-goblin-1',
+          sourceName: 'Remains of Goblin',
+          bundle: {
+            gp: 12,
+            items: ['acid-vial', 'dagger'],
+            origin: 'monster_drop',
+            sourceName: 'Goblin',
+          },
+        }}
+        onClose={vi.fn()}
+        onClaimLoot={onClaimLoot}
+        onEquipItem={vi.fn()}
+        onAttuneItem={vi.fn()}
+        onUnattuneItem={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('discovered-loot-cell-discovered-dagger-1'));
+    expect(onClaimLoot).toHaveBeenCalledWith('hero-1', 'corpse-goblin-1', undefined, 1);
+  });
 });

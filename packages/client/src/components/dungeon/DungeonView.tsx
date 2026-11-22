@@ -1369,17 +1369,28 @@ export function DungeonView({
         party={viewState.party}
         initialHeroId={focusedPartyHeroId}
         compendium={compendium}
-        activeLoot={activeLoot}
+        activeLoot={(() => {
+          // Resolve the bundle live from authoritative state so BG3-style
+          // per-item takes shrink the box without a stale snapshot. Fully
+          // looted props resolve to null and the modal falls back to inventory.
+          if (!activeLoot) return null;
+          if (!activeLoot.sourcePropId) return activeLoot;
+          const liveTable = authState.props.find((p) => p.id === activeLoot.sourcePropId)?.lootTable as
+            | typeof activeLoot.bundle
+            | undefined;
+          return liveTable ? { ...activeLoot, bundle: liveTable } : null;
+        })()}
         onClose={() => {
           setModalState(null);
           setActiveLoot(null);
         }}
-        onClaimLoot={(charId, propId, loot) =>
+        onClaimLoot={(charId, propId, loot, itemIndex) =>
           handleDispatch({
             type: 'CLAIM_LOOT',
             characterId: charId,
             propId,
             loot,
+            ...(itemIndex !== undefined ? { itemIndex } : {}),
           })
         }
         onEquipItem={(charId, slotName, instId) => {

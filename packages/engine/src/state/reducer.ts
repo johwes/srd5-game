@@ -64,7 +64,7 @@ import {
   transitionCombatToExploration,
 } from '../dungeon/encounters.js';
 import { resolveRest } from '../dungeon/rest.js';
-import { claimPropLoot, awardLootToCharacter } from '../dungeon/loot.js';
+import { claimPropLoot, claimPropLootItem, awardLootToCharacter } from '../dungeon/loot.js';
 import {
   dropInventoryItem,
   identifyInventoryItem,
@@ -1220,14 +1220,26 @@ export function reduceGame(
 
     case 'CLAIM_LOOT': {
       if (command.propId) {
-        const claimRes = claimPropLoot(
-          nextState,
-          command.propId,
-          command.characterId,
-          options?.compendium,
-        );
-        nextState = claimRes.nextState;
-        events.push(...claimRes.events);
+        if (command.itemIndex !== undefined) {
+          const itemRes = claimPropLootItem(
+            nextState,
+            command.propId,
+            command.characterId,
+            command.itemIndex,
+            options?.compendium,
+          );
+          nextState = itemRes.nextState;
+          events.push(...itemRes.events);
+        } else {
+          const claimRes = claimPropLoot(
+            nextState,
+            command.propId,
+            command.characterId,
+            options?.compendium,
+          );
+          nextState = claimRes.nextState;
+          events.push(...claimRes.events);
+        }
       } else if (command.loot) {
         const hero = nextState.party[command.characterId];
         if (hero?.buildState) {
