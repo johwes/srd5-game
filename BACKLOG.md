@@ -373,7 +373,7 @@ Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-
 | :--- | :---: | :--- | :--- | :--- |
 | **SRD-1501** | `[x]` | Character view shell (3-pane: stats rail · doll + equipment · backpack): fullscreen modal, hero switcher, XP + party-gold header, Esc close; reuses `InventoryView` grid + sheet doll slots; unit + E2E at 1280×800 | `@srd5/client` | SRD-1305 |
 | **SRD-1502** | `[x]` | Party strip mode: all active heroes side by side (doll card + condensed grid + weight bar each), per-hero gold + party total, drag-or-click hero-to-hero moves via `TRANSFER_ITEM`; engine-state re-render proof | `@srd5/client`, `@srd5/engine` | SRD-1501 |
-| **SRD-1503** | `[ ]` | Doll depth: melee/ranged weapon cards (icon, to-hit, damage from derived profiles) + weight capacity bar (STR × 15, display only) + click-to-unequip; visual validation screenshots | `@srd5/client` | SRD-1501 |
+| **SRD-1503** | `[x]` | Doll depth: melee/ranged weapon cards (icon, to-hit, damage from derived profiles) + weight capacity bar (STR × 15, display only) + click-to-unequip; visual validation screenshots | `@srd5/client` | SRD-1501 |
 | **SRD-1504** | `[ ]` | Flow parity: double-click equip/use, right-click context menu (Equip, Use, Send to hero, Split, Drop, Sell-info/Identify), sort control (Name/Type/Value/Weight); Deck focus+Enter parity for every flow | `@srd5/client` | SRD-1501, SRD-1502 |
 | **SRD-1505** | `[ ]` | Stats rail completion: Build/Skills/Attributes tabs (conditions, resistances, attributes, proficiencies, proficiency stars); presentation over sheet-drawer data, no new mechanics | `@srd5/client` | SRD-1501 |
 | **SRD-1506** | `[ ]` | Flow verification gate: E2E kill → loot box Take → Character view equip → party-strip move at 1280×800 with zero console errors + zero overflow; visual screenshots per surface | `@srd5/client` | SRD-1502, SRD-1503, SRD-1504, SRD-1505 |
@@ -381,7 +381,7 @@ Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-
 ### Epic 15 Acceptance Criteria Details
 - [x] **SRD-1501**: Character view opens from HUD/roster/loot, switches heroes, shows stats, doll, grid, gold; closes on Esc; drawer still works.
 - [x] **SRD-1502**: Strip shows all active heroes with correct per-hero and total gold; moving an item updates both heroes' grids from engine state.
-- [ ] **SRD-1503**: Weapon cards match derived to-hit/damage; weight bar matches STR×15; Unequip works from the doll.
+- [x] **SRD-1503**: Weapon cards match derived to-hit/damage; weight bar matches STR×15; Unequip works from the doll.
 - [ ] **SRD-1504**: Double-click, right-click menu, and sort all function by mouse, keyboard, and touch; no hover-only information.
 - [ ] **SRD-1505**: Skills/attributes/conditions/resistances render from sheet data; no new engine mechanics.
 - [ ] **SRD-1506**: Full flow E2E green at 1280×800 with zero console errors; screenshots archived per surface.

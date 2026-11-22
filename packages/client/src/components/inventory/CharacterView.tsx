@@ -65,6 +65,31 @@ const RAIL_TABS: ReadonlyArray<{ id: CharacterViewRailTab; label: string }> = [
 ];
 
 /**
+ * SRD-1503 class-tinted doll backdrop (Spec 14 §5: token sprite enlarged on a
+ * class-tinted backdrop; licensed-icon palette only, no Larian art).
+ */
+export function getDollBackdropClass(classId: string | undefined): string {
+  switch ((classId ?? '').toLowerCase()) {
+    case 'fighter':
+      return 'from-red-950 via-red-900 to-slate-900 border-red-700/50';
+    case 'wizard':
+      return 'from-indigo-950 via-indigo-900 to-slate-900 border-indigo-700/50';
+    case 'cleric':
+      return 'from-amber-950 via-amber-900 to-slate-900 border-amber-700/50';
+    case 'rogue':
+      return 'from-emerald-950 via-emerald-900 to-slate-900 border-emerald-700/50';
+    case 'bard':
+      return 'from-fuchsia-950 via-fuchsia-900 to-slate-900 border-fuchsia-700/50';
+    case 'ranger':
+      return 'from-lime-950 via-lime-900 to-slate-900 border-lime-700/50';
+    case 'druid':
+      return 'from-green-950 via-green-900 to-slate-900 border-green-700/50';
+    default:
+      return 'from-slate-800 via-slate-900 to-slate-950 border-slate-700';
+  }
+}
+
+/**
  * SRD-1501 BG3-style Character view shell (Spec 14 §3.1).
  *
  * Full-screen 3-pane modal: stats rail · doll + equipment · backpack.
@@ -654,11 +679,37 @@ export function CharacterView({
             )}
           </aside>
 
-          {/* Center + right: reuse InventoryView (paperdoll + grid) verbatim */}
+          {/* Center + right: doll depth header + reuse InventoryView (paperdoll + grid) verbatim */}
           <div
             data-testid={`${testIdPrefix}-inventory-pane`}
             className="p-3 overflow-y-auto min-h-0"
           >
+            {/* SRD-1503 doll: enlarged token on class-tinted backdrop + AC shield. */}
+            <div
+              data-testid={`${testIdPrefix}-doll`}
+              className={`mb-2 flex items-center gap-3 rounded-xl border bg-gradient-to-br p-2.5 ${getDollBackdropClass(derived.classes[0]?.classId)}`}
+            >
+              <div
+                data-testid={`${testIdPrefix}-doll-portrait`}
+                aria-hidden="true"
+                className="w-16 h-16 shrink-0 rounded-xl bg-slate-950/60 border border-white/10 flex items-center justify-center text-3xl font-bold text-white"
+              >
+                {derived.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-white truncate">{derived.name}</div>
+                <div className="text-[11px] text-slate-300 truncate">
+                  {derived.subraceName ?? derived.raceName} · {classLine}
+                </div>
+              </div>
+              <div
+                data-testid={`${testIdPrefix}-doll-ac`}
+                title={`Armor Class ${derived.armorClass.totalAc}`}
+                className="px-2.5 py-1.5 rounded-xl bg-sky-950/70 border border-sky-700/60 text-sky-200 text-sm font-bold font-mono whitespace-nowrap"
+              >
+                🛡️ {derived.armorClass.totalAc} AC
+              </div>
+            </div>
             <InventoryView
               heroId={activeHero.id}
               heroName={derived.name}
@@ -671,6 +722,7 @@ export function CharacterView({
                 .filter((h) => h.id !== activeHero.id)
                 .map((h) => ({ id: h.id, name: h.name }))}
               strScore={strScore}
+              weaponAttacks={derived.weaponAttacks}
               onEquipItem={(slot, instanceId) => onEquipItem(activeHero.id, slot, instanceId)}
               onAttuneItem={(instanceId) => onAttuneItem(activeHero.id, instanceId)}
               onUnattuneItem={(instanceId) => onUnattuneItem(activeHero.id, instanceId)}

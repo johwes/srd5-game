@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { InventoryItemInstance, SrdCompendium } from '@srd5/data';
+import type { DerivedWeaponAttackProfile } from '@srd5/engine';
 import { ItemIcon } from './ItemIcon.js';
 import { ItemTooltipCard } from './ItemTooltipCard.js';
 import { InventoryGridCell } from './InventoryGridCell.js';
@@ -24,7 +25,7 @@ import {
   getRarityBorderClass,
   getRarityTextClass,
 } from './itemRarity.js';
-import { formatTitleCase } from '../compendium/formatters.js';
+import { formatSignedNumber, formatTitleCase } from '../compendium/formatters.js';
 
 /** The 5 engine paperdoll slots mirrored by the BG3-style grid (Spec 12 §8). */
 export type InventorySlotName = 'armor' | 'shield' | 'mainHand' | 'offHand' | 'ranged';
@@ -91,6 +92,8 @@ export interface InventoryViewProps {
   partyHeroes?: ReadonlyArray<{ id: string; name: string }>;
   /** STR score for the carrying-capacity readout (capacity = STR × 15). */
   strScore?: number;
+  /** Derived weapon attack profiles for the melee/ranged weapon cards (SRD-1503). */
+  weaponAttacks?: readonly DerivedWeaponAttackProfile[];
   /** Precomputed equip-restriction messages (errors block, warnings inform). */
   equipIssues?: ReadonlyArray<{ slot: string; message: string; severity: 'error' | 'warning' }>;
   /** Give/trade the selected stack to another hero. */
@@ -133,6 +136,7 @@ export function InventoryView({
   testIdPrefix = 'inventory',
   partyHeroes,
   strScore,
+  weaponAttacks,
   equipIssues,
   onTransferItem,
   onDropItem,
@@ -240,6 +244,35 @@ export function InventoryView({
           )}
         </div>
       </div>
+      {/* SRD-1503 weight capacity bar (STR × 15, display only). */}
+      {strScore !== undefined && (
+        <div>
+          <div
+            data-testid={`${prefix}-weight-bar`}
+            role="progressbar"
+            aria-valuenow={
+              strScore * 15 > 0 ? Math.min(100, Math.round((totalWeightLb / (strScore * 15)) * 100)) : 0
+            }
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${heroName} carrying capacity`}
+            className="h-1.5 rounded-full bg-slate-800 overflow-hidden"
+          >
+            <div
+              className={`h-full ${
+                totalWeightLb > strScore * 15
+                  ? 'bg-red-400'
+                  : totalWeightLb >= strScore * 15 * 0.8
+                    ? 'bg-amber-400'
+                    : 'bg-emerald-400'
+              }`}
+              style={{
+                width: `${strScore * 15 > 0 ? Math.min(100, Math.round((totalWeightLb / (strScore * 15)) * 100)) : 0}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
       {equipIssues && equipIssues.length > 0 && (
         <div data-testid={`${prefix}-equip-issues`} className="rounded-lg border border-red-500/40 bg-red-950/40 p-2 text-[11px] text-red-200">
           {equipIssues.map((issue, idx) => (
@@ -357,6 +390,76 @@ export function InventoryView({
           <div className="mt-1 text-[10px] text-purple-300/90" data-testid={`${prefix}-attunement-count`}>
             🔮 Attuned {attunedItemInstanceIds.length} / 3 max
           </div>
+          {/* SRD-1503 weapon cards: melee / ranged from derived attack profiles. */}
+          {(() => {
+            const attacks = weaponAttacks ?? [];
+            const melee =
+              attacks.find((a) => a.slot === 'main_hand' && a.rangeType === 'melee') ??
+              attacks.find((a) => a.slot === 'off_hand' && a.rangeType === 'melee') ??
+              attacks.find((a) => a.rangeType === 'melee') ??
+              null;
+            const ranged = attacks.find((a) => a.rangeType === 'ranged') ?? null;
+            const cards: ReadonlyArray<{ key: 'melee' | 'ranged'; label: string; profile: DerivedWeaponAttackProfile | null }> = [
+              { key: 'melee', label: '⚔️ Melee', profile: melee },
+              { key: 'ranged', label: '🏹 Ranged', profile: ranged },
+            ];
+            return (
+              <div className="mt-2 flex flex-col gap-1.5" aria-label={`${heroName} weapon cards`}>
+                {cards.map(({ key, label, profile }) => (
+                  <div
+                    key={key}
+                    data-testid={`${prefix}-weapon-${key}`}
+                    className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950/70 p-2"
+                  >
+                    {profile ? (
+                      <>
+                        <ItemIcon itemId={profile.weaponId} size={26} testId={`${prefix}-weapon-${key}-icon`} />
+                        <div className="min-w-0 flex-1">
+                          <div
+                            data-testid={`${prefix}-weapon-${key}-name`}
+                            className="truncate text-[11px] font-bold text-slate-100"
+                          >
+                            {label} · {profile.name}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                            <span
+                              data-testid={`${prefix}-weapon-${key}-tohit`}
+                              title={
+                                profile.toHitBreakdown.length > 0
+                                  ? profile.toHitBreakdown.map((c) => `${c.sourceName} ${formatSignedNumber(c.value)}`).join(', ')
+                                  : undefined
+                              }
+                              className="px-1.5 py-0.5 rounded bg-sky-950/70 border border-sky-700/50 text-sky-200 font-mono font-semibold"
+                            >
+                              {formatSignedNumber(profile.toHitBonus)} to hit
+                            </span>
+                            <span
+                              data-testid={`${prefix}-weapon-${key}-damage`}
+                              title={
+                                profile.damageBreakdown.length > 0
+                                  ? profile.damageBreakdown.map((c) => `${c.sourceName} ${formatSignedNumber(c.value)}`).join(', ')
+                                  : undefined
+                              }
+                              className="font-mono text-amber-200"
+                            >
+                              {profile.damageFormula} {profile.damageType}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div
+                        data-testid={`${prefix}-weapon-${key}-empty`}
+                        className="text-[11px] text-slate-500"
+                      >
+                        {label} · No {key === 'melee' ? 'melee' : 'ranged'} weapon ready
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
 
         {/* ── Right: backpack grid ── */}
