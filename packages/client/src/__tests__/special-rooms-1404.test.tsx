@@ -268,6 +268,10 @@ describe('SRD-1404: Special-room card flows', () => {
 
     // Open the vault: the hoard shells in the loot modal with provenance.
     fireEvent.click(screen.getByTestId('prop-action-open-vault_chest_2'));
+    // SRD-1510: chest opens into the anchored loot box first (battlefield
+    // stays visible); Manage opens the fullscreen modal for full management.
+    expect(await screen.findByTestId('anchored-loot-box')).toBeDefined();
+    fireEvent.click(screen.getByTestId('anchored-loot-manage-btn'));
     expect(await screen.findByTestId('tab-discovered-loot-btn')).toBeDefined();
     fireEvent.click(screen.getByTestId('tab-discovered-loot-btn'));
     const provenance = await screen.findByTestId('discovered-loot-provenance');

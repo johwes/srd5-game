@@ -47,6 +47,7 @@ import { LevelUpModal } from '../roster/index.js';
 import { DungeonExplorationHud } from './DungeonExplorationHud.js';
 import { PropInteractionCard } from './PropInteractionCard.js';
 import { LootInventoryModal } from './LootInventoryModal.js';
+import { AnchoredLootBoxPanel } from './AnchoredLootBoxPanel.js';
 import { MarchingOrderModal } from './MarchingOrderModal.js';
 import { RestCampModal } from './RestCampModal.js';
 import { SaveLoadModal } from './SaveLoadModal.js';
@@ -219,6 +220,17 @@ export function DungeonView({
     sourceName?: string;
     bundle: any;
   } | null>(null);
+  // SRD-1510 anchored in-world loot box (first-touch surface; modal stays for
+  // full management). Battlefield stays visible behind the anchored panel.
+  const [anchoredLoot, setAnchoredLoot] = useState<{
+    sourcePropId?: string;
+    sourceName?: string;
+    bundle: any;
+  } | null>(null);
+  const [anchoredHeroId, setAnchoredHeroId] = useState<string | null>(null);
+  const [anchoredAt, setAnchoredAt] = useState<{ x: number; y: number } | null>(null);
+  const explorationCameraRef = useRef<{ cellToScreen: (x: number, y: number) => { x: number; y: number } } | null>(null);
+  const explorationContainerRef = useRef<HTMLDivElement | null>(null);
   const [activeShrine, setActiveShrine] =
     useState<InteractiveProp | PlayerViewProp | null>(null);
   // SRD-510 click-to-inspect: prop id whose interaction card is open.
@@ -344,17 +356,24 @@ export function DungeonView({
           setRollHistory((prev) => [r, ...prev.slice(0, 49)]);
         }
 
-        // Open chest with loot
+        // Open chest with loot -> SRD-1510 anchored loot box (first-touch).
+        // The fullscreen modal stays available via the box's Manage link.
         if (ev.type === 'PROP_STATE_CHANGED' && ev.nextState === 'open') {
           const auth = transport.getAuthoritativeState();
           const prop = auth.props.find((p) => p.id === ev.propId);
           if (prop?.lootTable) {
-            setActiveLoot({
+            const anchor = explorationCameraRef.current?.cellToScreen(prop.x, prop.y) ?? null;
+            setAnchoredAt(anchor);
+            setAnchoredHeroId((prev) => {
+              if (prev) return prev;
+              const authParty = (auth as { marchingOrder?: { leadExplorerId?: string } }).marchingOrder;
+              return authParty?.leadExplorerId ?? Object.keys(auth.party ?? {})[0] ?? null;
+            });
+            setAnchoredLoot({
               sourcePropId: prop.id,
-              sourceName: prop.id.replace(/[-_]/g, ' '),
+              sourceName: (prop as { label?: string }).label ?? prop.id.replace(/[-_]/g, ' '),
               bundle: prop.lootTable,
             });
-            setModalState('loot_inventory');
           }
         }
 
@@ -710,6 +729,74 @@ export function DungeonView({
     return null;
   })();
 
+  // SRD-1510: live anchored bundle (shrinks per take like the modal) +
+  // dismissal rules (Take All clears it; walk-away closes it).
+  const liveAnchoredLoot = (() => {
+    if (!anchoredLoot) return null;
+    if (!anchoredLoot.sourcePropId) return anchoredLoot;
+    const liveTable = getAuthState().props.find(
+      (p) => p.id === anchoredLoot.sourcePropId,
+    )?.lootTable as typeof anchoredLoot.bundle | undefined;
+    if (!liveTable) return null;
+    const empty =
+      (liveTable.gp ?? 0) <= 0 && (liveTable.items?.length ?? 0) === 0;
+    return empty ? null : { ...anchoredLoot, bundle: liveTable };
+  })();
+
+  useEffect(() => {
+    if (!anchoredLoot?.sourcePropId) return;
+    const stillAdjacent = adjacentProps.some((p) => p.id === anchoredLoot.sourcePropId);
+    if (!stillAdjacent) {
+      setAnchoredLoot(null);
+      setAnchoredAt(null);
+    }
+  }, [anchoredLoot?.sourcePropId, adjacentProps]);
+
+  useEffect(() => {
+    if (anchoredLoot && !liveAnchoredLoot) {
+      setAnchoredLoot(null);
+      setAnchoredAt(null);
+    }
+  }, [anchoredLoot, liveAnchoredLoot]);
+
+  const anchoredRecipientId =
+    (anchoredHeroId && authState.party[anchoredHeroId] ? anchoredHeroId : null) ??
+    focusedPartyHeroId;
+
+  const handleAnchoredClaimItem = (itemIndex: number) => {
+    if (!liveAnchoredLoot?.sourcePropId || !anchoredRecipientId) return;
+    void handleDispatch({
+      type: 'CLAIM_LOOT',
+      characterId: anchoredRecipientId,
+      propId: liveAnchoredLoot.sourcePropId,
+      itemIndex,
+    });
+  };
+  const handleAnchoredClaimGold = () => {
+    if (!liveAnchoredLoot?.sourcePropId || !anchoredRecipientId) return;
+    void handleDispatch({
+      type: 'CLAIM_LOOT',
+      characterId: anchoredRecipientId,
+      propId: liveAnchoredLoot.sourcePropId,
+      takeCoins: true,
+    });
+  };
+  const handleAnchoredClaimAll = () => {
+    if (!liveAnchoredLoot || !anchoredRecipientId) return;
+    void handleDispatch({
+      type: 'CLAIM_LOOT',
+      characterId: anchoredRecipientId,
+      propId: liveAnchoredLoot.sourcePropId,
+      loot: liveAnchoredLoot.bundle,
+    });
+  };
+  const handleAnchoredManage = () => {
+    setActiveLoot(liveAnchoredLoot ?? anchoredLoot);
+    setAnchoredLoot(null);
+    setAnchoredAt(null);
+    setModalState('loot_inventory');
+  };
+
   // Cell click handling. SRD-410 manual targeting consumes combat clicks
   // while an action is armed (right-click cancels).
   const handleCellClick = async (cell: GridPoint, button?: number) => {
@@ -722,8 +809,25 @@ export function DungeonView({
         (p) => p.x === cell.x && p.y === cell.y,
       );
       if (clickedProp) {
+        // Clicking elsewhere on the battlefield dismisses the anchored box
+        // (click-away); the loot paths below re-open it at the new container.
         if (clickedProp.kind === 'chest' && clickedProp.state === 'open') {
-          setModalState('loot_inventory');
+          const authProp = getAuthState().props.find((p) => p.id === clickedProp.id);
+          if (authProp?.lootTable) {
+            setAnchoredAt(
+              explorationCameraRef.current?.cellToScreen(authProp.x, authProp.y) ?? null,
+            );
+            setAnchoredHeroId((prev) => prev ?? focusedPartyHeroId);
+            setAnchoredLoot({
+              sourcePropId: authProp.id,
+              sourceName: (authProp as { label?: string }).label ?? authProp.id.replace(/[-_]/g, ' '),
+              bundle: authProp.lootTable,
+            });
+            setInspectedPropId(null);
+          } else {
+            setAnchoredLoot(null);
+            setModalState('loot_inventory');
+          }
           return;
         }
         // SRD-1307: corpses holding unclaimed drops open the per-corpse loot
@@ -736,13 +840,16 @@ export function DungeonView({
             setInspectedPropId(clickedProp.id);
             return;
           }
-          setActiveLoot({
+          setAnchoredAt(
+            explorationCameraRef.current?.cellToScreen(authProp.x, authProp.y) ?? null,
+          );
+          setAnchoredHeroId((prev) => prev ?? focusedPartyHeroId);
+          setAnchoredLoot({
             sourcePropId: authProp.id,
             sourceName: authProp.label ?? authProp.id.replace(/[-_]/g, ' '),
             bundle: authProp.lootTable,
           });
           setInspectedPropId(null);
-          setModalState('loot_inventory');
           return;
         }
         if (clickedProp.kind !== 'stairs_down' && clickedProp.kind !== 'stairs_up') {
@@ -1142,8 +1249,9 @@ export function DungeonView({
       ) : (
         /* EXPLORATION MODE */
         <div className="relative w-full h-full flex flex-col overflow-hidden">
-          <div className="relative flex-1 min-h-0 w-full overflow-hidden">
+          <div ref={explorationContainerRef} className="relative flex-1 min-h-0 w-full overflow-hidden">
             <TacticalCanvasViewport
+              cameraRef={explorationCameraRef as never}
               grid={viewState.grid}
               combatants={viewState.party}
               selectedCombatantId={selectedCombatantId}
@@ -1184,7 +1292,7 @@ export function DungeonView({
               onInspectProp={(id) =>
                 setInspectedPropId((prev) => (prev === id ? null : id))
               }
-              hasUnclaimedLoot={Boolean(activeLoot)}
+              hasUnclaimedLoot={Boolean(activeLoot ?? liveAnchoredLoot)}
               onToggleStealth={() =>
                 handleDispatch({
                   type: 'SET_PARTY_STEALTH',
@@ -1238,14 +1346,17 @@ export function DungeonView({
                       ? (propId) => {
                           const target = getAuthState().props.find((p) => p.id === propId);
                           if (!target?.lootTable) return;
-                          setActiveLoot({
+                          setAnchoredAt(
+                            explorationCameraRef.current?.cellToScreen(target.x, target.y) ?? null,
+                          );
+                          setAnchoredHeroId((prev) => prev ?? focusedPartyHeroId);
+                          setAnchoredLoot({
                             sourcePropId: target.id,
                             sourceName:
                               target.label ?? target.id.replace(/[-_]/g, ' '),
                             bundle: target.lootTable,
                           });
                           setInspectedPropId(null);
-                          setModalState('loot_inventory');
                         }
                       : undefined
                   }
@@ -1256,6 +1367,34 @@ export function DungeonView({
                       setModalState('shrine');
                       setInspectedPropId(null);
                     }
+                  }}
+                />
+              </div>
+            )}
+
+            {/* SRD-1510 anchored in-world loot box: absolute overlay so the
+                battlefield stays visible (no fullscreen backdrop). */}
+            {liveAnchoredLoot && modalState !== 'loot_inventory' && (
+              <div
+                data-testid="anchored-loot-layer"
+                className="absolute inset-0 z-30 pointer-events-none"
+              >
+                <AnchoredLootBoxPanel
+                  loot={liveAnchoredLoot}
+                  compendium={compendium}
+                  partyHeroes={partyList.map((p) => ({ id: p.id, name: p.name }))}
+                  selectedHeroId={anchoredRecipientId ?? partyList[0]?.id ?? ''}
+                  onSelectHero={setAnchoredHeroId}
+                  anchor={anchoredAt}
+                  viewportWidth={explorationContainerRef.current?.clientWidth ?? 1280}
+                  viewportHeight={explorationContainerRef.current?.clientHeight ?? 800}
+                  onClaimItem={handleAnchoredClaimItem}
+                  onClaimGold={handleAnchoredClaimGold}
+                  onClaimAll={handleAnchoredClaimAll}
+                  onManage={handleAnchoredManage}
+                  onClose={() => {
+                    setAnchoredLoot(null);
+                    setAnchoredAt(null);
                   }}
                 />
               </div>

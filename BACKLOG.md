@@ -380,7 +380,7 @@ Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-
 | **SRD-1507** | `[x]` | Spellbook view: class tabs + per-level rows with live slot pips + subclass resource header + search; reuses inspect card | `@srd5/client` | SRD-1501 |
 | **SRD-1508** | `[x]` | Cast flow: inspect card (damage range/dice/save/range/cost) + slot picker with upcast preview in the arming step | `@srd5/client` | SRD-1507 |
 | **SRD-1509** | `[x]` | Reactions policy tab (Ask/Auto/Off per reaction), client-side over prompt flow, persisted per character | `@srd5/client` | SRD-1507 |
-| **SRD-1510** | `[ ]` | Anchored in-world loot box panel (grid + gold + Take All + manage link), viewport-clamped, same commands | `@srd5/client` | SRD-1501 |
+| **SRD-1510** | `[x]` | Anchored in-world loot box panel (grid + gold + Take All + manage link), viewport-clamped, same commands | `@srd5/client` | SRD-1501 |
 
 ### Epic 15 Acceptance Criteria Details
 - [x] **SRD-1501**: Character view opens from HUD/roster/loot, switches heroes, shows stats, doll, grid, gold; closes on Esc; drawer still works.
@@ -392,5 +392,5 @@ Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-
 - [x] **SRD-1507**: Spellbook shows every known/prepared spell grouped by level with correct live slot pips; search filters; class tabs + resource header render.
 - [x] **SRD-1508**: Cast picker previews exact upcast math; unavailable slots disabled; cantrips skip the picker; Bonus-Action rule still enforced.
 - [x] **SRD-1509**: Reactions policy flips Ask/Auto/Off per reaction, persists per character, prompt modal honors it; zero engine changes.
-- [ ] **SRD-1510**: Loot box opens anchored at the container, takes items/gold inline, Take All clears it, Esc/walk-away dismisses, battlefield stays visible.
+- [x] **SRD-1510**: Loot box opens anchored at the container, takes items/gold inline, Take All clears it, Esc/walk-away dismisses, battlefield stays visible.
 - [ ] **Visual parity gate**: every Epic 15 surface is validated side-by-side against its `docs/reference/bg3/` shot (Character view vs `bg3-character-sheet-xorda`, skills/attributes tabs vs `bg3-character-skills` / `bg3-character-attributes`, party strip vs `bg3-party-inventory`, spellbook vs `bg3-spellbook-*`, cast picker vs `bg3-cast-fireball-*`, loot box vs `bg3-loot-box-inworld`); layout, grouping, and information density match the reference flow with our licensed icon set - no missing panels, no clipped tooltips, no text-only fallbacks where the reference shows a graphical surface.
