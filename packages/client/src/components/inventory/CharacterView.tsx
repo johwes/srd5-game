@@ -25,6 +25,7 @@ import {
 } from './inventorySort.js';
 import {
   formatAbilityAbbrev,
+  formatAbilityFullName,
   formatSignedNumber,
   formatTitleCase,
 } from '../compendium/formatters.js';
@@ -688,11 +689,36 @@ export function CharacterView({
 
             {railTab === 'build' && (
               <div data-testid={`${testIdPrefix}-rail-panel-build`} className="space-y-2 text-xs">
+                {/* SRD-1505: class/subclass/level breakdown over derived sheet data. */}
+                <div data-testid={`${testIdPrefix}-rail-classes`} className="space-y-1">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Class Breakdown
+                  </div>
+                  {derived.classes.map((c) => (
+                    <div
+                      key={c.classId}
+                      data-testid={`${testIdPrefix}-rail-class-${c.classId}`}
+                      className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-slate-800/80"
+                    >
+                      <span className="text-slate-200 truncate">
+                        {c.className}
+                        {c.subclassName ? ` (${c.subclassName})` : ''}
+                      </span>
+                      <span className="font-mono text-slate-400 shrink-0 ml-2">
+                        L{c.level} · d{c.hitDie}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="text-slate-400 px-0.5">
+                    {derived.backgroundName} · {formatTitleCase(derived.alignment)}
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   <div data-testid={`${testIdPrefix}-rail-hp`} className="rounded-lg bg-slate-950 border border-slate-800 p-2 text-center">
                     <div className="text-[10px] uppercase text-slate-500">HP</div>
                     <div className="font-mono font-bold text-emerald-300">
                       {derived.currentHp}/{derived.maxHp}
+                      {derived.tempHp > 0 ? ` (+${derived.tempHp} tmp)` : ''}
                     </div>
                   </div>
                   <div data-testid={`${testIdPrefix}-rail-ac`} className="rounded-lg bg-slate-950 border border-slate-800 p-2 text-center">
@@ -720,45 +746,223 @@ export function CharacterView({
                     ? `Darkvision ${derived.senses.darkvisionFeet} ft`
                     : 'Normal vision'}
                 </div>
-                <div className="text-slate-400">
-                  Resistances:{' '}
-                  <span className="text-amber-300">
-                    {derived.damageResistances.length > 0
-                      ? derived.damageResistances.map(formatTitleCase).join(', ')
-                      : 'None'}
-                  </span>
+                {/* SRD-1505: conditions list over derived activeConditions (presentation only). */}
+                <div data-testid={`${testIdPrefix}-rail-conditions`} className="space-y-1">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Conditions
+                  </div>
+                  {derived.activeConditions.length === 0 && derived.exhaustionLevel === 0 && !derived.concentratingOn ? (
+                    <div
+                      data-testid={`${testIdPrefix}-rail-conditions-none`}
+                      className="px-2 py-1 rounded bg-slate-950 border border-slate-800/80 text-slate-500"
+                    >
+                      None
+                    </div>
+                  ) : (
+                    <>
+                      {derived.activeConditions.map((cond, idx) => (
+                        <div
+                          key={`${cond.conditionId}-${idx}`}
+                          data-testid={`${testIdPrefix}-rail-condition-${cond.conditionId}`}
+                          className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-amber-700/40"
+                        >
+                          <span className="text-amber-200 font-medium truncate">
+                            {formatTitleCase(cond.conditionId)}
+                          </span>
+                          <span className="text-[10px] text-slate-400 shrink-0 ml-2">
+                            {cond.durationRounds ? `${cond.durationRounds} rd` : ''}
+                            {cond.sourceName ? ` · ${cond.sourceName}` : ''}
+                          </span>
+                        </div>
+                      ))}
+                      {derived.exhaustionLevel > 0 && (
+                        <div
+                          data-testid={`${testIdPrefix}-rail-condition-exhaustion`}
+                          className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-amber-700/40"
+                        >
+                          <span className="text-amber-200 font-medium">Exhaustion</span>
+                          <span className="text-[10px] text-slate-400">Level {derived.exhaustionLevel}</span>
+                        </div>
+                      )}
+                      {derived.concentratingOn && (
+                        <div
+                          data-testid={`${testIdPrefix}-rail-concentrating`}
+                          className="px-2 py-1 rounded bg-slate-950 border border-indigo-700/50 text-indigo-200"
+                        >
+                          Concentrating
+                          {derived.concentratingOn.sourceId
+                            ? `: ${formatTitleCase(derived.concentratingOn.sourceId)}`
+                            : ''}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-                <div className="text-slate-400">
-                  Features:{' '}
-                  <span className="text-slate-200">
-                    {derived.featureIds.length + derived.featIds.length} traits/feats
-                  </span>
+                {/* SRD-1505: full defenses row over derived mitigation lists. */}
+                <div className="space-y-1">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Defenses
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-resistances`} className="text-slate-400">
+                    Resistances:{' '}
+                    <span className="text-amber-300">
+                      {derived.damageResistances.length > 0
+                        ? derived.damageResistances.map(formatTitleCase).join(', ')
+                        : 'None'}
+                    </span>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-immunities`} className="text-slate-400">
+                    Immunities:{' '}
+                    <span className="text-slate-200">
+                      {derived.damageImmunities.length > 0
+                        ? derived.damageImmunities.map(formatTitleCase).join(', ')
+                        : 'None'}
+                    </span>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-vulnerabilities`} className="text-slate-400">
+                    Vulnerabilities:{' '}
+                    <span className="text-red-300">
+                      {derived.damageVulnerabilities.length > 0
+                        ? derived.damageVulnerabilities.map(formatTitleCase).join(', ')
+                        : 'None'}
+                    </span>
+                  </div>
+                  {derived.conditionImmunities.length > 0 && (
+                    <div data-testid={`${testIdPrefix}-rail-condition-immunities`} className="text-slate-400">
+                      Condition immunities:{' '}
+                      <span className="text-slate-200">
+                        {derived.conditionImmunities.map(formatTitleCase).join(', ')}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Full conditions, notable features, and breakdowns live in the quick-inspect sheet drawer.
-                </p>
+                {/* SRD-1505: notable features over derived feature/feat/trait ids (presentation only). */}
+                <div data-testid={`${testIdPrefix}-rail-features`} className="space-y-1">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Notable Features ({derived.featureIds.length + derived.featIds.length + derived.traitIds.length})
+                  </div>
+                  {derived.featureIds.length + derived.featIds.length + derived.traitIds.length === 0 ? (
+                    <div
+                      data-testid={`${testIdPrefix}-rail-features-none`}
+                      className="px-2 py-1 rounded bg-slate-950 border border-slate-800/80 text-slate-500"
+                    >
+                      No features yet
+                    </div>
+                  ) : (
+                    <div className="space-y-1 max-h-48 overflow-y-auto pr-0.5">
+                      {derived.featureIds.map((fId) => (
+                        <div
+                          key={fId}
+                          data-testid={`${testIdPrefix}-rail-feature-${fId}`}
+                          title={compendium.getFeature(fId)?.description ?? formatTitleCase(fId)}
+                          className="px-2 py-1 rounded bg-slate-950 border border-slate-800/80"
+                        >
+                          <span className="text-slate-200 font-medium">
+                            {compendium.getFeature(fId)?.name ?? formatTitleCase(fId)}
+                          </span>
+                        </div>
+                      ))}
+                      {derived.featIds.map((featId) => (
+                        <div
+                          key={featId}
+                          data-testid={`${testIdPrefix}-rail-feature-${featId}`}
+                          title={compendium.getFeat(featId)?.description ?? formatTitleCase(featId)}
+                          className="px-2 py-1 rounded bg-amber-950/30 border border-amber-700/40"
+                        >
+                          <span className="text-amber-200 font-medium">
+                            Feat: {compendium.getFeat(featId)?.name ?? formatTitleCase(featId)}
+                          </span>
+                        </div>
+                      ))}
+                      {derived.traitIds.map((traitId) => (
+                        <div
+                          key={traitId}
+                          data-testid={`${testIdPrefix}-rail-feature-${traitId}`}
+                          className="px-2 py-1 rounded bg-slate-950 border border-slate-800/80"
+                        >
+                          <span className="text-slate-400">{formatTitleCase(traitId)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {railTab === 'skills' && (
-              <div data-testid={`${testIdPrefix}-rail-panel-skills`} className="space-y-1 text-xs">
-                {SKILL_IDS.map((skillId) => {
-                  const sk = derived.skills[skillId];
+              <div data-testid={`${testIdPrefix}-rail-panel-skills`} className="space-y-2 text-xs">
+                {/* SRD-1505: passive scores header over derived sheet data. */}
+                <div
+                  data-testid={`${testIdPrefix}-rail-passives`}
+                  className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-slate-800/80 text-[11px] text-slate-400"
+                >
+                  <span>
+                    Passive Perc.{' '}
+                    <span className="font-mono text-slate-200">{derived.passivePerception}</span>
+                  </span>
+                  <span>
+                    Inv.{' '}
+                    <span className="font-mono text-slate-200">{derived.passiveInvestigation}</span>
+                  </span>
+                  <span>
+                    Ins.{' '}
+                    <span className="font-mono text-slate-200">{derived.passiveInsight}</span>
+                  </span>
+                </div>
+                {ABILITY_IDS.map((ab) => {
+                  const abStat = derived.abilities[ab];
+                  const groupSkills = SKILL_IDS.filter((skillId) => derived.skills[skillId].ability === ab);
+                  if (groupSkills.length === 0) return null;
                   return (
-                    <div
-                      key={skillId}
-                      data-testid={`${testIdPrefix}-rail-skill-${skillId}`}
-                      className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-slate-800/80"
-                    >
-                      <span className="text-slate-200 truncate">
-                        {formatTitleCase(skillId)}{' '}
-                        <span className="text-[10px] text-slate-500">
-                          ({formatAbilityAbbrev(sk.ability)})
+                    <div key={ab} data-testid={`${testIdPrefix}-rail-skill-group-${ab}`} className="space-y-1">
+                      <div className="flex items-center justify-between px-1 pt-1">
+                        <span
+                          className="text-[10px] uppercase tracking-wider text-slate-500"
+                          title={`${formatAbilityFullName(ab)} ${abStat.score}`}
+                        >
+                          {formatAbilityFullName(ab)} ({formatAbilityAbbrev(ab)})
                         </span>
-                      </span>
-                      <span className="font-mono font-semibold text-slate-100">
-                        {formatSignedNumber(sk.totalBonus)}
-                      </span>
+                        <span className="font-mono text-[11px] text-slate-400">
+                          {abStat.score} ({formatSignedNumber(abStat.modifier)})
+                        </span>
+                      </div>
+                      {groupSkills.map((skillId) => {
+                        const sk = derived.skills[skillId];
+                        const badge =
+                          sk.proficiencyLevel === 'expertise'
+                            ? '★ Exp'
+                            : sk.proficiencyLevel === 'proficient'
+                              ? '● Prof'
+                              : sk.proficiencyLevel === 'half'
+                                ? '◐ Half'
+                                : '';
+                        return (
+                          <div
+                            key={skillId}
+                            data-testid={`${testIdPrefix}-rail-skill-${skillId}`}
+                            title={`${formatTitleCase(skillId)} (${formatAbilityAbbrev(sk.ability)}): 1d20 ${formatSignedNumber(sk.totalBonus)} · Passive ${sk.passiveScore}`}
+                            className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-slate-800/80"
+                          >
+                            <span className="text-slate-200 truncate">
+                              {formatTitleCase(skillId)}{' '}
+                              <span className="text-[10px] text-slate-500">
+                                ({formatAbilityAbbrev(sk.ability)})
+                              </span>
+                              {badge && (
+                                <span
+                                  data-testid={`${testIdPrefix}-rail-skill-badge-${skillId}`}
+                                  className="ml-1.5 px-1 py-px rounded bg-amber-500/15 text-amber-300 text-[10px]"
+                                >
+                                  {badge}
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-mono font-semibold text-slate-100">
+                              {formatSignedNumber(sk.totalBonus)}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })}
@@ -766,32 +970,113 @@ export function CharacterView({
             )}
 
             {railTab === 'attributes' && (
-              <div data-testid={`${testIdPrefix}-rail-panel-attributes`} className="space-y-1 text-xs">
-                {ABILITY_IDS.map((ab) => {
-                  const stat = derived.abilities[ab];
-                  return (
-                    <div
-                      key={ab}
-                      data-testid={`${testIdPrefix}-rail-ability-${ab}`}
-                      className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-slate-800/80"
-                    >
-                      <span className="text-slate-200">{formatAbilityAbbrev(ab)}</span>
-                      <span className="font-mono text-slate-100">
-                        {stat.score} ({formatSignedNumber(stat.modifier)})
-                      </span>
+              <div data-testid={`${testIdPrefix}-rail-panel-attributes`} className="space-y-2 text-xs">
+                {/* SRD-1505: combat vitals over derived sheet data (presentation only). */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div data-testid={`${testIdPrefix}-rail-attr-hp`} className="rounded-lg bg-slate-950 border border-slate-800 p-2 text-center">
+                    <div className="text-[10px] uppercase text-slate-500">HP</div>
+                    <div className="font-mono font-bold text-emerald-300">
+                      {derived.currentHp}/{derived.maxHp}
                     </div>
-                  );
-                })}
-                <div className="pt-1 text-slate-400">
-                  Size: <span className="text-slate-200">{formatTitleCase(derived.size)}</span>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-attr-ac`} className="rounded-lg bg-slate-950 border border-slate-800 p-2 text-center">
+                    <div className="text-[10px] uppercase text-slate-500">AC</div>
+                    <div className="font-mono font-bold text-amber-300">{derived.armorClass.totalAc}</div>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-attr-initiative`} className="rounded-lg bg-slate-950 border border-slate-800 p-2 text-center">
+                    <div className="text-[10px] uppercase text-slate-500">Initiative</div>
+                    <div className="font-mono font-bold text-slate-100">
+                      {formatSignedNumber(derived.initiative.bonus)}
+                    </div>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-attr-speed`} className="rounded-lg bg-slate-950 border border-slate-800 p-2 text-center">
+                    <div className="text-[10px] uppercase text-slate-500">Speed</div>
+                    <div className="font-mono font-bold text-slate-100">{derived.speedFeet} ft</div>
+                  </div>
+                </div>
+                <div data-testid={`${testIdPrefix}-rail-attr-senses`} className="text-slate-400">
+                  Senses:{' '}
+                  <span className="text-slate-200">
+                    {derived.senses.darkvisionFeet > 0
+                      ? `Darkvision ${derived.senses.darkvisionFeet} ft`
+                      : 'Normal vision'}
+                  </span>
+                  {' · '}Passive Perc.{' '}
+                  <span className="font-mono text-slate-200">{derived.passivePerception}</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Ability Scores
+                  </div>
+                  {ABILITY_IDS.map((ab) => {
+                    const stat = derived.abilities[ab];
+                    const save = derived.savingThrows[ab];
+                    return (
+                      <div
+                        key={ab}
+                        data-testid={`${testIdPrefix}-rail-ability-${ab}`}
+                        title={`${formatAbilityFullName(ab)} save ${formatSignedNumber(save.totalBonus)}${save.proficient ? ' (proficient)' : ''}`}
+                        className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-slate-800/80"
+                      >
+                        <span className="text-slate-200">
+                          {formatAbilityAbbrev(ab)}{' '}
+                          <span className="text-[10px] text-slate-500">{formatAbilityFullName(ab)}</span>
+                          {save.proficient && <span className="ml-1 text-[10px] text-emerald-300">●</span>}
+                        </span>
+                        <span className="font-mono text-slate-100">
+                          {stat.score} ({formatSignedNumber(stat.modifier)})
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div data-testid={`${testIdPrefix}-rail-attr-creature`} className="text-slate-400">
+                  Type: <span className="text-slate-200">Humanoid</span>
+                  {' · '}Size: <span className="text-slate-200">{formatTitleCase(derived.size)}</span>
                   {' · '}Alignment:{' '}
                   <span className="text-slate-200">{formatTitleCase(derived.alignment)}</span>
                 </div>
-                <div className="text-slate-400">
-                  Languages:{' '}
-                  <span className="text-slate-200">
-                    {derived.proficiencies.languages.map(formatTitleCase).join(', ') || 'None'}
-                  </span>
+                <div data-testid={`${testIdPrefix}-rail-attr-carry`} className="text-slate-400">
+                  Carrying capacity:{' '}
+                  <span className="font-mono text-slate-200">
+                    {getInventoryTotalWeightLb(activeHero.inventory, compendium)} / {(strScore ?? 10) * 15} lb
+                  </span>{' '}
+                  <span className="text-slate-500">(STR × 15, display only)</span>
+                </div>
+                <div className="space-y-1 pt-1 border-t border-slate-800">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Proficiencies
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-attr-prof-armor`} className="text-slate-400">
+                    Armor:{' '}
+                    <span className="text-slate-200">
+                      {derived.proficiencies.armor.map(formatTitleCase).join(', ') || 'None'}
+                    </span>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-attr-prof-weapons`} className="text-slate-400">
+                    Weapons:{' '}
+                    <span className="text-slate-200">
+                      {derived.proficiencies.weapons.map(formatTitleCase).join(', ') || 'None'}
+                    </span>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-attr-prof-tools`} className="text-slate-400">
+                    Tools:{' '}
+                    <span className="text-slate-200">
+                      {derived.proficiencies.tools.map(formatTitleCase).join(', ') || 'None'}
+                    </span>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-attr-prof-saves`} className="text-slate-400">
+                    Saving throws:{' '}
+                    <span className="text-slate-200">
+                      {derived.proficiencies.savingThrows.map((s) => formatAbilityAbbrev(s)).join(', ') || 'None'}
+                    </span>
+                  </div>
+                  <div data-testid={`${testIdPrefix}-rail-attr-languages`} className="text-slate-400">
+                    Languages:{' '}
+                    <span className="text-slate-200">
+                      {derived.proficiencies.languages.map(formatTitleCase).join(', ') || 'None'}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
