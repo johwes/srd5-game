@@ -385,6 +385,8 @@ export type GameCommand =
       loot?: LootBundleSpec;
       /** BG3-style single-item take: bundle index into the prop's loot items. */
       itemIndex?: number;
+      /** BG3-style gold pile take: claim only the prop's coins. */
+      takeCoins?: boolean;
     }
   | {
       type: 'ATTUNE_ITEM';

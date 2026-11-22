@@ -435,7 +435,7 @@ describe('SRD-1404: Special Rooms & Delve Events', () => {
       const funded = structuredClone(gameState);
       funded.party[heroId]!.buildState = {
         ...funded.party[heroId]!.buildState!,
-        currency: { cp: 0, sp: 0, ep: 0, gp: 200, pp: 0 },
+        currency: { gp: 200 },
         inventory: [],
       };
       const res = reduceGame(funded, {
@@ -455,7 +455,7 @@ describe('SRD-1404: Special Rooms & Delve Events', () => {
       const poor = structuredClone(gameState);
       poor.party[heroId]!.buildState = {
         ...poor.party[heroId]!.buildState!,
-        currency: { cp: 0, sp: 0, ep: 0, gp: 7, pp: 0 },
+        currency: { gp: 7 },
         inventory: [],
       };
       expect(() =>

@@ -233,4 +233,41 @@ describe('SRD-1307: per-corpse loot card (modal)', () => {
     fireEvent.click(screen.getByTestId('discovered-loot-cell-discovered-dagger-1'));
     expect(onClaimLoot).toHaveBeenCalledWith('hero-1', 'corpse-goblin-1', undefined, 1);
   });
+
+  it('clicking the gold pile takes only the coins (BG3-style gold pile)', () => {
+    const onClaimLoot = vi.fn();
+    render(
+      <LootInventoryModal
+        isOpen={true}
+        party={makeParty()}
+        initialHeroId="hero-1"
+        compendium={compendium}
+        activeLoot={{
+          sourcePropId: 'corpse-goblin-1',
+          sourceName: 'Remains of Goblin',
+          bundle: {
+            gp: 23,
+            items: ['dagger'],
+            origin: 'monster_drop',
+            sourceName: 'Goblin',
+          },
+        }}
+        onClose={vi.fn()}
+        onClaimLoot={onClaimLoot}
+        onEquipItem={vi.fn()}
+        onAttuneItem={vi.fn()}
+        onUnattuneItem={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('discovered-loot-gold-pile').textContent).toContain('23 gp');
+    fireEvent.click(screen.getByTestId('discovered-loot-gold-pile'));
+    expect(onClaimLoot).toHaveBeenCalledWith(
+      'hero-1',
+      'corpse-goblin-1',
+      undefined,
+      undefined,
+      true,
+    );
+  });
 });

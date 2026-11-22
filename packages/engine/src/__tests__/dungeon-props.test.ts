@@ -317,8 +317,6 @@ describe('SRD-502: Interactive Props Engine', () => {
             state: 'locked',
             lockDc: 10,
             lootTable: {
-              cp: 50,
-              sp: 20,
               gp: 10,
               items: ['potion_of_healing'],
             },

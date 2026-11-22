@@ -9,7 +9,7 @@ import {
   getRarityBorderClass,
   getRarityTextClass,
 } from './itemRarity.js';
-import { formatCopperCost, formatTitleCase } from '../compendium/formatters.js';
+import { formatGoldCost, formatTitleCase } from '../compendium/formatters.js';
 import { getInventoryItemName } from './inventoryCategories.js';
 
 export interface InventoryGridCellProps {
@@ -73,7 +73,7 @@ export function InventoryGridCell({
     : equip
       ? formatTitleCase(equip.kind)
       : 'Item';
-  const costLabel = equip ? formatCopperCost(equip.costCopper) : undefined;
+  const costLabel = equip ? formatGoldCost(equip.costCopper) : undefined;
   const weightLabel = equip ? `${equip.weightLb} lb.` : undefined;
   const cellTestId = `${testIdPrefix}-cell-${instId}`;
 

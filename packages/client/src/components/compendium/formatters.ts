@@ -93,6 +93,21 @@ export function formatCopperCost(costCopper: number): string {
   return parts.join(', ');
 }
 
+/**
+ * Gold-only economy price tag for game-economy surfaces (loot tooltips,
+ * backpack cells, shop/builder rows). SRD catalog costs stay copper-denoted
+ * in the data; the purse only holds whole gold, so sub-gold prices read as
+ * trimmed-decimal gold (e.g. 50cp → "0.5 gp", 200cp → "2 gp").
+ */
+export function formatGoldCost(costCopper: number): string {
+  if (costCopper <= 0) return '0 gp';
+  const gp = costCopper / 100;
+  const text = Number.isInteger(gp)
+    ? String(gp)
+    : gp.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+  return `${text} gp`;
+}
+
 export function formatTitleCase(slug: string): string {
   return slug
     .replace(/[_-]+/g, ' ')

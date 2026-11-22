@@ -400,7 +400,7 @@ export function generateDraftHero(
         asiOrFeatByLevel: {},
       },
     ],
-    currency: { cp: 0, sp: 0, ep: 0, gp: 25, pp: 0 },
+    currency: { gp: 25 },
     inventory,
     equippedSlots: equipped,
     attunedItemInstanceIds: [],

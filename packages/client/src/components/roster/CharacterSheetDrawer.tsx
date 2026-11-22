@@ -1151,9 +1151,7 @@ export function CharacterSheetDrawer({
                         data-testid="sheet-currency-summary"
                         className="font-mono text-amber-300"
                       >
-                        {character.currency.pp > 0 ? `${character.currency.pp} pp ` : ''}
-                        {character.currency.gp} gp {character.currency.sp} sp{' '}
-                        {character.currency.cp} cp
+                        {character.currency.gp} gp
                       </span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-1">

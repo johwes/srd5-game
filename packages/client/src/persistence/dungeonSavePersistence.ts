@@ -1,6 +1,7 @@
 import {
   SRD_LEGAL_ATTRIBUTION,
   SRD_VERSION,
+  migrateGoldEconomyInPlace,
 } from '@srd5/data';
 import { type GameState } from '@srd5/engine';
 import { del as idbDel, get as idbGet, set as idbSet } from 'idb-keyval';
@@ -252,6 +253,8 @@ export async function loadDungeonSaveSlots(
   try {
     const raw = await storageAdapter.getItem(DUNGEON_SAVES_STORAGE_KEY);
     if (typeof raw === 'object' && raw !== null) {
+      // Gold-only economy: convert legacy purses/loot tables before use.
+      migrateGoldEconomyInPlace(raw);
       return raw as Record<string, DungeonSaveSlotData>;
     }
     return {};
@@ -372,6 +375,8 @@ export function importDungeonSaveFromJson(
     }
 
     if (parsed.format === 'srd5-dungeon-save' && parsed.saveData) {
+      // Gold-only economy: convert legacy purses/loot tables before use.
+      migrateGoldEconomyInPlace(parsed.saveData);
       return { ok: true, data: parsed.saveData as DungeonSaveSlotData };
     }
 

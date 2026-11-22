@@ -745,16 +745,9 @@ export function materializeGoldShopEquipment(
   }
 
   const remainingCopper = Math.max(0, budgetCopper - spentCopper);
-  const gp = Math.floor(remainingCopper / 100);
-  const sp = Math.floor((remainingCopper % 100) / 10);
-  const cp = remainingCopper % 10;
-
+  // Gold-only economy: leftover change below 1 gp does not mint coins.
   const currency = {
-    cp,
-    sp,
-    ep: 0,
-    gp,
-    pp: 0,
+    gp: Math.floor(remainingCopper / 100),
   };
 
   const equippedSlots = autoEquipInventoryItems(inventory, compendium);

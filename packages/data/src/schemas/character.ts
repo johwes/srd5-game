@@ -144,16 +144,62 @@ export const CharacterClassEntrySchema = z
 export type CharacterClassEntry = z.infer<typeof CharacterClassEntrySchema>;
 
 /**
- * Character coin purse across the 5 SRD currency denominations.
+ * Gold-only coin purse. The game economy tracks whole gold pieces exclusively
+ * (BG3-style): legacy copper/silver/electrum/platinum are converted on load
+ * and at loot-generation time via `coinsToGoldPieces`.
  */
 export const CharacterCurrencySchema = z.object({
-  cp: z.number().int().nonnegative(),
-  sp: z.number().int().nonnegative(),
-  ep: z.number().int().nonnegative(),
   gp: z.number().int().nonnegative(),
-  pp: z.number().int().nonnegative(),
 });
 export type CharacterCurrency = z.infer<typeof CharacterCurrencySchema>;
+
+/**
+ * Legacy 5-denomination SRD purse, accepted on load for pre-gold saves and
+ * immediately migrated with `migrateCharacterCurrencyToGold`.
+ */
+export const LegacyCharacterCurrencySchema = z.object({
+  cp: z.number().int().nonnegative().optional(),
+  sp: z.number().int().nonnegative().optional(),
+  ep: z.number().int().nonnegative().optional(),
+  gp: z.number().int().nonnegative().optional(),
+  pp: z.number().int().nonnegative().optional(),
+});
+export type LegacyCharacterCurrency = z.infer<typeof LegacyCharacterCurrencySchema>;
+
+/** Standard SRD 5.1 coin rates, in copper pieces: 10cp=1sp, 5sp=1ep, 1gp=100cp, 1pp=5gp. */
+const COPPER_PER_GP = 100;
+
+/**
+ * Converts a mixed coin purse to whole gold pieces (rounded to nearest, so
+ * stray silver still reads as pocket change instead of vanishing).
+ */
+export function coinsToGoldPieces(coins: LegacyCharacterCurrency): number {
+  const copper =
+    (coins.cp ?? 0) +
+    (coins.sp ?? 0) * 10 +
+    (coins.ep ?? 0) * 50 +
+    (coins.gp ?? 0) * COPPER_PER_GP +
+    (coins.pp ?? 0) * 500;
+  return Math.max(0, Math.round(copper / COPPER_PER_GP));
+}
+
+/**
+ * Migrates any purse (gold-only or legacy 5-denomination) to the gold-only
+ * shape. New saves persist `{ gp }`; old saves convert once on load.
+ */
+export function migrateCharacterCurrencyToGold(
+  purse: LegacyCharacterCurrency,
+): CharacterCurrency {
+  if (
+    purse.cp === undefined &&
+    purse.sp === undefined &&
+    purse.ep === undefined &&
+    purse.pp === undefined
+  ) {
+    return { gp: Math.max(0, purse.gp ?? 0) };
+  }
+  return { gp: coinsToGoldPieces(purse) };
+}
 
 /**
  * Individual item stack or equipment instance in a character's inventory.
@@ -451,17 +497,85 @@ export function createDefaultExpendedSpellSlots(): ExpendedSpellSlots {
 }
 
 /**
- * Creates a zeroed-out `CharacterCurrency` coin purse with optional overrides.
+ * In-place migration of legacy multi-denomination purses and loot tables to
+ * the gold-only economy. Walks any parsed-JSON structure and rewrites:
+ * - `currency` objects carrying cp/sp/ep/pp → `{ gp }` (rates via
+ *   `coinsToGoldPieces`);
+ * - `lootTable` objects carrying cp/sp/ep/pp → gp-only (items, origin and
+ *   sourceName preserved).
+ * Gold-only shapes pass through untouched. No randomness involved.
+ */
+export function migrateGoldEconomyInPlace(raw: unknown): void {
+  const seen = new Set<object>();
+  const toNumber = (value: unknown): number =>
+    typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
+  const hasLegacyCoins = (obj: Record<string, unknown>): boolean =>
+    toNumber(obj['cp']) > 0 ||
+    toNumber(obj['sp']) > 0 ||
+    toNumber(obj['ep']) > 0 ||
+    toNumber(obj['pp']) > 0;
+
+  const visit = (node: unknown): void => {
+    if (!node || typeof node !== 'object' || seen.has(node)) return;
+    seen.add(node);
+    if (Array.isArray(node)) {
+      for (const entry of node) visit(entry);
+      return;
+    }
+    const record = node as Record<string, unknown>;
+
+    const purse = record['currency'];
+    if (purse && typeof purse === 'object' && !Array.isArray(purse)) {
+      const purseRecord = purse as Record<string, unknown>;
+      if (hasLegacyCoins(purseRecord)) {
+        record['currency'] = {
+          gp: coinsToGoldPieces({
+            cp: toNumber(purseRecord['cp']),
+            sp: toNumber(purseRecord['sp']),
+            ep: toNumber(purseRecord['ep']),
+            gp: toNumber(purseRecord['gp']),
+            pp: toNumber(purseRecord['pp']),
+          }),
+        };
+      }
+    }
+
+    const table = record['lootTable'];
+    if (table && typeof table === 'object' && !Array.isArray(table)) {
+      const tableRecord = table as Record<string, unknown>;
+      if (hasLegacyCoins(tableRecord)) {
+        const gp = coinsToGoldPieces({
+          cp: toNumber(tableRecord['cp']),
+          sp: toNumber(tableRecord['sp']),
+          ep: toNumber(tableRecord['ep']),
+          gp: toNumber(tableRecord['gp']),
+          pp: toNumber(tableRecord['pp']),
+        });
+        const next: Record<string, unknown> = {};
+        if (gp > 0) next['gp'] = gp;
+        if (Array.isArray(tableRecord['items'])) next['items'] = tableRecord['items'];
+        if (typeof tableRecord['origin'] === 'string') next['origin'] = tableRecord['origin'];
+        if (typeof tableRecord['sourceName'] === 'string') {
+          next['sourceName'] = tableRecord['sourceName'];
+        }
+        record['lootTable'] = next;
+      }
+    }
+
+    for (const value of Object.values(record)) visit(value);
+  };
+
+  visit(raw);
+}
+
+/**
+ * Creates a zeroed-out gold-only coin purse with optional overrides.
  */
 export function createDefaultCurrency(
   overrides?: Partial<CharacterCurrency>,
 ): CharacterCurrency {
   return {
-    cp: 0,
-    sp: 0,
-    ep: 0,
     gp: 0,
-    pp: 0,
     ...overrides,
   };
 }

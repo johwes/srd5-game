@@ -89,11 +89,8 @@ export type PropState = z.infer<typeof PropStateSchema>;
  * container for display.
  */
 export const LootBundleSpecSchema = z.object({
-  cp: z.number().int().nonnegative().optional(),
-  sp: z.number().int().nonnegative().optional(),
-  ep: z.number().int().nonnegative().optional(),
+  /** Whole gold pieces (gold-only economy; legacy denoms convert at roll time). */
   gp: z.number().int().nonnegative().optional(),
-  pp: z.number().int().nonnegative().optional(),
   items: z.array(z.string()).optional(),
   origin: z.string().min(1).optional(),
   sourceName: z.string().min(1).optional(),

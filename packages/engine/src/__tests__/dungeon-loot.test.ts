@@ -30,34 +30,17 @@ describe('SRD-505: Loot Tables and Treasure Distribution', () => {
       expect(res1.loot).toEqual(res2.loot);
       expect(res1.nextRng).toBe(res2.nextRng);
 
-      // Verify at least one currency is awarded
-      const totalCoins =
-        (res1.loot.cp ?? 0) +
-        (res1.loot.sp ?? 0) +
-        (res1.loot.ep ?? 0) +
-        (res1.loot.gp ?? 0) +
-        (res1.loot.pp ?? 0);
-      expect(totalCoins).toBeGreaterThan(0);
+      // Gold-only economy: every coined roll collapses to whole gp (min 1).
+      const totalGp = res1.loot.gp ?? 0;
+      expect(totalGp).toBeGreaterThan(0);
+      expect(res1.loot).toEqual({ gp: totalGp });
     });
 
     it('scales coin rewards for higher CR brackets (CR 5–10, 11–16, 17+)', () => {
       const resLow = rollIndividualTreasure(2, 42);
       const resHigh = rollIndividualTreasure(18, 42);
 
-      const lowValueGp =
-        (resLow.loot.cp ?? 0) / 100 +
-        (resLow.loot.sp ?? 0) / 10 +
-        (resLow.loot.gp ?? 0) +
-        (resLow.loot.pp ?? 0) * 10;
-
-      const highValueGp =
-        (resHigh.loot.cp ?? 0) / 100 +
-        (resHigh.loot.sp ?? 0) / 10 +
-        (resHigh.loot.ep ?? 0) / 2 +
-        (resHigh.loot.gp ?? 0) +
-        (resHigh.loot.pp ?? 0) * 10;
-
-      expect(highValueGp).toBeGreaterThan(lowValueGp);
+      expect(resHigh.loot.gp ?? 0).toBeGreaterThan(resLow.loot.gp ?? 0);
     });
   });
 
@@ -77,7 +60,7 @@ describe('SRD-505: Loot Tables and Treasure Distribution', () => {
       }
 
       expect(foundItems).toBe(true);
-      expect((hoard.loot.gp ?? 0) + (hoard.loot.sp ?? 0)).toBeGreaterThan(0);
+      expect(hoard.loot.gp ?? 0).toBeGreaterThan(0);
       if (hoard.loot.items) {
         for (const it of hoard.loot.items) {
           expect(typeof it).toBe('string');
@@ -125,15 +108,13 @@ describe('SRD-505: Loot Tables and Treasure Distribution', () => {
       };
 
       const loot = {
-        gp: 50,
-        sp: 20,
+        gp: 52,
         items: ['potion-of-healing', 'ring-of-protection'],
       };
 
       const updated = awardLootToCharacter(heroWithPot, loot, compendium);
 
-      expect(updated.currency.gp).toBe(50);
-      expect(updated.currency.sp).toBe(20);
+      expect(updated.currency.gp).toBe(52);
 
       // Potion of healing stacked from 2 to 3
       const pot = updated.inventory.find((i) => i.itemId === 'potion-of-healing');

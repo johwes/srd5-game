@@ -2262,8 +2262,7 @@
           "blocksSight": false,
           "lockDc": 12,
           "lootTable": {
-            "sp": 80,
-            "gp": 35,
+            "gp": 43,
             "items": [
               "potion-of-greater-healing"
             ]
@@ -2307,60 +2306,6 @@
             "x": 2,
             "y": 2
           }
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f1_bunk_a",
-          "kind": "furniture",
-          "furnitureType": "bed",
-          "hideSpot": true,
-          "x": 11,
-          "y": 2
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f1_bunk_b",
-          "kind": "furniture",
-          "furnitureType": "bed",
-          "hideSpot": true,
-          "x": 11,
-          "y": 6
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f1_messtable",
-          "kind": "furniture",
-          "furnitureType": "table",
-          "x": 7,
-          "y": 6
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f1_crate_a",
-          "kind": "furniture",
-          "furnitureType": "crate",
-          "hideSpot": true,
-          "x": 16,
-          "y": 9
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f1_crate_b",
-          "kind": "furniture",
-          "furnitureType": "crate",
-          "hideSpot": true,
-          "x": 16,
-          "y": 13
         }
       ],
       "encounters": [
@@ -4816,8 +4761,7 @@
           "blocksMovement": true,
           "blocksSight": false,
           "lootTable": {
-            "sp": 200,
-            "gp": 100,
+            "gp": 120,
             "items": [
               "longsword-plus-1",
               "scroll-of-fireball"
@@ -4846,27 +4790,6 @@
             "x": 2,
             "y": 2
           }
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f2_altar",
-          "kind": "furniture",
-          "furnitureType": "altar",
-          "x": 11,
-          "y": 1
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f2_records",
-          "kind": "furniture",
-          "furnitureType": "bookshelf",
-          "detectionDc": 13,
-          "x": 7,
-          "y": 7
         }
       ],
       "encounters": [
@@ -7292,46 +7215,13 @@
           "blocksMovement": true,
           "blocksSight": false,
           "lootTable": {
-            "sp": 500,
-            "gp": 600,
-            "pp": 25,
+            "gp": 775,
             "items": [
               "ring-of-protection",
               "cloak-of-protection",
               "potion-of-greater-healing"
             ]
           }
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f3_ritual_altar",
-          "kind": "furniture",
-          "furnitureType": "altar",
-          "x": 14,
-          "y": 1
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f3_curtains",
-          "kind": "furniture",
-          "furnitureType": "curtains",
-          "hideSpot": true,
-          "x": 13,
-          "y": 8
-        },
-        {
-          "state": "closed",
-          "blocksMovement": false,
-          "blocksSight": false,
-          "id": "furniture_f3_throne",
-          "kind": "furniture",
-          "furnitureType": "throne",
-          "x": 15,
-          "y": 14
         }
       ],
       "encounters": [

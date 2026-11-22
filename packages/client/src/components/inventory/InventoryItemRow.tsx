@@ -9,7 +9,7 @@ import {
   getRarityBorderClass,
   getRarityTextClass,
 } from './itemRarity.js';
-import { formatCopperCost, formatTitleCase } from '../compendium/formatters.js';
+import { formatGoldCost, formatTitleCase } from '../compendium/formatters.js';
 
 export interface InventoryItemRowProps {
   /** Canonical equipment / magic-item id. */
@@ -59,7 +59,7 @@ export function InventoryItemRow({
     : equip
       ? formatTitleCase(equip.kind)
       : 'Item';
-  const costLabel = equip ? formatCopperCost(equip.costCopper) : undefined;
+  const costLabel = equip ? formatGoldCost(equip.costCopper) : undefined;
   const weightLabel = equip ? `${equip.weightLb} lb.` : undefined;
 
   return (

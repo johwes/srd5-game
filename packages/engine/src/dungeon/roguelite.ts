@@ -125,16 +125,12 @@ export function calculateRogueliteScore(factors: RogueliteScoreFactors): number 
 }
 
 /**
- * Converts a loot bundle (cp, sp, ep, gp, pp) into total gold pieces (GP).
+ * Converts a loot bundle into total gold pieces (GP). Bundles are gold-only;
+ * the legacy multi-denom math now lives in `coinsToGoldPieces` (@srd5/data).
  */
 export function calculateGoldFromLoot(loot?: LootBundleSpec): number {
   if (!loot) return 0;
-  const cp = loot.cp ?? 0;
-  const sp = loot.sp ?? 0;
-  const ep = loot.ep ?? 0;
-  const gp = loot.gp ?? 0;
-  const pp = loot.pp ?? 0;
-  return Math.floor(gp + pp * 10 + ep * 0.5 + sp * 0.1 + cp * 0.01);
+  return Math.max(0, Math.floor(loot.gp ?? 0));
 }
 
 /**

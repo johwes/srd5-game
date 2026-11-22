@@ -32,7 +32,7 @@ function makeBuild(id: string, level: number, gp = 0): CharacterBuildState {
     level,
     hpRollsByLevel: Array.from({ length: level }, () => c.hpRollsByLevel[0] ?? 8),
   }));
-  base.currency = { cp: 0, sp: 0, ep: 0, gp, pp: 0 };
+  base.currency = { gp };
   return base;
 }
 

@@ -166,7 +166,7 @@ describe('SRD-506: Kaelen Campaign Engine Integration Tests', () => {
 
     // 3. Claim the loot from the opened armory chest
     const lootRes = claimPropLoot(openChestRes.nextState, 'chest_f1_armory', 'hero-rogue', defaultCompendium);
-    expect(lootRes.loot.gp).toBe(35);
+    expect(lootRes.loot.gp).toBe(43);
     expect(lootRes.loot.items).toContain('potion-of-greater-healing');
     expect(lootRes.events.some((e) => e.type === 'LOOT_ACQUIRED')).toBe(true);
 
@@ -264,7 +264,7 @@ describe('SRD-506: Kaelen Campaign Engine Integration Tests', () => {
     const reliquaryLoot = claimPropLoot(openChestRes.nextState, 'chest_f2_reliquary', 'hero-wizard', defaultCompendium);
     expect(reliquaryLoot.loot.items).toContain('longsword-plus-1');
     expect(reliquaryLoot.loot.items).toContain('scroll-of-fireball');
-    expect(reliquaryLoot.loot.gp).toBe(100);
+    expect(reliquaryLoot.loot.gp).toBe(120);
   });
 
   it('Floor 3: shallow water tiles are difficult terrain, Gelatinous Cube and Dragon encounters spawn properly', () => {
@@ -330,7 +330,6 @@ describe('SRD-506: Kaelen Campaign Engine Integration Tests', () => {
     expect(hoardRes.loot.items).toContain('ring-of-protection');
     expect(hoardRes.loot.items).toContain('cloak-of-protection');
     expect(hoardRes.loot.items).toContain('potion-of-greater-healing');
-    expect(hoardRes.loot.pp).toBe(25);
-    expect(hoardRes.loot.gp).toBe(600);
+    expect(hoardRes.loot.gp).toBe(775);
   });
 });

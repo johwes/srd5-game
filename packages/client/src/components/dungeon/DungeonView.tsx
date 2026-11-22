@@ -1384,13 +1384,14 @@ export function DungeonView({
           setModalState(null);
           setActiveLoot(null);
         }}
-        onClaimLoot={(charId, propId, loot, itemIndex) =>
+        onClaimLoot={(charId, propId, loot, itemIndex, takeCoins) =>
           handleDispatch({
             type: 'CLAIM_LOOT',
             characterId: charId,
             propId,
             loot,
             ...(itemIndex !== undefined ? { itemIndex } : {}),
+            ...(takeCoins ? { takeCoins } : {}),
           })
         }
         onEquipItem={(charId, slotName, instId) => {

@@ -22,7 +22,7 @@ import {
   spawnCorpseLootProps,
   sweepUnclaimedCorpseLoot,
 } from '../dungeon/corpse-loot.js';
-import { claimPropLoot, rollIndividualTreasure, rollTreasureHoard } from '../dungeon/loot.js';
+import { claimPropLoot, claimPropLootCoins, rollIndividualTreasure, rollTreasureHoard } from '../dungeon/loot.js';
 import { getAvailablePropInteractions } from '../dungeon/props.js';
 import { resolveOverworldBattle } from '../overworld/battles.js';
 import type { Combatant } from '../combat/types.js';
@@ -249,9 +249,7 @@ describe('SRD-1307: searching the fallen (Investigation / Survival)', () => {
     }
     // Bonus merged: every pre-search coin/item still present.
     const after = afterProp.lootTable!;
-    for (const denom of ['cp', 'sp', 'ep', 'gp', 'pp'] as const) {
-      expect(after[denom] ?? 0).toBeGreaterThanOrEqual(before[denom] ?? 0);
-    }
+    expect(after.gp ?? 0).toBeGreaterThanOrEqual(before.gp ?? 0);
     expect(after.origin).toBe('monster_drop');
   });
 
@@ -457,6 +455,49 @@ describe('SRD-1307: claiming corpse loot and floor-exit sweep', () => {
     }
   });
 
+  it('CLAIM_LOOT with takeCoins takes only the gold pile and leaves items', () => {
+    const { state, propId } = stateWithCorpse();
+    const planted: GameState = {
+      ...state,
+      props: state.props.map((p) =>
+        p.id === propId ? { ...p, lootTable: { ...p.lootTable, items: ['dagger'], gp: 23 } } : p,
+      ),
+    };
+    const beforeGp = planted.party['fighter-1']!.buildState!.currency.gp;
+    const res = reduceGame(planted, {
+      type: 'CLAIM_LOOT',
+      characterId: 'fighter-1',
+      propId,
+      takeCoins: true,
+    });
+
+    const hero = res.nextState.party['fighter-1']!;
+    expect(hero.buildState!.currency.gp).toBe(beforeGp + 23);
+    const table = res.nextState.props.find((p) => p.id === propId)!.lootTable!;
+    expect(table.items).toEqual(['dagger']);
+    expect(table.gp).toBeUndefined();
+
+    const acquired = res.events.find((e) => e.type === 'LOOT_ACQUIRED');
+    expect(acquired).toBeDefined();
+    if (acquired && acquired.type === 'LOOT_ACQUIRED') {
+      expect(acquired.loot.gp).toBe(23);
+      expect(acquired.loot.items).toBeUndefined();
+    }
+  });
+
+  it('claimPropLootCoins on an empty purse is a no-op', () => {
+    const { state, propId } = stateWithCorpse();
+    const planted: GameState = {
+      ...state,
+      props: state.props.map((p) =>
+        p.id === propId ? { ...p, lootTable: { items: ['dagger'] } } : p,
+      ),
+    };
+    const res = claimPropLootCoins(planted, propId, 'fighter-1', compendium);
+    expect(res.loot).toEqual({});
+    expect(res.events).toHaveLength(0);
+  });
+
   it('claimPropLoot mints deterministic instance ids with a prefix', () => {
     const { state, propId } = stateWithCorpse();
     const bundle = state.props.find((p) => p.id === propId)!.lootTable!;
@@ -512,7 +553,7 @@ describe('SRD-1307: claiming corpse loot and floor-exit sweep', () => {
           monsterId: 'goblin-2',
           label: 'Remains of Goblin',
           searched: false,
-          lootTable: { sp: 7, items: ['acid-vial'], origin: 'monster_drop', sourceName: 'Goblin' },
+          lootTable: { gp: 7, items: ['acid-vial'], origin: 'monster_drop', sourceName: 'Goblin' },
         },
       ],
     };
@@ -535,8 +576,8 @@ describe('SRD-1307: claiming corpse loot and floor-exit sweep', () => {
     expect(res.nextState.party['fighter-1']!.buildState!.currency.gp).toBe(
       fighterBefore.gp + 5,
     );
-    expect(res.nextState.party['wizard-1']!.buildState!.currency.sp).toBe(
-      wizardBefore.sp + 7,
+    expect(res.nextState.party['wizard-1']!.buildState!.currency.gp).toBe(
+      wizardBefore.gp + 7,
     );
     const acquisitions = res.events.filter((e) => e.type === 'LOOT_ACQUIRED');
     expect(acquisitions).toHaveLength(2);

@@ -64,7 +64,7 @@ import {
   transitionCombatToExploration,
 } from '../dungeon/encounters.js';
 import { resolveRest } from '../dungeon/rest.js';
-import { claimPropLoot, claimPropLootItem, awardLootToCharacter } from '../dungeon/loot.js';
+import { claimPropLoot, claimPropLootItem, claimPropLootCoins, awardLootToCharacter } from '../dungeon/loot.js';
 import {
   dropInventoryItem,
   identifyInventoryItem,
@@ -1230,6 +1230,15 @@ export function reduceGame(
           );
           nextState = itemRes.nextState;
           events.push(...itemRes.events);
+        } else if (command.takeCoins) {
+          const coinRes = claimPropLootCoins(
+            nextState,
+            command.propId,
+            command.characterId,
+            options?.compendium,
+          );
+          nextState = coinRes.nextState;
+          events.push(...coinRes.events);
         } else {
           const claimRes = claimPropLoot(
             nextState,

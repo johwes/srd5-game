@@ -159,8 +159,7 @@ describe('SRD-506: The Sunken Crypt of Kaelen Campaign Module', () => {
     expect(dragonHoard?.lootTable?.items).toContain('ring-of-protection');
     expect(dragonHoard?.lootTable?.items).toContain('cloak-of-protection');
     expect(dragonHoard?.lootTable?.items).toContain('potion-of-greater-healing');
-    expect(dragonHoard?.lootTable?.gp).toBe(600);
-    expect(dragonHoard?.lootTable?.pp).toBe(25);
+    expect(dragonHoard?.lootTable?.gp).toBe(775);
 
     // Stairs up to Floor 2
     const stairsUp = floor3.props.find((p) => p.kind === 'stairs_up');

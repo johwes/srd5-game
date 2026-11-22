@@ -9,6 +9,7 @@ import {
   createIconicPartyStates,
   defaultCompendium,
   isProhibitedMonsterId,
+  migrateGoldEconomyInPlace,
 } from '@srd5/data';
 import { computeDerivedCharacter } from '@srd5/engine';
 import { del as idbDel, get as idbGet, set as idbSet } from 'idb-keyval';
@@ -68,6 +69,10 @@ function parsePersistedRosterData(
   if (!Array.isArray(obj['characters']) || !Array.isArray(obj['activePartyIds'])) {
     return { ok: false, errors: ['Persisted roster is missing characters or activePartyIds.'] };
   }
+
+  // Gold-only economy: convert legacy multi-denomination purses before parse
+  // (zod would otherwise strip the legacy coins silently).
+  migrateGoldEconomyInPlace(obj);
 
   const characters: CharacterBuildState[] = [];
   for (const item of obj['characters']) {
@@ -641,6 +646,9 @@ export function parseSrd5JsonImport(
       errors: ['Imported .srd5.json content must be a JSON object.'],
     };
   }
+
+  // Gold-only economy: convert legacy multi-denomination purses before parse.
+  migrateGoldEconomyInPlace(raw);
 
   const record = raw as Record<string, unknown>;
 

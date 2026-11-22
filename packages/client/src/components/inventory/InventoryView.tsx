@@ -59,11 +59,7 @@ export function resolveEquippedInstanceId(
 }
 
 export interface InventoryViewCurrency {
-  cp?: number;
-  sp?: number;
-  ep?: number;
   gp?: number;
-  pp?: number;
 }
 
 export interface InventoryViewProps {
@@ -198,12 +194,8 @@ export function InventoryView({
     : [];
 
   const totalWeightLb = getInventoryTotalWeightLb(inventory, compendium);
-  const totalGp =
-    (currency?.cp ?? 0) / 100 +
-    (currency?.sp ?? 0) / 10 +
-    (currency?.ep ?? 0) / 2 +
-    (currency?.gp ?? 0) +
-    (currency?.pp ?? 0) * 10;
+  // Gold-only economy: the purse holds whole gold pieces.
+  const totalGp = currency?.gp ?? 0;
 
   const handleDropOnSlot = (event: React.DragEvent, slot: InventorySlotName) => {
     event.preventDefault();
@@ -233,12 +225,7 @@ export function InventoryView({
       {/* Currency + encumbrance-display strip (display only; no enforcement). */}
       <div className="flex items-center justify-between gap-2 text-xs">
         <div data-testid={`${prefix}-currency`} className="font-medium text-slate-300">
-          💰 {totalGp.toFixed(1)} gp total
-          <span className="text-slate-500">
-            {' '}
-            ({currency?.cp ?? 0}cp {currency?.sp ?? 0}sp {currency?.ep ?? 0}ep {currency?.gp ?? 0}gp{' '}
-            {currency?.pp ?? 0}pp)
-          </span>
+          💰 {totalGp} gp
         </div>
         <div data-testid={`${prefix}-weight`} className="font-medium text-slate-400">
           ⚖️ {totalWeightLb} lb. carried

@@ -52,12 +52,14 @@ export function corpseSearchDc(cr: number): number {
   return CORPSE_SEARCH_BASE_DC + Math.max(0, Math.floor(cr));
 }
 
-/** Merge two loot bundles: coins sum, items concatenate, provenance kept. */
+/** Merge two loot bundles: gold sums, items concatenate, provenance kept. */
 export function mergeLootBundles(a: LootBundleSpec, b: LootBundleSpec): LootBundleSpec {
   const merged: LootBundleSpec = { ...a };
-  for (const denom of ['cp', 'sp', 'ep', 'gp', 'pp'] as const) {
-    const sum = (a[denom] ?? 0) + (b[denom] ?? 0);
-    if (sum > 0) merged[denom] = sum;
+  const gold = (a.gp ?? 0) + (b.gp ?? 0);
+  if (gold > 0) {
+    merged.gp = gold;
+  } else {
+    delete merged.gp;
   }
   const items = [...(a.items ?? []), ...(b.items ?? [])];
   if (items.length > 0) merged.items = items;
@@ -69,8 +71,7 @@ export function mergeLootBundles(a: LootBundleSpec, b: LootBundleSpec): LootBund
 /** True when a bundle holds anything worth a corpse prop / sweep. */
 export function hasClaimableLoot(loot: LootBundleSpec | undefined): boolean {
   if (!loot) return false;
-  if ((loot.cp ?? 0) > 0 || (loot.sp ?? 0) > 0 || (loot.ep ?? 0) > 0) return true;
-  if ((loot.gp ?? 0) > 0 || (loot.pp ?? 0) > 0) return true;
+  if ((loot.gp ?? 0) > 0) return true;
   return (loot.items?.length ?? 0) > 0;
 }
 
@@ -182,10 +183,7 @@ export function describeLootBonus(
   compendium: SrdCompendium = defaultCompendium,
 ): string {
   const parts: string[] = [];
-  for (const denom of ['cp', 'sp', 'ep', 'gp', 'pp'] as const) {
-    const amount = loot[denom] ?? 0;
-    if (amount > 0) parts.push(`+${amount} ${denom}`);
-  }
+  if ((loot.gp ?? 0) > 0) parts.push(`+${loot.gp} gp`);
   for (const itemId of loot.items ?? []) {
     const name =
       compendium.getMagicItem(itemId)?.name ??

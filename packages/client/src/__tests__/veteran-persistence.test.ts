@@ -24,7 +24,7 @@ function makeHero(id: string, level: number): CharacterBuildState {
     level,
     hpRollsByLevel: Array.from({ length: level }, () => c.hpRollsByLevel[0] ?? 8),
   }));
-  base.currency = { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 };
+  base.currency = { gp: 0 };
   return base;
 }
 

@@ -66,7 +66,13 @@ export interface LootInventoryModalProps {
     bundle: LootBundleSpec;
   } | null;
   onClose: () => void;
-  onClaimLoot: (characterId: string, propId?: string, loot?: LootBundleSpec, itemIndex?: number) => void;
+  onClaimLoot: (
+    characterId: string,
+    propId?: string,
+    loot?: LootBundleSpec,
+    itemIndex?: number,
+    takeCoins?: boolean,
+  ) => void;
   onEquipItem: (characterId: string, slotName: 'armor' | 'shield' | 'mainHand' | 'offHand' | 'ranged', instanceId?: string) => void;
   onAttuneItem: (characterId: string, instanceId: string) => void;
   onUnattuneItem: (characterId: string, instanceId: string) => void;

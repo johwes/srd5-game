@@ -227,8 +227,7 @@ function buildFloor1(): DungeonFloorSpec {
         blocksMovement: true,
         blocksSight: false,
         lootTable: {
-          gp: 35,
-          sp: 80,
+          gp: 43,
           items: ['potion-of-greater-healing'],
         },
       },
@@ -497,8 +496,7 @@ function buildFloor2(): DungeonFloorSpec {
         blocksMovement: true,
         blocksSight: false,
         lootTable: {
-          gp: 100,
-          sp: 200,
+          gp: 120,
           items: ['longsword-plus-1', 'scroll-of-fireball'],
         },
       },
@@ -698,9 +696,7 @@ function buildFloor3(): DungeonFloorSpec {
         blocksMovement: true,
         blocksSight: false,
         lootTable: {
-          pp: 25,
-          gp: 600,
-          sp: 500,
+          gp: 775,
           items: [
             'ring-of-protection',
             'cloak-of-protection',

@@ -1,6 +1,7 @@
 import {
   CharacterBuildStateSchema,
   type CharacterBuildState,
+  migrateGoldEconomyInPlace,
 } from '@srd5/data';
 import {
   VETERAN_MAX_LEVEL,
@@ -31,6 +32,7 @@ const VETERAN_SOURCES: VeteranSource[] = ['descent', 'delve', 'realm'];
 
 function parseVeteranEntry(raw: unknown): VeteranRosterEntry | null {
   if (typeof raw !== 'object' || raw === null) return null;
+  migrateGoldEconomyInPlace(raw);
   const obj = raw as Record<string, unknown>;
   if (typeof obj['veteranId'] !== 'string' || obj['veteranId'].length === 0) return null;
   if (typeof obj['retiredAt'] !== 'string') return null;

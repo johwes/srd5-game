@@ -176,44 +176,53 @@ export function LootInventoryModal({
                 </div>
               )}
 
-              {/* Coins Display */}
-              <div className="grid grid-cols-5 gap-2 text-center text-xs">
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <div className="text-slate-400">CP</div>
-                  <div className="font-bold text-amber-200">{activeLoot.bundle.cp ?? 0}</div>
-                </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <div className="text-slate-400">SP</div>
-                  <div className="font-bold text-slate-200">{activeLoot.bundle.sp ?? 0}</div>
-                </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <div className="text-slate-400">EP</div>
-                  <div className="font-bold text-slate-300">{activeLoot.bundle.ep ?? 0}</div>
-                </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <div className="text-slate-400">GP</div>
-                  <div className="font-bold text-amber-400">{activeLoot.bundle.gp ?? 0}</div>
-                </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <div className="text-slate-400">PP</div>
-                  <div className="font-bold text-slate-100">{activeLoot.bundle.pp ?? 0}</div>
-                </div>
-              </div>
-
-              {/* Items Grid (SRD-1305: icon-grid cells replace text rows) */}
-              {activeLoot.bundle.items && activeLoot.bundle.items.length > 0 && (
+              {/* Gold pile + items grid (gold-only economy; click to take) */}
+              {((activeLoot.bundle.gp ?? 0) > 0 ||
+                (activeLoot.bundle.items && activeLoot.bundle.items.length > 0)) && (
                 <div className="space-y-1.5 pt-2 border-t border-slate-800">
                   <div className="text-xs font-semibold text-slate-400 uppercase">
-                    Items &amp; Relics:{' '}
+                    Spoils:{' '}
                     <span className="normal-case font-normal text-slate-500">
-                      click an item to take it
+                      click an item or the gold pile to take it
                     </span>
                   </div>
                   <div
                     data-testid="discovered-loot-grid"
                     className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800"
                   >
-                    {activeLoot.bundle.items.map((itemId, idx) => (
+                    {(activeLoot.bundle.gp ?? 0) > 0 && (
+                      <button
+                        type="button"
+                        data-testid="discovered-loot-gold-pile"
+                        title={`Take ${activeLoot.bundle.gp} gp`}
+                        aria-label={`Take ${activeLoot.bundle.gp} gold pieces`}
+                        onClick={() =>
+                          currentHero &&
+                          onClaimLoot(
+                            currentHero.id,
+                            activeLoot.sourcePropId,
+                            undefined,
+                            undefined,
+                            true,
+                          )
+                        }
+                        className="group relative flex flex-col items-center justify-center gap-0.5 w-16 h-16 rounded-lg bg-amber-950/40 border-2 border-amber-500/70 p-1 transition-colors hover:bg-amber-900/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 cursor-pointer"
+                      >
+                        <img
+                          src="/assets/game-icons/coins.svg"
+                          alt=""
+                          className="w-6 h-6"
+                          draggable={false}
+                        />
+                        <span className="max-w-full truncate text-[9px] leading-tight font-bold text-amber-300">
+                          {activeLoot.bundle.gp} gp
+                        </span>
+                        <span className="max-w-full truncate text-[9px] leading-tight text-amber-200/70">
+                          Gold Pile
+                        </span>
+                      </button>
+                    )}
+                    {(activeLoot.bundle.items ?? []).map((itemId, idx) => (
                       <InventoryGridCell
                         key={`${itemId}-${idx}`}
                         itemId={itemId}

@@ -6,7 +6,7 @@ import {
   defaultCompendium,
 } from '@srd5/data';
 import {
-  formatCopperCost,
+  formatGoldCost,
   formatTitleCase,
 } from '../compendium/formatters.js';
 import {
@@ -583,7 +583,7 @@ export function EquipmentStep({
                 {startingGoldGp} gp
               </div>
               <div className="text-[11px] text-slate-400">
-                Spent: {formatCopperCost(shopSummary.spentCopper)}
+                Spent: {formatGoldCost(shopSummary.spentCopper)}
               </div>
             </div>
           </div>
@@ -636,7 +636,7 @@ export function EquipmentStep({
                       {eq.name}
                     </div>
                     <div className="text-[11px] text-amber-300/90 font-mono">
-                      {formatCopperCost(eq.costCopper)} &middot; {eq.weightLb} lb
+                      {formatGoldCost(eq.costCopper)} &middot; {eq.weightLb} lb
                     </div>
                   </div>
 
@@ -688,8 +688,7 @@ export function EquipmentStep({
               items)
             </h4>
             <p className="text-xs text-slate-400">
-              Starting Coin Pouch: {buildState.currency.gp} gp,{' '}
-              {buildState.currency.sp} sp, {buildState.currency.cp} cp
+              Starting Coin Pouch: {buildState.currency.gp} gp
             </p>
           </div>
         </div>

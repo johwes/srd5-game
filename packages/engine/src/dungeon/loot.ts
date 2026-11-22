@@ -112,6 +112,30 @@ function sumDice(rolls: number[]): number {
 }
 
 /**
+ * Collapses a rolled multi-denomination SRD coin bundle into the gold-only
+ * economy. The SRD table dice are still rolled identically (same RNG
+ * consumption, same branch structure) — only the payout reads in gold:
+ * any coined result is worth at least 1 gp so small-fry kills never pay
+ * literal nothing.
+ */
+export function collapseLootToGold(loot: {
+  cp?: number;
+  sp?: number;
+  ep?: number;
+  gp?: number;
+  pp?: number;
+}): LootBundleSpec {
+  const coins =
+    (loot.cp ?? 0) +
+    (loot.sp ?? 0) * 10 +
+    (loot.ep ?? 0) * 50 +
+    (loot.gp ?? 0) * 100 +
+    (loot.pp ?? 0) * 500;
+  if (coins <= 0) return {};
+  return { gp: Math.max(1, Math.round(coins / 100)) };
+}
+
+/**
  * Rolls Individual Treasure based on monster Challenge Rating (SRD 5.1).
  * CR 0–4, 5–10, 11–16, 17+.
  */
@@ -123,7 +147,8 @@ export function rollIndividualTreasure(
   const { roll: d100, nextState: r1 } = rollDie(currentRng, 100);
   currentRng = r1;
 
-  const loot: LootBundleSpec = {};
+  // Multi-denomination SRD accumulator (converted to gold on return).
+  const loot: { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number } = {};
 
   if (cr < 5) {
     // Challenge 0–4
@@ -229,7 +254,7 @@ export function rollIndividualTreasure(
     }
   }
 
-  return { loot, nextRng: currentRng };
+  return { loot: collapseLootToGold(loot), nextRng: currentRng };
 }
 
 /**
@@ -255,7 +280,8 @@ export function rollTreasureHoard(
   let currentRng = rngState;
   const items: string[] = [];
 
-  const loot: LootBundleSpec = {};
+  // Multi-denomination SRD accumulator (converted to gold on return).
+  const loot: { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number } = {};
 
   if (cr < 5) {
     // Challenge 0–4 Hoard
@@ -378,11 +404,12 @@ export function rollTreasureHoard(
     currentRng = picked2.nextRng;
   }
 
+  const out: LootBundleSpec = collapseLootToGold(loot);
   if (items.length > 0) {
-    loot.items = items;
+    out.items = items;
   }
 
-  return { loot, nextRng: currentRng };
+  return { loot: out, nextRng: currentRng };
 }
 
 /**
@@ -429,11 +456,7 @@ export function awardLootToCharacter(
   instanceIdPrefix?: string,
 ): CharacterBuildState {
   const nextCurrency: CharacterCurrency = {
-    cp: character.currency.cp + (loot.cp ?? 0),
-    sp: character.currency.sp + (loot.sp ?? 0),
-    ep: character.currency.ep + (loot.ep ?? 0),
     gp: character.currency.gp + (loot.gp ?? 0),
-    pp: character.currency.pp + (loot.pp ?? 0),
   };
 
   const nextInventory = [...character.inventory];
@@ -516,12 +539,7 @@ export function claimPropLootItem(
   };
 
   const remainingItems = table.items.filter((_, idx) => idx !== itemIndex);
-  const coinsRemain =
-    (table.cp ?? 0) > 0 ||
-    (table.sp ?? 0) > 0 ||
-    (table.ep ?? 0) > 0 ||
-    (table.gp ?? 0) > 0 ||
-    (table.pp ?? 0) > 0;
+  const coinsRemain = (table.gp ?? 0) > 0;
   const nextLootTable =
     remainingItems.length > 0 || coinsRemain
       ? { ...table, items: remainingItems.length > 0 ? remainingItems : undefined }
@@ -573,6 +591,85 @@ export function claimPropLootItem(
     loot: singleLoot,
   };
 }
+
+/**
+ * Claims only the coin pile from a prop's loot table (BG3-style gold pile
+ * Take), leaving any items behind. No-ops when the table holds no gold.
+ */
+export function claimPropLootCoins(
+  state: GameState,
+  propId: string,
+  actorId: string,
+  compendium: SrdCompendium = defaultCompendium,
+): { nextState: GameState; events: GameEvent[]; loot: LootBundleSpec } {
+  const prop = state.props.find((p) => p.id === propId);
+  if (!prop) {
+    throw new Error(`Interactive prop with id ${propId} not found`);
+  }
+
+  if (prop.state !== 'open' && prop.state !== 'destroyed') {
+    throw new Error(`Cannot claim loot from prop in state '${prop.state}'. Must be 'open' or 'destroyed'.`);
+  }
+
+  const table = prop.lootTable;
+  const coins = table?.gp ?? 0;
+  if (coins <= 0) {
+    return { nextState: state, events: [], loot: {} };
+  }
+
+  const hero = state.party[actorId];
+  if (!hero) {
+    throw new Error(`Actor ${actorId} not found in party`);
+  }
+
+  const coinLoot: LootBundleSpec = { origin: table?.origin, sourceName: table?.sourceName, gp: coins };
+  const nextTable =
+    table?.items && table.items.length > 0 ? { ...table, gp: undefined } : undefined;
+  const nextProps = state.props.map((p) =>
+    p.id === propId ? { ...p, lootTable: nextTable } : p,
+  );
+
+  let nextParty = { ...state.party };
+
+  if (hero.buildState) {
+    const updatedBuild = awardLootToCharacter(hero.buildState, coinLoot, compendium);
+    const updatedSheet = computeDerivedCharacter(updatedBuild, compendium);
+    nextParty[actorId] = {
+      ...hero,
+      buildState: updatedBuild,
+      characterSheet: updatedSheet,
+    };
+  }
+
+  const events: GameEvent[] = [
+    {
+      type: 'LOOT_ACQUIRED',
+      actorId,
+      propId,
+      loot: coinLoot,
+    },
+  ];
+
+  if (hero.buildState) {
+    events.push({
+      type: 'INVENTORY_UPDATED',
+      characterId: actorId,
+      inventory: nextParty[actorId]!.buildState!.inventory,
+      currency: nextParty[actorId]!.buildState!.currency,
+    });
+  }
+
+  return {
+    nextState: {
+      ...state,
+      props: nextProps,
+      party: nextParty,
+    },
+    events,
+    loot: coinLoot,
+  };
+}
+
 export function claimPropLoot(
   state: GameState,
   propId: string,

@@ -213,8 +213,7 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
       const onClose = vi.fn();
 
       const lootBundle = {
-        gp: 50,
-        sp: 120,
+        gp: 170,
         items: ['potion-of-healing', 'ring-of-protection'],
       };
 
@@ -238,7 +237,7 @@ describe('SRD-507: Dungeon Exploration HUD & Delve Experience', () => {
 
       expect(screen.getByText(/Dungeon Loot & Party Inventory/i)).toBeDefined();
       expect(screen.getAllByText(/Stone Chest/i).length).toBeGreaterThan(0);
-      expect(screen.getByText('50')).toBeDefined();
+      expect(screen.getByText('170 gp')).toBeDefined();
 
       // Claim All Spoils
       const claimBtn = screen.getByTestId('claim-all-loot-btn');
