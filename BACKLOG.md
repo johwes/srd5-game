@@ -427,7 +427,7 @@ Player feedback (Nov 2026, captures in `docs/reference/feedback/`): Bless cast w
 | **SRD-1701** | `[x]` | Doorway placement constraints: strict-threshold-only candidates, placement-level adjacency suppression (standard, locked, vault), seed-sweep invariant tests | `@srd5/engine` | SRD-508 |
 | **SRD-1702** | `[x]` | Bless reliability: AI `bless-buff` guard + self-dedupe fix, 3-target fan-out + concentration-overwrite engine tests, explicit picked/max commit counter | `@srd5/engine`, `@srd5/client` | SRD-306 |
 | **SRD-1703** | `[x]` | Weapon sets engine: `activeWeaponSet` discriminator + per-set slots, derivation filters to active set, free `SWAP_WEAPON_SET` command (BG3: swapping is free), save/pregen migration | `@srd5/data`, `@srd5/engine` | SRD-204 |
-| **SRD-1704** | `[ ]` | Weapon sets client: set toggle + per-set paperdoll/weapon cards in InventoryView/sheet drawer, hotbar stays passive (derivation-filtered), builder + e2e coverage | `@srd5/client` | SRD-1703 |
+| **SRD-1704** | `[x]` | Weapon sets client: set toggle + per-set paperdoll/weapon cards in InventoryView/sheet drawer, hotbar stays passive (derivation-filtered), builder + e2e coverage | `@srd5/client` | SRD-1703 |
 | **SRD-1705** | `[ ]` | Weapon sets verification gate: headless swap/derivation tests, E2E equip-set-swap flow at 1280×800, spec amendment lifting the one-set limitation | `@srd5/engine`, `@srd5/client` | SRD-1704 |
 
 ### Epic 17 Acceptance Criteria Details

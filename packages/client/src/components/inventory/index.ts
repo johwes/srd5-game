@@ -7,6 +7,7 @@ export * from './InventoryItemRow.js';
 export * from './InventoryGridCell.js';
 export * from './InventoryView.js';
 export * from './CharacterView.js';
+export * from './weaponSets.js';
 export * from './inventoryCategories.js';
 export * from './inventoryCompare.js';
 export * from './inventorySort.js';

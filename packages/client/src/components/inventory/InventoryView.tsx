@@ -15,6 +15,13 @@ import {
   type InventoryFilterKey,
 } from './inventoryCategories.js';
 import {
+  WEAPON_SET_IDS,
+  WEAPON_SET_SHORT_LABELS,
+  resolveActiveWeaponSet,
+  resolveSetAwareEquippedInstanceId,
+  type WeaponSetId,
+} from './weaponSets.js';
+import {
   candidateSlotsForItem,
   compareItemToEquipped,
   suggestEquipSlot,
@@ -92,6 +99,16 @@ export interface InventoryViewProps {
   onUnattuneItem: (instanceId: string) => void;
   /** Optional Use action (potions, scrolls, wands). */
   onUseItem?: (instanceId: string) => void;
+  /**
+   * SRD-1704: active weapon set + swap handler (BG3 Set I / Set II).
+   * The paperdoll's weapon slots (`mainHand`/`offHand`/`ranged`) render the
+   * visible set; equip/unequip keep their short-slot signatures and the
+   * parent maps them onto the visible set's engine keys. When omitted, the
+   * set resolves from `equippedSlots.activeWeaponSet` (legacy: `primary`)
+   * and the toggle renders display-only.
+   */
+  activeWeaponSet?: WeaponSetId;
+  onSwapWeaponSet?: (set: WeaponSetId) => void;
   /** Test id prefix. Defaults to `inventory`. */
   testIdPrefix?: string;
   // ── SRD-1306 stretch actions (all optional; hidden when unset) ──
@@ -144,6 +161,8 @@ export function InventoryView({
   onAttuneItem,
   onUnattuneItem,
   onUseItem,
+  activeWeaponSet: activeWeaponSetProp,
+  onSwapWeaponSet,
   testIdPrefix = 'inventory',
   partyHeroes,
   strScore,
@@ -171,15 +190,20 @@ export function InventoryView({
     return map;
   }, [inventory]);
 
+  // SRD-1704: the paperdoll's weapon slots follow the visible set.
+  // An explicit prop wins (CharacterView drives it from the hero's
+  // discriminator); otherwise read the slots' own discriminator.
+  const activeWeaponSet: WeaponSetId =
+    activeWeaponSetProp ?? resolveActiveWeaponSet(equippedSlots);
   const equippedInstanceBySlot = useMemo(() => {
     const map = new Map<InventorySlotName, InventoryItemInstance>();
     for (const slot of PAPERDOLL_SLOTS) {
-      const instId = resolveEquippedInstanceId(equippedSlots, slot);
+      const instId = resolveSetAwareEquippedInstanceId(equippedSlots, slot, activeWeaponSet);
       const inst = instId ? instanceById.get(instId) : undefined;
       if (inst) map.set(slot, inst);
     }
     return map;
-  }, [equippedSlots, instanceById]);
+  }, [equippedSlots, instanceById, activeWeaponSet]);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -355,8 +379,43 @@ export function InventoryView({
       <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-3">
         {/* ── Left: visual paperdoll ── */}
         <div data-testid={`${prefix}-paperdoll`} aria-label={`${heroName} paperdoll`}>
-          <div className="text-[10px] font-semibold uppercase text-slate-400 mb-1.5">
-            🛡️ {heroName} — Equipped
+          <div className="flex items-center justify-between gap-1.5 mb-1.5">
+            <div className="text-[10px] font-semibold uppercase text-slate-400">
+              🛡️ {heroName} — Equipped
+            </div>
+            {/* SRD-1704 weapon-set toggle (Set I / Set II; armor/shield shared). */}
+            <div
+              data-testid={`${prefix}-weapon-set-toggle`}
+              role="group"
+              aria-label="Weapon set"
+              className="flex gap-1"
+            >
+              {WEAPON_SET_IDS.map((set) => (
+                <button
+                  key={set}
+                  type="button"
+                  data-testid={`${prefix}-weapon-set-${set}`}
+                  aria-pressed={activeWeaponSet === set}
+                  title={
+                    set === activeWeaponSet
+                      ? `Active weapon set (${WEAPON_SET_SHORT_LABELS[set]})`
+                      : `Show ${WEAPON_SET_SHORT_LABELS[set]}`
+                  }
+                  onClick={() => {
+                    if (set !== activeWeaponSet) onSwapWeaponSet?.(set);
+                  }}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${activeWeaponSet === set ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white'}`}
+                >
+                  {WEAPON_SET_SHORT_LABELS[set]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div
+            data-testid={`${prefix}-weapon-set-label`}
+            className="mb-1.5 text-[10px] text-slate-500"
+          >
+            {activeWeaponSet === 'primary' ? 'Set I · Melee set' : 'Set II · Ranged set'} · armor/shield shared
           </div>
           <div className="grid grid-cols-2 gap-1.5">
             {PAPERDOLL_SLOTS.map((slot) => {

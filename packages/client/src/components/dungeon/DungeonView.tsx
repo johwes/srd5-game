@@ -48,6 +48,10 @@ import { DungeonExplorationHud } from './DungeonExplorationHud.js';
 import { PropInteractionCard } from './PropInteractionCard.js';
 import { LootInventoryModal } from './LootInventoryModal.js';
 import { AnchoredLootBoxPanel } from './AnchoredLootBoxPanel.js';
+import {
+  engineKeyForSlot,
+  resolveActiveWeaponSet,
+} from '../inventory/weaponSets.js';
 import { MarchingOrderModal } from './MarchingOrderModal.js';
 import { RestCampModal } from './RestCampModal.js';
 import { SaveLoadModal } from './SaveLoadModal.js';
@@ -1554,17 +1558,31 @@ export function DungeonView({
           })
         }
         onEquipItem={(charId, slotName, instId) => {
-          const charSheet = authState.party[charId]?.characterSheet as any;
-          const currentSlots = charSheet?.equippedSlots ?? {};
+          // SRD-1704: short UI slots land in the hero's *visible* weapon set
+          // (armor/shield shared; Set II addresses the secondary keys).
+          const combatant = authState.party[charId] as any;
+          const currentSlots: Record<string, string | undefined> =
+            combatant?.buildState?.equippedSlots ??
+            combatant?.characterSheet?.equippedSlots ??
+            {};
+          const activeSet = resolveActiveWeaponSet(currentSlots);
+          const engineKey = engineKeyForSlot(slotName, activeSet);
           handleDispatch({
             type: 'EQUIP_LOADOUT',
             characterId: charId,
             equippedSlots: {
               ...currentSlots,
-              [`${slotName}InstanceId`]: instId,
+              [engineKey]: instId,
             },
           });
         }}
+        onSwapWeaponSet={(charId, set) =>
+          handleDispatch({
+            type: 'SWAP_WEAPON_SET',
+            characterId: charId,
+            weaponSet: set,
+          })
+        }
         onAttuneItem={(charId, instId) =>
           handleDispatch({
             type: 'ATTUNE_ITEM',

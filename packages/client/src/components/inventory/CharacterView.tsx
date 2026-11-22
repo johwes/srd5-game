@@ -17,6 +17,10 @@ import {
   type InventoryFilterKey,
 } from './inventoryCategories.js';
 import { InventoryView, type InventorySlotName } from './InventoryView.js';
+import {
+  resolveActiveWeaponSet,
+  type WeaponSetId,
+} from './weaponSets.js';
 import { CharacterSpellbook } from './CharacterSpellbook.js';
 import {
   INVENTORY_SORTS,
@@ -51,6 +55,8 @@ export interface CharacterViewProps {
   onClose: () => void;
   /** Equip (or unequip when `instanceId` is `undefined`). */
   onEquipItem: (heroId: string, slot: InventorySlotName, instanceId: string | undefined) => void;
+  /** SRD-1704: flip the visible weapon set (Set I / Set II). */
+  onSwapWeaponSet?: (heroId: string, set: WeaponSetId) => void;
   /** Attune / unattune by instance id. */
   onAttuneItem: (heroId: string, instanceId: string) => void;
   onUnattuneItem: (heroId: string, instanceId: string) => void;
@@ -199,6 +205,7 @@ export function CharacterView({
   onSplitStack,
   onIdentifyItem,
   onSellItem,
+  onSwapWeaponSet,
   testIdPrefix = 'character-view',
   initialMode = 'character',
 }: CharacterViewProps) {
@@ -1234,6 +1241,12 @@ export function CharacterView({
                 .map((h) => ({ id: h.id, name: h.name }))}
               strScore={strScore}
               weaponAttacks={derived.weaponAttacks}
+              activeWeaponSet={resolveActiveWeaponSet(
+                activeHero.equippedSlots as unknown as Record<string, string | undefined>,
+              )}
+              onSwapWeaponSet={
+                onSwapWeaponSet ? (set) => onSwapWeaponSet(activeHero.id, set) : undefined
+              }
               onEquipItem={(slot, instanceId) => onEquipItem(activeHero.id, slot, instanceId)}
               onAttuneItem={(instanceId) => onAttuneItem(activeHero.id, instanceId)}
               onUnattuneItem={(instanceId) => onUnattuneItem(activeHero.id, instanceId)}

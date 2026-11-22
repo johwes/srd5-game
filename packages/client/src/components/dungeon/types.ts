@@ -74,6 +74,8 @@ export interface LootInventoryModalProps {
     takeCoins?: boolean,
   ) => void;
   onEquipItem: (characterId: string, slotName: 'armor' | 'shield' | 'mainHand' | 'offHand' | 'ranged', instanceId?: string) => void;
+  /** SRD-1704: flip the visible weapon set (Set I / Set II). */
+  onSwapWeaponSet?: (characterId: string, set: 'primary' | 'secondary') => void;
   onAttuneItem: (characterId: string, instanceId: string) => void;
   onUnattuneItem: (characterId: string, instanceId: string) => void;
   onUseItem?: (characterId: string, instanceId: string) => void;

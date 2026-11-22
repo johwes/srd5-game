@@ -548,14 +548,22 @@ export function rollStartingGoldGp(formula: string, seed: number): number {
 }
 
 /**
- * Automatically selects default equipped slots (`armorInstanceId`, `shieldInstanceId`,
- * `mainHandInstanceId`, `offHandInstanceId`, `rangedInstanceId`) from an inventory list.
+ * Automatically selects default equipped slots from an inventory list.
+ *
+ * SRD-1704 weapon sets (BG3-style Set I / Set II): the primary set keeps the
+ * previous behavior (best melee main + light off-hand + dedicated ranged or
+ * thrown fallback); the secondary set is filled from the *remaining*
+ * instances (best remaining ranged/thrown + best remaining melee + light
+ * off-hand) so a fresh hero walks out with a melee set and a ranged set.
+ * One instance never occupies two slots. `activeWeaponSet` defaults to
+ * `'primary'` (legacy saves normalize the same way engine-side).
  */
 export function autoEquipInventoryItems(
   inventory: readonly InventoryItemInstance[],
   compendium: SrdCompendium = defaultCompendium,
 ): EquippedSlots {
   const slots: EquippedSlots = {};
+  const used = new Set<string>();
 
   for (const inst of inventory) {
     if (inst.quantity <= 0) continue;
@@ -566,14 +574,17 @@ export function autoEquipInventoryItems(
       if (eq.category === 'shield') {
         if (!slots.shieldInstanceId) {
           slots.shieldInstanceId = inst.instanceId;
+          used.add(inst.instanceId);
         }
       } else if (!slots.armorInstanceId) {
         slots.armorInstanceId = inst.instanceId;
+        used.add(inst.instanceId);
       }
     } else if (eq.kind === 'weapon') {
       if (eq.rangeType === 'melee') {
         if (!slots.mainHandInstanceId) {
           slots.mainHandInstanceId = inst.instanceId;
+          used.add(inst.instanceId);
           // If weapon has thrown property and no ranged weapon yet, also allow ranged slot if no dedicated ranged weapon is found later
         } else if (
           !slots.offHandInstanceId &&
@@ -581,10 +592,12 @@ export function autoEquipInventoryItems(
           eq.properties.includes('light')
         ) {
           slots.offHandInstanceId = inst.instanceId;
+          used.add(inst.instanceId);
         }
       } else if (eq.rangeType === 'ranged') {
         if (!slots.rangedInstanceId) {
           slots.rangedInstanceId = inst.instanceId;
+          used.add(inst.instanceId);
         }
       }
     }
@@ -593,10 +606,11 @@ export function autoEquipInventoryItems(
   // If no dedicated ranged weapon was equipped, check for a thrown melee weapon not already in mainHand
   if (!slots.rangedInstanceId) {
     for (const inst of inventory) {
-      if (inst.instanceId === slots.mainHandInstanceId) continue;
+      if (used.has(inst.instanceId)) continue;
       const eq = compendium.getEquipment(inst.itemId);
       if (eq?.kind === 'weapon' && eq.properties.includes('thrown')) {
         slots.rangedInstanceId = inst.instanceId;
+        used.add(inst.instanceId);
         break;
       }
     }
@@ -610,10 +624,80 @@ export function autoEquipInventoryItems(
       mainWeapon?.kind === 'weapon' &&
       mainWeapon.properties.includes('two-handed')
     ) {
+      if (slots.shieldInstanceId) used.delete(slots.shieldInstanceId);
+      if (slots.offHandInstanceId) used.delete(slots.offHandInstanceId);
       delete slots.shieldInstanceId;
       delete slots.offHandInstanceId;
     }
   }
+
+  // ── SRD-1704: fill the secondary set from the remaining instances ──
+  // Best remaining ranged (dedicated ranged first, then thrown melee) plus
+  // best remaining melee main-hand (+ light off-hand when no shield).
+  if (!slots.secondaryRangedInstanceId) {
+    for (const inst of inventory) {
+      if (used.has(inst.instanceId) || inst.quantity <= 0) continue;
+      const eq = compendium.getEquipment(inst.itemId);
+      if (eq?.kind === 'weapon' && eq.rangeType === 'ranged') {
+        slots.secondaryRangedInstanceId = inst.instanceId;
+        used.add(inst.instanceId);
+        break;
+      }
+    }
+    if (!slots.secondaryRangedInstanceId) {
+      for (const inst of inventory) {
+        if (used.has(inst.instanceId) || inst.quantity <= 0) continue;
+        const eq = compendium.getEquipment(inst.itemId);
+        if (eq?.kind === 'weapon' && eq.properties.includes('thrown')) {
+          slots.secondaryRangedInstanceId = inst.instanceId;
+          used.add(inst.instanceId);
+          break;
+        }
+      }
+    }
+  }
+  if (!slots.secondaryMainHandInstanceId) {
+    for (const inst of inventory) {
+      if (used.has(inst.instanceId) || inst.quantity <= 0) continue;
+      const eq = compendium.getEquipment(inst.itemId);
+      if (eq?.kind === 'weapon' && eq.rangeType === 'melee') {
+        slots.secondaryMainHandInstanceId = inst.instanceId;
+        used.add(inst.instanceId);
+        break;
+      }
+    }
+  }
+  if (!slots.secondaryOffHandInstanceId && !slots.shieldInstanceId) {
+    for (const inst of inventory) {
+      if (used.has(inst.instanceId) || inst.quantity <= 0) continue;
+      const eq = compendium.getEquipment(inst.itemId);
+      if (
+        eq?.kind === 'weapon' &&
+        eq.rangeType === 'melee' &&
+        eq.properties.includes('light')
+      ) {
+        slots.secondaryOffHandInstanceId = inst.instanceId;
+        used.add(inst.instanceId);
+        break;
+      }
+    }
+  }
+  // Two-handed secondary main-hand clears a secondary off-hand pick.
+  if (slots.secondaryMainHandInstanceId && slots.secondaryOffHandInstanceId) {
+    const mainInst = inventory.find(
+      (i) => i.instanceId === slots.secondaryMainHandInstanceId,
+    );
+    const mainWeapon = mainInst ? compendium.getEquipment(mainInst.itemId) : undefined;
+    if (
+      mainWeapon?.kind === 'weapon' &&
+      mainWeapon.properties.includes('two-handed')
+    ) {
+      used.delete(slots.secondaryOffHandInstanceId);
+      delete slots.secondaryOffHandInstanceId;
+    }
+  }
+
+  slots.activeWeaponSet = 'primary';
 
   return slots;
 }

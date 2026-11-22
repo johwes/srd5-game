@@ -22,6 +22,12 @@ import {
 } from './components/roster/index.js';
 import { CharacterView } from './components/inventory/index.js';
 import type { InventorySlotName } from './components/inventory/index.js';
+import {
+  ALL_ENGINE_SLOT_KEYS,
+  engineKeyForSlot,
+  resolveActiveWeaponSet,
+  type WeaponSetId,
+} from './components/inventory/weaponSets.js';
 import { ArenaView } from './components/arena/index.js';
 import { DungeonView } from './components/dungeon/index.js';
 import { RealmView } from './components/realm/index.js';
@@ -270,31 +276,41 @@ export function App({
       ? (characterViewHeroes.find((c) => c.id === characterViewHeroId) ?? characterViewHeroes[0] ?? null)
       : null;
 
-  const SLOT_KEY_BY_SHORT: Record<InventorySlotName, 'armorInstanceId' | 'shieldInstanceId' | 'mainHandInstanceId' | 'offHandInstanceId' | 'rangedInstanceId'> = {
-    armor: 'armorInstanceId',
-    shield: 'shieldInstanceId',
-    mainHand: 'mainHandInstanceId',
-    offHand: 'offHandInstanceId',
-    ranged: 'rangedInstanceId',
-  };
-
+  // SRD-1704: short UI slots map onto the hero's *visible* weapon set.
   const handleCharacterViewEquip = (heroId: string, slot: InventorySlotName, instanceId: string | undefined) => {
     const hero = roster.characters.find((c) => c.id === heroId);
     if (!hero) return;
-    const slotKey = SLOT_KEY_BY_SHORT[slot];
-    const nextSlots = { ...hero.equippedSlots };
+    const activeSet = resolveActiveWeaponSet(
+      hero.equippedSlots as unknown as Record<string, string | undefined>,
+    );
+    const slotKey = engineKeyForSlot(slot, activeSet);
+    const nextSlots: Record<string, string | undefined> = { ...hero.equippedSlots };
     if (!instanceId) {
       delete nextSlots[slotKey];
     } else {
       // One instance cannot occupy two slots: incoming assignment wins.
-      for (const key of Object.values(SLOT_KEY_BY_SHORT)) {
+      for (const key of ALL_ENGINE_SLOT_KEYS) {
         if (key !== slotKey && nextSlots[key] === instanceId) {
           delete nextSlots[key];
         }
       }
       nextSlots[slotKey] = instanceId;
     }
-    handleUpdateCharacterFromSheetOrLevelUp({ ...hero, equippedSlots: nextSlots });
+    handleUpdateCharacterFromSheetOrLevelUp({
+      ...hero,
+      equippedSlots: nextSlots as CharacterBuildState['equippedSlots'],
+    });
+  };
+
+  // SRD-1704: flip the visible weapon set (roster-local mirror of the
+  // engine SWAP_WEAPON_SET; derivation follows the discriminator).
+  const handleCharacterViewSwapWeaponSet = (heroId: string, set: WeaponSetId) => {
+    const hero = roster.characters.find((c) => c.id === heroId);
+    if (!hero || hero.equippedSlots.activeWeaponSet === set) return;
+    handleUpdateCharacterFromSheetOrLevelUp({
+      ...hero,
+      equippedSlots: { ...hero.equippedSlots, activeWeaponSet: set },
+    });
   };
 
   const handleCharacterViewAttune = (heroId: string, instanceId: string) => {
@@ -325,14 +341,14 @@ export function App({
     if (!from || !to || fromHeroId === toHeroId) return;
     const inst = from.inventory.find((i) => i.instanceId === instanceId);
     if (!inst) return;
-    const nextFromSlots = { ...from.equippedSlots };
-    for (const key of Object.values(SLOT_KEY_BY_SHORT)) {
+    const nextFromSlots: Record<string, string | undefined> = { ...from.equippedSlots };
+    for (const key of ALL_ENGINE_SLOT_KEYS) {
       if (nextFromSlots[key] === instanceId) delete nextFromSlots[key];
     }
     const nextFrom: CharacterBuildState = {
       ...from,
       inventory: from.inventory.filter((i) => i.instanceId !== instanceId),
-      equippedSlots: nextFromSlots,
+      equippedSlots: nextFromSlots as CharacterBuildState['equippedSlots'],
       attunedItemInstanceIds: from.attunedItemInstanceIds.filter((id) => id !== instanceId),
     };
     const nextTo: CharacterBuildState = {
@@ -404,6 +420,7 @@ export function App({
             onSelectHero={(id) => setCharacterViewHeroId(id)}
             onClose={() => setCharacterViewHeroId(null)}
             onEquipItem={handleCharacterViewEquip}
+            onSwapWeaponSet={handleCharacterViewSwapWeaponSet}
             onAttuneItem={handleCharacterViewAttune}
             onUnattuneItem={handleCharacterViewUnattune}
             onTransferItem={handleCharacterViewTransfer}
@@ -499,6 +516,7 @@ export function App({
             onSelectHero={(id) => setCharacterViewHeroId(id)}
             onClose={() => setCharacterViewHeroId(null)}
             onEquipItem={handleCharacterViewEquip}
+            onSwapWeaponSet={handleCharacterViewSwapWeaponSet}
             onAttuneItem={handleCharacterViewAttune}
             onUnattuneItem={handleCharacterViewUnattune}
             onTransferItem={handleCharacterViewTransfer}
@@ -872,6 +890,7 @@ export function App({
           onSelectHero={(id) => setCharacterViewHeroId(id)}
           onClose={() => setCharacterViewHeroId(null)}
           onEquipItem={handleCharacterViewEquip}
+          onSwapWeaponSet={handleCharacterViewSwapWeaponSet}
           onAttuneItem={handleCharacterViewAttune}
           onUnattuneItem={handleCharacterViewUnattune}
           onTransferItem={handleCharacterViewTransfer}

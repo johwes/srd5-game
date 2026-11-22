@@ -37,6 +37,7 @@ export function LootInventoryModal({
   onSplitStack,
   onIdentifyItem,
   onSellItem,
+  onSwapWeaponSet,
   onOpenCharacterView,
 }: LootInventoryModalProps) {
   const partyList = Object.values(party);
@@ -320,6 +321,9 @@ export function LootInventoryModal({
               onSplitStack={onSplitStack ? (instanceId, qty) => onSplitStack(selectedHeroId, instanceId, qty) : undefined}
               onIdentifyItem={onIdentifyItem ? (instanceId) => onIdentifyItem(selectedHeroId, instanceId) : undefined}
               onSellItem={onSellItem ? (instanceId) => onSellItem(selectedHeroId, instanceId) : undefined}
+              onSwapWeaponSet={
+                onSwapWeaponSet ? (set) => onSwapWeaponSet(selectedHeroId, set) : undefined
+              }
               testIdPrefix="inventory"
             />
           </div>

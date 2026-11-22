@@ -32,6 +32,13 @@ import {
   getRarityTextClass,
   normalizeItemRarity,
 } from '../inventory/itemRarity.js';
+import {
+  WEAPON_SET_IDS,
+  WEAPON_SET_SHORT_LABELS,
+  engineKeyForSlot,
+  resolveActiveWeaponSet,
+  type WeaponSetId,
+} from '../inventory/weaponSets.js';
 
 export type CharacterSheetTabId = 'overview' | 'equipment' | 'spells';
 
@@ -116,6 +123,19 @@ export function CharacterSheetDrawer({
 }: CharacterSheetDrawerProps) {
   const [activeTab, setActiveTab] = useState<CharacterSheetTabId>('overview');
   const [xpAwardInput, setXpAwardInput] = useState<string>('300');
+  // SRD-1704: visible weapon set for the paperdoll (armor/shield shared).
+  // Roster-local mirror of the engine `activeWeaponSet` discriminator —
+  // `SWAP_WEAPON_SET` owns it in live play; the drawer writes it directly.
+  const [weaponSet, setWeaponSet] = useState<WeaponSetId>(() =>
+    resolveActiveWeaponSet(character.equippedSlots as unknown as Record<string, string | undefined>),
+  );
+
+  // Keep the visible set synced when the character (or its discriminator) changes.
+  useEffect(() => {
+    setWeaponSet(
+      resolveActiveWeaponSet(character.equippedSlots as unknown as Record<string, string | undefined>),
+    );
+  }, [character.id, (character.equippedSlots as { activeWeaponSet?: string } | undefined)?.activeWeaponSet]);
 
   const derived = computeDerivedCharacter(character, compendium);
   const xpProgress = getXpProgress(character);
@@ -243,10 +263,21 @@ export function CharacterSheetDrawer({
     onUpdateCharacter(res.state);
   };
 
+  const handleSwapWeaponSet = (set: WeaponSetId) => {
+    if (!onUpdateCharacter) return;
+    setWeaponSet(set);
+    if (character.equippedSlots.activeWeaponSet !== set) {
+      onUpdateCharacter({
+        ...character,
+        equippedSlots: { ...character.equippedSlots, activeWeaponSet: set },
+      });
+    }
+  };
+
   const handleEquipSlotChange = (
-    // SRD-1703: roster equip edits target gear slots only; the
-    // `activeWeaponSet` discriminator is managed by SWAP_WEAPON_SET (SRD-1704
-    // adds the set toggle UI).
+    // SRD-1703: roster equip edits gear slots only; the
+    // `activeWeaponSet` discriminator is managed by handleSwapWeaponSet
+    // (SRD-1704 set toggle UI below).
     slotKey: Exclude<keyof EquippedSlots, 'activeWeaponSet'>,
     instanceId: string,
   ) => {
@@ -267,31 +298,54 @@ export function CharacterSheetDrawer({
       }
       nextSlots[slotKey] = instanceId;
 
-      // Enforce SRD 5.1 two-handed vs shield/off-hand constraint
-      if (slotKey === 'mainHandInstanceId') {
+      // Enforce SRD 5.1 two-handed vs shield/off-hand constraint.
+      // SRD-1704: the constraint applies within the edited set — a
+      // two-handed primary main-hand clears the shared shield + the
+      // primary off-hand (same for the secondary set); a shield clears
+      // both off-hands, and an off-hand clears a two-handed main in its set.
+      const inSecondary =
+        slotKey === 'secondaryMainHandInstanceId' ||
+        slotKey === 'secondaryOffHandInstanceId' ||
+        slotKey === 'secondaryRangedInstanceId';
+      const mainKey = inSecondary ? 'secondaryMainHandInstanceId' : 'mainHandInstanceId';
+      const offKey = inSecondary ? 'secondaryOffHandInstanceId' : 'offHandInstanceId';
+      if (slotKey === 'mainHandInstanceId' || slotKey === 'secondaryMainHandInstanceId') {
         const inst = character.inventory.find((i) => i.instanceId === instanceId);
         const eq = inst ? compendium.getEquipment(inst.itemId) : undefined;
         if (eq?.kind === 'weapon' && eq.properties.includes('two-handed')) {
           delete nextSlots.shieldInstanceId;
-          delete nextSlots.offHandInstanceId;
+          delete nextSlots[offKey];
         }
       } else if (slotKey === 'shieldInstanceId') {
         delete nextSlots.offHandInstanceId;
+        delete nextSlots.secondaryOffHandInstanceId;
         const mainInst = character.inventory.find(
-          (i) => i.instanceId === nextSlots.mainHandInstanceId,
+          (i) => i.instanceId === nextSlots[mainKey],
         );
         const mainEq = mainInst ? compendium.getEquipment(mainInst.itemId) : undefined;
         if (mainEq?.kind === 'weapon' && mainEq.properties.includes('two-handed')) {
-          delete nextSlots.mainHandInstanceId;
+          delete nextSlots[mainKey];
         }
-      } else if (slotKey === 'offHandInstanceId') {
+        const secondaryMainInst = character.inventory.find(
+          (i) => i.instanceId === nextSlots.secondaryMainHandInstanceId,
+        );
+        const secondaryMainEq = secondaryMainInst
+          ? compendium.getEquipment(secondaryMainInst.itemId)
+          : undefined;
+        if (
+          secondaryMainEq?.kind === 'weapon' &&
+          secondaryMainEq.properties.includes('two-handed')
+        ) {
+          delete nextSlots.secondaryMainHandInstanceId;
+        }
+      } else if (slotKey === 'offHandInstanceId' || slotKey === 'secondaryOffHandInstanceId') {
         delete nextSlots.shieldInstanceId;
         const mainInst = character.inventory.find(
-          (i) => i.instanceId === nextSlots.mainHandInstanceId,
+          (i) => i.instanceId === nextSlots[mainKey],
         );
         const mainEq = mainInst ? compendium.getEquipment(mainInst.itemId) : undefined;
         if (mainEq?.kind === 'weapon' && mainEq.properties.includes('two-handed')) {
-          delete nextSlots.mainHandInstanceId;
+          delete nextSlots[mainKey];
         }
       }
     }
@@ -362,7 +416,9 @@ export function CharacterSheetDrawer({
       eq?.kind === 'weapon' &&
       eq.rangeType === 'melee' &&
       eq.properties.includes('light') &&
-      inst.instanceId !== character.equippedSlots.mainHandInstanceId
+      // SRD-1704: the candidate must be free in *both* sets' main hands.
+      inst.instanceId !== character.equippedSlots.mainHandInstanceId &&
+      inst.instanceId !== character.equippedSlots.secondaryMainHandInstanceId
     );
   });
   const rangedWeaponItems = character.inventory.filter((inst) => {
@@ -999,6 +1055,39 @@ export function CharacterSheetDrawer({
                       Current AC: <strong className="text-amber-300">{derived.armorClass.totalAc}</strong>
                     </span>
                   </div>
+                  {/* SRD-1704 weapon-set toggle (Set I / Set II; armor/shield shared). */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div
+                      data-testid="sheet-weapon-set-toggle"
+                      role="group"
+                      aria-label="Weapon set"
+                      className="flex gap-1"
+                    >
+                      {WEAPON_SET_IDS.map((set) => (
+                        <button
+                          key={set}
+                          type="button"
+                          data-testid={`sheet-weapon-set-${set}`}
+                          aria-pressed={weaponSet === set}
+                          title={
+                            set === weaponSet
+                              ? `Active weapon set (${WEAPON_SET_SHORT_LABELS[set]})`
+                              : `Show ${WEAPON_SET_SHORT_LABELS[set]}`
+                          }
+                          onClick={() => handleSwapWeaponSet(set)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${weaponSet === set ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:text-white'}`}
+                        >
+                          {WEAPON_SET_SHORT_LABELS[set]}
+                        </button>
+                      ))}
+                    </div>
+                    <span
+                      data-testid="sheet-weapon-set-label"
+                      className="text-[11px] text-slate-500"
+                    >
+                      {weaponSet === 'primary' ? 'Set I · Melee set' : 'Set II · Ranged set'}
+                    </span>
+                  </div>
 
                   <div className="space-y-3 text-xs">
                     <p className="text-slate-400">
@@ -1009,13 +1098,17 @@ export function CharacterSheetDrawer({
                       [
                         { slotKey: 'armorInstanceId', short: 'armor', label: 'Body Armor', emptyLabel: 'Unarmored (None)' },
                         { slotKey: 'shieldInstanceId', short: 'shield', label: 'Shield (+2 AC)', emptyLabel: 'No Shield' },
-                        { slotKey: 'mainHandInstanceId', short: 'mainHand', label: 'Main-Hand Melee Weapon', emptyLabel: 'Unarmed Strike Only' },
-                        { slotKey: 'offHandInstanceId', short: 'offHand', label: 'Off-Hand Light Weapon (Two-Weapon Fighting)', emptyLabel: 'Empty Off-Hand' },
-                        { slotKey: 'rangedInstanceId', short: 'ranged', label: 'Ranged Weapon Slot', emptyLabel: 'No Ranged Weapon' },
+                        // SRD-1704: weapon slots follow the visible set; the
+                        // short testids stay stable across sets.
+                        { slotKey: engineKeyForSlot('mainHand', weaponSet), short: 'mainHand', label: weaponSet === 'primary' ? 'Main-Hand Melee Weapon' : 'Set II Main-Hand Weapon', emptyLabel: 'Unarmed Strike Only' },
+                        { slotKey: engineKeyForSlot('offHand', weaponSet), short: 'offHand', label: 'Off-Hand Light Weapon (Two-Weapon Fighting)', emptyLabel: 'Empty Off-Hand' },
+                        { slotKey: engineKeyForSlot('ranged', weaponSet), short: 'ranged', label: 'Ranged Weapon Slot', emptyLabel: 'No Ranged Weapon' },
                       ] as const
                     ).map((slot) => {
+                      type SheetSlotKey = Exclude<keyof EquippedSlots, 'activeWeaponSet'>;
+                      const slotKey = slot.slotKey as SheetSlotKey;
                       const equippedInst = character.inventory.find(
-                        (i) => i.instanceId === character.equippedSlots[slot.slotKey],
+                        (i) => i.instanceId === character.equippedSlots[slotKey],
                       );
                       const equippedEq = equippedInst
                         ? compendium.getEquipment(equippedInst.itemId)
@@ -1034,7 +1127,7 @@ export function CharacterSheetDrawer({
                             data-testid={`sheet-paperdoll-slot-${slot.short}`}
                             title={equippedInst ? 'Click to unequip' : slot.emptyLabel}
                             onClick={() => {
-                              if (equippedInst) handleEquipSlotChange(slot.slotKey, '');
+                              if (equippedInst) handleEquipSlotChange(slotKey, '');
                             }}
                             className={`w-full flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors ${getRarityBorderClass(slotRarity)} ${equippedInst ? 'bg-slate-950 hover:border-amber-400 cursor-pointer' : 'bg-slate-950/60 border-slate-800 text-slate-500'}`}
                           >
@@ -1205,15 +1298,18 @@ export function CharacterSheetDrawer({
                                 [
                                   { list: armorItems, slotKey: 'armorInstanceId', short: 'armor', slotLabel: 'Armor' },
                                   { list: shieldItems, slotKey: 'shieldInstanceId', short: 'shield', slotLabel: 'Shield' },
-                                  { list: meleeWeaponItems, slotKey: 'mainHandInstanceId', short: 'mainHand', slotLabel: 'Main' },
-                                  { list: offHandLightWeaponItems, slotKey: 'offHandInstanceId', short: 'offHand', slotLabel: 'Off' },
-                                  { list: rangedWeaponItems, slotKey: 'rangedInstanceId', short: 'ranged', slotLabel: 'Ranged' },
+                                  // SRD-1704: weapon equips land in the visible set.
+                                  { list: meleeWeaponItems, slotKey: engineKeyForSlot('mainHand', weaponSet), short: 'mainHand', slotLabel: 'Main' },
+                                  { list: offHandLightWeaponItems, slotKey: engineKeyForSlot('offHand', weaponSet), short: 'offHand', slotLabel: 'Off' },
+                                  { list: rangedWeaponItems, slotKey: engineKeyForSlot('ranged', weaponSet), short: 'ranged', slotLabel: 'Ranged' },
                                 ] as const
                               )
                                 .filter(
                                   ({ list, slotKey }) =>
                                     list.some((i) => i.instanceId === inst.instanceId) &&
-                                    character.equippedSlots[slotKey] !== inst.instanceId,
+                                    character.equippedSlots[
+                                      slotKey as Exclude<keyof EquippedSlots, 'activeWeaponSet'>
+                                    ] !== inst.instanceId,
                                 )
                                 .map(({ slotKey, short, slotLabel }) => (
                                   <button
@@ -1221,7 +1317,12 @@ export function CharacterSheetDrawer({
                                     type="button"
                                     data-testid={`sheet-inventory-equip-${inst.instanceId}-${short}`}
                                     title={`Equip to ${slotLabel}`}
-                                    onClick={() => handleEquipSlotChange(slotKey, inst.instanceId)}
+                                    onClick={() =>
+                                      handleEquipSlotChange(
+                                        slotKey as Exclude<keyof EquippedSlots, 'activeWeaponSet'>,
+                                        inst.instanceId,
+                                      )
+                                    }
                                     className="px-1.5 py-0.5 rounded border border-slate-700 bg-slate-900 text-[10px] font-semibold text-amber-300 hover:border-amber-400 hover:bg-slate-800 transition-colors"
                                   >
                                     {slotLabel}
