@@ -18,6 +18,12 @@ import {
 } from './inventoryCategories.js';
 import { InventoryView, type InventorySlotName } from './InventoryView.js';
 import {
+  INVENTORY_SORTS,
+  INVENTORY_SORT_LABELS,
+  sortInventoryInstances,
+  type InventorySortKey,
+} from './inventorySort.js';
+import {
   formatAbilityAbbrev,
   formatSignedNumber,
   formatTitleCase,
@@ -128,7 +134,10 @@ export function CharacterView({
   const [viewMode, setViewMode] = useState<CharacterViewMode>(initialMode);
   const [partySearch, setPartySearch] = useState('');
   const [partyFilter, setPartyFilter] = useState<InventoryFilterKey>('all');
+  const [partySort, setPartySort] = useState<InventorySortKey>('newest');
   const [partySelected, setPartySelected] = useState<{ heroId: string; instanceId: string } | null>(null);
+  const [partyContextMenu, setPartyContextMenu] = useState<{ heroId: string; instanceId: string; x: number; y: number } | null>(null);
+  const [backpackMenuOpen, setBackpackMenuOpen] = useState(false);
 
   const activeHero = useMemo(
     () => heroes.find((h) => h.id === activeHeroId) ?? heroes[0],
@@ -136,15 +145,22 @@ export function CharacterView({
   );
 
   // Esc closes the fullscreen modal (same dismissal rule as prop cards).
+  // When a context menu is open (backpack grid or party strip), Esc dismisses
+  // the menu first and leaves the Character view open.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (backpackMenuOpen) return;
+        if (partyContextMenu) {
+          setPartyContextMenu(null);
+          return;
+        }
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, partyContextMenu, backpackMenuOpen]);
 
   const partyGoldTotal = useMemo(
     () => heroes.reduce((sum, h) => sum + (h.currency?.gp ?? 0), 0),
@@ -349,6 +365,22 @@ export function CharacterView({
                 aria-label="Search all backpacks"
                 className="ml-auto px-2 py-1 rounded-md bg-slate-950 border border-slate-700 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 w-40"
               />
+              <label className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                Sort
+                <select
+                  data-testid={`${testIdPrefix}-party-sort`}
+                  value={partySort}
+                  onChange={(event) => setPartySort(event.target.value as InventorySortKey)}
+                  aria-label="Sort all backpacks"
+                  className="px-1 py-1 rounded bg-slate-950 border border-slate-700 text-[11px] text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                >
+                  {INVENTORY_SORTS.map((key) => (
+                    <option key={key} value={key}>
+                      {INVENTORY_SORT_LABELS[key]}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             <div
               data-testid={`${testIdPrefix}-party-strip`}
@@ -364,14 +396,18 @@ export function CharacterView({
                 const overWeight = carriedLb > capacityLb;
                 const nearWeight = !overWeight && carriedLb >= capacityLb * 0.8;
                 const needle = partySearch.trim().toLowerCase();
-                const visibleItems = hero.inventory.filter((inst) => {
-                  if (partyFilter !== 'all' && getInventoryFilterCategory(inst.itemId, compendium) !== partyFilter) return false;
-                  if (needle.length > 0) {
-                    const name = getInventoryItemName(inst.itemId, compendium).toLowerCase();
-                    if (!name.includes(needle) && !inst.itemId.toLowerCase().includes(needle)) return false;
-                  }
-                  return true;
-                });
+                const visibleItems = sortInventoryInstances(
+                  hero.inventory.filter((inst) => {
+                    if (partyFilter !== 'all' && getInventoryFilterCategory(inst.itemId, compendium) !== partyFilter) return false;
+                    if (needle.length > 0) {
+                      const name = getInventoryItemName(inst.itemId, compendium).toLowerCase();
+                      if (!name.includes(needle) && !inst.itemId.toLowerCase().includes(needle)) return false;
+                    }
+                    return true;
+                  }),
+                  partySort,
+                  compendium,
+                );
                 const heroGp = hero.currency?.gp ?? 0;
                 return (
                   <section
@@ -486,6 +522,19 @@ export function CharacterView({
                                   isSelected ? null : { heroId: hero.id, instanceId: inst.instanceId },
                                 )
                               }
+                              onDoubleClick={() =>
+                                setPartySelected({ heroId: hero.id, instanceId: inst.instanceId })
+                              }
+                              onContextMenu={(event) => {
+                                event.preventDefault();
+                                setPartySelected({ heroId: hero.id, instanceId: inst.instanceId });
+                                setPartyContextMenu({
+                                  heroId: hero.id,
+                                  instanceId: inst.instanceId,
+                                  x: event.clientX,
+                                  y: event.clientY,
+                                });
+                              }}
                               className={`relative flex flex-col items-center justify-center gap-0.5 min-h-14 rounded-lg bg-slate-900 border p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 transition-colors ${isSelected ? 'border-amber-400 ring-2 ring-amber-400/60' : 'border-slate-700'}`}
                             >
                               <ItemIcon itemId={inst.itemId} size={24} testId={`${testIdPrefix}-party-card-icon`} />
@@ -539,6 +588,75 @@ export function CharacterView({
                 );
               })}
             </div>
+            {/* SRD-1504 party-strip right-click menu (Send to hero + Use; action bar stays the Deck path). */}
+            {partyContextMenu && onTransferItem && (
+              <div
+                data-testid={`${testIdPrefix}-party-ctx-backdrop`}
+                className="fixed inset-0 z-[70]"
+                onClick={() => setPartyContextMenu(null)}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  setPartyContextMenu(null);
+                }}
+              >
+                <div
+                  role="menu"
+                  aria-label="Send item to hero"
+                  data-testid={`${testIdPrefix}-party-ctx-menu-${partyContextMenu.instanceId}`}
+                  onClick={(event) => event.stopPropagation()}
+                  onContextMenu={(event) => event.preventDefault()}
+                  style={{
+                    position: 'fixed',
+                    left: Math.max(8, Math.min(partyContextMenu.x, window.innerWidth - 250)),
+                    top: Math.max(8, Math.min(partyContextMenu.y, window.innerHeight - 240)),
+                  }}
+                  className="w-56 rounded-xl border border-amber-500/40 bg-slate-900 shadow-2xl p-1.5 flex flex-col gap-0.5"
+                >
+                  <div className="px-2 py-1 text-[11px] font-bold text-slate-100 border-b border-slate-800 mb-1">
+                    Send to hero
+                  </div>
+                  {heroes
+                    .filter((h) => h.id !== partyContextMenu.heroId)
+                    .map((target) => {
+                      const targetDerived = computeDerivedCharacter(target, compendium);
+                      return (
+                        <button
+                          key={target.id}
+                          type="button"
+                          role="menuitem"
+                          data-testid={`${testIdPrefix}-party-ctx-send-${partyContextMenu.heroId}-to-${target.id}-${partyContextMenu.instanceId}`}
+                          onClick={() => {
+                            onTransferItem(
+                              partyContextMenu.heroId,
+                              partyContextMenu.instanceId,
+                              target.id,
+                            );
+                            setPartyContextMenu(null);
+                            setPartySelected(null);
+                          }}
+                          className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-slate-200 hover:bg-amber-500 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                        >
+                          ➡ {targetDerived.name}
+                        </button>
+                      );
+                    })}
+                  {onUseItem && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      data-testid={`${testIdPrefix}-party-ctx-use-${partyContextMenu.instanceId}`}
+                      onClick={() => {
+                        onUseItem(partyContextMenu.heroId, partyContextMenu.instanceId);
+                        setPartyContextMenu(null);
+                      }}
+                      className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-emerald-200 hover:bg-emerald-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                    >
+                      Use
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
         <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-0 min-h-0">
@@ -740,6 +858,7 @@ export function CharacterView({
                 onIdentifyItem ? (instanceId) => onIdentifyItem(activeHero.id, instanceId) : undefined
               }
               onSellItem={onSellItem ? (instanceId) => onSellItem(activeHero.id, instanceId) : undefined}
+              onContextMenuOpenChange={setBackpackMenuOpen}
               testIdPrefix={testIdPrefix}
             />
           </div>

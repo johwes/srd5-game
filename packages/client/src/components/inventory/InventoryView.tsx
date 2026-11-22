@@ -20,12 +20,19 @@ import {
   suggestEquipSlot,
 } from './inventoryCompare.js';
 import {
+  INVENTORY_SORTS,
+  INVENTORY_SORT_LABELS,
+  getInventoryItemValueCopper,
+  sortInventoryInstances,
+  type InventorySortKey,
+} from './inventorySort.js';
+import {
   formatRarityLabel,
   getItemRarityForMagicItem,
   getRarityBorderClass,
   getRarityTextClass,
 } from './itemRarity.js';
-import { formatSignedNumber, formatTitleCase } from '../compendium/formatters.js';
+import { formatGoldCost, formatSignedNumber, formatTitleCase } from '../compendium/formatters.js';
 
 /** The 5 engine paperdoll slots mirrored by the BG3-style grid (Spec 12 §8). */
 export type InventorySlotName = 'armor' | 'shield' | 'mainHand' | 'offHand' | 'ranged';
@@ -98,7 +105,11 @@ export interface InventoryViewProps {
   equipIssues?: ReadonlyArray<{ slot: string; message: string; severity: 'error' | 'warning' }>;
   /** Give/trade the selected stack to another hero. */
   onTransferItem?: (instanceId: string, toHeroId: string) => void;
-  /** Drop/discard the selected stack. */
+  /**
+   * SRD-1504: notified when the right-click context menu opens/closes so a
+   * hosting modal can keep Esc for menu-dismiss instead of closing itself.
+   */
+  onContextMenuOpenChange?: (open: boolean) => void;  /** Drop/discard the selected stack. */
   onDropItem?: (instanceId: string) => void;
   /** Split `quantity` units off the selected stack. */
   onSplitStack?: (instanceId: string, quantity: number) => void;
@@ -143,13 +154,16 @@ export function InventoryView({
   onSplitStack,
   onIdentifyItem,
   onSellItem,
+  onContextMenuOpenChange,
 }: InventoryViewProps) {
   const prefix = `${testIdPrefix}-${heroId}`;
   const [filter, setFilter] = useState<InventoryFilterKey>('all');
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<InventorySortKey>('newest');
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
   const [splitQuantity, setSplitQuantity] = useState(1);
   const [giveTargetId, setGiveTargetId] = useState('');
+  const [contextMenu, setContextMenu] = useState<{ instanceId: string; x: number; y: number } | null>(null);
 
   const instanceById = useMemo(() => {
     const map = new Map<string, InventoryItemInstance>();
@@ -180,6 +194,12 @@ export function InventoryView({
       return true;
     });
   }, [inventory, filter, search, compendium]);
+
+  // SRD-1504 sort control (native select; Deck focus+Enter parity).
+  const visible = useMemo(
+    () => sortInventoryInstances(filtered, sort, compendium),
+    [filtered, sort, compendium],
+  );
 
   const selected = selectedInstanceId ? (instanceById.get(selectedInstanceId) ?? null) : null;
   const selectedSlots = selected ? candidateSlotsForItem(selected.itemId, compendium) : [];
@@ -223,6 +243,55 @@ export function InventoryView({
     const occupant = equippedInstanceBySlot.get(slot);
     setSelectedInstanceId(occupant ? occupant.instanceId : null);
   };
+
+  /**
+   * SRD-1504 double-click / double-tap activation (Spec 14 §4): equips into
+   * the suggested slot when the item is equippable, otherwise fires Use when
+   * the item is usable. Single click/Enter still only selects (action bar).
+   */
+  const handleActivate = (instanceId: string) => {
+    const inst = instanceById.get(instanceId);
+    if (!inst) return;
+    setSelectedInstanceId(instanceId);
+    setContextMenu(null);
+    const suggested = suggestEquipSlot(inst.itemId, compendium);
+    if (suggested) {
+      onEquipItem(suggested, instanceId);
+      return;
+    }
+    if (isInventoryItemUsable(inst.itemId, compendium) && onUseItem) {
+      onUseItem(instanceId);
+    }
+  };
+
+  /** SRD-1504 right-click opener (Deck/keyboard parity lives in the action bar). */
+  const openContextMenu = (event: React.MouseEvent, instanceId: string) => {
+    event.preventDefault();
+    setSelectedInstanceId(instanceId);
+    setContextMenu({ instanceId, x: event.clientX, y: event.clientY });
+  };
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [contextMenu]);
+
+  React.useEffect(() => {
+    onContextMenuOpenChange?.(contextMenu !== null);
+  }, [contextMenu, onContextMenuOpenChange]);
+
+  const ctxInstance = contextMenu ? (instanceById.get(contextMenu.instanceId) ?? null) : null;
+  const ctxSlots = ctxInstance ? candidateSlotsForItem(ctxInstance.itemId, compendium) : [];
+  const ctxUsable = ctxInstance ? isInventoryItemUsable(ctxInstance.itemId, compendium) : false;
+  const ctxAttunable = ctxInstance ? isInventoryItemAttunable(ctxInstance.itemId, compendium) : false;
+  const ctxIsAttuned = ctxInstance ? attunedItemInstanceIds.includes(ctxInstance.instanceId) : false;
+  const ctxValueCopper = ctxInstance ? getInventoryItemValueCopper(ctxInstance.itemId, compendium) : 0;
 
   return (
     <div data-testid={`${prefix}-view`} className="flex flex-col gap-3">
@@ -486,15 +555,31 @@ export function InventoryView({
               aria-label="Search backpack"
               className="ml-auto px-2 py-1 rounded-md bg-slate-950 border border-slate-700 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 w-36"
             />
+            <label className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+              Sort
+              <select
+                data-testid={`${prefix}-sort`}
+                value={sort}
+                onChange={(event) => setSort(event.target.value as InventorySortKey)}
+                aria-label="Sort backpack"
+                className="px-1 py-1 rounded bg-slate-950 border border-slate-700 text-[11px] text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              >
+                {INVENTORY_SORTS.map((key) => (
+                  <option key={key} value={key}>
+                    {INVENTORY_SORT_LABELS[key]}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <div
             data-testid={`${prefix}-grid`}
             role="grid"
-            aria-label={`${heroName} backpack (${filtered.length} items)`}
+            aria-label={`${heroName} backpack (${visible.length} items)`}
             className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-1.5 p-2 rounded-xl bg-slate-950/60 border border-slate-800 max-h-72 overflow-y-auto"
           >
-            {filtered.length === 0 ? (
+            {visible.length === 0 ? (
               <div
                 data-testid={`${prefix}-grid-empty`}
                 className="col-span-full p-4 text-center text-xs text-slate-500"
@@ -502,7 +587,7 @@ export function InventoryView({
                 {inventory.length === 0 ? 'Backpack is empty.' : 'No items match this filter.'}
               </div>
             ) : (
-              filtered.map((inst) => {
+              visible.map((inst) => {
                 const compareLines = compareItemToEquipped(
                   inst.itemId,
                   (() => {
@@ -533,6 +618,8 @@ export function InventoryView({
                     draggable={candidateSlotsForItem(inst.itemId, compendium).length > 0}
                     testIdPrefix={prefix}
                     onSelect={setSelectedInstanceId}
+                    onActivate={handleActivate}
+                    onContextMenuInstance={openContextMenu}
                     onDragStartInstance={(event, dragId) => {
                       event.dataTransfer.setData('text/inventory-instance-id', dragId);
                       event.dataTransfer.effectAllowed = 'move';
@@ -542,6 +629,199 @@ export function InventoryView({
               })
             )}
           </div>
+
+          {/* SRD-1504 right-click context menu (same handlers as the action bar). */}
+          {contextMenu && ctxInstance && (
+            <div
+              data-testid={`${prefix}-ctx-backdrop`}
+              className="fixed inset-0 z-[70]"
+              onClick={closeContextMenu}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                closeContextMenu();
+              }}
+            >
+              <div
+                role="menu"
+                aria-label={`${getInventoryItemName(ctxInstance.itemId, compendium)} actions`}
+                data-testid={`${prefix}-ctx-menu-${ctxInstance.instanceId}`}
+                onClick={(event) => event.stopPropagation()}
+                onContextMenu={(event) => event.preventDefault()}
+                style={{
+                  position: 'fixed',
+                  left: Math.max(8, Math.min(contextMenu.x, window.innerWidth - 250)),
+                  top: Math.max(8, Math.min(contextMenu.y, window.innerHeight - 320)),
+                }}
+                className="w-56 rounded-xl border border-amber-500/40 bg-slate-900 shadow-2xl p-1.5 flex flex-col gap-0.5 max-h-80 overflow-y-auto"
+              >
+                <div className="px-2 py-1 text-[11px] font-bold text-slate-100 truncate border-b border-slate-800 mb-1">
+                  {getInventoryItemName(ctxInstance.itemId, compendium)}
+                  {ctxInstance.quantity > 1 && (
+                    <span className="text-slate-400"> ×{ctxInstance.quantity}</span>
+                  )}
+                </div>
+                {ctxSlots.map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    role="menuitem"
+                    data-testid={`${prefix}-ctx-equip-${slot}-${ctxInstance.instanceId}`}
+                    onClick={() => {
+                      onEquipItem(slot, ctxInstance.instanceId);
+                      closeContextMenu();
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-slate-200 hover:bg-amber-500 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                  >
+                    Equip → {PAPERDOLL_SLOT_LABELS[slot]}
+                  </button>
+                ))}
+                {ctxUsable && onUseItem && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-testid={`${prefix}-ctx-use-${ctxInstance.instanceId}`}
+                    onClick={() => {
+                      onUseItem(ctxInstance.instanceId);
+                      closeContextMenu();
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-emerald-200 hover:bg-emerald-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                  >
+                    Use
+                  </button>
+                )}
+                {ctxAttunable &&
+                  (ctxIsAttuned ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      data-testid={`${prefix}-ctx-unattune-${ctxInstance.instanceId}`}
+                      onClick={() => {
+                        onUnattuneItem(ctxInstance.instanceId);
+                        closeContextMenu();
+                      }}
+                      className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-slate-200 hover:bg-slate-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    >
+                      Unattune
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      data-testid={`${prefix}-ctx-attune-${ctxInstance.instanceId}`}
+                      disabled={attunedItemInstanceIds.length >= 3}
+                      onClick={() => {
+                        onAttuneItem(ctxInstance.instanceId);
+                        closeContextMenu();
+                      }}
+                      className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-purple-200 hover:bg-purple-800 hover:text-white disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                    >
+                      Attune{attunedItemInstanceIds.length >= 3 ? ' (3 max)' : ''}
+                    </button>
+                  ))}
+                {onTransferItem &&
+                  partyHeroes &&
+                  partyHeroes.filter((h) => h.id !== heroId).length > 0 && (
+                    <div className="border-t border-slate-800 pt-1 mt-0.5">
+                      <div className="px-2 py-0.5 text-[10px] uppercase font-semibold text-slate-500">
+                        Send to hero
+                      </div>
+                      {partyHeroes
+                        .filter((h) => h.id !== heroId)
+                        .map((h) => (
+                          <button
+                            key={h.id}
+                            type="button"
+                            role="menuitem"
+                            data-testid={`${prefix}-ctx-send-${h.id}-${ctxInstance.instanceId}`}
+                            onClick={() => {
+                              onTransferItem(ctxInstance.instanceId, h.id);
+                              closeContextMenu();
+                            }}
+                            className="w-full px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-slate-200 hover:bg-amber-500 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                          >
+                            ➡ {h.name}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                {onSplitStack && ctxInstance.quantity > 1 && (
+                  <div className="border-t border-slate-800 pt-1 mt-0.5 flex items-center gap-1 px-1">
+                    <input
+                      type="number"
+                      min={1}
+                      max={ctxInstance.quantity - 1}
+                      value={Math.min(splitQuantity, ctxInstance.quantity - 1)}
+                      onChange={(event) => setSplitQuantity(Number(event.target.value))}
+                      data-testid={`${prefix}-ctx-split-qty-${ctxInstance.instanceId}`}
+                      aria-label="Split quantity"
+                      className="w-14 px-1 py-1 rounded bg-slate-950 border border-slate-700 text-[11px] text-slate-200"
+                    />
+                    <button
+                      type="button"
+                      role="menuitem"
+                      data-testid={`${prefix}-ctx-split-${ctxInstance.instanceId}`}
+                      onClick={() => {
+                        onSplitStack(ctxInstance.instanceId, splitQuantity);
+                        closeContextMenu();
+                      }}
+                      className="flex-1 px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-slate-200 hover:bg-slate-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                    >
+                      Split stack
+                    </button>
+                  </div>
+                )}
+                {ctxInstance.identified === false && onIdentifyItem && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-testid={`${prefix}-ctx-identify-${ctxInstance.instanceId}`}
+                    onClick={() => {
+                      onIdentifyItem(ctxInstance.instanceId);
+                      closeContextMenu();
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-sky-200 hover:bg-sky-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                  >
+                    🔍 Identify
+                  </button>
+                )}
+                {onDropItem && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-testid={`${prefix}-ctx-drop-${ctxInstance.instanceId}`}
+                    onClick={() => {
+                      onDropItem(ctxInstance.instanceId);
+                      closeContextMenu();
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-red-200 hover:bg-red-900/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                  >
+                    Drop
+                  </button>
+                )}
+                {onSellItem && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-testid={`${prefix}-ctx-sell-${ctxInstance.instanceId}`}
+                    title={
+                      ctxValueCopper > 0
+                        ? `Value ${formatGoldCost(ctxValueCopper)} · sells for ${formatGoldCost(Math.floor(ctxValueCopper / 2))}`
+                        : 'Unpriced — sells for 0 gp'
+                    }
+                    onClick={() => {
+                      onSellItem(ctxInstance.instanceId);
+                      closeContextMenu();
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-left text-[12px] font-semibold text-yellow-200 hover:bg-yellow-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                  >
+                    Sell (½ value
+                    {ctxValueCopper > 0 ? ` · ${formatGoldCost(Math.floor(ctxValueCopper / 2))}` : ''}
+                    )
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Selection action bar: Equip / Use / Attune + compare deltas. */}
           {selected && (

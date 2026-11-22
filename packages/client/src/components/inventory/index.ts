@@ -9,3 +9,4 @@ export * from './InventoryView.js';
 export * from './CharacterView.js';
 export * from './inventoryCategories.js';
 export * from './inventoryCompare.js';
+export * from './inventorySort.js';

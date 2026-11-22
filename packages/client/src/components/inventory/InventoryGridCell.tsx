@@ -35,6 +35,10 @@ export interface InventoryGridCellProps {
   testIdPrefix?: string;
   /** Click / Enter activation (selects the cell). */
   onSelect?: (instanceId: string) => void;
+  /** Double-click / double-tap activation (equip suggested slot, else Use). */
+  onActivate?: (instanceId: string) => void;
+  /** Right-click / long-press (opens the context menu; Deck uses the action bar). */
+  onContextMenuInstance?: (event: React.MouseEvent, instanceId: string) => void;
   /** Drag payload starter (sets the drag data). */
   onDragStartInstance?: (event: React.DragEvent, instanceId: string) => void;
 }
@@ -59,6 +63,8 @@ export function InventoryGridCell({
   draggable = false,
   testIdPrefix = 'inventory',
   onSelect,
+  onActivate,
+  onContextMenuInstance,
   onDragStartInstance,
 }: InventoryGridCellProps) {
   const instId = instanceId ?? itemId;
@@ -86,6 +92,8 @@ export function InventoryGridCell({
       title={name}
       draggable={draggable}
       onClick={() => onSelect?.(instId)}
+      onDoubleClick={() => onActivate?.(instId)}
+      onContextMenu={(event) => onContextMenuInstance?.(event, instId)}
       onDragStart={(event) => onDragStartInstance?.(event, instId)}
       className={`group relative flex flex-col items-center justify-center gap-0.5 w-16 h-16 rounded-lg bg-slate-900 border-2 p-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${getRarityBorderClass(rarity)} ${selected ? 'ring-2 ring-amber-400 bg-slate-800' : 'hover:bg-slate-800'}`}
     >
