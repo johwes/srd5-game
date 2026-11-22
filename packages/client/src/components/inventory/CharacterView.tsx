@@ -17,6 +17,7 @@ import {
   type InventoryFilterKey,
 } from './inventoryCategories.js';
 import { InventoryView, type InventorySlotName } from './InventoryView.js';
+import { CharacterSpellbook } from './CharacterSpellbook.js';
 import {
   INVENTORY_SORTS,
   INVENTORY_SORT_LABELS,
@@ -33,6 +34,8 @@ import {
 export type CharacterViewRailTab = 'build' | 'skills' | 'attributes';
 
 export type CharacterViewMode = 'character' | 'party';
+
+export type CharacterViewPaneTab = 'backpack' | 'spellbook';
 
 export interface CharacterViewProps {
   /** All active heroes (1–4) shown in the switcher. */
@@ -133,6 +136,7 @@ export function CharacterView({
 }: CharacterViewProps) {
   const [railTab, setRailTab] = useState<CharacterViewRailTab>('build');
   const [viewMode, setViewMode] = useState<CharacterViewMode>(initialMode);
+  const [paneTab, setPaneTab] = useState<CharacterViewPaneTab>('backpack');
   const [partySearch, setPartySearch] = useState('');
   const [partyFilter, setPartyFilter] = useState<InventoryFilterKey>('all');
   const [partySort, setPartySort] = useState<InventorySortKey>('newest');
@@ -1113,6 +1117,53 @@ export function CharacterView({
                 🛡️ {derived.armorClass.totalAc} AC
               </div>
             </div>
+            {/* SRD-1507 backpack / spellbook tabs (Spec 14 §10). */}
+            <div
+              data-testid={`${testIdPrefix}-pane-tabs`}
+              role="tablist"
+              aria-label="Backpack or spellbook"
+              className="mb-2 flex gap-1.5"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={paneTab === 'backpack'}
+                data-testid={`${testIdPrefix}-pane-tab-backpack`}
+                onClick={() => setPaneTab('backpack')}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
+                  paneTab === 'backpack'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'bg-slate-800 text-slate-300 hover:text-white'
+                }`}
+              >
+                Backpack
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={paneTab === 'spellbook'}
+                data-testid={`${testIdPrefix}-pane-tab-spellbook`}
+                onClick={() => setPaneTab('spellbook')}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                  paneTab === 'spellbook'
+                    ? 'bg-purple-500 text-slate-950'
+                    : 'bg-slate-800 text-slate-300 hover:text-white'
+                }`}
+              >
+                Spellbook
+                {derived.spellcasting.isSpellcaster
+                  ? ` (${derived.spellcasting.preparedOrKnownSpellIds.length + derived.spellcasting.cantripIds.length})`
+                  : ''}
+              </button>
+            </div>
+            {paneTab === 'spellbook' ? (
+              <CharacterSpellbook
+                hero={activeHero}
+                compendium={compendium}
+                derived={derived}
+                testIdPrefix={testIdPrefix}
+              />
+            ) : (
             <InventoryView
               heroId={activeHero.id}
               heroName={derived.name}
@@ -1146,6 +1197,7 @@ export function CharacterView({
               onContextMenuOpenChange={setBackpackMenuOpen}
               testIdPrefix={testIdPrefix}
             />
+            )}
           </div>
         </div>
         )}
