@@ -1,8 +1,11 @@
 import {
   type CharacterBuildState,
+  type EquippedSlots,
   type InventoryItemInstance,
   type SrdCompendium,
+  type WeaponSetId,
   defaultCompendium,
+  getWeaponSetSlotIds,
 } from '@srd5/data';
 import { computeDerivedCharacter } from '../character/derived.js';
 import { type GameEvent, type GameState } from '../state/types.js';
@@ -213,10 +216,15 @@ function candidateSlotsForItemId(
  * Validates a full loadout against inventory contents, slot fit, armor/shield
  * proficiency (blocking), and STR requirements / weapon proficiency
  * (non-blocking warnings — SRD applies speed/attack penalties instead).
+ *
+ * SRD-1703: both weapon sets are validated (slot fit + proficiency apply to
+ * the inactive set too). Error `slot` values are prefixed with the set
+ * (`primary:mainHand`, `secondary:ranged`) for weapon slots; armor/shield
+ * slots keep their bare names.
  */
 export function validateEquipLoadout(
   buildState: CharacterBuildState,
-  equippedSlots: Record<string, string | undefined>,
+  equippedSlots: EquippedSlots | Record<string, string | undefined>,
   compendium: SrdCompendium = defaultCompendium,
 ): EquipValidation {
   const errors: EquipIssue[] = [];
@@ -225,30 +233,33 @@ export function validateEquipLoadout(
   const proficiencies = sheet.proficiencies;
   const strScore = sheet.abilities.str.score;
   const byId = new Map(buildState.inventory.map((i) => [i.instanceId, i]));
+  const slots = equippedSlots as Partial<EquippedSlots>;
 
-  const slotNames = ['armor', 'shield', 'mainHand', 'offHand', 'ranged'] as const;
-  for (const slot of slotNames) {
-    const instanceId = equippedSlotTarget(equippedSlots, slot);
-    if (!instanceId) continue;
+  const checkSlot = (
+    label: string,
+    slot: 'armor' | 'shield' | 'mainHand' | 'offHand' | 'ranged',
+    instanceId: string | undefined,
+  ): void => {
+    if (!instanceId) return;
     const inst = byId.get(instanceId);
     if (!inst) {
       errors.push({
-        slot,
+        slot: label,
         itemId: instanceId,
         code: 'missing_item',
-        message: `${slot}: instance '${instanceId}' is not in inventory`,
+        message: `${label}: instance '${instanceId}' is not in inventory`,
       });
-      continue;
+      return;
     }
     const fit = candidateSlotsForItemId(inst.itemId, compendium);
     if (fit.length > 0 && !fit.includes(slot)) {
       errors.push({
-        slot,
+        slot: label,
         itemId: inst.itemId,
         code: 'slot_mismatch',
-        message: `${slot}: '${inst.itemId}' cannot go there (fits: ${fit.join(', ')})`,
+        message: `${label}: '${inst.itemId}' cannot go there (fits: ${fit.join(', ')})`,
       });
-      continue;
+      return;
     }
     // Resolve the effective mundane record (magic items ride a base item).
     const magic = compendium.getMagicItem(inst.itemId);
@@ -265,19 +276,19 @@ export function validateEquipLoadout(
       const category = (effectiveArmor as { category: string }).category;
       if (!isArmorProficient(proficiencies.armor, category)) {
         errors.push({
-          slot,
+          slot: label,
           itemId: inst.itemId,
           code: category === 'shield' ? 'shield_proficiency_missing' : 'armor_proficiency_missing',
-          message: `${slot}: missing ${category} armor proficiency for '${inst.itemId}'`,
+          message: `${label}: missing ${category} armor proficiency for '${inst.itemId}'`,
         });
       }
       const req = (effectiveArmor as { strengthRequirement?: number }).strengthRequirement;
       if (req !== undefined && strScore < req) {
         warnings.push({
-          slot,
+          slot: label,
           itemId: inst.itemId,
           code: 'strength_requirement_unmet',
-          message: `${slot}: STR ${strScore} below requirement ${req} for '${inst.itemId}' (−10 ft speed)`,
+          message: `${label}: STR ${strScore} below requirement ${req} for '${inst.itemId}' (−10 ft speed)`,
         });
       }
     }
@@ -296,14 +307,28 @@ export function validateEquipLoadout(
       );
       if (!proficient) {
         warnings.push({
-          slot,
+          slot: label,
           itemId: inst.itemId,
           code: 'weapon_proficiency_missing',
-          message: `${slot}: not proficient with '${inst.itemId}' (attacks without proficiency bonus)`,
+          message: `${label}: not proficient with '${inst.itemId}' (attacks without proficiency bonus)`,
         });
       }
     }
-  }
+  };
+
+  // Armor/shield are shared across sets — validate once under bare names.
+  checkSlot('armor', 'armor', equippedSlotTarget(slots, 'armor'));
+  checkSlot('shield', 'shield', equippedSlotTarget(slots, 'shield'));
+
+  // Each weapon set validates independently; weapon labels carry the set.
+  const weaponSlots = ['mainHand', 'offHand', 'ranged'] as const;
+  (['primary', 'secondary'] as const).forEach((set: WeaponSetId) => {
+    const ids = getWeaponSetSlotIds(slots, set);
+    for (const slot of weaponSlots) {
+      const key = `${slot}InstanceId` as const;
+      checkSlot(`${set}:${slot}`, slot, ids[key]);
+    }
+  });
 
   return { ok: errors.length === 0, errors, warnings };
 }

@@ -216,7 +216,22 @@ export const InventoryItemInstanceSchema = z.object({
 export type InventoryItemInstance = z.infer<typeof InventoryItemInstanceSchema>;
 
 /**
+ * Weapon set discriminator (SRD-1703, BG3-style melee/ranged sets).
+ * `primary` is the default for all legacy single-set saves.
+ */
+export const WEAPON_SET_IDS = ['primary', 'secondary'] as const;
+export const WeaponSetIdSchema = z.enum(WEAPON_SET_IDS);
+export type WeaponSetId = z.infer<typeof WeaponSetIdSchema>;
+
+/**
  * Currently equipped gear slots referencing `InventoryItemInstance.instanceId`.
+ *
+ * SRD-1703 weapon sets: `mainHand`/`offHand`/`ranged` each carry two values —
+ * the primary set (`mainHandInstanceId`, ...) and the secondary set
+ * (`secondaryMainHandInstanceId`, ...). `activeWeaponSet` selects which set
+ * feeds `weaponAttacks` derivation. Armor/shield stay shared across sets.
+ * All new fields are optional so legacy single-set saves parse unchanged
+ * (missing `activeWeaponSet` normalizes to `'primary'`).
  */
 export const EquippedSlotsSchema = z.object({
   armorInstanceId: z.string().min(1).optional(),
@@ -224,8 +239,88 @@ export const EquippedSlotsSchema = z.object({
   mainHandInstanceId: z.string().min(1).optional(),
   offHandInstanceId: z.string().min(1).optional(),
   rangedInstanceId: z.string().min(1).optional(),
+  activeWeaponSet: WeaponSetIdSchema.optional(),
+  secondaryMainHandInstanceId: z.string().min(1).optional(),
+  secondaryOffHandInstanceId: z.string().min(1).optional(),
+  secondaryRangedInstanceId: z.string().min(1).optional(),
 });
 export type EquippedSlots = z.infer<typeof EquippedSlotsSchema>;
+
+/** Canonical weapon slot keys for the primary set. */
+export const PRIMARY_WEAPON_SLOT_KEYS = [
+  'mainHandInstanceId',
+  'offHandInstanceId',
+  'rangedInstanceId',
+] as const;
+export type PrimaryWeaponSlotKey = (typeof PRIMARY_WEAPON_SLOT_KEYS)[number];
+
+/** Canonical weapon slot keys for the secondary set. */
+export const SECONDARY_WEAPON_SLOT_KEYS = [
+  'secondaryMainHandInstanceId',
+  'secondaryOffHandInstanceId',
+  'secondaryRangedInstanceId',
+] as const;
+export type SecondaryWeaponSlotKey = (typeof SECONDARY_WEAPON_SLOT_KEYS)[number];
+
+/**
+ * Normalizes a possibly-legacy `EquippedSlots` value: fills
+ * `activeWeaponSet: 'primary'` when absent. Never mutates its input.
+ */
+export function normalizeEquippedSlots<T extends Partial<EquippedSlots>>(slots: T): T & { activeWeaponSet: WeaponSetId } {
+  if (slots.activeWeaponSet === 'primary' || slots.activeWeaponSet === 'secondary') {
+    return slots as T & { activeWeaponSet: WeaponSetId };
+  }
+  return { ...slots, activeWeaponSet: 'primary' as const };
+}
+
+/**
+ * Reads the active weapon-set instance ids for derivation and UI.
+ * Legacy saves (no discriminator) resolve to the primary set.
+ */
+export function getActiveWeaponSlotIds(slots: Partial<EquippedSlots>): {
+  mainHandInstanceId: string | undefined;
+  offHandInstanceId: string | undefined;
+  rangedInstanceId: string | undefined;
+} {
+  const normalized = normalizeEquippedSlots(slots);
+  if (normalized.activeWeaponSet === 'secondary') {
+    return {
+      mainHandInstanceId: normalized.secondaryMainHandInstanceId,
+      offHandInstanceId: normalized.secondaryOffHandInstanceId,
+      rangedInstanceId: normalized.secondaryRangedInstanceId,
+    };
+  }
+  return {
+    mainHandInstanceId: normalized.mainHandInstanceId,
+    offHandInstanceId: normalized.offHandInstanceId,
+    rangedInstanceId: normalized.rangedInstanceId,
+  };
+}
+
+/**
+ * Reads one weapon set's instance ids by discriminator.
+ */
+export function getWeaponSetSlotIds(
+  slots: Partial<EquippedSlots>,
+  set: WeaponSetId,
+): {
+  mainHandInstanceId: string | undefined;
+  offHandInstanceId: string | undefined;
+  rangedInstanceId: string | undefined;
+} {
+  if (set === 'secondary') {
+    return {
+      mainHandInstanceId: slots.secondaryMainHandInstanceId,
+      offHandInstanceId: slots.secondaryOffHandInstanceId,
+      rangedInstanceId: slots.secondaryRangedInstanceId,
+    };
+  }
+  return {
+    mainHandInstanceId: slots.mainHandInstanceId,
+    offHandInstanceId: slots.offHandInstanceId,
+    rangedInstanceId: slots.rangedInstanceId,
+  };
+}
 
 /**
  * Player spell selections for cantrips, known spells, wizard spellbook, and prepared spells.

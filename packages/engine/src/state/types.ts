@@ -374,6 +374,13 @@ export type GameCommand =
       equippedSlots: EquippedSlots;
     }
   | {
+      /** SRD-1703: flip the active weapon set. Free — costs no action. */
+      type: 'SWAP_WEAPON_SET';
+      characterId: string;
+      /** Target set; omitted toggles to the other set. */
+      weaponSet?: 'primary' | 'secondary';
+    }
+  | {
       type: 'UPDATE_PREPARED_SPELLS';
       characterId: string;
       preparedSpellIds: string[];
@@ -672,6 +679,12 @@ export type GameEvent =
       itemId: string;
       quantity: number;
       goldEarned: number;
+    }
+  | {
+      /** SRD-1703: emitted when the active weapon set flips. */
+      type: 'WEAPON_SET_SWAPPED';
+      characterId: string;
+      activeWeaponSet: 'primary' | 'secondary';
     }
   | {
       type: 'ITEM_CONSUMED';

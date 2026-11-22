@@ -25,6 +25,7 @@ import {
 } from '../dice/evaluator.js';
 import { tryParseFormula } from '../dice/ast.js';
 import { computeAbilityModifier } from './ability-generation.js';
+import { getActiveWeaponSlotIds } from './weapon-sets.js';
 import {
   normalizeFeatureOptionId,
   resolveProficienciesAndDuplicates,
@@ -474,21 +475,23 @@ function resolveEquippedGear(
     return undefined;
   };
 
+  // SRD-1703: weapon slots resolve through the active weapon set. Armor and
+  // shield stay shared across sets; only main/off/ranged vary per set.
+  const activeWeaponSlots = getActiveWeaponSlotIds(state.equippedSlots);
   const equippedArmor = resolveArmorSlot(state.equippedSlots.armorInstanceId, false);
   const equippedShield =
     resolveArmorSlot(state.equippedSlots.shieldInstanceId, true) ??
-    resolveArmorSlot(state.equippedSlots.offHandInstanceId, true);
-
-  const mainHandWeapon = resolveWeaponSlot(state.equippedSlots.mainHandInstanceId);
+    resolveArmorSlot(activeWeaponSlots.offHandInstanceId, true);
+  const mainHandWeapon = resolveWeaponSlot(activeWeaponSlots.mainHandInstanceId);
   const offHandWeapon =
-    state.equippedSlots.offHandInstanceId &&
-    state.equippedSlots.offHandInstanceId !== equippedShield?.instance.instanceId
-      ? resolveWeaponSlot(state.equippedSlots.offHandInstanceId)
+    activeWeaponSlots.offHandInstanceId &&
+    activeWeaponSlots.offHandInstanceId !== equippedShield?.instance.instanceId
+      ? resolveWeaponSlot(activeWeaponSlots.offHandInstanceId)
       : undefined;
   const rangedWeapon =
-    state.equippedSlots.rangedInstanceId &&
-    state.equippedSlots.rangedInstanceId !== state.equippedSlots.mainHandInstanceId
-      ? resolveWeaponSlot(state.equippedSlots.rangedInstanceId)
+    activeWeaponSlots.rangedInstanceId &&
+    activeWeaponSlots.rangedInstanceId !== activeWeaponSlots.mainHandInstanceId
+      ? resolveWeaponSlot(activeWeaponSlots.rangedInstanceId)
       : undefined;
 
   return {

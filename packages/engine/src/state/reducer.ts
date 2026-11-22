@@ -1,5 +1,6 @@
 import {
   type SrdCompendium,
+  normalizeEquippedSlots,
 } from '@srd5/data';
 import {
   type Combatant,
@@ -1346,22 +1347,34 @@ export function reduceGame(
         // intended change and wins: apply changes in canonical slot order,
         // clearing the moved instance everywhere else first (e.g. the same
         // handaxe lingering in main hand after moving it to ranged).
+        // SRD-1703: weapon slots exist in both sets; armor/shield stay shared
+        // and `activeWeaponSet` selects the derivation set.
         const incoming = { ...(command.equippedSlots as Record<string, string | undefined>) };
-        const current = hero.buildState.equippedSlots as Record<string, string | undefined>;
+        const current = normalizeEquippedSlots(
+          hero.buildState.equippedSlots as Record<string, string | undefined>,
+        ) as Record<string, string | undefined>;
         const canonical = [
           'armorInstanceId',
           'shieldInstanceId',
           'mainHandInstanceId',
           'offHandInstanceId',
           'rangedInstanceId',
+          'secondaryMainHandInstanceId',
+          'secondaryOffHandInstanceId',
+          'secondaryRangedInstanceId',
         ];
         const mergedSlots: Record<string, string | undefined> = { ...current };
+        // Discriminator flips apply directly (no dedupe — it names no item).
+        if (incoming.activeWeaponSet === 'primary' || incoming.activeWeaponSet === 'secondary') {
+          mergedSlots.activeWeaponSet = incoming.activeWeaponSet;
+        }
         for (const slot of canonical) {
           if (!(slot in incoming)) continue;
           const id = incoming[slot];
           if (mergedSlots[slot] === id) continue;
           if (typeof id === 'string' && id.length > 0) {
             for (const other of Object.keys(mergedSlots)) {
+              if (other === 'activeWeaponSet') continue;
               if (other !== slot && mergedSlots[other] === id) delete mergedSlots[other];
             }
             mergedSlots[slot] = id;
@@ -1398,6 +1411,47 @@ export function reduceGame(
             },
           },
         };
+      }
+      break;
+    }
+
+    case 'SWAP_WEAPON_SET': {
+      // SRD-1703: flipping the active weapon set is free (BG3) — it costs no
+      // action or bonus action and works in and out of combat. Derivation,
+      // hotbar, reactions, and AI all read the recomputed sheet, so they
+      // follow the active set with no further changes.
+      const hero = nextState.party[command.characterId];
+      if (hero?.buildState) {
+        const current = normalizeEquippedSlots(hero.buildState.equippedSlots);
+        const requested = command.weaponSet;
+        if (requested !== undefined && requested !== 'primary' && requested !== 'secondary') {
+          throw new Error(`Invalid weapon set '${requested as string}' (expected 'primary' | 'secondary')`);
+        }
+        const nextSet = requested ?? (current.activeWeaponSet === 'primary' ? 'secondary' : 'primary');
+        if (nextSet !== current.activeWeaponSet) {
+          const nextBuild = {
+            ...hero.buildState,
+            equippedSlots: { ...hero.buildState.equippedSlots, activeWeaponSet: nextSet },
+          };
+          const nextSheet = computeDerivedCharacter(nextBuild, options?.compendium);
+          nextState = {
+            ...nextState,
+            party: {
+              ...nextState.party,
+              [hero.id]: {
+                ...hero,
+                buildState: nextBuild,
+                characterSheet: nextSheet,
+                armorClass: nextSheet.armorClass.totalAc,
+              },
+            },
+          };
+          events.push({
+            type: 'WEAPON_SET_SWAPPED',
+            characterId: hero.id,
+            activeWeaponSet: nextSet,
+          });
+        }
       }
       break;
     }

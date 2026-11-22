@@ -244,7 +244,10 @@ export function CharacterSheetDrawer({
   };
 
   const handleEquipSlotChange = (
-    slotKey: keyof EquippedSlots,
+    // SRD-1703: roster equip edits target gear slots only; the
+    // `activeWeaponSet` discriminator is managed by SWAP_WEAPON_SET (SRD-1704
+    // adds the set toggle UI).
+    slotKey: Exclude<keyof EquippedSlots, 'activeWeaponSet'>,
     instanceId: string,
   ) => {
     if (!onUpdateCharacter) return;
@@ -257,6 +260,7 @@ export function CharacterSheetDrawer({
       delete nextSlots[slotKey];
     } else {
       for (const [slot, instId] of Object.entries(nextSlots)) {
+        if (slot === 'activeWeaponSet') continue;
         if (slot !== slotKey && instId === instanceId) {
           delete nextSlots[slot as keyof EquippedSlots];
         }

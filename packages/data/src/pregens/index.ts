@@ -361,6 +361,7 @@ export function validatePregenCharacters(
 
     for (const [slotName, instanceId] of Object.entries(char.equippedSlots)) {
       if (!instanceId) continue;
+      if (slotName === 'activeWeaponSet') continue;
       const invItem = inventoryByInstanceId.get(instanceId);
       if (!invItem) {
         errors.push({
@@ -391,7 +392,10 @@ export function validatePregenCharacters(
       } else if (
         slotName === 'mainHandInstanceId' ||
         slotName === 'offHandInstanceId' ||
-        slotName === 'rangedInstanceId'
+        slotName === 'rangedInstanceId' ||
+        slotName === 'secondaryMainHandInstanceId' ||
+        slotName === 'secondaryOffHandInstanceId' ||
+        slotName === 'secondaryRangedInstanceId'
       ) {
         if (!eqData || eqData.kind !== 'weapon') {
           errors.push({
