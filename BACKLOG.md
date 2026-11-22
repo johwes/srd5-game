@@ -378,7 +378,7 @@ Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-
 | **SRD-1505** | `[x]` | Stats rail completion: Build/Skills/Attributes tabs (conditions, resistances, attributes, proficiencies, proficiency stars); presentation over sheet-drawer data, no new mechanics | `@srd5/client` | SRD-1501 |
 | **SRD-1506** | `[x]` | Flow verification gate: E2E kill → loot box Take → Character view equip → party-strip move at 1280×800 with zero console errors + zero overflow; visual screenshots per surface | `@srd5/client` | SRD-1502, SRD-1503, SRD-1504, SRD-1505 |
 | **SRD-1507** | `[x]` | Spellbook view: class tabs + per-level rows with live slot pips + subclass resource header + search; reuses inspect card | `@srd5/client` | SRD-1501 |
-| **SRD-1508** | `[ ]` | Cast flow: inspect card (damage range/dice/save/range/cost) + slot picker with upcast preview in the arming step | `@srd5/client` | SRD-1507 |
+| **SRD-1508** | `[x]` | Cast flow: inspect card (damage range/dice/save/range/cost) + slot picker with upcast preview in the arming step | `@srd5/client` | SRD-1507 |
 | **SRD-1509** | `[ ]` | Reactions policy tab (Ask/Auto/Off per reaction), client-side over prompt flow, persisted per character | `@srd5/client` | SRD-1507 |
 | **SRD-1510** | `[ ]` | Anchored in-world loot box panel (grid + gold + Take All + manage link), viewport-clamped, same commands | `@srd5/client` | SRD-1501 |
 
@@ -390,7 +390,7 @@ Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-
 - [x] **SRD-1505**: Skills/attributes/conditions/resistances render from sheet data; no new engine mechanics.
 - [x] **SRD-1506**: Full flow E2E green at 1280×800 with zero console errors; screenshots archived per surface.
 - [x] **SRD-1507**: Spellbook shows every known/prepared spell grouped by level with correct live slot pips; search filters; class tabs + resource header render.
-- [ ] **SRD-1508**: Cast picker previews exact upcast math; unavailable slots disabled; cantrips skip the picker; Bonus-Action rule still enforced.
+- [x] **SRD-1508**: Cast picker previews exact upcast math; unavailable slots disabled; cantrips skip the picker; Bonus-Action rule still enforced.
 - [ ] **SRD-1509**: Reactions policy flips Ask/Auto/Off per reaction, persists per character, prompt modal honors it; zero engine changes.
 - [ ] **SRD-1510**: Loot box opens anchored at the container, takes items/gold inline, Take All clears it, Esc/walk-away dismisses, battlefield stays visible.
 - [ ] **Visual parity gate**: every Epic 15 surface is validated side-by-side against its `docs/reference/bg3/` shot (Character view vs `bg3-character-sheet-xorda`, skills/attributes tabs vs `bg3-character-skills` / `bg3-character-attributes`, party strip vs `bg3-party-inventory`, spellbook vs `bg3-spellbook-*`, cast picker vs `bg3-cast-fireball-*`, loot box vs `bg3-loot-box-inworld`); layout, grouping, and information density match the reference flow with our licensed icon set - no missing panels, no clipped tooltips, no text-only fallbacks where the reference shows a graphical surface.

@@ -42,7 +42,7 @@ import {
 import { LocalTransport, type PlayerViewProp, type PlayerViewState } from '@srd5/transport';
 import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
-import { TacticalCombatHud, TargetingCommitBar, useManualTargeting } from '../combat/index.js';
+import { TacticalCombatHud, TargetingCommitBar, buildCastSpellContext, useManualTargeting } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
 import { DungeonExplorationHud } from './DungeonExplorationHud.js';
 import { PropInteractionCard } from './PropInteractionCard.js';
@@ -1130,6 +1130,13 @@ export function DungeonView({
           onConfirmMulti={manualTargeting.handleCommitMulti}
           onConfirmAoe={manualTargeting.handleCommitAoe}
           onCancel={manualTargeting.cancelPendingTarget}
+          castSpell={buildCastSpellContext(
+            manualTargeting.pendingTarget,
+            activeCombatant,
+            compendium,
+            viewState.combat?.turnBudget?.bonusActionSpellCast,
+            manualTargeting.reslotSpell,
+          )}
         />
         </>
       ) : (

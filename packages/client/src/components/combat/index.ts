@@ -12,7 +12,19 @@ export type { TheftTargetOption, TheftAttemptRequest, TheftLastResult } from './
 export { ReactionInterruptModal } from './ReactionInterruptModal.js';
 export { AnimatedDiceTray, DieFace } from './AnimatedDiceTray.js';
 export { CombatLog } from './CombatLog.js';
-export { TargetingCommitBar } from './TargetingCommitBar.js';
+export { TargetingCommitBar, buildCastSpellContext } from './TargetingCommitBar.js';
+export { SpellCastPicker } from './SpellCastPicker.js';
+export type { SpellCastPickerProps, SpellSlotPool } from './SpellCastPicker.js';
+export {
+  parseDiceRange,
+  getSpellDamageSteps,
+  getEffectiveCastFormula,
+  findSpellSaveAbility,
+  getUpcastPreview,
+  getSpellSlotOptions,
+  isCantripSpell,
+  isBlockedByBonusActionRule,
+} from './SpellCastPicker.js';
 export { useManualTargeting } from './useManualTargeting.js';
 export type { ManualTargetingDeps, ManualTargetingApi } from './useManualTargeting.js';
-export type { TargetingCommitBarProps } from './TargetingCommitBar.js';
+export type { TargetingCommitBarProps, TargetingCommitBarSpellContext } from './TargetingCommitBar.js';

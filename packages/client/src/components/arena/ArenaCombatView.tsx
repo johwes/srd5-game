@@ -20,7 +20,7 @@ import {
 import { LocalTransport, type PlayerViewState } from '@srd5/transport';
 import { TacticalCanvasViewport } from '../../canvas/index.js';
 import { useEscHandler, ESC_PRIORITY } from '../../hooks/useEscStack.js';
-import { TacticalCombatHud, TargetingCommitBar, useManualTargeting } from '../combat/index.js';
+import { TacticalCombatHud, TargetingCommitBar, buildCastSpellContext, useManualTargeting } from '../combat/index.js';
 import { LevelUpModal } from '../roster/index.js';
 import {
   applyArenaBreather,
@@ -787,6 +787,13 @@ export function ArenaCombatView({
         onConfirmMulti={manualTargeting.handleCommitMulti}
         onConfirmAoe={manualTargeting.handleCommitAoe}
         onCancel={manualTargeting.cancelPendingTarget}
+        castSpell={buildCastSpellContext(
+          manualTargeting.pendingTarget,
+          activeCombatant,
+          compendium,
+          viewState.combat?.turnBudget?.bonusActionSpellCast,
+          manualTargeting.reslotSpell,
+        )}
       />
 
       {/* Breather Rest Modal between Waves */}

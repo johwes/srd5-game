@@ -142,7 +142,7 @@ function collectSpellEffectLines(
   return lines;
 }
 
-function summarizeSpellEffects(
+export function summarizeSpellEffects(
   spell: SpellData,
   caster?: PlayerViewCombatant | null,
   slotLevel?: number,

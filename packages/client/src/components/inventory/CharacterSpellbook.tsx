@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { CharacterBuildState, SpellData, SrdCompendium } from '@srd5/data';
+import type { PlayerViewCombatant } from '@srd5/transport';
 import { computeDerivedCharacter, type DerivedCharacterSheet } from '@srd5/engine';
+import { SpellCastPicker } from '../combat/SpellCastPicker.js';
 import { assetRegistry } from '../../canvas/assets/AssetRegistry.js';
 import {
   formatAbilityAbbrev,
@@ -75,6 +77,11 @@ export function CharacterSpellbook({
   );
   const [activeTab, setActiveTab] = useState<SpellbookTabId | null>(null);
   const [search, setSearch] = useState('');
+  // SRD-1508: spellbook-cell inspect step — clicking a cell opens the shared
+  // cast-flow picker as a read-only preview (slot choice updates the upcast
+  // math; management surface has no dispatch).
+  const [inspectSpellId, setInspectSpellId] = useState<string | null>(null);
+  const [inspectSlot, setInspectSlot] = useState<number>(0);
 
   const sc = derived.spellcasting;
 
@@ -392,6 +399,11 @@ export function CharacterSpellbook({
                             data-testid={`${prefix}-cell-${spell.id}`}
                             title={`${spell.name} (Level ${spell.level} ${formatTitleCase(spell.school)}): ${spell.description}`}
                             aria-label={`${spell.name}, level ${spell.level} ${spell.school}${isAlways ? ', always prepared' : isPrepared ? ', prepared' : bookOnly ? ', in spellbook' : ''}`}
+                            aria-expanded={inspectSpellId === spell.id}
+                            onClick={() => {
+                              setInspectSpellId(spell.id);
+                              setInspectSlot(spell.level);
+                            }}
                             className={`relative flex flex-col items-center gap-1 rounded-lg bg-slate-950 border p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 transition-colors ${
                               exhausted ? 'opacity-50 border-slate-800' : 'border-slate-700 hover:border-purple-400'
                             }`}
@@ -436,6 +448,39 @@ export function CharacterSpellbook({
               })}
             </div>
           )}
+
+          {/* SRD-1508 spellbook inspect step: shared cast-flow picker preview. */}
+          {inspectSpellId &&
+            (() => {
+              const inspectSpell = compendium.getSpell(inspectSpellId);
+              if (!inspectSpell) return null;
+              const pools = sc.spellSlots as unknown as
+                | Record<number, { available: number; max: number } | undefined>
+                | undefined;
+              return (
+                <div
+                  data-testid={`${prefix}-inspect`}
+                  className="rounded-xl border border-purple-500/40 bg-purple-950/10 p-2 flex flex-col items-center gap-2"
+                >
+                  <SpellCastPicker
+                    spell={inspectSpell}
+                    caster={{ characterSheet: derived } as unknown as PlayerViewCombatant}
+                    spellSlots={pools}
+                    selectedSlot={inspectSpell.level === 0 ? 0 : inspectSlot}
+                    onSelectSlot={setInspectSlot}
+                    testIdPrefix={`${prefix}-inspect`}
+                  />
+                  <button
+                    type="button"
+                    data-testid={`${prefix}-inspect-close`}
+                    onClick={() => setInspectSpellId(null)}
+                    className="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                  >
+                    Close inspect
+                  </button>
+                </div>
+              );
+            })()}
         </>
       )}
     </div>

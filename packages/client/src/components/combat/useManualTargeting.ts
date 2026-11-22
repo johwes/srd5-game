@@ -21,7 +21,7 @@ import {
   validateTargetPick,
   type PendingTarget,
 } from '../../utils/pendingTargeting.js';
-import { resolveSpellTargets } from '../../utils/combatTargeting.js';
+import { getSpellMaxTargets, resolveSpellTargets } from '../../utils/combatTargeting.js';
 
 /**
  * Shared SRD-410 manual targeting state machine for every tactical view
@@ -58,6 +58,8 @@ export interface ManualTargetingApi {
     opts?: { isOffHand?: boolean; twoHanded?: boolean },
   ) => void;
   armSpell: (spellId: string, slotLevel: number) => void;
+  /** SRD-1508: re-slot an armed spell cast without clearing picks/origin. */
+  reslotSpell: (slotLevel: number) => void;
   /** Token clicks: commit armed picks, otherwise inspect. */
   handleCombatantClick: (combatantId: string) => void;
   /**
@@ -156,6 +158,34 @@ export function useManualTargeting(deps: ManualTargetingDeps): ManualTargetingAp
       }
     },
     [activeCombatantId, activeCombatant, compendium, dispatch],
+  );
+
+  /**
+   * SRD-1508 cast-flow re-slot: the inspect + slot picker beside the armed
+   * cast changes only `slotLevel` (and the derived multi-target budget),
+   * preserving picks and the AOE origin so preview math stays in lockstep
+   * with the armed command.
+   */
+  const reslotSpell = useCallback(
+    (slotLevel: number) => {
+      setPendingTarget((prev) => {
+        if (prev.kind === 'single' && prev.action === 'spell' && prev.spellId) {
+          return { ...prev, slotLevel };
+        }
+        if (prev.kind === 'multi' && prev.spellId) {
+          const spell = compendium.getSpell(prev.spellId);
+          const maxTargets = spell ? getSpellMaxTargets(spell, slotLevel) : prev.maxTargets;
+          const picked =
+            prev.picked.length > maxTargets ? prev.picked.slice(0, maxTargets) : prev.picked;
+          return { ...prev, slotLevel, maxTargets, picked };
+        }
+        if (prev.kind === 'aoe' && prev.spellId) {
+          return { ...prev, slotLevel };
+        }
+        return prev;
+      });
+    },
+    [compendium],
   );
 
   const handleCombatCellClick = useCallback(
@@ -391,6 +421,7 @@ export function useManualTargeting(deps: ManualTargetingDeps): ManualTargetingAp
     cancelPendingTarget,
     armAttack,
     armSpell,
+    reslotSpell,
     handleCombatantClick,
     handleCombatCellClick,
     handleCommitMulti,
