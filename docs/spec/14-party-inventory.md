@@ -169,3 +169,91 @@ links out to the Character view (drawer stays for quick inspect).
   scope unless a ticket proves otherwise.
 - Camp-supply / consumable quick-use row in the sheet? Nice-to-have; propose
   only if free inside SRD-1504.
+
+## 10. Spellbook View (BG3 `bg3-spellbook-*` reference)
+
+The sheet drawer's "Spellbook & Preparation" tab today is text rows with
+prepare toggles. The reference is a dedicated panel per hero:
+
+- **Class tabs** with prepared counts (`Cleric (8/11)`, `Wizard (5/11)`),
+  plus `Common` (weapon/class actions, passives) and `Reactions` tabs.
+- **Header per class tab**: subclass name, resource pips (sorcery points,
+  bardic inspiration), casting ability, save DC, spell attack bonus, search.
+- **Cantrips + class/metamagic actions** rows, then **spells grouped by
+  level** (I-IX) as icon cells with **live slot pips per level row**
+  (filled = available, from the hero's `spellSlots`), dimmed when exhausted.
+- **Prepared bar**: prepared spells with `+` slots to add (up to the
+  class limit); "replace on level-up" legend for fixed-list casters.
+- Spell cells reuse the cast-flow inspect card (section 11) on hover/focus.
+- Multiclass heroes get one tab per spellcasting class; `Common` aggregates
+  non-spell actions so the hotbar stays the combat surface.
+
+## 11. Cast Flow: Inspect, Slot, Target (BG3 `bg3-cast-fireball-*`)
+
+Today the hotbar spell card carries a tooltip plus an embedded slot
+`<select>`; one click casts. The reference splits this into three beats:
+
+1. **Pick spell** (hotbar card or spellbook cell) - arms a pending cast.
+2. **Inspect + slot picker**: a card showing name, level + school, damage
+   range (`8-48 Damage`), dice + type + rider (`8d6 Fire (Ignores
+   Resistance)`), description, save-for-half, range (`18m`), save ability
+   + casting mod, cost row (`Action + Level 3 Spell Slot`); beside it the
+   slot picker (`I II III IV V` with available counts, current highlighted)
+   with an **upcast preview line** (`Upcast: Deals an additional 1d6 Fire
+   damage per level`, computed from the spell's scaling formula at the
+   hovered/selected slot).
+3. **Pick target** through the existing manual-targeting flow
+   (`useManualTargeting` arming stays; the picker sets `slotLevel`).
+
+Rules: cantrips skip step 2; unavailable slots are visible-but-disabled;
+the Bonus-Action casting rule warning stays inline; everything reuses
+`summarizeSpellEffects` / `resolveSpellFormulaForTooltip` so preview math
+matches resolution math exactly.
+
+## 12. Reactions Policy Tab (BG3 `bg3-spellbook-reactions`)
+
+Today reactions arrive as interrupt prompts (`ReactionInterruptModal` over
+`pendingReactionPrompt`) with no pre-configuration. The reference adds a
+`Reactions` tab listing each owned reaction (per-slot-level variants where
+applicable, e.g. `Shield` I-V; plus `Opportunity Attack`, class features):
+
+- Row: icon + name + slot tag, **enable toggle**, **Ask / Auto policy
+  control**.
+- Semantics (client-side over the existing prompt flow, no engine change):
+  `Ask` (default) keeps today's modal; `Auto` answers the prompt
+  immediately when it arrives (first valid option); `Off` declines.
+- Policy stores in roster storage per character; the prompt modal shows the
+  active policy and lets the player flip it mid-fight.
+
+## 13. In-World Loot Box (BG3 `bg3-loot-box-inworld`)
+
+The corpse/chest loot box today is a fullscreen modal (`LootInventoryModal`).
+The reference is a small panel anchored near the container in the world:
+item grid, gold line, **Take All** bar, click-item-to-take - the same
+`CLAIM_LOOT` / `itemIndex` / `takeCoins` commands, minus the modal chrome.
+
+v1: keep the modal as the full management surface; add the anchored box as
+the **first-touch** surface (open on corpse/chest click, Take/Take All
+inline, "Manage" link opens the modal). Battlefield stays visible behind it.
+Position follows the container's screen projection, clamps to viewport,
+closes on Esc/walk-away - same dismissal rules as the prop card.
+
+## 14. Phased Delivery (extends section 7)
+
+| Phase | Tickets | Content |
+|---|---|---|
+| 6 - Spellbook | SRD-1507 | Class tabs + per-level rows with live slot pips + subclass resource header + search; reuses inspect card |
+| 7 - Cast flow | SRD-1508 | Inspect card (damage range/dice/save/range/cost) + slot picker with upcast preview in the arming step |
+| 8 - Reactions | SRD-1509 | Reactions tab (Ask/Auto/Off per reaction), client-side over prompt flow, persisted per character |
+| 9 - Loot box | SRD-1510 | Anchored in-world loot panel (grid + gold + Take All + manage link), viewport-clamped, same commands |
+
+## 15. Acceptance Criteria (extends section 8)
+
+- Spellbook shows every known/prepared spell grouped by level with correct
+  live slot pips; search filters; no new engine mechanics.
+- Cast picker previews exact upcast math; unavailable slots disabled;
+  cantrips skip the picker; Bonus-Action rule still enforced.
+- Reactions policy flips Ask/Auto/Off per reaction, persists, and the
+  prompt modal honors it with zero engine changes.
+- Loot box opens anchored at the container, takes items/gold inline,
+  Take All clears it, Esc/walk-away dismisses, battlefield stays visible.

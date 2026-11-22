@@ -385,3 +385,11 @@ Reference shots live in `docs/reference/bg3/` (`bg3-hotbar.png`, `bg3-character-
 - [ ] **SRD-1504**: Double-click, right-click menu, and sort all function by mouse, keyboard, and touch; no hover-only information.
 - [ ] **SRD-1505**: Skills/attributes/conditions/resistances render from sheet data; no new engine mechanics.
 - [ ] **SRD-1506**: Full flow E2E green at 1280×800 with zero console errors; screenshots archived per surface.
+- [ ] **SRD-1507**: Spellbook shows every known/prepared spell grouped by level with correct live slot pips; search filters; class tabs + resource header render.
+- [ ] **SRD-1508**: Cast picker previews exact upcast math; unavailable slots disabled; cantrips skip the picker; Bonus-Action rule still enforced.
+- [ ] **SRD-1509**: Reactions policy flips Ask/Auto/Off per reaction, persists per character, prompt modal honors it; zero engine changes.
+- [ ] **SRD-1510**: Loot box opens anchored at the container, takes items/gold inline, Take All clears it, Esc/walk-away dismisses, battlefield stays visible.
+- [ ] **SRD-1507**: Spellbook shows every known/prepared spell grouped by level with correct live slot pips; search filters; class tabs + resource header render.
+- [ ] **SRD-1508**: Cast picker previews exact upcast math; unavailable slots disabled; cantrips skip the picker; Bonus-Action rule still enforced.
+- [ ] **SRD-1509**: Reactions policy flips Ask/Auto/Off per reaction, persists per character, prompt modal honors it; zero engine changes.
+- [ ] **SRD-1510**: Loot box opens anchored at the container, takes items/gold inline, Take All clears it, Esc/walk-away dismisses, battlefield stays visible.
