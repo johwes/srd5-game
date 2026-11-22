@@ -35,6 +35,8 @@ export interface PartyRosterViewProps {
   onCreateNewHero?: () => void;
   onEnterArena?: () => void;
   onEnterDungeon?: () => void;
+  /** SRD-1501: open the fullscreen BG3-style Character view for a hero. */
+  onOpenCharacterView?: (characterId: string) => void;
 }
 
 export function PartyRosterView({
@@ -48,6 +50,7 @@ export function PartyRosterView({
   onCreateNewHero,
   onEnterArena,
   onEnterDungeon,
+  onOpenCharacterView,
 }: PartyRosterViewProps) {
   const [jsonModalMode, setJsonModalMode] = useState<'export' | 'import' | null>(
     null,
@@ -517,6 +520,16 @@ export function PartyRosterView({
                     >
                       Character Sheet
                     </button>
+                    {onOpenCharacterView && (
+                      <button
+                        type="button"
+                        data-testid={`roster-open-character-view-${hero.id}`}
+                        onClick={() => onOpenCharacterView(hero.id)}
+                        className="px-3 py-1.5 rounded-lg bg-purple-500/15 border border-purple-500/50 text-purple-300 text-xs font-semibold hover:bg-purple-500/25"
+                      >
+                        Character View
+                      </button>
+                    )}
                     {derived.totalLevel < MAX_CHARACTER_LEVEL && (
                       <button
                         type="button"

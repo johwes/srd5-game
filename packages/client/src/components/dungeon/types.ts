@@ -83,6 +83,8 @@ export interface LootInventoryModalProps {
   onSplitStack?: (characterId: string, instanceId: string, quantity: number) => void;
   onIdentifyItem?: (characterId: string, instanceId: string) => void;
   onSellItem?: (characterId: string, instanceId: string) => void;
+  /** SRD-1501: jump from loot to the recipient's fullscreen Character view. */
+  onOpenCharacterView?: (heroId: string) => void;
 }
 
 export interface SaveLoadModalProps {

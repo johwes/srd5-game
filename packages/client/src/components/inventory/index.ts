@@ -6,5 +6,6 @@ export * from './ItemTooltipCard.js';
 export * from './InventoryItemRow.js';
 export * from './InventoryGridCell.js';
 export * from './InventoryView.js';
+export * from './CharacterView.js';
 export * from './inventoryCategories.js';
 export * from './inventoryCompare.js';

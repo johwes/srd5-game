@@ -51,6 +51,8 @@ export interface CharacterSheetDrawerProps {
   onUpdateCharacter?: (updated: CharacterBuildState) => void;
   onOpenLevelUp?: (character: CharacterBuildState) => void;
   onExportCharacter?: (character: CharacterBuildState) => void;
+  /** SRD-1501: open the fullscreen BG3-style Character view for this hero. */
+  onOpenCharacterView?: (characterId: string) => void;
 }
 
 function formatBreakdownInline(contributions: readonly ModifierContribution[]): string {
@@ -110,6 +112,7 @@ export function CharacterSheetDrawer({
   onUpdateCharacter,
   onOpenLevelUp,
   onExportCharacter,
+  onOpenCharacterView,
 }: CharacterSheetDrawerProps) {
   const [activeTab, setActiveTab] = useState<CharacterSheetTabId>('overview');
   const [xpAwardInput, setXpAwardInput] = useState<string>('300');
@@ -970,6 +973,17 @@ export function CharacterSheetDrawer({
 
           {activeTab === 'equipment' && (
             <div data-testid="sheet-panel-equipment" className="space-y-6">
+              {/* SRD-1501: link out to the fullscreen Character view (drawer keeps quick-inspect). */}
+              {onOpenCharacterView && (
+                <button
+                  type="button"
+                  data-testid="sheet-open-character-view-btn"
+                  onClick={() => onOpenCharacterView(character.id)}
+                  className="w-full px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-500/50 text-amber-300 text-xs font-bold hover:bg-amber-500/25"
+                >
+                  🧙 Open full Character view (BG3-style inventory)
+                </button>
+              )}
               {/* Interactive Loadout Paperdoll & Weapon Attacks */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-4">

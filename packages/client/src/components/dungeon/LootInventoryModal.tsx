@@ -37,6 +37,7 @@ export function LootInventoryModal({
   onSplitStack,
   onIdentifyItem,
   onSellItem,
+  onOpenCharacterView,
 }: LootInventoryModalProps) {
   const partyList = Object.values(party);
   const [selectedHeroId, setSelectedHeroId] = useState<string>(
@@ -324,7 +325,19 @@ export function LootInventoryModal({
           </div>
         )}
 
-        <footer className="flex items-center justify-end pt-3 border-t border-slate-800">
+        <footer className="flex items-center justify-between gap-2 pt-3 border-t border-slate-800">
+          {onOpenCharacterView && currentHero ? (
+            <button
+              type="button"
+              data-testid="loot-open-character-view-btn"
+              onClick={() => onOpenCharacterView(currentHero.id)}
+              className="px-4 py-2 rounded-lg bg-purple-600/20 border border-purple-600/60 text-purple-200 text-xs font-semibold hover:bg-purple-600/30"
+            >
+              🧙 Inspect {currentHero.name} in Character view
+            </button>
+          ) : (
+            <span />
+          )}
           <button
             type="button"
             data-testid="loot-inventory-done-btn"

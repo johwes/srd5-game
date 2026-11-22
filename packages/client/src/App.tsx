@@ -20,6 +20,8 @@ import {
   LevelUpModal,
   PartyRosterView,
 } from './components/roster/index.js';
+import { CharacterView } from './components/inventory/index.js';
+import type { InventorySlotName } from './components/inventory/index.js';
 import { ArenaView } from './components/arena/index.js';
 import { DungeonView } from './components/dungeon/index.js';
 import { RealmView } from './components/realm/index.js';
@@ -89,6 +91,8 @@ export function App({
   const [sheetCharacterId, setSheetCharacterId] = useState<string | null>(null);
   const [sheetFallbackCharacter, setSheetFallbackCharacter] =
     useState<CharacterBuildState | null>(null);
+  // SRD-1501: fullscreen BG3-style Character view (roster-backed shell).
+  const [characterViewHeroId, setCharacterViewHeroId] = useState<string | null>(null);
   const [levelUpCharacterId, setLevelUpCharacterId] = useState<string | null>(
     null,
   );
@@ -253,6 +257,87 @@ export function App({
         : null))
     : null;
 
+  // SRD-1501: heroes shown in the fullscreen Character view (active party, roster fallback).
+  const characterViewHeroes =
+    roster.characters.filter((c) => roster.activePartyIds.includes(c.id)).length > 0
+      ? roster.characters.filter((c) => roster.activePartyIds.includes(c.id))
+      : roster.characters.slice(0, 4);
+  const characterViewHero =
+    characterViewHeroId !== null
+      ? (characterViewHeroes.find((c) => c.id === characterViewHeroId) ?? characterViewHeroes[0] ?? null)
+      : null;
+
+  const SLOT_KEY_BY_SHORT: Record<InventorySlotName, 'armorInstanceId' | 'shieldInstanceId' | 'mainHandInstanceId' | 'offHandInstanceId' | 'rangedInstanceId'> = {
+    armor: 'armorInstanceId',
+    shield: 'shieldInstanceId',
+    mainHand: 'mainHandInstanceId',
+    offHand: 'offHandInstanceId',
+    ranged: 'rangedInstanceId',
+  };
+
+  const handleCharacterViewEquip = (heroId: string, slot: InventorySlotName, instanceId: string | undefined) => {
+    const hero = roster.characters.find((c) => c.id === heroId);
+    if (!hero) return;
+    const slotKey = SLOT_KEY_BY_SHORT[slot];
+    const nextSlots = { ...hero.equippedSlots };
+    if (!instanceId) {
+      delete nextSlots[slotKey];
+    } else {
+      // One instance cannot occupy two slots: incoming assignment wins.
+      for (const key of Object.values(SLOT_KEY_BY_SHORT)) {
+        if (key !== slotKey && nextSlots[key] === instanceId) {
+          delete nextSlots[key];
+        }
+      }
+      nextSlots[slotKey] = instanceId;
+    }
+    handleUpdateCharacterFromSheetOrLevelUp({ ...hero, equippedSlots: nextSlots });
+  };
+
+  const handleCharacterViewAttune = (heroId: string, instanceId: string) => {
+    const hero = roster.characters.find((c) => c.id === heroId);
+    if (!hero || hero.attunedItemInstanceIds.includes(instanceId)) return;
+    if (hero.attunedItemInstanceIds.length >= 3) return;
+    handleUpdateCharacterFromSheetOrLevelUp({
+      ...hero,
+      attunedItemInstanceIds: [...hero.attunedItemInstanceIds, instanceId],
+    });
+  };
+
+  const handleCharacterViewUnattune = (heroId: string, instanceId: string) => {
+    const hero = roster.characters.find((c) => c.id === heroId);
+    if (!hero) return;
+    handleUpdateCharacterFromSheetOrLevelUp({
+      ...hero,
+      attunedItemInstanceIds: hero.attunedItemInstanceIds.filter((id) => id !== instanceId),
+    });
+  };
+
+  const handleCharacterViewTransfer = (fromHeroId: string, instanceId: string, toHeroId: string) => {
+    const from = roster.characters.find((c) => c.id === fromHeroId);
+    const to = roster.characters.find((c) => c.id === toHeroId);
+    if (!from || !to || fromHeroId === toHeroId) return;
+    const inst = from.inventory.find((i) => i.instanceId === instanceId);
+    if (!inst) return;
+    const nextFromSlots = { ...from.equippedSlots };
+    for (const key of Object.values(SLOT_KEY_BY_SHORT)) {
+      if (nextFromSlots[key] === instanceId) delete nextFromSlots[key];
+    }
+    const nextFrom: CharacterBuildState = {
+      ...from,
+      inventory: from.inventory.filter((i) => i.instanceId !== instanceId),
+      equippedSlots: nextFromSlots,
+      attunedItemInstanceIds: from.attunedItemInstanceIds.filter((id) => id !== instanceId),
+    };
+    const nextTo: CharacterBuildState = {
+      ...to,
+      inventory: [...to.inventory, inst],
+    };
+    let nextRoster = upsertRosterCharacter(roster, nextFrom, { addToPartyIfRoom: false });
+    nextRoster = upsertRosterCharacter(nextRoster, nextTo, { addToPartyIfRoom: false });
+    persistAndSetRoster(nextRoster);
+  };
+
   if (activeView === 'title_menu') {
     return (
       <>
@@ -296,11 +381,26 @@ export function App({
             }}
             onUpdateCharacter={handleUpdateCharacterFromSheetOrLevelUp}
             onOpenLevelUp={(hero) => setLevelUpCharacterId(hero.id)}
+            onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
             onExportCharacter={(hero) => {
               const content = serializeCharacterToSrd5Json(hero);
               const filename = formatSrd5Filename(hero.name, 'character');
               triggerSrd5FileDownload(filename, content);
             }}
+          />
+        )}
+        {/* SRD-1501: fullscreen Character view shell (all branches). */}
+        {characterViewHero && (
+          <CharacterView
+            heroes={characterViewHeroes}
+            activeHeroId={characterViewHero.id}
+            compendium={defaultCompendium}
+            onSelectHero={(id) => setCharacterViewHeroId(id)}
+            onClose={() => setCharacterViewHeroId(null)}
+            onEquipItem={handleCharacterViewEquip}
+            onAttuneItem={handleCharacterViewAttune}
+            onUnattuneItem={handleCharacterViewUnattune}
+            onTransferItem={handleCharacterViewTransfer}
           />
         )}
       </>
@@ -377,11 +477,25 @@ export function App({
             }}
             onUpdateCharacter={handleUpdateCharacterFromSheetOrLevelUp}
             onOpenLevelUp={(hero) => setLevelUpCharacterId(hero.id)}
+            onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
             onExportCharacter={(hero) => {
               const content = serializeCharacterToSrd5Json(hero);
               const filename = formatSrd5Filename(hero.name, 'character');
               triggerSrd5FileDownload(filename, content);
             }}
+          />
+        )}
+        {characterViewHero && (
+          <CharacterView
+            heroes={characterViewHeroes}
+            activeHeroId={characterViewHero.id}
+            compendium={defaultCompendium}
+            onSelectHero={(id) => setCharacterViewHeroId(id)}
+            onClose={() => setCharacterViewHeroId(null)}
+            onEquipItem={handleCharacterViewEquip}
+            onAttuneItem={handleCharacterViewAttune}
+            onUnattuneItem={handleCharacterViewUnattune}
+            onTransferItem={handleCharacterViewTransfer}
           />
         )}
       </>
@@ -589,6 +703,7 @@ export function App({
             }}
             onInspectCharacter={handleInspectCharacter}
             onLevelUpCharacter={(hero) => setLevelUpCharacterId(hero.id)}
+            onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
             onEnterArena={() => setActiveView('arena')}
             onEnterDungeon={() => setActiveView('dungeon')}
             onEditInBuilder={(hero) => {
@@ -637,6 +752,7 @@ export function App({
                 handleInspectCharacter(char);
               }
             }}
+            onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
             onExitToRoster={() => setActiveView('title_menu')}
           />
         )}
@@ -707,6 +823,7 @@ export function App({
                 handleInspectCharacter(char);
               }
             }}
+            onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
             onExitToRoster={() => {
               setIsDailyDescentActive(false);
               setActiveView('title_menu');
@@ -726,11 +843,27 @@ export function App({
           }}
           onUpdateCharacter={handleUpdateCharacterFromSheetOrLevelUp}
           onOpenLevelUp={(hero) => setLevelUpCharacterId(hero.id)}
+          onOpenCharacterView={(id) => setCharacterViewHeroId(id)}
           onExportCharacter={(hero) => {
             const content = serializeCharacterToSrd5Json(hero);
             const filename = formatSrd5Filename(hero.name, 'character');
             triggerSrd5FileDownload(filename, content);
           }}
+        />
+      )}
+
+      {/* SRD-1501: fullscreen BG3-style Character view shell. */}
+      {characterViewHero && (
+        <CharacterView
+          heroes={characterViewHeroes}
+          activeHeroId={characterViewHero.id}
+          compendium={defaultCompendium}
+          onSelectHero={(id) => setCharacterViewHeroId(id)}
+          onClose={() => setCharacterViewHeroId(null)}
+          onEquipItem={handleCharacterViewEquip}
+          onAttuneItem={handleCharacterViewAttune}
+          onUnattuneItem={handleCharacterViewUnattune}
+          onTransferItem={handleCharacterViewTransfer}
         />
       )}
 

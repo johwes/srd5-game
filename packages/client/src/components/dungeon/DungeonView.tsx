@@ -82,6 +82,8 @@ export interface DungeonViewProps {
   storageAdapter?: DungeonStorageAdapter;
   onExitToRoster: () => void;
   onOpenCharacterSheet?: (characterId: string) => void;
+  /** SRD-1501: open the fullscreen BG3-style Character view (roster-backed shell). */
+  onOpenCharacterView?: (characterId: string) => void;
   /** SRD-806: scoped POI delve state when gameMode is 'realm_delve'. */
   initialDelveState?: RealmDelveState;
   /** SRD-806: generated first-floor spec for the POI delve. */
@@ -105,6 +107,7 @@ export function DungeonView({
   storageAdapter = defaultDungeonStorageAdapter,
   onExitToRoster,
   onOpenCharacterSheet,
+  onOpenCharacterView,
   initialDelveState,
   initialFloorSpec,
   onDelveResolved,
@@ -1463,6 +1466,15 @@ export function DungeonView({
             characterId: charId,
             itemInstanceId: instId,
           })
+        }
+        onOpenCharacterView={
+          onOpenCharacterView
+            ? (heroId) => {
+                setModalState(null);
+                setActiveLoot(null);
+                onOpenCharacterView(heroId);
+              }
+            : undefined
         }
       />
 
